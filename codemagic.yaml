@@ -1,0 +1,19 @@
+workflows:
+  react-native-ios:
+    name: React Native iOS Build
+    instance_type: mac_mini_m1 # macOS machine with Xcode pre-installed
+    max_build_duration: 60 # Maximum build time in minutes
+    environment:
+      node: 16 # Node.js version
+      xcode: 15.0 # Xcode version
+      npm: yarn # Use Yarn if your project uses it
+    scripts:
+      - yarn install # Install dependencies
+      - cd ios && pod install && cd .. # Install CocoaPods dependencies
+      - npx react-native run-ios --configuration Release # Build the iOS app
+    artifacts:
+      - build/ios/ipa/*.ipa # Path to the generated .ipa file
+    publishing:
+      email:
+        recipients:
+          - malini220402@gmail.com # Email address to receive the .ipa file

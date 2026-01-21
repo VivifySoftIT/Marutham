@@ -1,0 +1,64 @@
+{
+  "expo": {
+    "name": "Alaigal",
+    "slug": "alaigal",
+    "version": "1.0.6",
+    "orientation": "portrait",
+    "icon": "./assets/Alaigal.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/Alaigal.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "usesPushNotifications": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location for attendance tracking.",
+        "NSLocationAlwaysUsageDescription": "We need your location for attendance tracking.",
+        "NSFaceIDUsageDescription": "We use Face ID to ensure secure check-in and check-out.",
+        "NSPhotoLibraryUsageDescription": "We need access to your photos to update your profile picture .",
+        "NSPhotoLibraryAddUsageDescription": "We need access to your photos to update your profile picture .",
+        "NSUserNotificationsUsageDescription": "We use notifications to keep you updated on important alerts and messages."
+      },
+      "bundleIdentifier": "com.vivify.safety"
+    },
+    "android": {
+      "versionCode": 12,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/Alaigal.png",
+        "backgroundColor": "#ffffff"
+      },
+      "useNextNotificationsApi": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
+        "POST_NOTIFICATIONS"
+      ],
+      "package": "com.alaigal"
+    },
+    "web": {
+      "favicon": "./assets/playstore-icon.png"
+    },
+    "plugins": [
+      "expo-video",
+      "expo-font",
+      "expo-notifications",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "We need access to your photos to update your profile picture."
+        }
+      ],
+      "expo-web-browser"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "9045acc5-4e5b-48a3-8216-c04497de89a7"
+      }
+    }
+  }
+}
