@@ -308,7 +308,7 @@ const loadDashboardData = async () => {
               <StatCard 
                 icon="alert-circle" 
                 value={pendingPayments} 
-                label="Pending"
+                label="Payment Pending"
                 delay={300}
               />
              
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: 130,
-    height: 90,
+    height: 85,
     marginRight: 10,
     borderRadius: 14,
     overflow: 'hidden',

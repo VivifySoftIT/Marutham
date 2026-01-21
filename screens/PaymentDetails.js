@@ -13,6 +13,7 @@ import {
   Dimensions,
   Animated,
   Easing,
+  TextInput,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -237,8 +238,8 @@ const PaymentDetails = () => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor="#4F46E5" barStyle="light-content" />
-        <LinearGradient colors={['#4F46E5', '#7C3AED']} style={styles.header}>
+        <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+        <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
@@ -246,7 +247,7 @@ const PaymentDetails = () => {
           <View style={{ width: 24 }} />
         </LinearGradient>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4F46E5" />
+          <ActivityIndicator size="large" color="#4A90E2" />
           <Text style={styles.loadingText}>Loading payment details...</Text>
         </View>
       </SafeAreaView>
@@ -255,10 +256,10 @@ const PaymentDetails = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4F46E5" barStyle="light-content" />
+      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
       
       {/* Enhanced Header */}
-      <LinearGradient colors={['#4F46E5', '#7C3AED']} style={styles.header}>
+      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -284,8 +285,8 @@ const PaymentDetails = () => {
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={onRefresh}
-            tintColor="#4F46E5"
-            colors={['#4F46E5']}
+            tintColor="#4A90E2"
+            colors={['#4A90E2']}
           />
         }
       >
@@ -298,7 +299,7 @@ const PaymentDetails = () => {
             activeOpacity={0.7}
           >
             <View style={styles.selectionButtonContent}>
-              <Icon name="account-circle" size={24} color="#4F46E5" />
+              <Icon name="account-circle" size={24} color="#4A90E2" />
               <View style={styles.selectionTextContainer}>
                 <Text style={styles.selectionName}>
                   {memberData?.name || 'Select a member'}
@@ -307,7 +308,7 @@ const PaymentDetails = () => {
                   {memberData ? 'Tap to change member' : 'Tap to select member'}
                 </Text>
               </View>
-              <Icon name="chevron-right" size={24} color="#4F46E5" />
+              <Icon name="chevron-right" size={24} color="#4A90E2" />
             </View>
           </TouchableOpacity>
         </View>
@@ -316,7 +317,7 @@ const PaymentDetails = () => {
         {memberData && (
           <View style={styles.memberCard}>
             <LinearGradient
-              colors={['#4F46E5', '#7C3AED']}
+              colors={['#4A90E2', '#87CEEB']}
               style={styles.memberCardGradient}
             >
               <View style={styles.memberCardHeader}>
@@ -501,7 +502,7 @@ const PaymentDetails = () => {
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={['#4F46E5', '#7C3AED']}
+              colors={['#4A90E2', '#87CEEB']}
               style={styles.fabGradient}
             >
               <Icon name="cash-plus" size={24} color="#FFF" />
@@ -555,7 +556,7 @@ const PaymentDetails = () => {
                     </Text>
                   </View>
                   {selectedMemberId === member.id && (
-                    <Icon name="check-circle" size={24} color="#4F46E5" />
+                    <Icon name="check-circle" size={24} color="#4A90E2" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -580,31 +581,29 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-  header: {
+   header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 15, 
+    paddingVertical: 15,
+  },
+  headerTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    color: '#FFF',
+    textAlign: 'center',
+    flex: 1,
+  },
+  headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    paddingTop: StatusBar.currentHeight + 16 || 16,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    gap: 10,
   },
   backButton: {
     padding: 4,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFF',
-    letterSpacing: 0.5,
-  },
-  headerButton: {
-    padding: 4,
-  },
+
   content: {
     flex: 1,
     padding: 20,
@@ -666,7 +665,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     elevation: 8,
-    shadowColor: '#4F46E5',
+    shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.2,
     shadowRadius: 16,
@@ -810,7 +809,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   historyStats: {
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -818,7 +817,7 @@ const styles = StyleSheet.create({
   historyCount: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4F46E5',
+    color: '#4A90E2',
   },
   paymentCard: {
     backgroundColor: '#FFF',
@@ -941,7 +940,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     elevation: 8,
-    shadowColor: '#4F46E5',
+    shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,

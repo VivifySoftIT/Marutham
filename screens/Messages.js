@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import ApiService from '../service/api';
 
 const Messages = ({ navigation }) => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -22,23 +23,37 @@ const Messages = ({ navigation }) => {
   const [showComposeModal, setShowComposeModal] = useState(false);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMembers, setLoadingMembers] = useState(false);
   const [attachment, setAttachment] = useState(null);
+  const [allMembers, setAllMembers] = useState([]);
 
   const [formData, setFormData] = useState({
     toEmail: '',
     toMemberName: '',
+    toMemberId: '',
     subject: '',
     content: '',
-    recipientType: 'all', // all, unpaid, birthday
+    recipientType: 'all',
   });
 
-  const allMembers = [
-    { id: 1, name: 'John Doe', email: 'john@example.com' },
-    { id: 2, name: 'Sarah Smith', email: 'sarah@example.com' },
-    { id: 3, name: 'Mike Johnson', email: 'mike@example.com' },
-    { id: 4, name: 'Emma Wilson', email: 'emma@example.com' },
-    { id: 5, name: 'David Lee', email: 'david@example.com' },
-  ];
+  // Load members from API when component mounts
+  useEffect(() => {
+    loadMembers();
+  }, []);
+
+  const loadMembers = async () => {
+    try {
+      setLoadingMembers(true);
+      const members = await ApiService.getMembers();
+      setAllMembers(members || []);
+      console.log('Members loaded:', members?.length);
+    } catch (error) {
+      console.error('Error loading members:', error);
+      Alert.alert('Error', 'Failed to load members list');
+    } finally {
+      setLoadingMembers(false);
+    }
+  };
 
   const messageTemplates = [
     {
@@ -124,6 +139,7 @@ const Messages = ({ navigation }) => {
   const handleSelectMember = (member) => {
     setFormData(prev => ({
       ...prev,
+      toMemberId: member.id,
       toMemberName: member.name,
       toEmail: member.email,
     }));
@@ -276,40 +292,113 @@ const Messages = ({ navigation }) => {
               </View>
             </View>
 
-            {/* Recipient Email (if custom) */}
-            {selectedTemplate.recipientType === 'all' && (
-              <View style={styles.section}>
-                <Text style={styles.label}>To Member *</Text>
+            {/* Recipient Type Selection */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Send To *</Text>
+              <View style={styles.recipientTypeContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.recipientTypeButton,
+                    formData.recipientType === 'member' && styles.recipientTypeButtonActive
+                  ]}
+                  onPress={() => handleInputChange('recipientType', 'member')}
+                >
+                  <Icon 
+                    name="account" 
+                    size={20} 
+                    color={formData.recipientType === 'member' ? '#FFF' : '#4A90E2'} 
+                  />
+                  <Text style={[
+                    styles.recipientTypeText,
+                    formData.recipientType === 'member' && styles.recipientTypeTextActive
+                  ]}>
+                    Specific Member
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.recipientTypeButton,
+                    formData.recipientType === 'all' && styles.recipientTypeButtonActive
+                  ]}
+                  onPress={() => handleInputChange('recipientType', 'all')}
+                >
+                  <Icon 
+                    name="account-multiple" 
+                    size={20} 
+                    color={formData.recipientType === 'all' ? '#FFF' : '#4A90E2'} 
+                  />
+                  <Text style={[
+                    styles.recipientTypeText,
+                    formData.recipientType === 'all' && styles.recipientTypeTextActive
+                  ]}>
+                    All Members
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Recipient Email (if specific member) */}
+            {formData.recipientType === 'member' && (
+              <View style={[styles.section, styles.memberSelectionSection]}>
+                <Text style={styles.label}>Select Member *</Text>
                 <TouchableOpacity
                   style={styles.memberDropdownButton}
                   onPress={() => setShowMemberDropdown(!showMemberDropdown)}
+                  disabled={loadingMembers}
                 >
                   <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
                   <Text style={[styles.input, { color: formData.toMemberName ? '#333' : '#999' }]}>
-                    {formData.toMemberName || 'Select member'}
+                    {loadingMembers ? 'Loading members...' : (formData.toMemberName || 'Select member')}
                   </Text>
                   <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
                 </TouchableOpacity>
 
                 {showMemberDropdown && (
-                  <View style={styles.memberDropdownList}>
-                    {allMembers.map(member => (
-                      <TouchableOpacity
-                        key={member.id}
-                        style={styles.memberDropdownItem}
-                        onPress={() => handleSelectMember(member)}
-                      >
-                        <View style={styles.memberItemContent}>
-                          <Text style={styles.memberName}>{member.name}</Text>
-                          <Text style={styles.memberEmail}>{member.email}</Text>
-                        </View>
-                        {formData.toMemberName === member.name && (
-                          <Icon name="check" size={20} color="#4A90E2" />
-                        )}
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  <ScrollView 
+                    style={styles.memberDropdownList}
+                    scrollEnabled={true}
+                    nestedScrollEnabled={true}
+                  >
+                    {loadingMembers ? (
+                      <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="small" color="#4A90E2" />
+                        <Text style={styles.loadingText}>Loading members...</Text>
+                      </View>
+                    ) : allMembers.length > 0 ? (
+                      allMembers.map(member => (
+                        <TouchableOpacity
+                          key={member.id}
+                          style={styles.memberDropdownItem}
+                          onPress={() => handleSelectMember(member)}
+                        >
+                          <View style={styles.memberItemContent}>
+                            <Text style={styles.memberName}>{member.name}</Text>
+                            <Text style={styles.memberEmail}>{member.email || member.phone || 'No contact'}</Text>
+                          </View>
+                          {formData.toMemberName === member.name && (
+                            <Icon name="check" size={20} color="#4A90E2" />
+                          )}
+                        </TouchableOpacity>
+                      ))
+                    ) : (
+                      <View style={styles.emptyContainer}>
+                        <Icon name="account-off" size={32} color="#D1D5DB" />
+                        <Text style={styles.emptyText}>No members found</Text>
+                      </View>
+                    )}
+                  </ScrollView>
                 )}
+              </View>
+            )}
+
+            {/* All Members Info */}
+            {formData.recipientType === 'all' && (
+              <View style={styles.infoCard}>
+                <Icon name="information" size={20} color="#2196F3" />
+                <Text style={styles.infoText}>
+                  This message will be sent to all active members
+                </Text>
               </View>
             )}
 
@@ -397,7 +486,11 @@ const Messages = ({ navigation }) => {
 
       {/* Header */}
       <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Icon name="arrow-left" size={24} color="#FFF" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Send Messages</Text>
+        <View style={{ width: 24 }} />
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -505,6 +598,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F9FC',
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 15,
     paddingVertical: 15,
   },
@@ -512,6 +608,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
+    textAlign: 'center',
+    flex: 1,
   },
   content: {
     flex: 1,
@@ -670,12 +768,48 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 20,
+    overflow: 'visible',
+    zIndex: 1,
+  },
+  memberSelectionSection: {
+    overflow: 'visible',
+    zIndex: 100,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: '#4A90E2',
     marginBottom: 8,
+  },
+  recipientTypeContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 15,
+  },
+  recipientTypeButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#FFF',
+    borderWidth: 2,
+    borderColor: '#87CEEB',
+    gap: 8,
+  },
+  recipientTypeButtonActive: {
+    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  recipientTypeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4A90E2',
+  },
+  recipientTypeTextActive: {
+    color: '#FFF',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -824,6 +958,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     maxHeight: 250,
     elevation: 3,
+    overflow: 'hidden',
+    zIndex: 1000,
   },
   memberDropdownItem: {
     flexDirection: 'row',
@@ -846,6 +982,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     marginTop: 2,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  loadingText: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  emptyText: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
   },
 });
 

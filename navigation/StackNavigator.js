@@ -6,7 +6,7 @@ import { View, ActivityIndicator } from 'react-native'; // 👈 ADDED
 
 // Import Screens
 import LoginScreen from '../screens/LoginScreen';
-import ForgotPassword from '../screens/ForgotPassword';
+
 import NewMember from '../screens/NewMember';
 import BulkMemberImport from '../screens/BulkMemberImport';
 import MemberDashboard from '../screens/MemberDashboard';
@@ -140,7 +140,7 @@ const StackNavigator = () => {
         name="MyCEUs"
         component={MyCEUs}
       />
-      <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+      {/* <Stack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
       <Stack.Screen 
         name="BulkMemberImport"
         component={BulkMemberImport}

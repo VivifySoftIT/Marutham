@@ -36,6 +36,9 @@ const DrawerNavigator = ({ route }) => {
         // Remove header completely from all screens
         headerShown: false,
         
+        // Disable swipe gesture to open drawer
+        swipeEnabled: false,
+        
         drawerStyle: {
           backgroundColor: '#F8F9FA',
           width: 280,
