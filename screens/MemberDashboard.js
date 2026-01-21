@@ -19,11 +19,13 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import ApiService from '../service/api'; // Import your API service
+import { useLanguage } from '../service/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
 const MemberDashboard = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [greeting, setGreeting] = useState('');
   const [quote, setQuote] = useState('');
   const [totalMembers, setTotalMembers] = useState(0);
@@ -34,6 +36,8 @@ const MemberDashboard = () => {
   const [accountName, setAccountName] = useState('Admin User');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Water blue color theme
   const waterBlueColors = {
@@ -52,14 +56,14 @@ const MemberDashboard = () => {
     let newQuote = '';
     
     if (currentHour < 12) {
-      newGreeting = 'Good Morning';
-      newQuote = 'Start your day with energy and purpose!';
+      newGreeting = t('goodMorning');
+      newQuote = t('startYourDay');
     } else if (currentHour < 18) {
-      newGreeting = 'Good Afternoon';
-      newQuote = 'Keep up the momentum! Great things are happening.';
+      newGreeting = t('goodAfternoon');
+      newQuote = t('keepMomentum');
     } else {
-      newGreeting = 'Good Evening';
-      newQuote = 'Reflect on your achievements and plan for tomorrow.';
+      newGreeting = t('goodEvening');
+      newQuote = t('reflectAchievements');
     }
     
     setGreeting(newGreeting);
@@ -67,7 +71,7 @@ const MemberDashboard = () => {
     
     // Load dashboard data
     loadDashboardData();
-  }, []);
+  }, [t]);
 
   // Replace the loadDashboardData function with this:
 const loadDashboardData = async () => {
@@ -265,18 +269,14 @@ const loadDashboardData = async () => {
 
             <TouchableOpacity 
               style={styles.iconButton}
-              onPress={() => {
-                Alert.alert(
-                  'Logout',
-                  'Are you sure you want to logout?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Logout', style: 'destructive', onPress: () => navigation.navigate('Login') }
-                  ]
-                );
-              }}
+              onPress={() => setShowNotifications(true)}
             >
-              <Icon name="logout" size={22} color="#FFF" />
+              <Icon name="bell" size={22} color="#FFF" />
+              {notificationCount > 0 && (
+                <View style={styles.notificationDot}>
+                  <Text style={styles.notificationDotText}>{notificationCount}</Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
           
@@ -340,7 +340,7 @@ const loadDashboardData = async () => {
             style={styles.welcomeCardGradient}
           >
             <View style={styles.welcomeContent}>
-              <Text style={styles.welcomeTitle}>👋 Welcome Back!</Text>
+              <Text style={styles.welcomeTitle}>👋 {t('welcomeBack')}!</Text>
               <Text style={styles.welcomeText}>{quote}</Text>
             </View>
             <View style={styles.welcomeIcon}>
@@ -460,6 +460,65 @@ const loadDashboardData = async () => {
         </Animatable.View>
       </ScrollView>
 
+      {/* Notifications Modal */}
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={showNotifications}
+        onRequestClose={() => setShowNotifications(false)}
+      >
+        <View style={styles.notificationModalOverlay}>
+          <TouchableOpacity 
+            style={styles.notificationModalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowNotifications(false)}
+          />
+          <View style={styles.notificationModalContainer}>
+            <View style={styles.notificationModalHeader}>
+              <Text style={styles.notificationModalTitle}>{t('notifications')}</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setShowNotifications(false)}
+              >
+                <Icon name="close" size={22} color={waterBlueColors.primary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.notificationsList}>
+              <View style={styles.notificationItem}>
+                <View style={[styles.notificationIcon, { backgroundColor: '#FFE5E5' }]}>
+                  <Icon name="account-plus" size={20} color="#E74C3C" />
+                </View>
+                <View style={styles.notificationContent}>
+                  <Text style={styles.notificationItemTitle}>New Member Registered</Text>
+                  <Text style={styles.notificationItemTime}>10:30 AM Today</Text>
+                </View>
+              </View>
+
+              <View style={styles.notificationItem}>
+                <View style={[styles.notificationIcon, { backgroundColor: '#E8F5E9' }]}>
+                  <Icon name="cash-check" size={20} color="#27AE60" />
+                </View>
+                <View style={styles.notificationContent}>
+                  <Text style={styles.notificationItemTitle}>Payment Received</Text>
+                  <Text style={styles.notificationItemTime}>09:15 AM Today</Text>
+                </View>
+              </View>
+
+              <View style={styles.notificationItem}>
+                <View style={[styles.notificationIcon, { backgroundColor: '#FFF3E0' }]}>
+                  <Icon name="alert-circle" size={20} color="#F39C12" />
+                </View>
+                <View style={styles.notificationContent}>
+                  <Text style={styles.notificationItemTitle}>Pending Payments Alert</Text>
+                  <Text style={styles.notificationItemTime}>08:00 AM Today</Text>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Settings Modal */}
       <Modal
         transparent={true}
@@ -501,6 +560,20 @@ const loadDashboardData = async () => {
             </View>
 
             <ScrollView style={styles.settingsOptions}>
+              <TouchableOpacity 
+                style={styles.settingsOption}
+                onPress={() => {
+                  setShowSettingsModal(false);
+                  navigation.navigate('Settings');
+                }}
+              >
+                <View style={[styles.optionIcon, { backgroundColor: waterBlueColors.lightest }]}>
+                  <Icon name="translate" size={20} color={waterBlueColors.primary} />
+                </View>
+                <Text style={styles.settingsOptionText}>{t('language')}</Text>
+                <Icon name="chevron-right" size={18} color="#666" />
+              </TouchableOpacity>
+
               <TouchableOpacity 
                 style={styles.settingsOption}
                 onPress={() => {
@@ -1049,6 +1122,92 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 10,
     fontWeight: '700',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  notificationDotText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  notificationModalOverlay: {
+    flex: 1,
+  },
+  notificationModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  notificationModalContainer: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '70%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  notificationModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  notificationModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  notificationsList: {
+    maxHeight: 400,
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  notificationIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationItemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 4,
+  },
+  notificationItemTime: {
+    fontSize: 12,
+    color: '#95A5A6',
   },
 });
 

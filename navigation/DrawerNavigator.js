@@ -3,14 +3,20 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import CustomDrawerContent from '../components/CustomDrawerContent'; 
 import InventoryForm from '../screens/InventoryForm';
 import AttendanceScreen from '../screens/AttendanceScreen';
+import AttendanceUploadScreen from '../screens/AttendanceUploadScreen';
+import AttendanceReportScreen from '../screens/AttendanceReportScreen';
+import ExcelViewerScreen from '../screens/ExcelViewerScreen';
 import BiometricReport from '../screens/BiometricReport';
 import Profile from '../screens/Profile';
 import ChangePassword from '../screens/ChangePassword';
 import NewMember from '../screens/NewMember';
+import NewMemberUploadScreen from '../screens/NewMemberUploadScreen';
 import BulkMemberImport from '../screens/BulkMemberImport';
 import MemberDashboard from '../screens/MemberDashboard';
 import MembersList from '../screens/MembersList';
 import MemberDetails from '../screens/MemberDetails';
+import MemberListUploadScreen from '../screens/MemberListUploadScreen';
+import MemberFormScreen from '../screens/MemberFormScreen';
 import PaymentDetails from '../screens/PaymentDetails';
 import FeesManagement from '../screens/FeesManagement';
 import Reports from '../screens/Reports';
@@ -22,6 +28,7 @@ import AddBatch from '../screens/AddBatch';
 import ReferralReports from '../screens/ReferralReports';
 import AdminNotificationsScreen from '../screens/AdminNotificationsScreen';
 import Visitors from '../screens/Visitors';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -51,6 +58,13 @@ const DrawerNavigator = ({ route }) => {
       />
       <Drawer.Screen name="InventoryForm" component={InventoryForm} />
       <Drawer.Screen name="Attendance" component={AttendanceScreen} />
+      <Drawer.Screen name="AttendanceUpload" component={AttendanceUploadScreen} />
+      <Drawer.Screen name="AttendanceReport" component={AttendanceReportScreen} />
+      <Drawer.Screen name="ExcelViewer" component={ExcelViewerScreen} />
+      <Drawer.Screen name="MemberListUpload" component={MemberListUploadScreen} />
+      <Drawer.Screen name="MemberForm" component={MemberFormScreen} />
+      <Drawer.Screen name="NewMemberUpload" component={NewMemberUploadScreen} />
+      <Drawer.Screen name="Settings" component={SettingsScreen} />
       <Drawer.Screen name="NewMember" component={NewMember} />
       <Drawer.Screen name="BulkMemberImport" component={BulkMemberImport} />
       <Drawer.Screen name="BiometricReport" component={BiometricReport} />

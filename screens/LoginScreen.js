@@ -19,10 +19,12 @@ import { FontAwesome } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Constants from "expo-constants";
+import { useLanguage } from '../service/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation, notificationScreen }) => {
+  const { t } = useLanguage();
   const [employeeNumber, setEmployeeNumber] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);

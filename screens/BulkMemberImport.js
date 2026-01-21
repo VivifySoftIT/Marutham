@@ -92,13 +92,13 @@ const BulkMemberImport = () => {
         
         return {
           id: `temp_${index}`,
-          name: row['Name'] || row['Member Name'] || row['name'] || '',
-          phone: String(row['Phone'] || row['Mobile'] || row['phone'] || ''),
+          name: row['MEMBER'] || row['Name'] || row['Member Name'] || row['name'] || '',
+          phone: String(row['Contact'] || row['Phone'] || row['Mobile'] || row['phone'] || '').trim(),
           email: row['Email'] || row['email'] || '',
           joinDate: row['Join Date'] || row['Joining Date'] || row['joinDate'] || new Date().toISOString(),
           address: row['Address'] || row['address'] || '',
           batch: row['Batch'] || row['batch'] || '',
-          business: row['Business'] || row['business'] || '',
+          business: row['Type Of Buissness'] || row['Business'] || row['business'] || '',
           status: 'Active',
           feesStatus: 'Unpaid',
           memberId: `MEM${String(Date.now() + index).slice(-6)}`,
@@ -115,12 +115,15 @@ const BulkMemberImport = () => {
         if (!member.name || member.name.trim() === '') {
           errors.push('Name is required');
         }
-        if (!member.phone || member.phone.length < 10) {
-          errors.push('Valid phone number required');
+        // Remove spaces from phone and check length
+        const phoneDigits = member.phone.replace(/\s/g, '');
+        if (!phoneDigits || phoneDigits.length < 10) {
+          errors.push('Valid phone number required (10+ digits)');
         }
         
         return {
           ...member,
+          phone: phoneDigits, // Store cleaned phone number
           isValid: errors.length === 0,
           errors,
         };
