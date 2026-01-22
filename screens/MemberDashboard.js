@@ -32,12 +32,126 @@ const MemberDashboard = () => {
   const [activeMembers, setActiveMembers] = useState(0);
   const [pendingPayments, setPendingPayments] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState('₹0');
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [accountName, setAccountName] = useState('Admin User');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(3);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      type: 'birthday',
+      title: 'Birthday Reminder',
+      message: 'John Doe\'s birthday is today! 🎉',
+      time: '09:00 AM Today',
+      icon: 'cake',
+      color: '#FF6B6B',
+      backgroundColor: '#FFE5E5',
+      isRead: false,
+    },
+    {
+      id: 2,
+      type: 'meeting',
+      title: 'Meeting Reminder',
+      message: 'Monthly board meeting at 2:00 PM',
+      time: '1 hour ago',
+      icon: 'calendar-clock',
+      color: '#4ECDC4',
+      backgroundColor: '#E8F8F7',
+      isRead: false,
+    },
+    {
+      id: 3,
+      type: 'admin',
+      title: 'Admin Notice',
+      message: 'New safety protocols have been updated',
+      time: '2 hours ago',
+      icon: 'information',
+      color: '#45B7D1',
+      backgroundColor: '#E3F2FD',
+      isRead: false,
+    },
+    {
+      id: 4,
+      type: 'payment',
+      title: 'Payment Notification',
+      message: '5 members have pending payments due',
+      time: '3 hours ago',
+      icon: 'credit-card-alert',
+      color: '#FFA726',
+      backgroundColor: '#FFF3E0',
+      isRead: true,
+    },
+    {
+      id: 5,
+      type: 'birthday',
+      title: 'Upcoming Birthday',
+      message: 'Sarah Wilson\'s birthday is tomorrow',
+      time: 'Yesterday',
+      icon: 'cake-variant',
+      color: '#FF6B6B',
+      backgroundColor: '#FFE5E5',
+      isRead: true,
+    },
+  ]);
+
+  // Handle logout
+  const handleLogout = async () => {
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Clear all stored data
+              await AsyncStorage.removeItem('jwt_token');
+              await AsyncStorage.removeItem('token');
+              await AsyncStorage.removeItem('authToken');
+              await AsyncStorage.removeItem('username');
+              await AsyncStorage.removeItem('password');
+              
+              // Reset navigation to login screen
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              console.error('Error during logout:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Mark notification as read
+  const markNotificationAsRead = (notificationId) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId 
+          ? { ...notif, isRead: true }
+          : notif
+      )
+    );
+    
+    // Update notification count
+    const unreadCount = notifications.filter(n => !n.isRead && n.id !== notificationId).length;
+    setNotificationCount(unreadCount);
+  };
+
+  // Clear all notifications
+  const clearAllNotifications = () => {
+    setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
+    setNotificationCount(0);
+  };
 
   // Water blue color theme
   const waterBlueColors = {
@@ -256,28 +370,39 @@ const loadDashboardData = async () => {
       >
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => setShowSettingsModal(true)}
-            >
-              <Icon name="menu" size={24} color="#FFF" />
-            </TouchableOpacity>
+            <View style={styles.headerLeftIcons}>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => navigation.navigate('SettingsScreen')}
+              >
+                <Icon name="cog" size={22} color="#FFF" />
+              </TouchableOpacity>
+            </View>
 
             <View style={styles.headerTitleContainer}>
               <Text style={styles.headerTitle}>{greeting}, {accountName}</Text>
             </View>
 
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => setShowNotifications(true)}
-            >
-              <Icon name="bell" size={22} color="#FFF" />
-              {notificationCount > 0 && (
-                <View style={styles.notificationDot}>
-                  <Text style={styles.notificationDotText}>{notificationCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+            <View style={styles.headerRightIcons}>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => setShowNotifications(true)}
+              >
+                <Icon name="bell" size={22} color="#FFF" />
+                {notificationCount > 0 && (
+                  <View style={styles.notificationDot}>
+                    <Text style={styles.notificationDotText}>{notificationCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.iconButton, { marginLeft: 8 }]}
+                onPress={handleLogout}
+              >
+                <Icon name="logout" size={22} color="#FFF" />
+              </TouchableOpacity>
+            </View>
           </View>
           
           {/* Stats Cards */}
@@ -344,9 +469,79 @@ const loadDashboardData = async () => {
               <Text style={styles.welcomeText}>{quote}</Text>
             </View>
             <View style={styles.welcomeIcon}>
-              <Icon name="star-circle" size={36} color={waterBlueColors.primary} />
+              <TouchableOpacity onPress={() => setShowNotifications(true)}>
+                <Icon name="bell" size={36} color={waterBlueColors.primary} />
+                {notificationCount > 0 && (
+                  <View style={styles.welcomeNotificationDot}>
+                    <Text style={styles.welcomeNotificationText}>{notificationCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
           </LinearGradient>
+        </Animatable.View>
+
+        {/* Swipeable Notifications Card */}
+        <Animatable.View 
+          animation="fadeInUp"
+          delay={600}
+          style={styles.notificationCard}
+        >
+          <View style={styles.notificationCardHeader}>
+            <Text style={styles.notificationCardTitle}>🔔 Recent Notifications</Text>
+            <TouchableOpacity onPress={() => setShowNotifications(true)}>
+              <Text style={styles.viewAllNotifications}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.notificationScrollView}
+            contentContainerStyle={styles.notificationScrollContent}
+          >
+            {notifications.slice(0, 5).map((notification, index) => (
+              <TouchableOpacity
+                key={notification.id}
+                style={[
+                  styles.notificationSwipeCard,
+                  !notification.isRead && styles.unreadNotificationCard
+                ]}
+                onPress={() => markNotificationAsRead(notification.id)}
+                activeOpacity={0.8}
+              >
+                <View style={[
+                  styles.notificationSwipeIcon, 
+                  { backgroundColor: notification.backgroundColor }
+                ]}>
+                  <Icon name={notification.icon} size={18} color={notification.color} />
+                </View>
+                <View style={styles.notificationSwipeContent}>
+                  <Text style={styles.notificationSwipeTitle} numberOfLines={2}>
+                    {notification.title}
+                  </Text>
+                  <Text style={styles.notificationSwipeMessage} numberOfLines={2}>
+                    {notification.message}
+                  </Text>
+                  <Text style={styles.notificationSwipeTime}>
+                    {notification.time}
+                  </Text>
+                </View>
+                {!notification.isRead && (
+                  <View style={styles.swipeUnreadIndicator} />
+                )}
+              </TouchableOpacity>
+            ))}
+            
+            {/* Add more notifications card */}
+            <TouchableOpacity
+              style={styles.moreNotificationsCard}
+              onPress={() => setShowNotifications(true)}
+            >
+              <Icon name="plus-circle" size={24} color={waterBlueColors.primary} />
+              <Text style={styles.moreNotificationsText}>View More</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </Animatable.View>
 
         {/* Quick Actions */}
@@ -475,167 +670,96 @@ const loadDashboardData = async () => {
           />
           <View style={styles.notificationModalContainer}>
             <View style={styles.notificationModalHeader}>
-              <Text style={styles.notificationModalTitle}>{t('notifications')}</Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setShowNotifications(false)}
-              >
-                <Icon name="close" size={22} color={waterBlueColors.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.notificationsList}>
-              <View style={styles.notificationItem}>
-                <View style={[styles.notificationIcon, { backgroundColor: '#FFE5E5' }]}>
-                  <Icon name="account-plus" size={20} color="#E74C3C" />
-                </View>
-                <View style={styles.notificationContent}>
-                  <Text style={styles.notificationItemTitle}>New Member Registered</Text>
-                  <Text style={styles.notificationItemTime}>10:30 AM Today</Text>
-                </View>
-              </View>
-
-              <View style={styles.notificationItem}>
-                <View style={[styles.notificationIcon, { backgroundColor: '#E8F5E9' }]}>
-                  <Icon name="cash-check" size={20} color="#27AE60" />
-                </View>
-                <View style={styles.notificationContent}>
-                  <Text style={styles.notificationItemTitle}>Payment Received</Text>
-                  <Text style={styles.notificationItemTime}>09:15 AM Today</Text>
-                </View>
-              </View>
-
-              <View style={styles.notificationItem}>
-                <View style={[styles.notificationIcon, { backgroundColor: '#FFF3E0' }]}>
-                  <Icon name="alert-circle" size={20} color="#F39C12" />
-                </View>
-                <View style={styles.notificationContent}>
-                  <Text style={styles.notificationItemTitle}>Pending Payments Alert</Text>
-                  <Text style={styles.notificationItemTime}>08:00 AM Today</Text>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Settings Modal */}
-      <Modal
-        transparent={true}
-        animationType="slide"
-        visible={showSettingsModal}
-        onRequestClose={() => setShowSettingsModal(false)}
-      >
-        <View style={styles.settingsModalOverlay}>
-          <TouchableOpacity 
-            style={styles.settingsModalBackdrop}
-            activeOpacity={1}
-            onPress={() => setShowSettingsModal(false)}
-          />
-          <View style={styles.settingsModalContainer}>
-            <View style={styles.settingsModalHeader}>
-              <Text style={styles.settingsModalTitle}>⚙️ Settings</Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setShowSettingsModal(false)}
-              >
-                <Icon name="close" size={22} color={waterBlueColors.primary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.accountInfoCard}>
-              <View style={styles.accountAvatar}>
-                <LinearGradient
-                  colors={[waterBlueColors.primary, waterBlueColors.dark]}
-                  style={styles.avatarGradient}
+              <Text style={styles.notificationModalTitle}>🔔 Notifications</Text>
+              <View style={styles.notificationHeaderActions}>
+                {notificationCount > 0 && (
+                  <TouchableOpacity 
+                    style={styles.clearAllButton}
+                    onPress={clearAllNotifications}
+                  >
+                    <Text style={styles.clearAllText}>Clear All</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={() => setShowNotifications(false)}
                 >
-                  <Icon name="account" size={32} color="#FFF" />
-                </LinearGradient>
-              </View>
-              <View style={styles.accountDetails}>
-                <Text style={styles.accountName}>{accountName}</Text>
-                <Text style={styles.accountRole}>Administrator</Text>
-                <Text style={styles.accountEmail}>admin@alaigal.com</Text>
+                  <Icon name="close" size={22} color={waterBlueColors.primary} />
+                </TouchableOpacity>
               </View>
             </View>
 
-            <ScrollView style={styles.settingsOptions}>
-              <TouchableOpacity 
-                style={styles.settingsOption}
-                onPress={() => {
-                  setShowSettingsModal(false);
-                  navigation.navigate('Settings');
-                }}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: waterBlueColors.lightest }]}>
-                  <Icon name="translate" size={20} color={waterBlueColors.primary} />
+            <ScrollView style={styles.notificationsList} showsVerticalScrollIndicator={false}>
+              {notifications.length === 0 ? (
+                <View style={styles.emptyNotifications}>
+                  <Icon name="bell-off" size={48} color="#BDC3C7" />
+                  <Text style={styles.emptyNotificationsText}>No notifications</Text>
+                  <Text style={styles.emptyNotificationsSubtext}>You're all caught up!</Text>
                 </View>
-                <Text style={styles.settingsOptionText}>{t('language')}</Text>
-                <Icon name="chevron-right" size={18} color="#666" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.settingsOption}
-                onPress={() => {
-                  setShowSettingsModal(false);
-                  navigation.navigate('Profile');
-                }}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: waterBlueColors.lightest }]}>
-                  <Icon name="account-edit" size={20} color={waterBlueColors.primary} />
-                </View>
-                <Text style={styles.settingsOptionText}>Edit Profile</Text>
-                <Icon name="chevron-right" size={18} color="#666" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.settingsOption}
-                onPress={() => {
-                  setShowSettingsModal(false);
-                  navigation.navigate('ChangePassword');
-                }}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: waterBlueColors.lightest }]}>
-                  <Icon name="lock-reset" size={20} color={waterBlueColors.primary} />
-                </View>
-                <Text style={styles.settingsOptionText}>Change Password</Text>
-                <Icon name="chevron-right" size={18} color="#666" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.settingsOption}
-                onPress={() => {
-                  setShowSettingsModal(false);
-                  navigation.navigate('Notifications');
-                }}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: waterBlueColors.lightest }]}>
-                  <Icon name="bell" size={20} color={waterBlueColors.primary} />
-                </View>
-                <Text style={styles.settingsOptionText}>Notifications</Text>
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationBadgeText}>3</Text>
-                </View>
-                <Icon name="chevron-right" size={18} color="#666" />
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={styles.settingsOption}
-                onPress={() => {
-                  setShowSettingsModal(false);
-                  navigation.navigate('Privacy');
-                }}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: waterBlueColors.lightest }]}>
-                  <Icon name="shield-account" size={20} color={waterBlueColors.primary} />
-                </View>
-                <Text style={styles.settingsOptionText}>Privacy & Security</Text>
-                <Icon name="chevron-right" size={18} color="#666" />
-              </TouchableOpacity>
+              ) : (
+                notifications.map((notification) => (
+                  <TouchableOpacity
+                    key={notification.id}
+                    style={[
+                      styles.notificationItem,
+                      !notification.isRead && styles.unreadNotificationItem
+                    ]}
+                    onPress={() => markNotificationAsRead(notification.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[
+                      styles.notificationIcon, 
+                      { backgroundColor: notification.backgroundColor }
+                    ]}>
+                      <Icon name={notification.icon} size={20} color={notification.color} />
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <View style={styles.notificationHeader}>
+                        <Text style={[
+                          styles.notificationItemTitle,
+                          !notification.isRead && styles.unreadNotificationTitle
+                        ]}>
+                          {notification.title}
+                        </Text>
+                        {!notification.isRead && (
+                          <View style={styles.unreadIndicator} />
+                        )}
+                      </View>
+                      <Text style={styles.notificationItemMessage}>
+                        {notification.message}
+                      </Text>
+                      <Text style={styles.notificationItemTime}>
+                        {notification.time}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
             </ScrollView>
+
+            {/* Notification Categories */}
+            <View style={styles.notificationCategories}>
+              <Text style={styles.categoriesTitle}>Quick Filters</Text>
+              <View style={styles.categoriesRow}>
+                <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#FFE5E5' }]}>
+                  <Icon name="cake" size={16} color="#FF6B6B" />
+                  <Text style={[styles.categoryText, { color: '#FF6B6B' }]}>Birthdays</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#E8F8F7' }]}>
+                  <Icon name="calendar-clock" size={16} color="#4ECDC4" />
+                  <Text style={[styles.categoryText, { color: '#4ECDC4' }]}>Meetings</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#FFF3E0' }]}>
+                  <Icon name="credit-card" size={16} color="#FFA726" />
+                  <Text style={[styles.categoryText, { color: '#FFA726' }]}>Payments</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       </Modal>
+
+      {/* Settings Modal - REMOVED */}
     </SafeAreaView>
   );
 };
@@ -667,6 +791,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     height: 40,
+  },
+  headerRightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerLeftIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   iconButton: {
     width: 40,
@@ -788,6 +920,128 @@ const styles = StyleSheet.create({
   },
   welcomeIcon: {
     marginLeft: 12,
+    position: 'relative',
+  },
+  welcomeNotificationDot: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  welcomeNotificationText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  notificationCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 4,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
+  notificationCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notificationCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  viewAllNotifications: {
+    fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '600',
+  },
+  notificationScrollView: {
+    marginHorizontal: -16,
+  },
+  notificationScrollContent: {
+    paddingHorizontal: 16,
+  },
+  notificationSwipeCard: {
+    width: 200,
+    backgroundColor: '#F8FBFF',
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E8F1FF',
+    position: 'relative',
+  },
+  unreadNotificationCard: {
+    backgroundColor: '#F0F7FF',
+    borderColor: '#4A90E2',
+    borderWidth: 1.5,
+  },
+  notificationSwipeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  notificationSwipeContent: {
+    flex: 1,
+  },
+  notificationSwipeTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  notificationSwipeMessage: {
+    fontSize: 11,
+    color: '#5D6D7E',
+    lineHeight: 14,
+    marginBottom: 6,
+  },
+  notificationSwipeTime: {
+    fontSize: 10,
+    color: '#95A5A6',
+    fontWeight: '500',
+  },
+  swipeUnreadIndicator: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6B6B',
+  },
+  moreNotificationsCard: {
+    width: 120,
+    backgroundColor: '#E3F2FD',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#4A90E2',
+    borderStyle: 'dashed',
+  },
+  moreNotificationsText: {
+    fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '600',
+    marginTop: 4,
   },
   sectionContainer: {
     backgroundColor: '#FFF',
@@ -1173,6 +1427,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
+  notificationHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearAllButton: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 10,
+  },
+  clearAllText: {
+    color: '#4A90E2',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   notificationModalTitle: {
     fontSize: 20,
     fontWeight: '700',
@@ -1183,10 +1453,87 @@ const styles = StyleSheet.create({
   },
   notificationItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
+    alignItems: 'flex-start',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  unreadNotificationItem: {
+    backgroundColor: '#F8FBFF',
+    borderLeftWidth: 3,
+    borderLeftColor: '#4A90E2',
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  unreadIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6B6B',
+  },
+  unreadNotificationTitle: {
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  notificationItemMessage: {
+    fontSize: 13,
+    color: '#5D6D7E',
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  emptyNotifications: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyNotificationsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7F8C8D',
+    marginTop: 12,
+  },
+  emptyNotificationsSubtext: {
+    fontSize: 12,
+    color: '#BDC3C7',
+    marginTop: 4,
+  },
+  notificationCategories: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    marginTop: 8,
+  },
+  categoriesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 12,
+  },
+  categoriesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   notificationIcon: {
     width: 44,

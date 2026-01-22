@@ -95,10 +95,6 @@ const MyFeed = ({ route }) => {
         endpoint = `/api/Feed/member/${memberId}/tyfcb`;
       } else if (activeTab === 'one_to_one') {
         endpoint = `/api/Feed/member/${memberId}/meetings`;
-      } else if (activeTab === 'ceu') {
-        setFeedData([]);
-        setLoading(false);
-        return;
       }
 
       console.log('Fetching feed from:', `${API_BASE_URL}${endpoint}`);
@@ -441,15 +437,6 @@ const MyFeed = ({ route }) => {
           <Text style={[styles.tabButtonText, activeTab === 'tyfcb' && styles.tabButtonTextActive]}>TYFCB</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'ceu' && styles.tabButtonActive]} 
-          onPress={() => {
-            Alert.alert('Coming Soon', 'CEU feed will be available soon!');
-            setActiveTab('ceu');
-          }}
-        >
-          <Text style={[styles.tabButtonText, activeTab === 'ceu' && styles.tabButtonTextActive]}>CEUs</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
           style={[styles.tabButton, activeTab === 'one_to_one' && styles.tabButtonActive]} 
           onPress={() => setActiveTab('one_to_one')}
         >
@@ -510,12 +497,10 @@ const MyFeed = ({ route }) => {
           <View style={styles.emptyContainer}>
             <Icon name="inbox" size={60} color="#CCC" />
             <Text style={styles.emptyText}>
-              {activeTab === 'ceu' ? 'CEU feed coming soon!' : 'No activities yet'}
+              No activities yet
             </Text>
             <Text style={styles.emptySubtext}>
-              {activeTab === 'ceu' 
-                ? 'Continuing Education Units feature is under development' 
-                : 'Your activities will appear here'}
+              Your activities will appear here
             </Text>
             {!loading && (
               <TouchableOpacity 

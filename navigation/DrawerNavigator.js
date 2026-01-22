@@ -46,16 +46,21 @@ const DrawerNavigator = ({ route }) => {
         // Disable swipe gesture to open drawer
         swipeEnabled: false,
         
+        // Disable drawer completely
+        drawerType: 'slide',
         drawerStyle: {
-          backgroundColor: '#F8F9FA',
-          width: 280,
+          width: 0, // Make drawer invisible
         },
+        
+        // Prevent drawer from opening
+        gestureEnabled: false,
       }}
     >
       <Drawer.Screen 
         name="MemberDashboard" 
         component={MemberDashboard}
       />
+      <Drawer.Screen name="Settings" component={SettingsScreen} />
       <Drawer.Screen name="InventoryForm" component={InventoryForm} />
       <Drawer.Screen name="Attendance" component={AttendanceScreen} />
       <Drawer.Screen name="AttendanceUpload" component={AttendanceUploadScreen} />
@@ -64,7 +69,6 @@ const DrawerNavigator = ({ route }) => {
       <Drawer.Screen name="MemberListUpload" component={MemberListUploadScreen} />
       <Drawer.Screen name="MemberForm" component={MemberFormScreen} />
       <Drawer.Screen name="NewMemberUpload" component={NewMemberUploadScreen} />
-      <Drawer.Screen name="Settings" component={SettingsScreen} />
       <Drawer.Screen name="NewMember" component={NewMember} />
       <Drawer.Screen name="BulkMemberImport" component={BulkMemberImport} />
       <Drawer.Screen name="BiometricReport" component={BiometricReport} />

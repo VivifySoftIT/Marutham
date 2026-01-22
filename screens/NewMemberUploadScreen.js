@@ -72,6 +72,7 @@ const NewMemberUploadScreen = () => {
         contact: row['Contact'] || row['contact'] || row['Phone'] || row['phone'] || row['Mobile'] || '',
         company: row['Company Name'] || row['company'] || row['Company'] || '',
         business: row['Type Of Buisness'] || row['Type Of Business'] || row['business'] || row['Business'] || '',
+        dob: row['DOB'] || row['dob'] || row['Date of Birth'] || row['date of birth'] || '',
         sno: row['S.NO'] || row['S.No'] || row['sno'] || index + 1,
       }));
 
@@ -178,6 +179,7 @@ const NewMemberUploadScreen = () => {
           contact: member.contact.toString().trim(),
           company: member.company.trim(),
           business: member.business.trim(),
+          dateOfBirth: member.dob ? member.dob.toString().trim() : null,
         }));
 
       console.log('Saving members:', membersToSave);
@@ -256,6 +258,12 @@ const NewMemberUploadScreen = () => {
               <Text style={styles.value}>{member.company}</Text>
             </View>
           )}
+          {member.dob && (
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>DOB:</Text>
+              <Text style={styles.value}>{member.dob}</Text>
+            </View>
+          )}
         </View>
 
         {hasErrors && (
@@ -311,6 +319,7 @@ const NewMemberUploadScreen = () => {
           </TouchableOpacity>
           <Text style={styles.uploadHint}>
             Required columns: Name, Contact, Business Type
+            Optional: Company, DOB
           </Text>
         </View>
 

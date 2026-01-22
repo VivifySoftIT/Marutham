@@ -70,6 +70,24 @@ const translations = {
     attendanceUpdated: 'Attendance Updated Successfully',
     selectMembers: 'Please select at least one member',
     markedPresent: 'Marked Present',
+    searchBy: 'Search by',
+    name: 'Name',
+    business: 'Business',
+    id: 'ID',
+    phone: 'Phone',
+    
+    // Voice Search
+    voiceSearch: 'Voice Search',
+    voiceError: 'Voice Error',
+    voiceErrorMessage: 'Unable to recognize speech. Please try again.',
+    noMemberFound: 'No Member Found',
+    noMemberFoundMessage: 'No member found with the name',
+    speakMemberName: 'Speak member name to search and mark attendance',
+    listening: 'Listening...',
+    tapToSpeak: 'Tap microphone to speak',
+    summary: 'Summary',
+    saving: 'Saving',
+    markAttendance: 'Mark',
     
     // Members
     members: 'Members',
@@ -257,6 +275,24 @@ const translations = {
     attendanceUpdated: 'கலந்து கொள்ளுதல் வெற்றிகரமாக புதுப்பிக்கப்பட்டது',
     selectMembers: 'குறைந்தபட்சம் ஒரு உறுப்பினரைத் தேர்ந்தெடுக்கவும்',
     markedPresent: 'குறிக்கப்பட்ட உள்ளவர்',
+    searchBy: 'தேடல்',
+    name: 'பெயர்',
+    business: 'வணிகம்',
+    id: 'அடையாள எண்',
+    phone: 'தொலைபேசி',
+    
+    // Voice Search
+    voiceSearch: 'குரல் தேடல்',
+    voiceError: 'குரல் பிழை',
+    voiceErrorMessage: 'பேச்சை அடையாளம் காண முடியவில்லை. மீண்டும் முயற்சி செய்யவும்.',
+    noMemberFound: 'உறுப்பினர் கிடைக்கவில்லை',
+    noMemberFoundMessage: 'இந்த பெயருடன் உறுப்பினர் கிடைக்கவில்லை',
+    speakMemberName: 'உறுப்பினர் பெயரை சொல்லி தேடவும் மற்றும் கலந்து கொள்ளுதல் குறிக்கவும்',
+    listening: 'கேட்கிறது...',
+    tapToSpeak: 'பேச மைக்ரோஃபோனை தட்டவும்',
+    summary: 'சுருக்கம்',
+    saving: 'சேமிக்கிறது',
+    markAttendance: 'குறிக்க',
     
     // Members
     members: 'உறுப்பினர்கள்',

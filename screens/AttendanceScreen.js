@@ -10,15 +10,19 @@ import {
   TextInput,
   SafeAreaView,
   StatusBar,
+  Platform,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
+import { useLanguage } from '../service/LanguageContext';
+import * as Speech from 'expo-speech';
 
 const MemberAttendanceScreen = () => {
   const navigation = useNavigation();
+  const { t, language } = useLanguage();
 
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +32,110 @@ const MemberAttendanceScreen = () => {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('name'); // 'name', 'business', 'id'
+  
+  // Voice search states
+  const [isListening, setIsListening] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(true);
+
+  // Voice search functionality using Web Speech API (for web) or simple text-to-speech feedback
+  const startVoiceSearch = () => {
+    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
+      const recognition = new window.webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = language === 'ta' ? 'ta-IN' : 'en-US';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        setSearchQuery(spokenText);
+        handleVoiceSearchResult(spokenText);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        Alert.alert(t('voiceError'), t('voiceErrorMessage'));
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } else {
+      // For mobile, show a simple input dialog
+      Alert.prompt(
+        t('voiceSearch'),
+        t('speakMemberName'),
+        [
+          {
+            text: t('cancel'),
+            style: 'cancel',
+          },
+          {
+            text: t('search'),
+            onPress: (text) => {
+              if (text) {
+                setSearchQuery(text);
+                handleVoiceSearchResult(text);
+              }
+            },
+          },
+        ],
+        'plain-text',
+        '',
+        'default'
+      );
+    }
+  };
+
+  const handleVoiceSearchResult = (spokenText) => {
+    // Auto-search for the member and mark attendance if found
+    const foundMember = members.find(member => 
+      member.name.toLowerCase().includes(spokenText.toLowerCase())
+    );
+    
+    if (foundMember) {
+      setAttendanceData(prev => ({
+        ...prev,
+        [foundMember.id]: true,
+      }));
+      
+      // Provide audio feedback
+      Speech.speak(
+        `${t('markedPresent')}: ${foundMember.name}`,
+        {
+          language: language === 'ta' ? 'ta' : 'en',
+          pitch: 1.0,
+          rate: 0.8,
+        }
+      );
+      
+      Alert.alert(
+        t('success'),
+        `${t('markedPresent')}: ${foundMember.name}`,
+        [{ text: t('ok') }]
+      );
+    } else {
+      Speech.speak(
+        `${t('noMemberFound')}: ${spokenText}`,
+        {
+          language: language === 'ta' ? 'ta' : 'en',
+          pitch: 1.0,
+          rate: 0.8,
+        }
+      );
+      
+      Alert.alert(
+        t('noMemberFound'),
+        `${t('noMemberFoundMessage')}: "${spokenText}"`,
+        [{ text: t('ok') }]
+      );
+    }
+  };
 
   // Load members from API
   const loadMembers = async () => {
@@ -190,7 +298,7 @@ const MemberAttendanceScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mark Attendance</Text>
+        <Text style={styles.headerTitle}>{t('markAttendance')}</Text>
         
         {/* Refresh button */}
         <TouchableOpacity onPress={loadMembers}>
@@ -202,7 +310,7 @@ const MemberAttendanceScreen = () => {
         {/* Date Selection Card */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Select Date</Text>
+            <Text style={styles.sectionTitle}>{t('selectDate')}</Text>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
               style={styles.dateButton}
@@ -239,7 +347,7 @@ const MemberAttendanceScreen = () => {
         {/* Search Card */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Search Members</Text>
+            <Text style={styles.sectionTitle}>{t('search')} {t('members')}</Text>
           </View>
           
           {/* Search Type Tabs */}
@@ -257,7 +365,7 @@ const MemberAttendanceScreen = () => {
                   styles.searchTypeText,
                   searchType === type && styles.searchTypeTextActive
                 ]}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                  {t(type)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -267,7 +375,7 @@ const MemberAttendanceScreen = () => {
             <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
             <TextInput
               style={styles.searchInput}
-              placeholder={`Search by ${searchType}...`}
+              placeholder={`${t('searchBy')} ${t(searchType)}...`}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -276,19 +384,44 @@ const MemberAttendanceScreen = () => {
                 <Icon name="close-circle" size={20} color="#666" />
               </TouchableOpacity>
             )}
+            
+            {/* Voice Search Button */}
+            {voiceSupported && (
+              <TouchableOpacity
+                style={[
+                  styles.voiceButton,
+                  isListening && styles.voiceButtonActive
+                ]}
+                onPress={startVoiceSearch}
+              >
+                <Icon 
+                  name={isListening ? "microphone" : "microphone-outline"} 
+                  size={20} 
+                  color={isListening ? "#FF6B6B" : "#4A90E2"} 
+                />
+              </TouchableOpacity>
+            )}
           </View>
           
           {searchQuery && searchType === 'business' && (
             <Text style={styles.searchHint}>
-              Searching businesses: "{searchQuery}"
+              {t('searchBy')} {t('business')}: "{searchQuery}"
             </Text>
           )}
+          
+          {/* Voice Search Hint */}
+          <View style={styles.voiceHintContainer}>
+            <Icon name="information" size={14} color="#4A90E2" />
+            <Text style={styles.voiceHint}>
+              {t('tapToSpeak')} - {t('speakMemberName')}
+            </Text>
+          </View>
         </View>
 
         {/* Statistics Cards */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Attendance Summary</Text>
+            <Text style={styles.sectionTitle}>{t('attendance')} {t('summary')}</Text>
             <Text style={styles.summaryDate}>{selectedDate.toDateString()}</Text>
           </View>
           <View style={styles.summaryGrid}>
@@ -298,7 +431,7 @@ const MemberAttendanceScreen = () => {
               </View>
               <View style={styles.summaryText}>
                 <Text style={styles.summaryNumber}>{members.length}</Text>
-                <Text style={styles.summaryLabel}>Total Members</Text>
+                <Text style={styles.summaryLabel}>{t('totalMembers')}</Text>
               </View>
             </View>
             
@@ -308,7 +441,7 @@ const MemberAttendanceScreen = () => {
               </View>
               <View style={styles.summaryText}>
                 <Text style={[styles.summaryNumber, { color: '#4CAF50' }]}>{presentCount}</Text>
-                <Text style={styles.summaryLabel}>Present</Text>
+                <Text style={styles.summaryLabel}>{t('present')}</Text>
               </View>
             </View>
             
@@ -320,7 +453,7 @@ const MemberAttendanceScreen = () => {
                 <Text style={[styles.summaryNumber, { color: '#F44336' }]}>
                   {members.length - presentCount}
                 </Text>
-                <Text style={styles.summaryLabel}>Absent</Text>
+                <Text style={styles.summaryLabel}>{t('absent')}</Text>
               </View>
             </View>
           </View>
@@ -338,19 +471,19 @@ const MemberAttendanceScreen = () => {
         {/* Members List */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Members List</Text>
+            <Text style={styles.sectionTitle}>{t('membersList')}</Text>
             <Text style={styles.memberCount}>{filteredMembers.length} members</Text>
           </View>
 
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#4A90E2" />
-              <Text style={styles.loadingText}>Loading members...</Text>
+              <Text style={styles.loadingText}>{t('loading')}</Text>
             </View>
           ) : filteredMembers.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Icon name="account-multiple-off" size={60} color="#ccc" />
-              <Text style={styles.emptyText}>No members found</Text>
+              <Text style={styles.emptyText}>{t('noMemberFound')}</Text>
               <Text style={styles.emptySubtext}>
                 {members.length === 0 ? 'Failed to load members' : 
                  searchQuery ? 'No members match your search' : 'No members available'}
@@ -358,12 +491,12 @@ const MemberAttendanceScreen = () => {
               {members.length === 0 ? (
                 <TouchableOpacity style={styles.retryButton} onPress={loadMembers}>
                   <Icon name="refresh" size={16} color="#FFF" />
-                  <Text style={styles.retryButtonText}>Retry Loading</Text>
+                  <Text style={styles.retryButtonText}>{t('tryAgain')}</Text>
                 </TouchableOpacity>
               ) : searchQuery ? (
                 <TouchableOpacity style={styles.retryButton} onPress={() => setSearchQuery('')}>
                   <Icon name="close" size={16} color="#FFF" />
-                  <Text style={styles.retryButtonText}>Clear Search</Text>
+                  <Text style={styles.retryButtonText}>{t('cancel')} {t('search')}</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -418,11 +551,8 @@ const MemberAttendanceScreen = () => {
                     size={24}
                     color={attendanceData[member.id] ? '#4CAF50' : '#666'}
                   />
-                  <Text style={[
-                    styles.attendanceText,
-                    attendanceData[member.id] ? styles.presentText : styles.absentText,
-                  ]}>
-                    {attendanceData[member.id] ? 'Present' : 'Mark'}
+                  <Text style={styles.attendanceText}>
+                    {attendanceData[member.id] ? t('present') : t('markAttendance')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -441,13 +571,13 @@ const MemberAttendanceScreen = () => {
               {saving ? (
                 <View style={styles.savingContainer}>
                   <ActivityIndicator size="small" color="white" />
-                  <Text style={styles.saveButtonText}>Saving...</Text>
+                  <Text style={styles.saveButtonText}>{t('saving')}...</Text>
                 </View>
               ) : (
                 <>
                   <Icon name="content-save" size={24} color="white" />
                   <View style={styles.saveButtonContent}>
-                    <Text style={styles.saveButtonText}>Save Attendance</Text>
+                    <Text style={styles.saveButtonText}>{t('saveAttendance')}</Text>
 
                   </View>
                 </>
@@ -565,6 +695,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: '#E0E0E0',
+  },
+  voiceButton: {
+    marginLeft: 8,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#E3F2FD',
+  },
+  voiceButtonActive: {
+    backgroundColor: '#FFE5E5',
+  },
+  voiceHintContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  voiceHint: {
+    fontSize: 12,
+    color: '#4A90E2',
+    marginLeft: 6,
+    fontStyle: 'italic',
   },
   searchIcon: {
     marginRight: 8,

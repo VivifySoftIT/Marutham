@@ -25,6 +25,7 @@ import AdminMeeting from '../screens/AdminMeeting';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import MyCEUs from '../screens/MyCEUs';
 import Visitors from '../screens/Visitors';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -152,6 +153,10 @@ const StackNavigator = () => {
       <Stack.Screen 
         name="Visitors"
         component={Visitors}
+      />
+      <Stack.Screen 
+        name="SettingsScreen"
+        component={SettingsScreen}
       />
     
     </Stack.Navigator>

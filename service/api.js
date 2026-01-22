@@ -549,6 +549,69 @@ class ApiService {
   async notifyMembersAboutMeeting(meetingId) {
     return await this.request(`/api/AdminMeetings/${meetingId}/notify`, 'POST');
   }
+
+  // ==================== MAIN COMPANIES APIs ====================
+  async getMainCompanies() {
+    return await this.request('/api/MainCompanies');
+  }
+
+  async getMainCompany(id) {
+    return await this.request(`/api/MainCompanies/${id}`);
+  }
+
+  async getMainCompanyByCode(code) {
+    return await this.request(`/api/MainCompanies/code/${code}`);
+  }
+
+  async createMainCompany(companyData) {
+    return await this.request('/api/MainCompanies', 'POST', companyData);
+  }
+
+  async updateMainCompany(id, companyData) {
+    return await this.request(`/api/MainCompanies/${id}`, 'PUT', companyData);
+  }
+
+  async deleteMainCompany(id) {
+    return await this.request(`/api/MainCompanies/${id}`, 'DELETE');
+  }
+
+  // ==================== SUB COMPANIES APIs ====================
+  async getSubCompanies(mainCompanyId = null) {
+    const endpoint = mainCompanyId ? `/api/SubCompanies?mainCompanyId=${mainCompanyId}` : '/api/SubCompanies';
+    return await this.request(endpoint);
+  }
+
+  async getSubCompany(id) {
+    return await this.request(`/api/SubCompanies/${id}`);
+  }
+
+  async getSubCompaniesByMainCompany(mainCompanyId) {
+    return await this.request(`/api/SubCompanies/maincompany/${mainCompanyId}`);
+  }
+
+  async getSubCompanyByCode(code, mainCompanyId) {
+    return await this.request(`/api/SubCompanies/code/${code}/maincompany/${mainCompanyId}`);
+  }
+
+  async createSubCompany(subCompanyData) {
+    return await this.request('/api/SubCompanies', 'POST', subCompanyData);
+  }
+
+  async updateSubCompany(id, subCompanyData) {
+    return await this.request(`/api/SubCompanies/${id}`, 'PUT', subCompanyData);
+  }
+
+  async deleteSubCompany(id) {
+    return await this.request(`/api/SubCompanies/${id}`, 'DELETE');
+  }
+
+  async getSubCompanyStats(id) {
+    return await this.request(`/api/SubCompanies/${id}/stats`);
+  }
+
+  async getSubCompanyMembers(id) {
+    return await this.request(`/api/SubCompanies/${id}/members`);
+  }
 }
 
 export default new ApiService();

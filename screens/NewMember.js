@@ -17,7 +17,6 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
 import ApiService from '../service/api';
 
 const NewMember = () => {
@@ -30,15 +29,27 @@ const NewMember = () => {
     mobileNum: "",
     email: "",
     joiningDate: "",
+    dateOfBirth: "",
     business: "",
     address: "",
     batch: "",
+    subCompanyId: null,
   });
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showJoiningDatePicker, setShowJoiningDatePicker] = useState(false);
+  const [showDOBDatePicker, setShowDOBDatePicker] = useState(false);
+  const [selectedJoiningDate, setSelectedJoiningDate] = useState(new Date());
+  const [selectedDOBDate, setSelectedDOBDate] = useState(new Date());
   const [loading, setLoading] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState(null);
+
+  // Company data
+  const [mainCompanies, setMainCompanies] = useState([]);
+  const [subCompanies, setSubCompanies] = useState([]);
+  const [loadingMainCompanies, setLoadingMainCompanies] = useState(false);
+  const [loadingSubCompanies, setLoadingSubCompanies] = useState(false);
+  const [showMainCompanyDropdown, setShowMainCompanyDropdown] = useState(false);
+  const [showSubCompanyDropdown, setShowSubCompanyDropdown] = useState(false);
+  const [selectedMainCompanyId, setSelectedMainCompanyId] = useState(null);
 
   // Load member data if editing
   useEffect(() => {
@@ -49,59 +60,138 @@ const NewMember = () => {
         mobileNum: member.phone || "",
         email: member.email || "",
         joiningDate: member.joinDate || "",
+        dateOfBirth: member.dateOfBirth || "",
         business: member.business || "",
         address: member.address || "",
         batch: member.batch || "",
+        subCompanyId: member.subCompanyId || null,
       });
       
-      // Set the date if available
+      // Set the joining date if available
       if (member.joinDate) {
         try {
-          setSelectedDate(new Date(member.joinDate));
+          setSelectedJoiningDate(new Date(member.joinDate));
         } catch (error) {
-          console.error('Error parsing date:', error);
+          console.error('Error parsing joining date:', error);
+        }
+      }
+      
+      // Set the date of birth if available
+      if (member.dateOfBirth) {
+        try {
+          setSelectedDOBDate(new Date(member.dateOfBirth));
+        } catch (error) {
+          console.error('Error parsing date of birth:', error);
         }
       }
     }
   }, [isEditing, member]);
+
+  // Load companies on component mount
+  useEffect(() => {
+    loadMainCompanies();
+  }, []);
+
+  // Load sub-companies when main company is selected
+  useEffect(() => {
+    if (selectedMainCompanyId) {
+      loadSubCompanies(selectedMainCompanyId);
+    } else {
+      setSubCompanies([]);
+      setFormData(prev => ({ ...prev, subCompanyId: null }));
+    }
+  }, [selectedMainCompanyId]);
+
+  const loadMainCompanies = async () => {
+    try {
+      setLoadingMainCompanies(true);
+      const mainCompaniesData = await ApiService.getMainCompanies();
+      setMainCompanies(mainCompaniesData || []);
+      
+      // If no main company selected and there's a default company, select it
+      if (!selectedMainCompanyId && mainCompaniesData && mainCompaniesData.length > 0) {
+        const defaultMainCompany = mainCompaniesData.find(c => c.companyCode === 'ALAIGAL') || mainCompaniesData[0];
+        setSelectedMainCompanyId(defaultMainCompany.id);
+      }
+    } catch (error) {
+      console.error('Error loading main companies:', error);
+      Alert.alert('Error', 'Failed to load main companies');
+    } finally {
+      setLoadingMainCompanies(false);
+    }
+  };
+
+  const loadSubCompanies = async (mainCompanyId) => {
+    try {
+      setLoadingSubCompanies(true);
+      const subCompaniesData = await ApiService.getSubCompaniesByMainCompany(mainCompanyId);
+      setSubCompanies(subCompaniesData || []);
+      
+      // If no sub-company selected and there's a default sub-company, select it
+      if (!formData.subCompanyId && subCompaniesData && subCompaniesData.length > 0) {
+        const defaultSubCompany = subCompaniesData.find(sc => sc.subCompanyCode === 'MAIN') || subCompaniesData[0];
+        setFormData(prev => ({ ...prev, subCompanyId: defaultSubCompany.id }));
+      }
+    } catch (error) {
+      console.error('Error loading sub-companies:', error);
+      Alert.alert('Error', 'Failed to load sub-companies');
+    } finally {
+      setLoadingSubCompanies(false);
+    }
+  };
 
   const initialFormState = {
     memberName: "",
     mobileNum: "",
     email: "",
     joiningDate: "",
+    dateOfBirth: "",
     business: "",
     address: "",
     batch: "",
+    subCompanyId: null,
   };
 
   const handleInputChange = (field, value) => {
     if (field === "mobileNum") {
       const sanitized = value.replace(/\D/g, "").slice(0, 10);
       setFormData((prev) => ({ ...prev, [field]: sanitized }));
-    } else if (field === "joiningDate") {
-      setFormData((prev) => ({ ...prev, [field]: value }));
     } else {
       setFormData((prev) => ({ ...prev, [field]: value }));
     }
   };
 
-  const handleDateChange = (event, date) => {
-    setShowDatePicker(false);
+  const handleJoiningDateChange = (_, date) => {
+    setShowJoiningDatePicker(false);
     
     if (date) {
-      setSelectedDate(date);
+      setSelectedJoiningDate(date);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
       
       setFormData((prev) => ({ ...prev, joiningDate: formattedDate }));
-      console.log("Date selected from calendar:", formattedDate);
+      console.log("Joining Date selected from calendar:", formattedDate);
     }
   };
 
-  const openDatePicker = () => {
+  const handleDOBDateChange = (_, date) => {
+    setShowDOBDatePicker(false);
+    
+    if (date) {
+      setSelectedDOBDate(date);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      setFormData((prev) => ({ ...prev, dateOfBirth: formattedDate }));
+      console.log("Date of Birth selected from calendar:", formattedDate);
+    }
+  };
+
+  const openJoiningDatePicker = () => {
     Keyboard.dismiss();
     
     if (formData.joiningDate) {
@@ -113,54 +203,44 @@ const NewMember = () => {
           const day = parseInt(dateParts[2]);
           const parsedDate = new Date(year, month, day);
           if (!isNaN(parsedDate.getTime())) {
-            setSelectedDate(parsedDate);
+            setSelectedJoiningDate(parsedDate);
           }
         }
       } catch (error) {
-        console.log("Error parsing date:", error);
+        console.log("Error parsing joining date:", error);
       }
     }
     
-    setShowDatePicker(true);
+    setShowJoiningDatePicker(true);
   };
 
-  const handlePickPhoto = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        setProfilePhoto(result.assets[0].uri);
+  const openDOBDatePicker = () => {
+    Keyboard.dismiss();
+    
+    if (formData.dateOfBirth) {
+      try {
+        const dateParts = formData.dateOfBirth.split('-');
+        if (dateParts.length === 3) {
+          const year = parseInt(dateParts[0]);
+          const month = parseInt(dateParts[1]) - 1;
+          const day = parseInt(dateParts[2]);
+          const parsedDate = new Date(year, month, day);
+          if (!isNaN(parsedDate.getTime())) {
+            setSelectedDOBDate(parsedDate);
+          }
+        }
+      } catch (error) {
+        console.log("Error parsing date of birth:", error);
       }
-    } catch (error) {
-      Alert.alert("Error", "Failed to pick image");
     }
-  };
-
-  const handleTakePhoto = async () => {
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        setProfilePhoto(result.assets[0].uri);
-      }
-    } catch (error) {
-      Alert.alert("Error", "Failed to take photo");
-    }
+    
+    setShowDOBDatePicker(true);
   };
 
   const resetForm = () => {
     setFormData(initialFormState);
-    setSelectedDate(new Date());
-    setProfilePhoto(null);
+    setSelectedJoiningDate(new Date());
+    setSelectedDOBDate(new Date());
     Keyboard.dismiss();
     
     if (Platform.OS === 'web' && document.activeElement) {
@@ -192,6 +272,11 @@ const NewMember = () => {
       return;
     }
     
+    if (!formData.subCompanyId) {
+      Alert.alert("Validation Error", "Sub Company selection is required.");
+      return;
+    }
+    
     if (!isValidDate(joiningDate)) {
       Alert.alert(
         "Invalid Date Format", 
@@ -199,7 +284,26 @@ const NewMember = () => {
         [
           {
             text: "Use Calendar",
-            onPress: openDatePicker
+            onPress: openJoiningDatePicker
+          },
+          {
+            text: "OK",
+            style: "default"
+          }
+        ]
+      );
+      return;
+    }
+
+    // Validate date of birth if provided
+    if (formData.dateOfBirth && !isValidDate(formData.dateOfBirth)) {
+      Alert.alert(
+        "Invalid Date of Birth Format", 
+        "Please enter date in YYYY-MM-DD format or use calendar picker.",
+        [
+          {
+            text: "Use Calendar",
+            onPress: openDOBDatePicker
           },
           {
             text: "OK",
@@ -220,11 +324,13 @@ const NewMember = () => {
           phone: mobileNum,
           email: formData.email || '',
           joinDate: joiningDate,
+          dateOfBirth: formData.dateOfBirth || '',
           status: 'Active',
           feesStatus: 'Unpaid',
           address: formData.address || '',
           batch: formData.batch || '',
           business: business,
+          subCompanyId: formData.subCompanyId,
           updatedBy: 'Admin',
         };
 
@@ -245,30 +351,23 @@ const NewMember = () => {
           phone: mobileNum,
           email: formData.email || '',
           joinDate: joiningDate,
+          dateOfBirth: formData.dateOfBirth || '',
           status: 'Active',
           feesStatus: 'Unpaid',
           address: formData.address || '',
           batch: formData.batch || '',
           business: business,
+          subCompanyId: formData.subCompanyId,
           createdBy: 'Admin',
-          profilePhoto: profilePhoto || null,
         };
 
         console.log('Creating new member:', memberData);
         await ApiService.createMember(memberData);
         
         // Clear all form fields
-        setFormData({
-          memberName: "",
-          mobileNum: "",
-          email: "",
-          joiningDate: "",
-          business: "",
-          address: "",
-          batch: "",
-        });
-        setProfilePhoto(null);
-        setSelectedDate(new Date());
+        setFormData(initialFormState);
+        setSelectedJoiningDate(new Date());
+        setSelectedDOBDate(new Date());
         
         Alert.alert("Success", "Member added successfully!", [
           {
@@ -371,6 +470,32 @@ const NewMember = () => {
           </View>
         </View>
 
+        {/* Date of Birth with Calendar Icon INSIDE the input */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Date of Birth</Text>
+          <Text style={styles.dateHelperText}>Format: YYYY-MM-DD</Text>
+          <View style={styles.inputContainer}>
+            <Icon name="cake" size={18} color="#4A90E2" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="YYYY-MM-DD"
+              value={formData.dateOfBirth}
+              onChangeText={(text) => handleInputChange("dateOfBirth", text)}
+              placeholderTextColor="#999"
+              editable={!loading}
+              keyboardType="numbers-and-punctuation"
+              maxLength={10}
+            />
+            <TouchableOpacity 
+              style={[styles.calendarIconInside, loading && styles.disabledButton]}
+              onPress={openDOBDatePicker}
+              disabled={loading}
+            >
+              <Icon name="calendar-month" size={20} color="#4A90E2" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Joining Date with Calendar Icon INSIDE the input */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Joining Date *</Text>
@@ -389,7 +514,7 @@ const NewMember = () => {
             />
             <TouchableOpacity 
               style={[styles.calendarIconInside, loading && styles.disabledButton]}
-              onPress={openDatePicker}
+              onPress={openJoiningDatePicker}
               disabled={loading}
             >
               <Icon name="calendar-month" size={20} color="#4A90E2" />
@@ -397,12 +522,22 @@ const NewMember = () => {
           </View>
         </View>
 
-        {showDatePicker && (
+        {showDOBDatePicker && (
           <DateTimePicker
-            value={selectedDate}
+            value={selectedDOBDate}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={handleDateChange}
+            onChange={handleDOBDateChange}
+            maximumDate={new Date()}
+          />
+        )}
+
+        {showJoiningDatePicker && (
+          <DateTimePicker
+            value={selectedJoiningDate}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleJoiningDateChange}
             maximumDate={new Date()}
           />
         )}
@@ -439,21 +574,115 @@ const NewMember = () => {
           </View>
         </View>
 
-        {/* Batch */}
-        {/* <View style={styles.inputGroup}>
-          <Text style={styles.label}>Batch</Text>
-          <View style={styles.inputContainer}>
-            <Icon name="clock" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Morning, Evening, etc."
-              value={formData.batch}
-              onChangeText={(text) => handleInputChange("batch", text)}
-              placeholderTextColor="#999"
-              editable={!loading}
-            />
-          </View>
-        </View> */}
+        {/* Main Company Dropdown */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Main Company</Text>
+          <TouchableOpacity
+            style={[styles.dropdownContainer, loading && styles.disabledButton]}
+            onPress={() => setShowMainCompanyDropdown(!showMainCompanyDropdown)}
+            disabled={loading || loadingMainCompanies}
+          >
+            <Icon name="domain" size={18} color="#4A90E2" style={styles.inputIcon} />
+            <Text style={[styles.dropdownText, !selectedMainCompanyId && styles.placeholderText]}>
+              {selectedMainCompanyId 
+                ? mainCompanies.find(c => c.id === selectedMainCompanyId)?.companyName || 'Select Main Company'
+                : 'Select Main Company'
+              }
+            </Text>
+            {loadingMainCompanies ? (
+              <ActivityIndicator size="small" color="#4A90E2" />
+            ) : (
+              <Icon 
+                name={showMainCompanyDropdown ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color="#4A90E2" 
+              />
+            )}
+          </TouchableOpacity>
+          
+          {showMainCompanyDropdown && (
+            <View style={styles.dropdownList}>
+              {mainCompanies.map((company) => (
+                <TouchableOpacity
+                  key={company.id}
+                  style={[
+                    styles.dropdownItem,
+                    selectedMainCompanyId === company.id && styles.selectedDropdownItem
+                  ]}
+                  onPress={() => {
+                    setSelectedMainCompanyId(company.id);
+                    setShowMainCompanyDropdown(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownItemText,
+                    selectedMainCompanyId === company.id && styles.selectedDropdownItemText
+                  ]}>
+                    {company.companyName}
+                  </Text>
+                  <Text style={styles.dropdownItemSubText}>
+                    {company.companyCode}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
+
+        {/* Sub Company Dropdown */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Sub Company *</Text>
+          <TouchableOpacity
+            style={[styles.dropdownContainer, loading && styles.disabledButton]}
+            onPress={() => setShowSubCompanyDropdown(!showSubCompanyDropdown)}
+            disabled={loading || loadingSubCompanies || !selectedMainCompanyId}
+          >
+            <Icon name="office-building" size={18} color="#4A90E2" style={styles.inputIcon} />
+            <Text style={[styles.dropdownText, !formData.subCompanyId && styles.placeholderText]}>
+              {formData.subCompanyId 
+                ? subCompanies.find(sc => sc.id === formData.subCompanyId)?.subCompanyName || 'Select Sub Company'
+                : selectedMainCompanyId ? 'Select Sub Company' : 'Select Main Company First'
+              }
+            </Text>
+            {loadingSubCompanies ? (
+              <ActivityIndicator size="small" color="#4A90E2" />
+            ) : (
+              <Icon 
+                name={showSubCompanyDropdown ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color={selectedMainCompanyId ? "#4A90E2" : "#999"} 
+              />
+            )}
+          </TouchableOpacity>
+          
+          {showSubCompanyDropdown && selectedMainCompanyId && (
+            <View style={styles.dropdownList}>
+              {subCompanies.map((subCompany) => (
+                <TouchableOpacity
+                  key={subCompany.id}
+                  style={[
+                    styles.dropdownItem,
+                    formData.subCompanyId === subCompany.id && styles.selectedDropdownItem
+                  ]}
+                  onPress={() => {
+                    setFormData(prev => ({ ...prev, subCompanyId: subCompany.id }));
+                    setShowSubCompanyDropdown(false);
+                  }}
+                >
+                  <Text style={[
+                    styles.dropdownItemText,
+                    formData.subCompanyId === subCompany.id && styles.selectedDropdownItemText
+                  ]}>
+                    {subCompany.subCompanyName}
+                  </Text>
+                  <Text style={styles.dropdownItemSubText}>
+                    {subCompany.subCompanyCode}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </View>
 
         {/* Buttons Container */}
         <View style={styles.buttonsContainer}>
@@ -481,15 +710,6 @@ const NewMember = () => {
             )}
           </TouchableOpacity>
         </View>
-
-        {/* <TouchableOpacity
-          style={styles.clearAllButton}
-          onPress={resetForm}
-          disabled={loading}
-        >
-          <Icon name="close-circle" size={18} color="#FF6B6B" />
-          <Text style={styles.clearAllButtonText}>Clear All Fields</Text>
-        </TouchableOpacity> */}
 
         <View style={{ height: 20 }} />
       </ScrollView>
@@ -612,23 +832,62 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 8,
   },
-  clearAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    marginTop: 10,
-    backgroundColor: 'transparent',
-  },
-  clearAllButtonText: {
-    color: '#FF6B6B',
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 8,
-    textDecorationLine: 'underline',
-  },
   disabledButton: {
     opacity: 0.5,
+  },
+  dropdownContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#87CEEB',
+    paddingHorizontal: 12,
+    minHeight: 45,
+  },
+  dropdownText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    paddingVertical: 10,
+  },
+  placeholderText: {
+    color: '#999',
+  },
+  dropdownList: {
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#87CEEB',
+    marginTop: 5,
+    maxHeight: 200,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  selectedDropdownItem: {
+    backgroundColor: '#E3F2FD',
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  selectedDropdownItemText: {
+    color: '#4A90E2',
+    fontWeight: 'bold',
+  },
+  dropdownItemSubText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
 });
 
