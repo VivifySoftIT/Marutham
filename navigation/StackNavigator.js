@@ -15,6 +15,7 @@ import MemberDetails from '../screens/MemberDetails';
 import DrawerNavigator from './DrawerNavigator';
 import UserDashboard from '../screens/UserDashboard';
 import ChangePassword from '../screens/ChangePassword';
+import Profile from '../screens/Profile';
 import TYFCBSlip from '../screens/TYFCBSlip';
 import ReferralSlip from '../screens/ReferralSlip';
 import OneToOneSlip from '../screens/OneToOneSlip';
@@ -104,6 +105,10 @@ const StackNavigator = () => {
       <Stack.Screen 
         name="ChangePassword"
         component={ChangePassword}
+      />
+      <Stack.Screen 
+        name="Profile"
+        component={Profile}
       />
       <Stack.Screen 
         name="TYFCBSlip"

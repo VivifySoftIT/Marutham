@@ -46,47 +46,19 @@ const UserDashboard = () => {
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('all'); // 'all', 'weekly', 'monthly', 'annual'
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(3);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'birthday',
-      title: 'Birthday Reminder',
-      message: 'John Doe\'s birthday is today! 🎉',
-      time: '09:00 AM Today',
-      icon: 'cake',
-      color: '#FF6B6B',
-      backgroundColor: '#FFE5E5',
-      isRead: false,
-      canRespond: true,
-      recipientName: 'John Doe',
-    },
-    {
-      id: 2,
-      type: 'meeting',
-      title: 'Meeting Reminder',
-      message: 'Monthly board meeting at 2:00 PM',
-      time: '1 hour ago',
-      icon: 'calendar-clock',
-      color: '#4ECDC4',
-      backgroundColor: '#E8F8F7',
-      isRead: false,
-      canRespond: true,
-      meetingTitle: 'Monthly Board Meeting',
-    },
-    {
-      id: 3,
-      type: 'admin',
-      title: 'Admin Notice',
-      message: 'New safety protocols have been updated',
-      time: '2 hours ago',
-      icon: 'information',
-      color: '#45B7D1',
-      backgroundColor: '#E3F2FD',
-      isRead: false,
-      canRespond: false,
-    },
-  ]);
+  const [notificationCount, setNotificationCount] = useState(0);
+  
+  // State for inline settings
+  const [showLanguageSettings, setShowLanguageSettings] = useState(false);
+  const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+
+  // Language options - Only English and Tamil
+  const languages = [
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'ta', name: 'Tamil', flag: '🇮🇳' },
+  ];
+
+  const [notifications, setNotifications] = useState([]);
   
   // User statistics
   const [stats, setStats] = useState({
@@ -327,21 +299,30 @@ const UserDashboard = () => {
       const memberId = await getCurrentUserMemberId();
       if (!memberId) {
         console.log('UserDashboard - No memberId for reminders');
+        setNotifications([]);
+        setNotificationCount(0);
         return;
       }
 
       console.log('UserDashboard - Loading dashboard reminders for memberId:', memberId);
-      const reminders = await ApiService.getDashboardReminders(memberId);
+      
+      // Load both dashboard reminders and message notifications
+      const [reminders, messageNotifications] = await Promise.all([
+        ApiService.getDashboardReminders(memberId),
+        ApiService.getMessageNotificationReport(null, 'daily', memberId)
+      ]);
+      
       console.log('UserDashboard - Dashboard reminders:', reminders);
+      console.log('UserDashboard - Message notifications:', messageNotifications);
 
-      // Convert reminders to notifications format
+      // Convert reminders to notifications format - only if data exists
       const newNotifications = [];
 
-      // Add birthday notifications
-      if (reminders.teamBirthdays && reminders.teamBirthdays.length > 0) {
+      // Add birthday notifications ONLY if there are actual birthdays
+      if (reminders && reminders.teamBirthdays && reminders.teamBirthdays.length > 0) {
         reminders.teamBirthdays.forEach((birthday, index) => {
           newNotifications.push({
-            id: `birthday-${index}`,
+            id: `birthday-${birthday.name}-${index}`,
             type: 'birthday',
             title: 'Birthday Reminder',
             message: birthday.isToday 
@@ -359,9 +340,9 @@ const UserDashboard = () => {
         });
       }
 
-      // Add meeting notifications
-      if (reminders.upcomingMeetings && reminders.upcomingMeetings.length > 0) {
-        reminders.upcomingMeetings.forEach((meeting, index) => {
+      // Add meeting notifications ONLY if there are actual meetings
+      if (reminders && reminders.upcomingMeetings && reminders.upcomingMeetings.length > 0) {
+        reminders.upcomingMeetings.forEach((meeting) => {
           newNotifications.push({
             id: `meeting-${meeting.id}`,
             type: 'meeting',
@@ -384,11 +365,53 @@ const UserDashboard = () => {
         });
       }
 
+      // Add message notifications ONLY if there are actual notifications from API
+      if (messageNotifications && messageNotifications.data && messageNotifications.data.length > 0) {
+        messageNotifications.data.forEach((notification) => {
+          const notificationTypeMap = {
+            'Payment': { icon: 'credit-card', color: '#4CAF50', backgroundColor: '#E8F5E9' },
+            'Birthday': { icon: 'cake', color: '#FF6B6B', backgroundColor: '#FFE5E5' },
+            'Event': { icon: 'calendar-star', color: '#FF9800', backgroundColor: '#FFF3E0' },
+            'Meeting': { icon: 'calendar-clock', color: '#4ECDC4', backgroundColor: '#E8F8F7' },
+            'Welcome': { icon: 'hand-wave', color: '#9C27B0', backgroundColor: '#F3E5F5' }
+          };
+
+          const typeConfig = notificationTypeMap[notification.messageType] || 
+                           { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
+
+          newNotifications.push({
+            id: `message-${notification.id}`,
+            type: 'message',
+            title: notification.subject || `${notification.messageType} Notification`,
+            message: notification.content || 'New notification received',
+            time: notification.createdDate ? new Date(notification.createdDate).toLocaleDateString() : 'Recent',
+            icon: typeConfig.icon,
+            color: typeConfig.color,
+            backgroundColor: typeConfig.backgroundColor,
+            isRead: notification.isSent || false,
+            canRespond: false,
+            messageType: notification.messageType,
+            attachmentUrl: notification.attachmentUrl,
+          });
+        });
+      }
+
+      // Set notifications and count
       setNotifications(newNotifications);
-      setNotificationCount(newNotifications.length);
-      console.log('UserDashboard - Set notifications:', newNotifications.length);
+      setNotificationCount(newNotifications.filter(n => !n.isRead).length);
+      
+      console.log('UserDashboard - Set notifications from API:', newNotifications.length);
+      
+      // If no notifications, log it
+      if (newNotifications.length === 0) {
+        console.log('UserDashboard - No notifications to display (no birthdays, meetings, or messages)');
+      }
+      
     } catch (error) {
       console.error('UserDashboard - Error loading dashboard reminders:', error);
+      // Set empty notifications on error
+      setNotifications([]);
+      setNotificationCount(0);
     }
   };
 
@@ -694,73 +717,92 @@ const UserDashboard = () => {
           </Animatable.View>
         )}
 
-        {/* Swipeable Notifications Card */}
-        <Animatable.View 
-          animation="fadeInUp"
-          delay={200}
-          style={styles.notificationCard}
-        >
-          <View style={styles.notificationCardHeader}>
-            <Text style={styles.notificationCardTitle}>🔔 Recent Notifications</Text>
-            <TouchableOpacity onPress={() => setShowNotifications(true)}>
-              <Text style={styles.viewAllNotifications}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.notificationScrollView}
-            contentContainerStyle={styles.notificationScrollContent}
+        {/* Swipeable Notifications Card - Only show if there are notifications */}
+        {notifications.length > 0 && (
+          <Animatable.View 
+            animation="fadeInUp"
+            delay={200}
+            style={styles.notificationCard}
           >
-            {notifications.slice(0, 5).map((notification, index) => (
-              <TouchableOpacity
-                key={notification.id}
-                style={[
-                  styles.notificationSwipeCard,
-                  !notification.isRead && styles.unreadNotificationCard
-                ]}
-                onPress={() => handleNotificationPress(notification)}
-                activeOpacity={0.8}
-              >
-                <View style={[
-                  styles.notificationSwipeIcon, 
-                  { backgroundColor: notification.backgroundColor }
-                ]}>
-                  <Icon name={notification.icon} size={18} color={notification.color} />
-                </View>
-                <View style={styles.notificationSwipeContent}>
-                  <Text style={styles.notificationSwipeTitle} numberOfLines={2}>
-                    {notification.title}
-                  </Text>
-                  <Text style={styles.notificationSwipeMessage} numberOfLines={2}>
-                    {notification.message}
-                  </Text>
-                  <Text style={styles.notificationSwipeTime}>
-                    {notification.time}
-                  </Text>
-                  {notification.canRespond && (
-                    <View style={styles.respondBadge}>
-                      <Text style={styles.respondBadgeText}>Tap to respond</Text>
-                    </View>
-                  )}
-                </View>
-                {!notification.isRead && (
-                  <View style={styles.swipeUnreadIndicator} />
-                )}
+            <View style={styles.notificationCardHeader}>
+              <Text style={styles.notificationCardTitle}>🔔 Recent Notifications</Text>
+              <TouchableOpacity onPress={() => setShowNotifications(true)}>
+                <Text style={styles.viewAllNotifications}>View All</Text>
               </TouchableOpacity>
-            ))}
+            </View>
             
-            {/* Add more notifications card */}
-            <TouchableOpacity
-              style={styles.moreNotificationsCard}
-              onPress={() => setShowNotifications(true)}
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.notificationScrollView}
+              contentContainerStyle={styles.notificationScrollContent}
             >
-              <Icon name="plus-circle" size={24} color={waterBlueColors.primary} />
-              <Text style={styles.moreNotificationsText}>View More</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Animatable.View>
+              {notifications.slice(0, 5).map((notification) => (
+                <TouchableOpacity
+                  key={notification.id}
+                  style={[
+                    styles.notificationSwipeCard,
+                    !notification.isRead && styles.unreadNotificationCard
+                  ]}
+                  onPress={() => handleNotificationPress(notification)}
+                  activeOpacity={0.8}
+                >
+                  <View style={[
+                    styles.notificationSwipeIcon, 
+                    { backgroundColor: notification.backgroundColor }
+                  ]}>
+                    <Icon name={notification.icon} size={18} color={notification.color} />
+                  </View>
+                  <View style={styles.notificationSwipeContent}>
+                    <Text style={styles.notificationSwipeTitle} numberOfLines={2}>
+                      {notification.title}
+                    </Text>
+                    <Text style={styles.notificationSwipeMessage} numberOfLines={2}>
+                      {notification.message}
+                    </Text>
+                    <Text style={styles.notificationSwipeTime}>
+                      {notification.time}
+                    </Text>
+                    {notification.canRespond && (
+                      <View style={styles.respondBadge}>
+                        <Text style={styles.respondBadgeText}>Tap to respond</Text>
+                      </View>
+                    )}
+                  </View>
+                  {!notification.isRead && (
+                    <View style={styles.swipeUnreadIndicator} />
+                  )}
+                </TouchableOpacity>
+              ))}
+              
+              {/* Add more notifications card */}
+              <TouchableOpacity
+                style={styles.moreNotificationsCard}
+                onPress={() => setShowNotifications(true)}
+              >
+                <Icon name="plus-circle" size={24} color={waterBlueColors.primary} />
+                <Text style={styles.moreNotificationsText}>View More</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </Animatable.View>
+        )}
+
+        {/* No Notifications Message - Only show if there are no notifications */}
+        {notifications.length === 0 && (
+          <Animatable.View 
+            animation="fadeInUp"
+            delay={200}
+            style={styles.noNotificationCard}
+          >
+            <View style={styles.noNotificationContent}>
+              <Icon name="bell-off-outline" size={48} color="#BDC3C7" />
+              <Text style={styles.noNotificationTitle}>No Notifications</Text>
+              <Text style={styles.noNotificationMessage}>
+                You're all caught up! No birthdays, meetings, or messages to display.
+              </Text>
+            </View>
+          </Animatable.View>
+        )}
 
         {/* Stats Section with Period Selector */}
         <Animatable.View 
@@ -1053,34 +1095,68 @@ const UserDashboard = () => {
 
               {/* Settings Options */}
               <View style={styles.settingsOptions}>
+                {/* Language Settings */}
                 <TouchableOpacity 
                   style={styles.settingsOption}
-                  onPress={() => {
-                    setShowUserModal(false);
-                    navigation.navigate('SettingsScreen');
-                  }}
+                  onPress={() => setShowLanguageSettings(!showLanguageSettings)}
                 >
                   <View style={[styles.optionIcon, { backgroundColor: '#E3F2FD' }]}>
                     <Icon name="translate" size={22} color={waterBlueColors.primary} />
                   </View>
                   <Text style={styles.settingsOptionText}>Language</Text>
-                  <Icon name="chevron-right" size={20} color="#999" />
+                  <Icon name={showLanguageSettings ? "chevron-up" : "chevron-down"} size={20} color="#999" />
                 </TouchableOpacity>
 
+                {showLanguageSettings && (
+                  <View style={styles.inlineSettingsContainer}>
+                    {languages.map((lang) => (
+                      <TouchableOpacity
+                        key={lang.code}
+                        style={styles.languageOption}
+                        onPress={() => {
+                          // Handle language selection
+                          Alert.alert('Language', `${lang.name} selected`);
+                          setShowLanguageSettings(false);
+                        }}
+                      >
+                        <Text style={styles.languageFlag}>{lang.flag}</Text>
+                        <Text style={styles.languageName}>{lang.name}</Text>
+                        <Icon name="check-circle" size={16} color={waterBlueColors.primary} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+
+                {/* Privacy & Security Settings */}
                 <TouchableOpacity 
                   style={styles.settingsOption}
-                  onPress={() => {
-                    setShowUserModal(false);
-                    Alert.alert('Privacy & Security', 'Privacy settings coming soon!');
-                  }}
+                  onPress={() => setShowPrivacySettings(!showPrivacySettings)}
                 >
                   <View style={[styles.optionIcon, { backgroundColor: '#FFF3E0' }]}>
                     <Icon name="shield-lock" size={22} color="#FF9800" />
                   </View>
                   <Text style={styles.settingsOptionText}>Privacy & Security</Text>
-                  <Icon name="chevron-right" size={20} color="#999" />
+                  <Icon name={showPrivacySettings ? "chevron-up" : "chevron-down"} size={20} color="#999" />
                 </TouchableOpacity>
 
+                {showPrivacySettings && (
+                  <View style={styles.inlineSettingsContainer}>
+                    <TouchableOpacity style={styles.privacyOption}>
+                      <Text style={styles.privacyOptionText}>Two-Factor Authentication</Text>
+                      <Text style={styles.privacyOptionStatus}>Disabled</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.privacyOption}>
+                      <Text style={styles.privacyOptionText}>Login Notifications</Text>
+                      <Text style={styles.privacyOptionStatus}>Enabled</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.privacyOption}>
+                      <Text style={styles.privacyOptionText}>Data Privacy</Text>
+                      <Text style={styles.privacyOptionStatus}>View Settings</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Change Password - Navigate to separate screen */}
                 <TouchableOpacity 
                   style={styles.settingsOption}
                   onPress={() => {
@@ -1095,11 +1171,12 @@ const UserDashboard = () => {
                   <Icon name="chevron-right" size={20} color="#999" />
                 </TouchableOpacity>
 
+                {/* Edit Profile - Navigate to separate screen */}
                 <TouchableOpacity 
                   style={styles.settingsOption}
                   onPress={() => {
                     setShowUserModal(false);
-                    navigation.navigate('EditProfile');
+                    navigation.navigate('Profile');
                   }}
                 >
                   <View style={[styles.optionIcon, { backgroundColor: '#FCE4EC' }]}>
@@ -1752,7 +1829,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    maxHeight: '65%',
+    maxHeight: '80%',
     elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
@@ -1764,100 +1841,123 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 18,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     color: '#FFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
   },
   closeModalButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   modalContent: {
-    padding: 20,
+    padding: 24,
   },
   modalProfileSection: {
     alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 15,
+    marginBottom: 24,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
   modalAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 15,
-    elevation: 4,
+    marginBottom: 16,
+    elevation: 6,
     shadowColor: '#357ABD',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 6,
+    shadowRadius: 8,
   },
   modalProfileInfo: {
     alignItems: 'center',
   },
   modalUserName: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     color: '#2C3E50',
-    marginBottom: 8,
+    marginBottom: 10,
     textAlign: 'center',
   },
   modalMemberIdContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E8F4FD',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   modalMemberId: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#4A90E2',
     marginLeft: 6,
   },
   modalUserRole: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#4A90E2',
     fontWeight: '600',
   },
-  // Settings Options
+  // Enhanced Settings Options
   settingsOptions: {
-    marginTop: 10,
+    marginTop: 12,
   },
   settingsOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 4,
+    paddingVertical: 16,
+    paddingHorizontal: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: '#F8F9FA',
+    borderRadius: 12,
+    marginBottom: 4,
+    backgroundColor: '#FAFBFC',
   },
   optionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   settingsOptionText: {
     flex: 1,
-    fontSize: 15,
-    color: '#333',
+    fontSize: 16,
+    color: '#2C3E50',
     fontWeight: '600',
   },
   // Compact Info Grid
@@ -2301,6 +2401,97 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 6,
+  },
+  // No Notifications Card Styles
+  noNotificationCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  noNotificationContent: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  noNotificationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7F8C8D',
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  noNotificationMessage: {
+    fontSize: 13,
+    color: '#BDC3C7',
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  // Inline Settings Styles
+  inlineSettingsContainer: {
+    backgroundColor: '#F8F9FA',
+    marginLeft: 64,
+    marginRight: 6,
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: waterBlueColors.primary,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E9EA',
+    borderRadius: 8,
+    marginBottom: 4,
+    backgroundColor: '#FFF',
+  },
+  languageFlag: {
+    fontSize: 20,
+    marginRight: 14,
+  },
+  languageName: {
+    flex: 1,
+    fontSize: 15,
+    color: '#2C3E50',
+    fontWeight: '600',
+  },
+  privacyOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8E9EA',
+    borderRadius: 8,
+    marginBottom: 4,
+    backgroundColor: '#FFF',
+  },
+  privacyOptionText: {
+    fontSize: 15,
+    color: '#2C3E50',
+    fontWeight: '600',
+  },
+  privacyOptionStatus: {
+    fontSize: 13,
+    color: '#666',
+    fontStyle: 'italic',
+    fontWeight: '500',
   },
 });
 

@@ -427,110 +427,37 @@ const Reports = ({ navigation }) => {
     }
   };
 
-  const generatePDF = async (attendanceData, timestamp) => {
+  const generatePDF = async (reportData, timestamp) => {
     try {
-      // Create HTML table for PDF
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Attendance Report</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              padding: 20px;
-            }
-            h1 {
-              color: #4A90E2;
-              text-align: center;
-              margin-bottom: 10px;
-            }
-            .report-info {
-              text-align: center;
-              color: #666;
-              margin-bottom: 20px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-            }
-            th {
-              background-color: #4A90E2;
-              color: white;
-              padding: 12px;
-              text-align: left;
-              font-weight: bold;
-            }
-            td {
-              padding: 10px;
-              border-bottom: 1px solid #ddd;
-            }
-            tr:nth-child(even) {
-              background-color: #f9f9f9;
-            }
-            .status-present {
-              color: #4CAF50;
-              font-weight: bold;
-            }
-            .status-absent {
-              color: #F44336;
-              font-weight: bold;
-            }
-            .footer {
-              margin-top: 30px;
-              text-align: center;
-              color: #999;
-              font-size: 12px;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>Attendance Report</h1>
-          <div class="report-info">
-            <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
-            <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-            <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
-            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
-          </div>
-          
-          <table>
-            <thead>
-              <tr>
-                <th>S.No</th>
-                <th>Member Name</th>
-                <th>Date</th>
-                <th>Check-In Time</th>
-                <th>Check-Out Time</th>
-                <th>Status</th>
-                <th>Batch</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${attendanceData.map((item, index) => `
-                <tr>
-                  <td>${index + 1}</td>
-                  <td>${item.memberName || 'Unknown'}</td>
-                  <td>${new Date(item.attendanceDate).toLocaleDateString()}</td>
-                  <td>${item.checkInTime || '-'}</td>
-                  <td>${item.checkOutTime || '-'}</td>
-                  <td class="status-${item.status?.toLowerCase()}">${item.status || '-'}</td>
-                  <td>${item.batch || '-'}</td>
-                  <td>${item.notes || '-'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          
-          <div class="footer">
-            <p>Alaigal Member Management System</p>
-            <p>Report generated on ${new Date().toLocaleString()}</p>
-          </div>
-        </body>
-        </html>
-      `;
+      let htmlContent = '';
+      const currentTab = reportTabs.find(t => t.id === selectedReportTab);
+      
+      // Generate different content based on report type
+      switch (selectedReportTab) {
+        case 'attendance':
+          htmlContent = generateAttendancePDFContent(reportData, currentTab.title);
+          break;
+        case 'tyfcb':
+          htmlContent = generateTYFCBPDFContent(reportData, currentTab.title);
+          break;
+        case 'meeting':
+          htmlContent = generateMeetingPDFContent(reportData, currentTab.title);
+          break;
+        case 'referral':
+          htmlContent = generateReferralPDFContent(reportData, currentTab.title);
+          break;
+        case 'payment':
+          htmlContent = generatePaymentPDFContent(reportData, currentTab.title);
+          break;
+        case 'alaigalmeeting':
+          htmlContent = generateAlaigalMeetingPDFContent(reportData, currentTab.title);
+          break;
+        case 'visitor':
+          htmlContent = generateVisitorPDFContent(reportData, currentTab.title);
+          break;
+        default:
+          htmlContent = generateAttendancePDFContent(reportData, currentTab.title);
+      }
 
       // Generate PDF
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
@@ -539,10 +466,10 @@ const Reports = ({ navigation }) => {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'application/pdf',
-          dialogTitle: 'Share Attendance Report',
+          dialogTitle: `Share ${currentTab.title} Report`,
           UTI: 'com.adobe.pdf',
         });
-        Alert.alert('Success', 'PDF report generated successfully!');
+        Alert.alert('Success', `${currentTab.title} PDF report generated successfully!`);
       } else {
         Alert.alert('Success', `PDF saved to: ${uri}`);
       }
@@ -552,42 +479,646 @@ const Reports = ({ navigation }) => {
     }
   };
 
-  const generateExcel = async (attendanceData, timestamp) => {
+  // Generate Attendance PDF Content
+  const generateAttendancePDFContent = (data, title) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title} Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          .report-info { text-align: center; color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          td { padding: 10px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .status-present { color: #4CAF50; font-weight: bold; }
+          .status-absent { color: #F44336; font-weight: bold; }
+          .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>${title} Report</h1>
+        <div class="report-info">
+          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Member Name</th>
+              <th>Date</th>
+              <th>Check-In Time</th>
+              <th>Check-Out Time</th>
+              <th>Status</th>
+              <th>Batch</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map((item, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${item.memberName || 'Unknown'}</td>
+                <td>${new Date(item.attendanceDate).toLocaleDateString()}</td>
+                <td>${item.checkInTime || '-'}</td>
+                <td>${item.checkOutTime || '-'}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || '-'}</td>
+                <td>${item.batch || '-'}</td>
+                <td>${item.notes || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Alaigal Member Management System</p>
+          <p>Report generated on ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // Generate TYFCB PDF Content
+  const generateTYFCBPDFContent = (data, title) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title} Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          .report-info { text-align: center; color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          td { padding: 10px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .status-completed { color: #4CAF50; font-weight: bold; }
+          .status-pending { color: #FF9800; font-weight: bold; }
+          .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>${title} Report</h1>
+        <div class="report-info">
+          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Given By</th>
+              <th>Received By</th>
+              <th>Visit Date</th>
+              <th>Amount</th>
+              <th>Rating</th>
+              <th>Business Visited</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map((item, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${item.givenByMemberName || 'Unknown'}</td>
+                <td>${item.receivedByMemberName || 'Unknown'}</td>
+                <td>${new Date(item.visitDate).toLocaleDateString()}</td>
+                <td>₹${item.amount || 0}</td>
+                <td>${item.rating || '-'}/5</td>
+                <td>${item.businessVisited || '-'}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || 'Pending'}</td>
+                <td>${item.notes || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Alaigal Member Management System</p>
+          <p>Report generated on ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // Generate Meeting PDF Content
+  const generateMeetingPDFContent = (data, title) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title} Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          .report-info { text-align: center; color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          td { padding: 10px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .status-completed { color: #4CAF50; font-weight: bold; }
+          .status-pending { color: #FF9800; font-weight: bold; }
+          .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>${title} Report</h1>
+        <div class="report-info">
+          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Member 1</th>
+              <th>Member 2</th>
+              <th>Meeting Date</th>
+              <th>Location</th>
+              <th>Duration</th>
+              <th>Topic</th>
+              <th>Status</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map((item, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${item.member1Name || 'Unknown'}</td>
+                <td>${item.member2Name || 'Unknown'}</td>
+                <td>${new Date(item.meetingDate).toLocaleDateString()}</td>
+                <td>${item.location || '-'}</td>
+                <td>${item.duration || '-'} min</td>
+                <td>${item.topic || '-'}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || 'Completed'}</td>
+                <td>${item.notes || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Alaigal Member Management System</p>
+          <p>Report generated on ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // Generate Referral PDF Content
+  const generateReferralPDFContent = (data, title) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title} Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          .report-info { text-align: center; color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          td { padding: 10px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .status-confirmed { color: #4CAF50; font-weight: bold; }
+          .status-pending { color: #FF9800; font-weight: bold; }
+          .status-rejected { color: #F44336; font-weight: bold; }
+          .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>${title} Report</h1>
+        <div class="report-info">
+          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Given By</th>
+              <th>Received By</th>
+              <th>Client Name</th>
+              <th>Client Phone</th>
+              <th>Business Type</th>
+              <th>Revenue</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map((item, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${item.givenByMemberName || 'Unknown'}</td>
+                <td>${item.receivedByMemberName || 'Unknown'}</td>
+                <td>${item.clientName || '-'}</td>
+                <td>${item.clientPhone || '-'}</td>
+                <td>${item.businessType || '-'}</td>
+                <td>₹${item.revenue || 0}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || 'Pending'}</td>
+                <td>${new Date(item.referralDate).toLocaleDateString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Alaigal Member Management System</p>
+          <p>Report generated on ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // Generate Payment PDF Content
+  const generatePaymentPDFContent = (data, title) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title} Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          .report-info { text-align: center; color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          td { padding: 10px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .status-paid { color: #4CAF50; font-weight: bold; }
+          .status-completed { color: #4CAF50; font-weight: bold; }
+          .status-pending { color: #FF9800; font-weight: bold; }
+          .status-failed { color: #F44336; font-weight: bold; }
+          .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>${title} Report</h1>
+        <div class="report-info">
+          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Member Name</th>
+              <th>Amount</th>
+              <th>Payment Date</th>
+              <th>Payment For</th>
+              <th>Payment Method</th>
+              <th>Receipt No</th>
+              <th>Status</th>
+              <th>Transaction ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map((item, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${item.memberName || 'Unknown'}</td>
+                <td>₹${item.amount || 0}</td>
+                <td>${new Date(item.paymentDate).toLocaleDateString()}</td>
+                <td>${item.paymentForMonth || '-'}</td>
+                <td>${item.paymentMethod || '-'}</td>
+                <td>${item.receiptNumber || '-'}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || 'Paid'}</td>
+                <td>${item.transactionId || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Alaigal Member Management System</p>
+          <p>Report generated on ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // Generate Alaigal Meeting PDF Content
+  const generateAlaigalMeetingPDFContent = (data, title) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title} Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          .report-info { text-align: center; color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          td { padding: 10px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>${title} Report</h1>
+        <div class="report-info">
+          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Meeting Title</th>
+              <th>Meeting Code</th>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Type</th>
+              <th>Place</th>
+              <th>Contact Person</th>
+              <th>Contact Number</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map((item, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${item.meetingTitle || item.meetingCode || 'Untitled'}</td>
+                <td>${item.meetingCode || '-'}</td>
+                <td>${new Date(item.meetingDate).toLocaleDateString()}</td>
+                <td>${item.time || '-'}</td>
+                <td>${item.meetingType || 'In-Person'}</td>
+                <td>${item.place || '-'}</td>
+                <td>${item.contactPersonName || '-'}</td>
+                <td>${item.contactPersonNum || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Alaigal Member Management System</p>
+          <p>Report generated on ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // Generate Visitor PDF Content
+  const generateVisitorPDFContent = (data, title) => {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>${title} Report</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          .report-info { text-align: center; color: #666; margin-bottom: 20px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          td { padding: 10px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .status-member { color: #4CAF50; font-weight: bold; }
+          .status-visitor { color: #FF9800; font-weight: bold; }
+          .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>${title} Report</h1>
+        <div class="report-info">
+          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
+          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Visitor Name</th>
+              <th>Phone</th>
+              <th>Business</th>
+              <th>City</th>
+              <th>Brought By</th>
+              <th>Visit Date</th>
+              <th>Status</th>
+              <th>Company</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map((item, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${item.visitorName || 'Unknown'}</td>
+                <td>${item.visitorPhone || '-'}</td>
+                <td>${item.visitorBusiness || '-'}</td>
+                <td>${item.visitorCity || '-'}</td>
+                <td>${item.broughtByMemberName || 'Unknown'}</td>
+                <td>${new Date(item.visitDate).toLocaleDateString()}</td>
+                <td class="status-${item.becameMember ? 'member' : 'visitor'}">${item.becameMember ? 'Member' : 'Visitor'}</td>
+                <td>${item.company || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Alaigal Member Management System</p>
+          <p>Report generated on ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  const generateExcel = async (reportData, timestamp) => {
     try {
-      // Prepare data for Excel
-      const excelData = attendanceData.map((item, index) => ({
-        'S.No': index + 1,
-        'Member Name': item.memberName || 'Unknown',
-        'Date': new Date(item.attendanceDate).toLocaleDateString(),
-        'Check-In Time': item.checkInTime || '-',
-        'Check-Out Time': item.checkOutTime || '-',
-        'Status': item.status || '-',
-        'Batch': item.batch || '-',
-        'Notes': item.notes || '-',
-      }));
+      const currentTab = reportTabs.find(t => t.id === selectedReportTab);
+      let excelData = [];
+      let columnWidths = [];
+      let sheetName = '';
+      let filename = '';
+
+      // Generate different Excel content based on report type
+      switch (selectedReportTab) {
+        case 'attendance':
+          excelData = generateAttendanceExcelData(reportData);
+          columnWidths = [
+            { wch: 6 },  // S.No
+            { wch: 20 }, // Member Name
+            { wch: 12 }, // Date
+            { wch: 15 }, // Check-In Time
+            { wch: 15 }, // Check-Out Time
+            { wch: 10 }, // Status
+            { wch: 10 }, // Batch
+            { wch: 30 }, // Notes
+          ];
+          sheetName = 'Attendance Report';
+          filename = `attendance_report_${timestamp}.xlsx`;
+          break;
+
+        case 'tyfcb':
+          excelData = generateTYFCBExcelData(reportData);
+          columnWidths = [
+            { wch: 6 },  // S.No
+            { wch: 20 }, // Given By
+            { wch: 20 }, // Received By
+            { wch: 12 }, // Visit Date
+            { wch: 12 }, // Amount
+            { wch: 8 },  // Rating
+            { wch: 20 }, // Business Visited
+            { wch: 12 }, // Status
+            { wch: 30 }, // Notes
+          ];
+          sheetName = 'TYFCB Report';
+          filename = `tyfcb_report_${timestamp}.xlsx`;
+          break;
+
+        case 'meeting':
+          excelData = generateMeetingExcelData(reportData);
+          columnWidths = [
+            { wch: 6 },  // S.No
+            { wch: 20 }, // Member 1
+            { wch: 20 }, // Member 2
+            { wch: 12 }, // Meeting Date
+            { wch: 15 }, // Location
+            { wch: 10 }, // Duration
+            { wch: 20 }, // Topic
+            { wch: 12 }, // Status
+            { wch: 30 }, // Notes
+          ];
+          sheetName = '1:1 Meeting Report';
+          filename = `meeting_report_${timestamp}.xlsx`;
+          break;
+
+        case 'referral':
+          excelData = generateReferralExcelData(reportData);
+          columnWidths = [
+            { wch: 6 },  // S.No
+            { wch: 20 }, // Given By
+            { wch: 20 }, // Received By
+            { wch: 20 }, // Client Name
+            { wch: 15 }, // Client Phone
+            { wch: 20 }, // Business Type
+            { wch: 12 }, // Revenue
+            { wch: 12 }, // Status
+            { wch: 12 }, // Date
+          ];
+          sheetName = 'Referral Report';
+          filename = `referral_report_${timestamp}.xlsx`;
+          break;
+
+        case 'payment':
+          excelData = generatePaymentExcelData(reportData);
+          columnWidths = [
+            { wch: 6 },  // S.No
+            { wch: 20 }, // Member Name
+            { wch: 12 }, // Amount
+            { wch: 12 }, // Payment Date
+            { wch: 15 }, // Payment For
+            { wch: 15 }, // Payment Method
+            { wch: 15 }, // Receipt No
+            { wch: 12 }, // Status
+            { wch: 20 }, // Transaction ID
+          ];
+          sheetName = 'Payment Report';
+          filename = `payment_report_${timestamp}.xlsx`;
+          break;
+
+        case 'alaigalmeeting':
+          excelData = generateAlaigalMeetingExcelData(reportData);
+          columnWidths = [
+            { wch: 6 },  // S.No
+            { wch: 25 }, // Meeting Title
+            { wch: 15 }, // Meeting Code
+            { wch: 12 }, // Date
+            { wch: 10 }, // Time
+            { wch: 12 }, // Type
+            { wch: 20 }, // Place
+            { wch: 20 }, // Contact Person
+            { wch: 15 }, // Contact Number
+          ];
+          sheetName = 'Alaigal Meeting Report';
+          filename = `alaigal_meeting_report_${timestamp}.xlsx`;
+          break;
+
+        case 'visitor':
+          excelData = generateVisitorExcelData(reportData);
+          columnWidths = [
+            { wch: 6 },  // S.No
+            { wch: 20 }, // Visitor Name
+            { wch: 15 }, // Phone
+            { wch: 20 }, // Business
+            { wch: 15 }, // City
+            { wch: 20 }, // Brought By
+            { wch: 12 }, // Visit Date
+            { wch: 12 }, // Status
+            { wch: 20 }, // Company
+          ];
+          sheetName = 'Visitor Report';
+          filename = `visitor_report_${timestamp}.xlsx`;
+          break;
+
+        default:
+          // Fallback to attendance format
+          excelData = generateAttendanceExcelData(reportData);
+          columnWidths = [
+            { wch: 6 }, { wch: 20 }, { wch: 12 }, { wch: 15 }, 
+            { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 30 }
+          ];
+          sheetName = 'Report';
+          filename = `report_${timestamp}.xlsx`;
+      }
 
       // Create worksheet
       const ws = XLSX.utils.json_to_sheet(excelData);
 
       // Set column widths
-      ws['!cols'] = [
-        { wch: 6 },  // S.No
-        { wch: 20 }, // Member Name
-        { wch: 12 }, // Date
-        { wch: 15 }, // Check-In Time
-        { wch: 15 }, // Check-Out Time
-        { wch: 10 }, // Status
-        { wch: 10 }, // Batch
-        { wch: 30 }, // Notes
-      ];
+      ws['!cols'] = columnWidths;
 
       // Create workbook
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
 
       // Generate Excel file
       const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
-      const filename = `attendance_report_${timestamp}.xlsx`;
       const filepath = `${FileSystem.documentDirectory}${filename}`;
 
       // Write file
@@ -599,9 +1130,9 @@ const Reports = ({ navigation }) => {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(filepath, {
           mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          dialogTitle: 'Share Attendance Report',
+          dialogTitle: `Share ${currentTab.title} Report`,
         });
-        Alert.alert('Success', 'Excel report generated successfully!');
+        Alert.alert('Success', `${currentTab.title} Excel report generated successfully!`);
       } else {
         Alert.alert('Success', `Excel file saved to: ${filepath}`);
       }
@@ -609,6 +1140,110 @@ const Reports = ({ navigation }) => {
       console.error('Excel generation error:', error);
       throw error;
     }
+  };
+
+  // Generate Attendance Excel Data
+  const generateAttendanceExcelData = (data) => {
+    return data.map((item, index) => ({
+      'S.No': index + 1,
+      'Member Name': item.memberName || 'Unknown',
+      'Date': new Date(item.attendanceDate).toLocaleDateString(),
+      'Check-In Time': item.checkInTime || '-',
+      'Check-Out Time': item.checkOutTime || '-',
+      'Status': item.status || '-',
+      'Batch': item.batch || '-',
+      'Notes': item.notes || '-',
+    }));
+  };
+
+  // Generate TYFCB Excel Data
+  const generateTYFCBExcelData = (data) => {
+    return data.map((item, index) => ({
+      'S.No': index + 1,
+      'Given By': item.givenByMemberName || 'Unknown',
+      'Received By': item.receivedByMemberName || 'Unknown',
+      'Visit Date': new Date(item.visitDate).toLocaleDateString(),
+      'Amount': `₹${item.amount || 0}`,
+      'Rating': `${item.rating || '-'}/5`,
+      'Business Visited': item.businessVisited || '-',
+      'Status': item.status || 'Pending',
+      'Notes': item.notes || '-',
+    }));
+  };
+
+  // Generate Meeting Excel Data
+  const generateMeetingExcelData = (data) => {
+    return data.map((item, index) => ({
+      'S.No': index + 1,
+      'Member 1': item.member1Name || 'Unknown',
+      'Member 2': item.member2Name || 'Unknown',
+      'Meeting Date': new Date(item.meetingDate).toLocaleDateString(),
+      'Location': item.location || '-',
+      'Duration': item.duration ? `${item.duration} min` : '-',
+      'Topic': item.topic || '-',
+      'Status': item.status || 'Completed',
+      'Notes': item.notes || '-',
+    }));
+  };
+
+  // Generate Referral Excel Data
+  const generateReferralExcelData = (data) => {
+    return data.map((item, index) => ({
+      'S.No': index + 1,
+      'Given By': item.givenByMemberName || 'Unknown',
+      'Received By': item.receivedByMemberName || 'Unknown',
+      'Client Name': item.clientName || '-',
+      'Client Phone': item.clientPhone || '-',
+      'Business Type': item.businessType || '-',
+      'Revenue': `₹${item.revenue || 0}`,
+      'Status': item.status || 'Pending',
+      'Date': new Date(item.referralDate).toLocaleDateString(),
+    }));
+  };
+
+  // Generate Payment Excel Data
+  const generatePaymentExcelData = (data) => {
+    return data.map((item, index) => ({
+      'S.No': index + 1,
+      'Member Name': item.memberName || 'Unknown',
+      'Amount': `₹${item.amount || 0}`,
+      'Payment Date': new Date(item.paymentDate).toLocaleDateString(),
+      'Payment For': item.paymentForMonth || '-',
+      'Payment Method': item.paymentMethod || '-',
+      'Receipt No': item.receiptNumber || '-',
+      'Status': item.status || 'Paid',
+      'Transaction ID': item.transactionId || '-',
+    }));
+  };
+
+  // Generate Alaigal Meeting Excel Data
+  const generateAlaigalMeetingExcelData = (data) => {
+    return data.map((item, index) => ({
+      'S.No': index + 1,
+      'Meeting Title': item.meetingTitle || item.meetingCode || 'Untitled',
+      'Meeting Code': item.meetingCode || '-',
+      'Date': new Date(item.meetingDate).toLocaleDateString(),
+      'Time': item.time || '-',
+      'Type': item.meetingType || 'In-Person',
+      'Place': item.place || '-',
+      'Contact Person': item.contactPersonName || '-',
+      'Contact Number': item.contactPersonNum || '-',
+    }));
+  };
+
+  // Generate Visitor Excel Data
+  const generateVisitorExcelData = (data) => {
+    return data.map((item, index) => ({
+      'S.No': index + 1,
+      'Visitor Name': item.visitorName || 'Unknown',
+      'Phone': item.visitorPhone || '-',
+      'Business': item.visitorBusiness || '-',
+      'City': item.visitorCity || '-',
+      'Brought By': item.broughtByMemberName || 'Unknown',
+      'Visit Date': new Date(item.visitDate).toLocaleDateString(),
+      'Status': item.becameMember ? 'Member' : 'Visitor',
+      'Company': item.company || '-',
+    }));
   };
 
   const getReportStats = () => {
