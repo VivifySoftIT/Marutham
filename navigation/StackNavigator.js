@@ -26,7 +26,7 @@ import NotificationsScreen from '../screens/NotificationsScreen';
 import MyCEUs from '../screens/MyCEUs';
 import Visitors from '../screens/Visitors';
 import SettingsScreen from '../screens/SettingsScreen';
-
+import CreateMeeting from '../screens/CreateMeeting';
 const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {

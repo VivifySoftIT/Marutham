@@ -13,8 +13,10 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
 
 const Messages = ({ navigation }) => {
@@ -22,10 +24,16 @@ const Messages = ({ navigation }) => {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showComposeModal, setShowComposeModal] = useState(false);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+  const [showMemberSelectionModal, setShowMemberSelectionModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [attachment, setAttachment] = useState(null);
   const [allMembers, setAllMembers] = useState([]);
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [recentMessages, setRecentMessages] = useState([]);
+  const [adminMemberId, setAdminMemberId] = useState(null);
+  const [adminSubCompanyId, setAdminSubCompanyId] = useState(null);
 
   const [formData, setFormData] = useState({
     toEmail: '',
@@ -34,100 +42,210 @@ const Messages = ({ navigation }) => {
     subject: '',
     content: '',
     recipientType: 'all',
+    messageType: 'Welcome',
+    paymentMonth: new Date().getMonth() + 1, // Current month (1-12)
+    paymentYear: new Date().getFullYear(),
   });
 
-  // Load members from API when component mounts
+  // Load members and messages from API when component mounts
   useEffect(() => {
+    loadAdminMemberInfo();
     loadMembers();
+    loadMessages();
   }, []);
+
+  // Three-tier admin member ID lookup (matches Reports.js pattern)
+  const loadAdminMemberInfo = async () => {
+    try {
+      // Tier 1: Check AsyncStorage
+      const storedMemberId = await AsyncStorage.getItem('memberId');
+      if (storedMemberId) {
+        console.log('Messages - Member ID found in storage:', storedMemberId);
+        const memberId = parseInt(storedMemberId);
+        try {
+          const memberData = await ApiService.getMemberById(memberId);
+          if (memberData && memberData.isActive) {
+            setAdminMemberId(memberId);
+            setAdminSubCompanyId(memberData.subCompanyId);
+            console.log('Messages - Admin member loaded from storage:', memberId, 'SubCompany:', memberData.subCompanyId);
+            return memberId;
+          }
+        } catch (error) {
+          console.log('Messages - Stored member ID invalid, continuing to lookup...');
+        }
+      }
+
+      console.log('Messages - Member ID not in storage, attempting to look up...');
+
+      // Tier 2: Get by User ID
+      const userId = await AsyncStorage.getItem('userId');
+      const fullName = await AsyncStorage.getItem('fullName');
+      
+      if (userId) {
+        try {
+          console.log('Messages - Trying GetByUserId with userId:', userId);
+          const memberData = await ApiService.getMemberByUserId(parseInt(userId));
+          if (memberData && memberData.id) {
+            await AsyncStorage.setItem('memberId', memberData.id.toString());
+            setAdminMemberId(memberData.id);
+            setAdminSubCompanyId(memberData.subCompanyId);
+            console.log('Messages - Member found via GetByUserId:', memberData.id, 'SubCompany:', memberData.subCompanyId);
+            return memberData.id;
+          }
+        } catch (error) {
+          console.log('Messages - GetByUserId failed, trying name search:', error);
+        }
+      }
+
+      // Tier 3: Search by name
+      if (fullName) {
+        try {
+          console.log('Messages - Searching members by name:', fullName);
+          const members = await ApiService.getMembers();
+          const member = members.find(m => 
+            m.name && 
+            m.name.trim().toLowerCase() === fullName.trim().toLowerCase() &&
+            m.isActive
+          );
+          if (member) {
+            await AsyncStorage.setItem('memberId', member.id.toString());
+            setAdminMemberId(member.id);
+            setAdminSubCompanyId(member.subCompanyId);
+            console.log('Messages - Member found by name:', member.id, 'SubCompany:', member.subCompanyId);
+            return member.id;
+          }
+        } catch (error) {
+          console.log('Messages - Name search failed:', error);
+        }
+      }
+
+      console.warn('Messages - Could not determine admin member ID');
+      return null;
+    } catch (error) {
+      console.error('Messages - Error loading admin member info:', error);
+      return null;
+    }
+  };
 
   const loadMembers = async () => {
     try {
       setLoadingMembers(true);
+      console.log('Messages - Loading members...');
       const members = await ApiService.getMembers();
-      setAllMembers(members || []);
-      console.log('Members loaded:', members?.length);
+      console.log('Messages - Raw members response:', members);
+      const activeMembers = (members || []).filter(m => m.isActive);
+      console.log('Messages - Active members count:', activeMembers.length);
+      console.log('Messages - Active members:', activeMembers);
+      setAllMembers(activeMembers);
     } catch (error) {
-      console.error('Error loading members:', error);
+      console.error('Messages - Error loading members:', error);
       Alert.alert('Error', 'Failed to load members list');
     } finally {
       setLoadingMembers(false);
     }
   };
 
+  const loadMessages = async () => {
+    try {
+      setLoadingMessages(true);
+      const messages = await ApiService.getMessageNotifications();
+      setRecentMessages(messages || []);
+      console.log('Messages loaded:', messages?.length);
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
   const messageTemplates = [
     {
       id: 1,
-      title: 'Payment Reminder',
-      icon: 'cash-clock',
-      color: '#FF9800',
-      description: 'Send payment reminder to unpaid members',
-      defaultSubject: 'Payment Reminder - Alaigal Membership',
-      defaultContent: 'Dear Member,\n\nThis is a friendly reminder that your membership payment is due.\n\nPlease make the payment at your earliest convenience.\n\nThank you,\nAlaigal Team',
-      recipientType: 'unpaid'
-    },
-    {
-      id: 2,
-      title: 'Welcome Message',
-      icon: 'hand-wave',
-      color: '#4CAF50',
-      description: 'Welcome new members',
-      defaultSubject: 'Welcome to Alaigal!',
-      defaultContent: 'Dear Member,\n\nWelcome to Alaigal! We are excited to have you as part of our community.\n\nFeel free to connect with other members and grow your business together.\n\nBest regards,\nAlaigal Team',
-      recipientType: 'all'
-    },
-    {
-      id: 3,
       title: 'Birthday Wish',
       icon: 'cake-variant',
       color: '#E91E63',
       description: 'Send birthday wishes to members',
       defaultSubject: 'Happy Birthday! 🎉',
       defaultContent: 'Dear Member,\n\nWishing you a wonderful birthday filled with joy and success!\n\nMay this year bring you great opportunities and prosperity.\n\nHappy Birthday!\nAlaigal Team',
-      recipientType: 'birthday'
+      messageType: 'Birthday'
     },
     {
-      id: 4,
+      id: 2,
+      title: 'Payment Reminder',
+      icon: 'cash-clock',
+      color: '#FF9800',
+      description: 'Send payment reminder (validates payment status)',
+      defaultSubject: 'Payment Reminder - Alaigal Membership',
+      defaultContent: 'Dear Member,\n\nThis is a friendly reminder that your membership payment is due.\n\nPlease make the payment at your earliest convenience.\n\nThank you,\nAlaigal Team',
+      messageType: 'Payment'
+    },
+    {
+      id: 3,
       title: 'Event Notification',
       icon: 'calendar-star',
       color: '#2196F3',
       description: 'Notify members about upcoming events',
       defaultSubject: 'Upcoming Event - Alaigal Networking',
       defaultContent: 'Dear Member,\n\nWe are excited to invite you to our upcoming networking event!\n\nEvent Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nLooking forward to seeing you there!\n\nAlaigal Team',
-      recipientType: 'all'
+      messageType: 'Event'
+    },
+    {
+      id: 4,
+      title: 'Meeting Notification',
+      icon: 'account-group',
+      color: '#00BCD4',
+      description: 'Notify members about meetings',
+      defaultSubject: 'Meeting Notification - Alaigal',
+      defaultContent: 'Dear Member,\n\nYou are invited to attend our upcoming meeting.\n\nMeeting Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nPlease confirm your attendance.\n\nAlaigal Team',
+      messageType: 'Meeting'
     },
     {
       id: 5,
-      title: 'Custom Message',
-      icon: 'email-outline',
-      color: '#9C27B0',
-      description: 'Send custom message to members',
-      defaultSubject: '',
-      defaultContent: '',
-      recipientType: 'all'
+      title: 'Welcome Message',
+      icon: 'hand-wave',
+      color: '#4CAF50',
+      description: 'Welcome new members',
+      defaultSubject: 'Welcome to Alaigal!',
+      defaultContent: 'Dear Member,\n\nWelcome to Alaigal! We are excited to have you as part of our community.\n\nFeel free to connect with other members and grow your business together.\n\nBest regards,\nAlaigal Team',
+      messageType: 'Welcome'
     },
   ];
 
-  const unpaidMembers = [
-    { id: 1, name: 'John Doe', email: 'john@example.com', amount: 5000 },
-    { id: 2, name: 'Sarah Smith', email: 'sarah@example.com', amount: 5000 },
-    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', amount: 5000 },
-  ];
+  const toggleMemberSelection = (member) => {
+    setSelectedMembers(prev => {
+      const isSelected = prev.some(m => m.id === member.id);
+      if (isSelected) {
+        return prev.filter(m => m.id !== member.id);
+      } else {
+        return [...prev, member];
+      }
+    });
+  };
 
-  const birthdayMembers = [
-    { id: 1, name: 'Emma Wilson', email: 'emma@example.com', date: '2026-01-15' },
-    { id: 2, name: 'David Lee', email: 'david@example.com', date: '2026-01-20' },
-  ];
+  const selectAllMembers = () => {
+    if (selectedMembers.length === allMembers.length) {
+      setSelectedMembers([]);
+    } else {
+      setSelectedMembers([...allMembers]);
+    }
+  };
 
   const handleSelectTemplate = (template) => {
     setSelectedTemplate(template);
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
     setFormData({
       toEmail: '',
       toMemberName: '',
+      toMemberId: '',
       subject: template.defaultSubject,
       content: template.defaultContent,
-      recipientType: template.recipientType,
+      recipientType: 'all',
+      messageType: template.messageType,
+      paymentMonth: currentMonth,
+      paymentYear: currentYear,
     });
+    setSelectedMembers([]);
     setShowTemplateModal(false);
     setShowComposeModal(true);
   };
@@ -167,8 +285,8 @@ const Messages = ({ navigation }) => {
       Alert.alert('Error', 'Please select a template');
       return false;
     }
-    if (!formData.toEmail.trim() && selectedTemplate.recipientType === 'all') {
-      Alert.alert('Error', 'Please enter recipient email');
+    if (formData.recipientType === 'member' && selectedMembers.length === 0) {
+      Alert.alert('Error', 'Please select at least one member');
       return false;
     }
     if (!formData.subject.trim()) {
@@ -179,6 +297,14 @@ const Messages = ({ navigation }) => {
       Alert.alert('Error', 'Please enter message content');
       return false;
     }
+    if (!adminMemberId) {
+      Alert.alert('Error', 'Admin member ID not found. Please try again.');
+      return false;
+    }
+    if (!adminSubCompanyId) {
+      Alert.alert('Error', 'Sub-company ID not found. Please try again.');
+      return false;
+    }
     return true;
   };
 
@@ -187,46 +313,105 @@ const Messages = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // Determine recipients based on template type
-      let recipients = [];
-      
-      if (selectedTemplate.recipientType === 'unpaid') {
-        recipients = unpaidMembers.map(m => m.email);
-      } else if (selectedTemplate.recipientType === 'birthday') {
-        recipients = birthdayMembers.map(m => m.email);
-      } else {
-        recipients = [formData.toEmail];
+      // Format member IDs as comma-separated string
+      let memberIds = null;
+      if (formData.recipientType === 'member' && selectedMembers.length > 0) {
+        memberIds = selectedMembers.map(m => m.id).join(',');
       }
 
-      // TODO: Call API to send message
-      console.log('Sending message:', {
-        template: selectedTemplate.title,
-        recipients,
-        subject: formData.subject,
-        content: formData.content,
-        attachment: attachment?.name,
-      });
+      // Prepare notification data
+      const notificationData = {
+        MessageType: formData.messageType,
+        MemberIds: memberIds,
+        Subject: formData.subject.trim(),
+        Content: formData.content.trim(),
+        AttachmentUrl: attachment?.uri || null,
+        CreatedBy: adminMemberId,
+        SubCompanyId: adminSubCompanyId,
+      };
+
+      // Add payment-specific fields if Payment type
+      if (formData.messageType === 'Payment') {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        notificationData.PaymentForMonth = `${monthNames[formData.paymentMonth - 1]} ${formData.paymentYear}`;
+        notificationData.PaymentDate = new Date().toISOString();
+      }
+
+      console.log('Sending message notification:', notificationData);
+
+      // Call API to create message notification
+      const response = await ApiService.createMessageNotification(notificationData);
+
+      console.log('Message sent successfully:', response);
 
       Alert.alert(
         'Success',
-        `Message sent to ${recipients.length} recipient(s)!`,
+        `Message sent successfully!${formData.recipientType === 'all' ? ' (All members)' : ` (${selectedMembers.length} member${selectedMembers.length > 1 ? 's' : ''})`}`,
         [
           {
             text: 'OK',
             onPress: () => {
               setShowComposeModal(false);
               setSelectedTemplate(null);
-              setFormData({ toEmail: '', subject: '', content: '', recipientType: 'all' });
+              const currentMonth = new Date().getMonth() + 1;
+              const currentYear = new Date().getFullYear();
+              setFormData({ 
+                toEmail: '', 
+                toMemberName: '',
+                toMemberId: '',
+                subject: '', 
+                content: '', 
+                recipientType: 'all',
+                messageType: 'Welcome',
+                paymentMonth: currentMonth,
+                paymentYear: currentYear,
+              });
+              setSelectedMembers([]);
               setAttachment(null);
+              loadMessages(); // Reload messages
             },
           },
         ]
       );
     } catch (error) {
-      Alert.alert('Error', 'Failed to send message');
+      console.error('Error sending message:', error);
+      let errorMessage = 'Failed to send message';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    Alert.alert(
+      'Delete Message',
+      'Are you sure you want to delete this message?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await ApiService.deleteMessageNotification(messageId);
+              Alert.alert('Success', 'Message deleted successfully');
+              loadMessages();
+            } catch (error) {
+              console.error('Error deleting message:', error);
+              Alert.alert('Error', 'Failed to delete message');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderTemplateCard = ({ item }) => (
@@ -251,12 +436,10 @@ const Messages = ({ navigation }) => {
     if (!selectedTemplate) return null;
 
     const getRecipientInfo = () => {
-      if (selectedTemplate.recipientType === 'unpaid') {
-        return `${unpaidMembers.length} unpaid members`;
-      } else if (selectedTemplate.recipientType === 'birthday') {
-        return `${birthdayMembers.length} birthday members`;
+      if (formData.recipientType === 'all') {
+        return 'All active members';
       }
-      return 'Custom recipient';
+      return `${selectedMembers.length} selected member${selectedMembers.length !== 1 ? 's' : ''}`;
     };
 
     return (
@@ -287,7 +470,7 @@ const Messages = ({ navigation }) => {
               <View style={styles.templateInfoText}>
                 <Text style={styles.templateInfoTitle}>{selectedTemplate.title}</Text>
                 <Text style={styles.templateInfoSubtitle}>
-                  Recipients: {getRecipientInfo()}
+                  Type: {formData.messageType}
                 </Text>
               </View>
             </View>
@@ -312,7 +495,7 @@ const Messages = ({ navigation }) => {
                     styles.recipientTypeText,
                     formData.recipientType === 'member' && styles.recipientTypeTextActive
                   ]}>
-                    Specific Member
+                    Specific Members
                   </Text>
                 </TouchableOpacity>
 
@@ -321,7 +504,10 @@ const Messages = ({ navigation }) => {
                     styles.recipientTypeButton,
                     formData.recipientType === 'all' && styles.recipientTypeButtonActive
                   ]}
-                  onPress={() => handleInputChange('recipientType', 'all')}
+                  onPress={() => {
+                    handleInputChange('recipientType', 'all');
+                    setSelectedMembers([]);
+                  }}
                 >
                   <Icon 
                     name="account-multiple" 
@@ -338,56 +524,39 @@ const Messages = ({ navigation }) => {
               </View>
             </View>
 
-            {/* Recipient Email (if specific member) */}
+            {/* Member Selection Button (if specific members) */}
             {formData.recipientType === 'member' && (
-              <View style={[styles.section, styles.memberSelectionSection]}>
-                <Text style={styles.label}>Select Member *</Text>
+              <View style={styles.section}>
+                <Text style={styles.label}>Select Members *</Text>
                 <TouchableOpacity
-                  style={styles.memberDropdownButton}
-                  onPress={() => setShowMemberDropdown(!showMemberDropdown)}
-                  disabled={loadingMembers}
+                  style={styles.memberSelectionButton}
+                  onPress={() => setShowMemberSelectionModal(true)}
                 >
-                  <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-                  <Text style={[styles.input, { color: formData.toMemberName ? '#333' : '#999' }]}>
-                    {loadingMembers ? 'Loading members...' : (formData.toMemberName || 'Select member')}
+                  <Icon name="account-multiple" size={20} color="#4A90E2" style={styles.icon} />
+                  <Text style={[styles.input, { color: selectedMembers.length > 0 ? '#333' : '#999' }]}>
+                    {selectedMembers.length > 0 
+                      ? `${selectedMembers.length} member${selectedMembers.length > 1 ? 's' : ''} selected`
+                      : 'Tap to select members'}
                   </Text>
-                  <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
+                  <Icon name="chevron-right" size={20} color="#4A90E2" />
                 </TouchableOpacity>
-
-                {showMemberDropdown && (
-                  <ScrollView 
-                    style={styles.memberDropdownList}
-                    scrollEnabled={true}
-                    nestedScrollEnabled={true}
-                  >
-                    {loadingMembers ? (
-                      <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="small" color="#4A90E2" />
-                        <Text style={styles.loadingText}>Loading members...</Text>
-                      </View>
-                    ) : allMembers.length > 0 ? (
-                      allMembers.map(member => (
-                        <TouchableOpacity
-                          key={member.id}
-                          style={styles.memberDropdownItem}
-                          onPress={() => handleSelectMember(member)}
-                        >
-                          <View style={styles.memberItemContent}>
-                            <Text style={styles.memberName}>{member.name}</Text>
-                            <Text style={styles.memberEmail}>{member.email || member.phone || 'No contact'}</Text>
-                          </View>
-                          {formData.toMemberName === member.name && (
-                            <Icon name="check" size={20} color="#4A90E2" />
-                          )}
+                
+                {selectedMembers.length > 0 && (
+                  <View style={styles.selectedMembersPreview}>
+                    {selectedMembers.slice(0, 3).map(member => (
+                      <View key={member.id} style={styles.selectedMemberChip}>
+                        <Text style={styles.selectedMemberChipText}>{member.name}</Text>
+                        <TouchableOpacity onPress={() => toggleMemberSelection(member)}>
+                          <Icon name="close-circle" size={16} color="#666" />
                         </TouchableOpacity>
-                      ))
-                    ) : (
-                      <View style={styles.emptyContainer}>
-                        <Icon name="account-off" size={32} color="#D1D5DB" />
-                        <Text style={styles.emptyText}>No members found</Text>
                       </View>
+                    ))}
+                    {selectedMembers.length > 3 && (
+                      <Text style={styles.moreSelectedText}>
+                        +{selectedMembers.length - 3} more
+                      </Text>
                     )}
-                  </ScrollView>
+                  </View>
                 )}
               </View>
             )}
@@ -397,9 +566,75 @@ const Messages = ({ navigation }) => {
               <View style={styles.infoCard}>
                 <Icon name="information" size={20} color="#2196F3" />
                 <Text style={styles.infoText}>
-                  This message will be sent to all active members
+                  This message will be sent to all active members in your sub-company
                 </Text>
               </View>
+            )}
+
+            {/* Payment Type Warning */}
+            {formData.messageType === 'Payment' && (
+              <>
+                <View style={[styles.infoCard, { backgroundColor: '#FFF3E0' }]}>
+                  <Icon name="alert" size={20} color="#FF9800" />
+                  <Text style={[styles.infoText, { color: '#E65100' }]}>
+                    Payment messages are validated. Only members with valid payment records will receive this message.
+                  </Text>
+                </View>
+
+                {/* Payment Month/Year Selection */}
+                <View style={styles.section}>
+                  <Text style={styles.label}>Payment Period *</Text>
+                  <View style={styles.paymentPeriodContainer}>
+                    {/* Month Picker */}
+                    <View style={styles.paymentPeriodItem}>
+                      <Text style={styles.paymentPeriodLabel}>Month</Text>
+                      <View style={styles.pickerContainer}>
+                        <Icon name="calendar-month" size={20} color="#4A90E2" style={styles.pickerIcon} />
+                        <Picker
+                          selectedValue={formData.paymentMonth}
+                          onValueChange={(value) => handleInputChange('paymentMonth', value)}
+                          style={styles.picker}
+                        >
+                          <Picker.Item label="January" value={1} />
+                          <Picker.Item label="February" value={2} />
+                          <Picker.Item label="March" value={3} />
+                          <Picker.Item label="April" value={4} />
+                          <Picker.Item label="May" value={5} />
+                          <Picker.Item label="June" value={6} />
+                          <Picker.Item label="July" value={7} />
+                          <Picker.Item label="August" value={8} />
+                          <Picker.Item label="September" value={9} />
+                          <Picker.Item label="October" value={10} />
+                          <Picker.Item label="November" value={11} />
+                          <Picker.Item label="December" value={12} />
+                        </Picker>
+                      </View>
+                    </View>
+
+                    {/* Year Picker */}
+                    <View style={styles.paymentPeriodItem}>
+                      <Text style={styles.paymentPeriodLabel}>Year</Text>
+                      <View style={styles.pickerContainer}>
+                        <Icon name="calendar" size={20} color="#4A90E2" style={styles.pickerIcon} />
+                        <Picker
+                          selectedValue={formData.paymentYear}
+                          onValueChange={(value) => handleInputChange('paymentYear', value)}
+                          style={styles.picker}
+                        >
+                          {Array.from({ length: 5 }, (_, i) => {
+                            const year = new Date().getFullYear() - 1 + i;
+                            return <Picker.Item key={year} label={year.toString()} value={year} />;
+                          })}
+                        </Picker>
+                      </View>
+                    </View>
+                  </View>
+                  <Text style={styles.paymentPeriodHint}>
+                    Reminder for: {['January', 'February', 'March', 'April', 'May', 'June', 
+                                   'July', 'August', 'September', 'October', 'November', 'December'][formData.paymentMonth - 1]} {formData.paymentYear}
+                  </Text>
+                </View>
+              </>
             )}
 
             {/* Subject */}
@@ -434,24 +669,18 @@ const Messages = ({ navigation }) => {
               </View>
             </View>
 
-            {/* Attachment */}
-            <View style={styles.section}>
-              <Text style={styles.label}>Attachment (Optional)</Text>
-              <TouchableOpacity
-                style={styles.attachmentButton}
-                onPress={handlePickAttachment}
-              >
-                <Icon name="paperclip" size={20} color="#4A90E2" />
-                <Text style={styles.attachmentButtonText}>
-                  {attachment ? `Attached: ${attachment.name}` : 'Attach File'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
             {/* Preview */}
             <View style={styles.section}>
               <Text style={styles.label}>Preview</Text>
               <View style={styles.previewCard}>
+                <View style={styles.previewHeader}>
+                  <Text style={styles.previewLabel}>To:</Text>
+                  <Text style={styles.previewValue}>{getRecipientInfo()}</Text>
+                </View>
+                <View style={styles.previewHeader}>
+                  <Text style={styles.previewLabel}>Type:</Text>
+                  <Text style={styles.previewValue}>{formData.messageType}</Text>
+                </View>
                 <Text style={styles.previewSubject}>{formData.subject}</Text>
                 <Text style={styles.previewContent}>{formData.content}</Text>
               </View>
@@ -516,35 +745,64 @@ const Messages = ({ navigation }) => {
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Icon name="account-alert" size={24} color="#FF9800" />
-            <Text style={styles.statLabel}>Unpaid Members</Text>
-            <Text style={styles.statValue}>{unpaidMembers.length}</Text>
+            <Icon name="email-send" size={24} color="#4A90E2" />
+            <Text style={styles.statLabel}>Total Messages</Text>
+            <Text style={styles.statValue}>{recentMessages.length}</Text>
           </View>
           <View style={styles.statCard}>
-            <Icon name="cake-variant" size={24} color="#E91E63" />
-            <Text style={styles.statLabel}>Birthdays This Month</Text>
-            <Text style={styles.statValue}>{birthdayMembers.length}</Text>
+            <Icon name="account-multiple" size={24} color="#4CAF50" />
+            <Text style={styles.statLabel}>Active Members</Text>
+            <Text style={styles.statValue}>{allMembers.length}</Text>
           </View>
         </View>
 
         {/* Recent Messages */}
         <Text style={styles.sectionTitle}>Recent Messages</Text>
-        <View style={styles.recentMessagesContainer}>
-          <View style={styles.messageItem}>
-            <Icon name="check-circle" size={20} color="#4CAF50" />
-            <View style={styles.messageItemText}>
-              <Text style={styles.messageItemTitle}>Payment Reminder</Text>
-              <Text style={styles.messageItemDate}>Sent to 3 members • Jan 6, 2026</Text>
-            </View>
+        {loadingMessages ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#4A90E2" />
+            <Text style={styles.loadingText}>Loading messages...</Text>
           </View>
-          <View style={styles.messageItem}>
-            <Icon name="check-circle" size={20} color="#4CAF50" />
-            <View style={styles.messageItemText}>
-              <Text style={styles.messageItemTitle}>Welcome Message</Text>
-              <Text style={styles.messageItemDate}>Sent to 1 member • Jan 5, 2026</Text>
-            </View>
+        ) : recentMessages.length > 0 ? (
+          <View style={styles.recentMessagesContainer}>
+            {recentMessages.slice(0, 5).map((message) => (
+              <View key={message.id} style={styles.messageItem}>
+                <Icon 
+                  name={
+                    message.messageType === 'Birthday' ? 'cake-variant' :
+                    message.messageType === 'Payment' ? 'cash-clock' :
+                    message.messageType === 'Event' ? 'calendar-star' :
+                    message.messageType === 'Meeting' ? 'account-group' :
+                    'hand-wave'
+                  } 
+                  size={20} 
+                  color={
+                    message.messageType === 'Birthday' ? '#E91E63' :
+                    message.messageType === 'Payment' ? '#FF9800' :
+                    message.messageType === 'Event' ? '#2196F3' :
+                    message.messageType === 'Meeting' ? '#00BCD4' :
+                    '#4CAF50'
+                  } 
+                />
+                <View style={styles.messageItemText}>
+                  <Text style={styles.messageItemTitle}>{message.subject}</Text>
+                  <Text style={styles.messageItemDate}>
+                    {message.messageType} • {message.memberIds ? `${message.memberIds.split(',').length} member${message.memberIds.split(',').length > 1 ? 's' : ''}` : 'All members'} • {new Date(message.createdDate).toLocaleDateString()}
+                  </Text>
+                </View>
+                <TouchableOpacity onPress={() => handleDeleteMessage(message.id)}>
+                  <Icon name="delete" size={20} color="#F44336" />
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
-        </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <Icon name="email-off" size={48} color="#D1D5DB" />
+            <Text style={styles.emptyText}>No messages sent yet</Text>
+            <Text style={styles.emptySubtext}>Start by selecting a template above</Text>
+          </View>
+        )}
 
         <View style={{ height: 30 }} />
       </ScrollView>
@@ -588,6 +846,98 @@ const Messages = ({ navigation }) => {
       </Modal>
 
       {renderComposeModal()}
+
+      {/* Member Selection Modal */}
+      <Modal
+        visible={showMemberSelectionModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowMemberSelectionModal(false)}
+      >
+        <SafeAreaView style={styles.memberSelectionModalContainer}>
+          <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+
+          {/* Modal Header */}
+          <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowMemberSelectionModal(false)}>
+              <Icon name="close" size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Select Members</Text>
+            <View style={styles.headerRightButtons}>
+              <TouchableOpacity onPress={loadMembers} style={styles.refreshButton}>
+                <Icon name="refresh" size={20} color="#FFF" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={selectAllMembers}>
+                <Text style={styles.selectAllText}>
+                  {selectedMembers.length === allMembers.length && allMembers.length > 0 ? 'Deselect All' : 'Select All'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+
+          {/* Selected Count */}
+          <View style={styles.selectedCountContainer}>
+            <Icon name="account-check" size={20} color="#4A90E2" />
+            <Text style={styles.selectedCountText}>
+              {selectedMembers.length} member{selectedMembers.length !== 1 ? 's' : ''} selected
+            </Text>
+          </View>
+
+          {/* Members List */}
+          {loadingMembers ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4A90E2" />
+              <Text style={styles.loadingText}>Loading members...</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={allMembers}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => {
+                const isSelected = selectedMembers.some(m => m.id === item.id);
+                return (
+                  <TouchableOpacity
+                    style={[styles.memberSelectionItem, isSelected && styles.memberSelectionItemSelected]}
+                    onPress={() => toggleMemberSelection(item)}
+                  >
+                    <View style={styles.memberSelectionItemContent}>
+                      <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                        {isSelected && <Icon name="check" size={16} color="#FFF" />}
+                      </View>
+                      <View style={styles.memberInfo}>
+                        <Text style={styles.memberSelectionName}>{item.name}</Text>
+                        <Text style={styles.memberSelectionContact}>
+                          {item.email || item.phone || 'No contact'}
+                        </Text>
+                      </View>
+                    </View>
+                    {isSelected && <Icon name="check-circle" size={24} color="#4A90E2" />}
+                  </TouchableOpacity>
+                );
+              }}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyContainer}>
+                  <Icon name="account-off" size={48} color="#D1D5DB" />
+                  <Text style={styles.emptyText}>No members found</Text>
+                  <Text style={styles.emptySubtext}>
+                    {allMembers.length === 0 ? 'No active members available' : 'Try refreshing the screen'}
+                  </Text>
+                </View>
+              )}
+            />
+          )}
+
+          {/* Done Button */}
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={() => setShowMemberSelectionModal(false)}
+          >
+            <Text style={styles.doneButtonText}>
+              Done ({selectedMembers.length} selected)
+            </Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -1002,6 +1352,184 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     marginTop: 8,
+  },
+  emptySubtext: {
+    fontSize: 11,
+    color: '#BBB',
+    marginTop: 4,
+  },
+  memberSelectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 12,
+    minHeight: 50,
+  },
+  selectedMembersPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 10,
+    gap: 8,
+  },
+  selectedMemberChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  selectedMemberChipText: {
+    fontSize: 12,
+    color: '#1976D2',
+    fontWeight: '500',
+  },
+  moreSelectedText: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    alignSelf: 'center',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    marginBottom: 6,
+  },
+  previewLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#666',
+    width: 60,
+  },
+  previewValue: {
+    fontSize: 12,
+    color: '#333',
+    flex: 1,
+  },
+  memberSelectionModalContainer: {
+    flex: 1,
+    backgroundColor: '#87CEEB',
+    marginTop: 50,
+  },
+  selectAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  headerRightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  refreshButton: {
+    padding: 4,
+  },
+  selectedCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  selectedCountText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1976D2',
+  },
+  memberSelectionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  memberSelectionItemSelected: {
+    backgroundColor: '#F0F8FF',
+  },
+  memberSelectionItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  memberInfo: {
+    flex: 1,
+  },
+  memberSelectionName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  memberSelectionContact: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  doneButton: {
+    backgroundColor: '#4A90E2',
+    paddingVertical: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  doneButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FFF',
+  },
+  paymentPeriodContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  paymentPeriodItem: {
+    flex: 1,
+  },
+  paymentPeriodLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 6,
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 12,
+    minHeight: 50,
+  },
+  pickerIcon: {
+    marginRight: 10,
+  },
+  picker: {
+    flex: 1,
+    height: 50,
+  },
+  paymentPeriodHint: {
+    fontSize: 12,
+    color: '#4A90E2',
+    marginTop: 8,
+    fontWeight: '600',
   },
 });
 

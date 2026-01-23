@@ -29,7 +29,7 @@ import ReferralReports from '../screens/ReferralReports';
 import AdminNotificationsScreen from '../screens/AdminNotificationsScreen';
 import Visitors from '../screens/Visitors';
 import SettingsScreen from '../screens/SettingsScreen';
-
+import CreateMeeting from '../screens/CreateMeeting';
 const Drawer = createDrawerNavigator();
 
 const DrawerNavigator = ({ route }) => {
@@ -87,6 +87,7 @@ const DrawerNavigator = ({ route }) => {
       <Drawer.Screen name="ReferralReports" component={ReferralReports} />
       <Drawer.Screen name="AdminNotificationsScreen" component={AdminNotificationsScreen} />
       <Drawer.Screen name="Visitors" component={Visitors} />
+      <Drawer.Screen name="CreateMeeting" component={CreateMeeting} />
     </Drawer.Navigator>
   );
 };

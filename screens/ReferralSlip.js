@@ -376,7 +376,7 @@ const ReferralSlip = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Referral Slip</Text>
+        <Text style={styles.headerTitle}>Referral</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 
@@ -617,7 +617,7 @@ const ReferralSlip = () => {
             ) : (
               <>
                 <Icon name="check-circle" size={20} color="#FFF" />
-                <Text style={styles.confirmButtonText}>Confirm Referral Slip</Text>
+                <Text style={styles.confirmButtonText}>Confirm Referral</Text>
               </>
             )}
           </TouchableOpacity>

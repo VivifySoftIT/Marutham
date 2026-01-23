@@ -194,6 +194,10 @@ class ApiService {
     return await this.request(`/api/Members/${id}`);
   }
 
+  async getMemberByUserId(userId) {
+    return await this.request(`/api/Members/GetByUserId/${userId}`);
+  }
+
   async searchMembers(query) {
     return await this.request(`/api/Members/search?query=${encodeURIComponent(query)}`);
   }
@@ -296,6 +300,37 @@ class ApiService {
     return await this.request(endpoint);
   }
 
+  async getAttendanceWithFilters(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
+    let endpoint = '/api/Attendance';
+    const params = [];
+    
+    if (fromDate) params.push(`fromDate=${fromDate}`);
+    if (toDate) params.push(`toDate=${toDate}`);
+    if (period) params.push(`period=${period}`);
+    if (memberId) params.push(`memberId=${memberId}`);
+    if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
+  }
+
+  async getAttendanceReport(fromDate = null, toDate = null) {
+    let endpoint = '/api/Attendance/report';
+    const params = [];
+    
+    if (fromDate) params.push(`startDate=${fromDate}`);
+    if (toDate) params.push(`endDate=${toDate}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
+  }
+
   async getAttendanceById(id) {
     return await this.request(`/api/Attendance/${id}`);
   }
@@ -309,11 +344,12 @@ class ApiService {
     return await this.request(endpoint);
   }
 
-  async getAttendanceReport(startDate = null, endDate = null) {
+  async getAttendanceReport(startDate = null, endDate = null, memberId = null) {
     let endpoint = '/api/Attendance/report';
     const params = [];
     if (startDate) params.push(`startDate=${startDate}`);
     if (endDate) params.push(`endDate=${endDate}`);
+    if (memberId) params.push(`memberId=${memberId}`);
     if (params.length > 0) endpoint += `?${params.join('&')}`;
     return await this.request(endpoint);
   }
@@ -353,6 +389,56 @@ class ApiService {
 
   async deleteBatch(id) {
     return await this.request(`/api/Batches/${id}`, 'DELETE');
+  }
+
+  // ==================== MAIN COMPANIES APIs ====================
+  async getMainCompanies() {
+    return await this.request('/api/MainCompanies');
+  }
+
+  async getMainCompany(id) {
+    return await this.request(`/api/MainCompanies/${id}`);
+  }
+
+  async getMainCompanyByCode(code) {
+    return await this.request(`/api/MainCompanies/code/${code}`);
+  }
+
+  async createMainCompany(companyData) {
+    return await this.request('/api/MainCompanies', 'POST', companyData);
+  }
+
+  async updateMainCompany(id, companyData) {
+    return await this.request(`/api/MainCompanies/${id}`, 'PUT', companyData);
+  }
+
+  async deleteMainCompany(id) {
+    return await this.request(`/api/MainCompanies/${id}`, 'DELETE');
+  }
+
+  // ==================== SUB COMPANIES APIs ====================
+  async getSubCompanies() {
+    return await this.request('/api/SubCompanies');
+  }
+
+  async getSubCompany(id) {
+    return await this.request(`/api/SubCompanies/${id}`);
+  }
+
+  async getSubCompaniesByMainCompany(mainCompanyId) {
+    return await this.request(`/api/SubCompanies/maincompany/${mainCompanyId}`);
+  }
+
+  async createSubCompany(subCompanyData) {
+    return await this.request('/api/SubCompanies', 'POST', subCompanyData);
+  }
+
+  async updateSubCompany(id, subCompanyData) {
+    return await this.request(`/api/SubCompanies/${id}`, 'PUT', subCompanyData);
+  }
+
+  async deleteSubCompany(id) {
+    return await this.request(`/api/SubCompanies/${id}`, 'DELETE');
   }
 
   // ==================== INVENTORY APIs ====================
@@ -405,6 +491,71 @@ class ApiService {
     return await this.request(`/api/Notices/${id}`, 'DELETE');
   }
 
+  // ==================== MESSAGE NOTIFICATIONS APIs ====================
+  async getMessageNotifications() {
+    return await this.request('/api/MessageNotifications');
+  }
+
+  async getMessageNotification(id) {
+    return await this.request(`/api/MessageNotifications/${id}`);
+  }
+
+  async createMessageNotification(notificationData) {
+    return await this.request('/api/MessageNotifications', 'POST', notificationData);
+  }
+
+  async updateMessageNotification(id, notificationData) {
+    return await this.request(`/api/MessageNotifications/${id}`, 'PUT', notificationData);
+  }
+
+  async deleteMessageNotification(id) {
+    return await this.request(`/api/MessageNotifications/${id}`, 'DELETE');
+  }
+
+  async getMessageNotificationReport(type = null, period = 'daily', adminMemberId = null) {
+    let endpoint = '/api/MessageNotifications/report';
+    const params = [];
+    
+    if (type) params.push(`type=${type}`);
+    if (period) params.push(`period=${period}`);
+    if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
+  }
+
+  // ==================== NOTICES APIs ====================
+  async getNotices() {
+    return await this.request('/api/Notices');
+  }
+
+  async getNotice(id) {
+    return await this.request(`/api/Notices/${id}`);
+  }
+
+  async getDashboardReminders(memberId) {
+    return await this.request(`/api/Notices/dashboard-reminders?memberId=${memberId}`);
+  }
+
+  async createNotice(noticeData) {
+    return await this.request('/api/Notices', 'POST', noticeData);
+  }
+
+  async sendNotice(id) {
+    return await this.request(`/api/Notices/${id}/send`, 'POST');
+  }
+
+  async updateNotice(id, noticeData) {
+    return await this.request(`/api/Notices/${id}`, 'PUT', noticeData);
+  }
+
+  async deleteNotice(id) {
+    return await this.request(`/api/Notices/${id}`, 'DELETE');
+  }
+
   // ==================== TYFCB APIs ====================
   async getTYFCBs() {
     return await this.request('/api/TYFCB');
@@ -414,12 +565,106 @@ class ApiService {
     return await this.request(`/api/TYFCB/${id}`);
   }
 
-  async getMemberTYFCBGiven(memberId) {
-    return await this.request(`/api/TYFCB/given/${memberId}`);
+  async getTYFCBReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
+    let endpoint = '/api/TYFCB/report';
+    const params = [];
+    
+    if (fromDate) params.push(`fromDate=${fromDate}`);
+    if (toDate) params.push(`toDate=${toDate}`);
+    if (period) params.push(`period=${period}`);
+    if (memberId) params.push(`memberId=${memberId}`);
+    if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
   }
 
-  async getMemberTYFCBReceived(memberId) {
-    return await this.request(`/api/TYFCB/received/${memberId}`);
+  async getOneToOneMeetingReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
+    let endpoint = '/api/OneToOneMeeting/report';
+    const params = [];
+    
+    if (fromDate) params.push(`fromDate=${fromDate}`);
+    if (toDate) params.push(`toDate=${toDate}`);
+    if (period) params.push(`period=${period}`);
+    if (memberId) params.push(`memberId=${memberId}`);
+    if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
+  }
+
+  async getReferralReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
+    let endpoint = '/api/Referrals/report';
+    const params = [];
+    
+    if (fromDate) params.push(`fromDate=${fromDate}`);
+    if (toDate) params.push(`toDate=${toDate}`);
+    if (period) params.push(`period=${period}`);
+    if (memberId) params.push(`memberId=${memberId}`);
+    if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
+  }
+
+  async getPaymentReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
+    let endpoint = '/api/Payments/report';
+    const params = [];
+    
+    if (fromDate) params.push(`fromDate=${fromDate}`);
+    if (toDate) params.push(`toDate=${toDate}`);
+    if (period) params.push(`period=${period}`);
+    if (memberId) params.push(`memberId=${memberId}`);
+    if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
+  }
+
+  async getAlaigalMeetingReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
+    let endpoint = '/api/MeetingDetails/report';
+    const params = [];
+    
+    if (fromDate) params.push(`fromDate=${fromDate}`);
+    if (toDate) params.push(`toDate=${toDate}`);
+    if (period) params.push(`period=${period}`);
+    if (memberId) params.push(`memberId=${memberId}`);
+    if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
+  }
+
+  async getVisitorReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
+    let endpoint = '/api/Inventory/visitors/report';
+    const params = [];
+    
+    if (fromDate) params.push(`fromDate=${fromDate}`);
+    if (toDate) params.push(`toDate=${toDate}`);
+    if (period) params.push(`period=${period}`);
+    if (memberId) params.push(`memberId=${memberId}`);
+    if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
+    
+    if (params.length > 0) {
+      endpoint += '?' + params.join('&');
+    }
+    
+    return await this.request(endpoint);
   }
 
   async createTYFCB(tyfcbData) {
@@ -535,15 +780,23 @@ class ApiService {
   }
 
   async createMeeting(meetingData) {
-    return await this.request('/api/AdminMeetings', 'POST', meetingData);
+    return await this.request('/api/MeetingDetails', 'POST', meetingData);
   }
 
   async updateMeeting(id, meetingData) {
-    return await this.request(`/api/AdminMeetings/${id}`, 'PUT', meetingData);
+    return await this.request(`/api/MeetingDetails/${id}`, 'PUT', meetingData);
   }
 
   async deleteMeeting(id) {
-    return await this.request(`/api/AdminMeetings/${id}`, 'DELETE');
+    return await this.request(`/api/MeetingDetails/${id}`, 'DELETE');
+  }
+
+  async getMeetings() {
+    return await this.request('/api/MeetingDetails');
+  }
+
+  async getMeeting(id) {
+    return await this.request(`/api/MeetingDetails/${id}`);
   }
 
   async notifyMembersAboutMeeting(meetingId) {

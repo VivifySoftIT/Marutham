@@ -322,8 +322,8 @@ const loadDashboardData = async () => {
   const quickActions = [
     { 
       id: 'send-notice', 
-      icon: 'bell-ring', 
-      title: 'Send Notice', 
+      icon: 'bullhorn', 
+      title: 'Broadcast', 
       action: () => navigation.navigate('SendNotice'),
     },
     { 
@@ -331,6 +331,12 @@ const loadDashboardData = async () => {
       icon: 'file-document', 
       title: 'Quick Report', 
       action: () => navigation.navigate('Reports'),
+    },
+    { 
+      id: 'create-meeting', 
+      icon: 'calendar-plus', 
+      title: 'Create Meeting', 
+      action: () => navigation.navigate('CreateMeeting'),
     },
   ];
 
@@ -433,7 +439,7 @@ const loadDashboardData = async () => {
               <StatCard 
                 icon="alert-circle" 
                 value={pendingPayments} 
-                label="Payment Pending"
+                label="Dues Outstanding"
                 delay={300}
               />
              
@@ -470,7 +476,7 @@ const loadDashboardData = async () => {
             </View>
             <View style={styles.welcomeIcon}>
               <TouchableOpacity onPress={() => setShowNotifications(true)}>
-                <Icon name="bell" size={36} color={waterBlueColors.primary} />
+                <Icon name="hand-wave" size={36} color={waterBlueColors.primary} />
                 {notificationCount > 0 && (
                   <View style={styles.welcomeNotificationDot}>
                     <Text style={styles.welcomeNotificationText}>{notificationCount}</Text>
@@ -553,7 +559,12 @@ const loadDashboardData = async () => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
           </View>
-          <View style={styles.quickActionsGrid}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.quickActionsScroll}
+            contentContainerStyle={styles.quickActionsContent}
+          >
             {quickActions.map((action, index) => (
               <TouchableOpacity
                 key={action.id}
@@ -572,7 +583,7 @@ const loadDashboardData = async () => {
                 </LinearGradient>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
         </Animatable.View>
 
         {/* Main Modules */}
@@ -1079,14 +1090,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginRight: 4,
   },
+  quickActionsScroll: {
+    marginHorizontal: -16,
+  },
+  quickActionsContent: {
+    paddingHorizontal: 16,
+  },
   quickActionsGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
   quickActionCard: {
-    width: '48%',
-    marginBottom: 10,
+    width: 140,
+    marginRight: 12,
     borderRadius: 14,
     overflow: 'hidden',
     elevation: 2,
@@ -1094,7 +1110,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
-    height: 90,
+    height: 100,
   },
   quickActionGradient: {
     padding: 14,

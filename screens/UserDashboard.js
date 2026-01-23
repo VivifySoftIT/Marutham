@@ -45,6 +45,48 @@ const UserDashboard = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('all'); // 'all', 'weekly', 'monthly', 'annual'
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(3);
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      type: 'birthday',
+      title: 'Birthday Reminder',
+      message: 'John Doe\'s birthday is today! 🎉',
+      time: '09:00 AM Today',
+      icon: 'cake',
+      color: '#FF6B6B',
+      backgroundColor: '#FFE5E5',
+      isRead: false,
+      canRespond: true,
+      recipientName: 'John Doe',
+    },
+    {
+      id: 2,
+      type: 'meeting',
+      title: 'Meeting Reminder',
+      message: 'Monthly board meeting at 2:00 PM',
+      time: '1 hour ago',
+      icon: 'calendar-clock',
+      color: '#4ECDC4',
+      backgroundColor: '#E8F8F7',
+      isRead: false,
+      canRespond: true,
+      meetingTitle: 'Monthly Board Meeting',
+    },
+    {
+      id: 3,
+      type: 'admin',
+      title: 'Admin Notice',
+      message: 'New safety protocols have been updated',
+      time: '2 hours ago',
+      icon: 'information',
+      color: '#45B7D1',
+      backgroundColor: '#E3F2FD',
+      isRead: false,
+      canRespond: false,
+    },
+  ]);
   
   // User statistics
   const [stats, setStats] = useState({
@@ -67,11 +109,13 @@ const UserDashboard = () => {
   useEffect(() => {
     loadUserData();
     setGreetingMessage();
+    loadDashboardReminders();
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
       loadUserData();
+      loadDashboardReminders();
     }, [])
   );
 
@@ -278,6 +322,76 @@ const UserDashboard = () => {
     }
   };
 
+  const loadDashboardReminders = async () => {
+    try {
+      const memberId = await getCurrentUserMemberId();
+      if (!memberId) {
+        console.log('UserDashboard - No memberId for reminders');
+        return;
+      }
+
+      console.log('UserDashboard - Loading dashboard reminders for memberId:', memberId);
+      const reminders = await ApiService.getDashboardReminders(memberId);
+      console.log('UserDashboard - Dashboard reminders:', reminders);
+
+      // Convert reminders to notifications format
+      const newNotifications = [];
+
+      // Add birthday notifications
+      if (reminders.teamBirthdays && reminders.teamBirthdays.length > 0) {
+        reminders.teamBirthdays.forEach((birthday, index) => {
+          newNotifications.push({
+            id: `birthday-${index}`,
+            type: 'birthday',
+            title: 'Birthday Reminder',
+            message: birthday.isToday 
+              ? `${birthday.name}'s birthday is today! 🎉`
+              : `${birthday.name}'s birthday in ${birthday.daysUntil} day${birthday.daysUntil > 1 ? 's' : ''}`,
+            time: birthday.isToday ? 'Today' : `In ${birthday.daysUntil} day${birthday.daysUntil > 1 ? 's' : ''}`,
+            icon: 'cake',
+            color: '#FF6B6B',
+            backgroundColor: '#FFE5E5',
+            isRead: false,
+            canRespond: true,
+            recipientName: birthday.name,
+            birthdayDate: birthday.birthday,
+          });
+        });
+      }
+
+      // Add meeting notifications
+      if (reminders.upcomingMeetings && reminders.upcomingMeetings.length > 0) {
+        reminders.upcomingMeetings.forEach((meeting, index) => {
+          newNotifications.push({
+            id: `meeting-${meeting.id}`,
+            type: 'meeting',
+            title: 'Meeting Reminder',
+            message: meeting.isToday
+              ? `${meeting.meetingTitle || 'Meeting'} today at ${meeting.time}`
+              : `${meeting.meetingTitle || 'Meeting'} in ${meeting.daysUntil} day${meeting.daysUntil > 1 ? 's' : ''}`,
+            time: meeting.isToday ? 'Today' : `In ${meeting.daysUntil} day${meeting.daysUntil > 1 ? 's' : ''}`,
+            icon: 'calendar-clock',
+            color: '#4ECDC4',
+            backgroundColor: '#E8F8F7',
+            isRead: false,
+            canRespond: true,
+            meetingTitle: meeting.meetingTitle,
+            meetingDate: meeting.meetingDate,
+            meetingTime: meeting.time,
+            meetingPlace: meeting.place,
+            meetingType: meeting.meetingType,
+          });
+        });
+      }
+
+      setNotifications(newNotifications);
+      setNotificationCount(newNotifications.length);
+      console.log('UserDashboard - Set notifications:', newNotifications.length);
+    } catch (error) {
+      console.error('UserDashboard - Error loading dashboard reminders:', error);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
     if (userData?.memberId) {
@@ -308,6 +422,87 @@ const UserDashboard = () => {
         },
       ]
     );
+  };
+
+  // Mark notification as read
+  const markNotificationAsRead = (notificationId) => {
+    setNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId 
+          ? { ...notif, isRead: true }
+          : notif
+      )
+    );
+    
+    // Update notification count
+    const unreadCount = notifications.filter(n => !n.isRead && n.id !== notificationId).length;
+    setNotificationCount(unreadCount);
+  };
+
+  // Clear all notifications
+  const clearAllNotifications = () => {
+    setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
+    setNotificationCount(0);
+  };
+
+  // Handle birthday response
+  const handleBirthdayResponse = (notification) => {
+    Alert.alert(
+      'Send Birthday Wishes',
+      `Send birthday wishes to ${notification.recipientName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send',
+          onPress: () => {
+            // Here you would call your API to send birthday wishes
+            Alert.alert('Success', `Birthday wishes sent to ${notification.recipientName}!`);
+            markNotificationAsRead(notification.id);
+          },
+        },
+      ]
+    );
+  };
+
+  // Handle meeting response
+  const handleMeetingResponse = (notification) => {
+    Alert.alert(
+      'Meeting Response',
+      `Respond to "${notification.meetingTitle}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Accept',
+          onPress: () => {
+            // Here you would call your API to accept meeting
+            Alert.alert('Success', 'Meeting accepted!');
+            markNotificationAsRead(notification.id);
+          },
+        },
+        {
+          text: 'Decline',
+          style: 'destructive',
+          onPress: () => {
+            // Here you would call your API to decline meeting
+            Alert.alert('Success', 'Meeting declined.');
+            markNotificationAsRead(notification.id);
+          },
+        },
+      ]
+    );
+  };
+
+  // Handle notification press
+  const handleNotificationPress = (notification) => {
+    if (notification.canRespond) {
+      if (notification.type === 'birthday') {
+        handleBirthdayResponse(notification);
+      } else if (notification.type === 'meeting') {
+        handleMeetingResponse(notification);
+      }
+    } else {
+      markNotificationAsRead(notification.id);
+    }
   };
 
   // Activity Stat Card with Water Color Theme and Shadows
@@ -404,7 +599,22 @@ const UserDashboard = () => {
             </View>
             
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity onPress={handleLogout} style={styles.headerActionButton}>
+              <TouchableOpacity 
+                onPress={() => setShowNotifications(true)} 
+                style={styles.headerActionButton}
+              >
+                <Icon name="bell" size={22} color="#FFF" />
+                {notificationCount > 0 && (
+                  <View style={styles.notificationDot}>
+                    <Text style={styles.notificationDotText}>{notificationCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={handleLogout} 
+                style={[styles.headerActionButton, { marginLeft: 8 }]}
+              >
                 <Icon name="logout" size={22} color="#FFF" />
               </TouchableOpacity>
             </View>
@@ -483,6 +693,74 @@ const UserDashboard = () => {
             </View>
           </Animatable.View>
         )}
+
+        {/* Swipeable Notifications Card */}
+        <Animatable.View 
+          animation="fadeInUp"
+          delay={200}
+          style={styles.notificationCard}
+        >
+          <View style={styles.notificationCardHeader}>
+            <Text style={styles.notificationCardTitle}>🔔 Recent Notifications</Text>
+            <TouchableOpacity onPress={() => setShowNotifications(true)}>
+              <Text style={styles.viewAllNotifications}>View All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.notificationScrollView}
+            contentContainerStyle={styles.notificationScrollContent}
+          >
+            {notifications.slice(0, 5).map((notification, index) => (
+              <TouchableOpacity
+                key={notification.id}
+                style={[
+                  styles.notificationSwipeCard,
+                  !notification.isRead && styles.unreadNotificationCard
+                ]}
+                onPress={() => handleNotificationPress(notification)}
+                activeOpacity={0.8}
+              >
+                <View style={[
+                  styles.notificationSwipeIcon, 
+                  { backgroundColor: notification.backgroundColor }
+                ]}>
+                  <Icon name={notification.icon} size={18} color={notification.color} />
+                </View>
+                <View style={styles.notificationSwipeContent}>
+                  <Text style={styles.notificationSwipeTitle} numberOfLines={2}>
+                    {notification.title}
+                  </Text>
+                  <Text style={styles.notificationSwipeMessage} numberOfLines={2}>
+                    {notification.message}
+                  </Text>
+                  <Text style={styles.notificationSwipeTime}>
+                    {notification.time}
+                  </Text>
+                  {notification.canRespond && (
+                    <View style={styles.respondBadge}>
+                      <Text style={styles.respondBadgeText}>Tap to respond</Text>
+                    </View>
+                  )}
+                </View>
+                {!notification.isRead && (
+                  <View style={styles.swipeUnreadIndicator} />
+                )}
+              </TouchableOpacity>
+            ))}
+            
+            {/* Add more notifications card */}
+            <TouchableOpacity
+              style={styles.moreNotificationsCard}
+              onPress={() => setShowNotifications(true)}
+            >
+              <Icon name="plus-circle" size={24} color={waterBlueColors.primary} />
+              <Text style={styles.moreNotificationsText}>View More</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </Animatable.View>
 
         {/* Stats Section with Period Selector */}
         <Animatable.View 
@@ -639,71 +917,52 @@ const UserDashboard = () => {
           >
             <View style={styles.menuGrid}>
               <MenuButton
-                icon="bell"
-                label="Notifications"
-                onPress={() => navigation.navigate('NotificationsScreen')}
-                badge={2}
-                delay={100}
-              />
-              <MenuButton
                 icon="timeline-text"
-                label="My Feed"
+                label="My Activity Log"
                 onPress={() => navigation.navigate('MyFeed')}
-                delay={150}
+                delay={100}
               />
               <MenuButton
                 icon="account-group"
                 label="Members Directory"
                 onPress={() => navigation.navigate('MembersDirectory')}
-                delay={200}
+                delay={150}
               />
               <MenuButton
                 icon="account-arrow-right"
-                label="Give Referral"
+                label="Referral"
                 onPress={() => navigation.navigate('ReferralSlip')}
-                delay={250}
+                delay={200}
               />
               <MenuButton
                 icon="handshake"
-                label="TYFCB"
+                label="Thanks Note"
                 onPress={() => navigation.navigate('TYFCBSlip')}
-                delay={300}
+                delay={250}
               />
-             <MenuButton
-  icon="school"
-  label="My CEUs"
-  onPress={() => {
-    Alert.alert(
-      'CEU Status',
-      'Your CEU is currently under processing.',
-      [{ text: 'OK' }]
-    );
-  }}
-  delay={350}
-/>
               <MenuButton
                 icon="calendar-account"
                 label="1:1 Meetings"
                 onPress={() => navigation.navigate('OneToOneSlip')}
-                delay={400}
+                delay={300}
               />
               <MenuButton
                 icon="account-plus"
                 label="Visitors"
                 onPress={() => navigation.navigate('Visitors')}
-                delay={450}
+                delay={350}
               />
               <MenuButton
                 icon="credit-card"
                 label="Payments"
                 onPress={() => navigation.navigate('MyPayments')}
-                delay={500}
+                delay={400}
               />
               <MenuButton
                 icon="lock-reset"
                 label="Change Password"
                 onPress={() => navigation.navigate('ChangePassword')}
-                delay={550}
+                delay={450}
               />
             </View>
           </LinearGradient>
@@ -768,7 +1027,7 @@ const UserDashboard = () => {
               </TouchableOpacity>
             </LinearGradient>
 
-            <ScrollView style={styles.modalContent}>
+            <View style={styles.modalContent}>
               {/* Profile Section */}
               <View style={styles.modalProfileSection}>
                 <LinearGradient
@@ -792,89 +1051,175 @@ const UserDashboard = () => {
                 </View>
               </View>
 
-              {/* Member Information Grid */}
-              <View style={styles.infoGrid}>
-                {userData?.memberCode && userData.memberCode !== 'N/A' && (
-                  <View style={styles.infoGridItem}>
-                    <Icon name="badge-account" size={20} color={waterBlueColors.primary} />
-                    <Text style={styles.infoGridLabel}>Member Code</Text>
-                    <Text style={styles.infoGridValue}>{userData.memberCode}</Text>
-                  </View>
-                )}
-                
-                {userData?.memberType && (
-                  <View style={styles.infoGridItem}>
-                    <Icon name="shield-account" size={20} color={waterBlueColors.primary} />
-                    <Text style={styles.infoGridLabel}>Member Type</Text>
-                    <Text style={styles.infoGridValue}>{userData.memberType}</Text>
-                  </View>
-                )}
-                
-                {userData?.phone && (
-                  <View style={styles.infoGridItem}>
-                    <Icon name="phone" size={20} color={waterBlueColors.primary} />
-                    <Text style={styles.infoGridLabel}>Phone</Text>
-                    <Text style={styles.infoGridValue}>{userData.phone}</Text>
-                  </View>
-                )}
-                
-                {userData?.email && (
-                  <View style={styles.infoGridItem}>
-                    <Icon name="email" size={20} color={waterBlueColors.primary} />
-                    <Text style={styles.infoGridLabel}>Email</Text>
-                    <Text style={styles.infoGridValue}>{userData.email}</Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Account Stats */}
-              <View style={styles.statsSection}>
-                <Text style={styles.statsTitle}>Account Statistics ({getPeriodLabel()})</Text>
-                <View style={styles.statsGridModal}>
-                  <View style={styles.statItemModal}>
-                    <Text style={styles.statNumberModal}>{stats.referralGiven}</Text>
-                    <Text style={styles.statLabelModal}>Referrals Given</Text>
-                  </View>
-                  <View style={styles.statItemModal}>
-                    <Text style={styles.statNumberModal}>{stats.referralReceived}</Text>
-                    <Text style={styles.statLabelModal}>Referrals Received</Text>
-                  </View>
-                  <View style={styles.statItemModal}>
-                    <Text style={styles.statNumberModal}>{stats.tyfcbGiven}</Text>
-                    <Text style={styles.statLabelModal}>TYFCB Given</Text>
-                  </View>
-                  <View style={styles.statItemModal}>
-                    <Text style={styles.statNumberModal}>{stats.tyfcbReceived}</Text>
-                    <Text style={styles.statLabelModal}>TYFCB Received</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Action Buttons */}
-              <View style={styles.modalActions}>
+              {/* Settings Options */}
+              <View style={styles.settingsOptions}>
                 <TouchableOpacity 
-                  style={styles.modalActionButton}
+                  style={styles.settingsOption}
+                  onPress={() => {
+                    setShowUserModal(false);
+                    navigation.navigate('SettingsScreen');
+                  }}
+                >
+                  <View style={[styles.optionIcon, { backgroundColor: '#E3F2FD' }]}>
+                    <Icon name="translate" size={22} color={waterBlueColors.primary} />
+                  </View>
+                  <Text style={styles.settingsOptionText}>Language</Text>
+                  <Icon name="chevron-right" size={20} color="#999" />
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.settingsOption}
+                  onPress={() => {
+                    setShowUserModal(false);
+                    Alert.alert('Privacy & Security', 'Privacy settings coming soon!');
+                  }}
+                >
+                  <View style={[styles.optionIcon, { backgroundColor: '#FFF3E0' }]}>
+                    <Icon name="shield-lock" size={22} color="#FF9800" />
+                  </View>
+                  <Text style={styles.settingsOptionText}>Privacy & Security</Text>
+                  <Icon name="chevron-right" size={20} color="#999" />
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.settingsOption}
                   onPress={() => {
                     setShowUserModal(false);
                     navigation.navigate('ChangePassword');
                   }}
                 >
-                  <Icon name="lock-reset" size={20} color="#FFF" />
-                  <Text style={styles.modalActionText}>Change Password</Text>
+                  <View style={[styles.optionIcon, { backgroundColor: '#E8F5E9' }]}>
+                    <Icon name="lock-reset" size={22} color="#4CAF50" />
+                  </View>
+                  <Text style={styles.settingsOptionText}>Change Password</Text>
+                  <Icon name="chevron-right" size={20} color="#999" />
                 </TouchableOpacity>
-                
+
                 <TouchableOpacity 
-                  style={[styles.modalActionButton, { backgroundColor: '#FF9800' }]}
+                  style={styles.settingsOption}
                   onPress={() => {
                     setShowUserModal(false);
                     navigation.navigate('EditProfile');
                   }}
                 >
-                  <Icon name="account-edit" size={20} color="#FFF" />
-                  <Text style={styles.modalActionText}>Edit Profile</Text>
+                  <View style={[styles.optionIcon, { backgroundColor: '#FCE4EC' }]}>
+                    <Icon name="account-edit" size={22} color="#E91E63" />
+                  </View>
+                  <Text style={styles.settingsOptionText}>Edit Profile</Text>
+                  <Icon name="chevron-right" size={20} color="#999" />
                 </TouchableOpacity>
               </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Notifications Modal */}
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={showNotifications}
+        onRequestClose={() => setShowNotifications(false)}
+      >
+        <View style={styles.notificationModalOverlay}>
+          <TouchableOpacity 
+            style={styles.notificationModalBackdrop}
+            activeOpacity={1}
+            onPress={() => setShowNotifications(false)}
+          />
+          <View style={styles.notificationModalContainer}>
+            <View style={styles.notificationModalHeader}>
+              <Text style={styles.notificationModalTitle}>🔔 Notifications</Text>
+              <View style={styles.notificationHeaderActions}>
+                {notificationCount > 0 && (
+                  <TouchableOpacity 
+                    style={styles.clearAllButton}
+                    onPress={clearAllNotifications}
+                  >
+                    <Text style={styles.clearAllText}>Clear All</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={() => setShowNotifications(false)}
+                >
+                  <Icon name="close" size={22} color={waterBlueColors.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <ScrollView style={styles.notificationsList} showsVerticalScrollIndicator={false}>
+              {notifications.length === 0 ? (
+                <View style={styles.emptyNotifications}>
+                  <Icon name="bell-off" size={48} color="#BDC3C7" />
+                  <Text style={styles.emptyNotificationsText}>No notifications</Text>
+                  <Text style={styles.emptyNotificationsSubtext}>You're all caught up!</Text>
+                </View>
+              ) : (
+                notifications.map((notification) => (
+                  <TouchableOpacity
+                    key={notification.id}
+                    style={[
+                      styles.notificationItem,
+                      !notification.isRead && styles.unreadNotificationItem
+                    ]}
+                    onPress={() => handleNotificationPress(notification)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[
+                      styles.notificationIcon, 
+                      { backgroundColor: notification.backgroundColor }
+                    ]}>
+                      <Icon name={notification.icon} size={20} color={notification.color} />
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <View style={styles.notificationHeader}>
+                        <Text style={[
+                          styles.notificationItemTitle,
+                          !notification.isRead && styles.unreadNotificationTitle
+                        ]}>
+                          {notification.title}
+                        </Text>
+                        {!notification.isRead && (
+                          <View style={styles.unreadIndicator} />
+                        )}
+                      </View>
+                      <Text style={styles.notificationItemMessage}>
+                        {notification.message}
+                      </Text>
+                      <Text style={styles.notificationItemTime}>
+                        {notification.time}
+                      </Text>
+                      {notification.canRespond && (
+                        <View style={styles.respondButton}>
+                          <Icon name="reply" size={14} color={waterBlueColors.primary} />
+                          <Text style={styles.respondButtonText}>Tap to respond</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))
+              )}
             </ScrollView>
+
+            {/* Notification Categories */}
+            <View style={styles.notificationCategories}>
+              <Text style={styles.categoriesTitle}>Quick Filters</Text>
+              <View style={styles.categoriesRow}>
+                <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#FFE5E5' }]}>
+                  <Icon name="cake" size={16} color="#FF6B6B" />
+                  <Text style={[styles.categoryText, { color: '#FF6B6B' }]}>Birthdays</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#E8F8F7' }]}>
+                  <Icon name="calendar-clock" size={16} color="#4ECDC4" />
+                  <Text style={[styles.categoryText, { color: '#4ECDC4' }]}>Meetings</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#E3F2FD' }]}>
+                  <Icon name="information" size={16} color="#45B7D1" />
+                  <Text style={[styles.categoryText, { color: '#45B7D1' }]}>Admin</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1407,7 +1752,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    maxHeight: '85%',
+    maxHeight: '65%',
     elevation: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
@@ -1441,8 +1786,8 @@ const styles = StyleSheet.create({
   },
   modalProfileSection: {
     alignItems: 'center',
-    marginBottom: 25,
-    paddingBottom: 20,
+    marginBottom: 20,
+    paddingBottom: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
@@ -1488,6 +1833,60 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4A90E2',
     fontWeight: '600',
+  },
+  // Settings Options
+  settingsOptions: {
+    marginTop: 10,
+  },
+  settingsOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+  },
+  optionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  settingsOptionText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '600',
+  },
+  // Compact Info Grid
+  infoGridCompact: {
+    marginBottom: 20,
+  },
+  infoGridItemCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FBFF',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E0F7FA',
+  },
+  infoGridTextCompact: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  infoGridLabelCompact: {
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 2,
+  },
+  infoGridValueCompact: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2C3E50',
   },
   // Info Grid
   infoGrid: {
@@ -1558,7 +1957,7 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 5,
   },
   modalActionButton: {
     flex: 1,
@@ -1580,6 +1979,328 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 8,
+  },
+  // Notification styles
+  notificationDot: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  notificationDotText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  notificationCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    elevation: 4,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
+  notificationCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notificationCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  viewAllNotifications: {
+    fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '600',
+  },
+  notificationScrollView: {
+    marginHorizontal: -16,
+  },
+  notificationScrollContent: {
+    paddingHorizontal: 16,
+  },
+  notificationSwipeCard: {
+    width: 200,
+    backgroundColor: '#F8FBFF',
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E8F1FF',
+    position: 'relative',
+  },
+  unreadNotificationCard: {
+    backgroundColor: '#F0F7FF',
+    borderColor: '#4A90E2',
+    borderWidth: 1.5,
+  },
+  notificationSwipeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  notificationSwipeContent: {
+    flex: 1,
+  },
+  notificationSwipeTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 4,
+    lineHeight: 16,
+  },
+  notificationSwipeMessage: {
+    fontSize: 11,
+    color: '#5D6D7E',
+    lineHeight: 14,
+    marginBottom: 6,
+  },
+  notificationSwipeTime: {
+    fontSize: 10,
+    color: '#95A5A6',
+    fontWeight: '500',
+  },
+  swipeUnreadIndicator: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6B6B',
+  },
+  respondBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginTop: 6,
+    alignSelf: 'flex-start',
+  },
+  respondBadgeText: {
+    fontSize: 9,
+    color: '#4A90E2',
+    fontWeight: '600',
+  },
+  moreNotificationsCard: {
+    width: 120,
+    backgroundColor: '#E3F2FD',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#4A90E2',
+    borderStyle: 'dashed',
+  },
+  moreNotificationsText: {
+    fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  notificationModalOverlay: {
+    flex: 1,
+  },
+  notificationModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  notificationModalContainer: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '70%',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  notificationModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  notificationHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  clearAllButton: {
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginRight: 10,
+  },
+  clearAllText: {
+    color: '#4A90E2',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  notificationModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F5F5F5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationsList: {
+    maxHeight: 400,
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F5F5F5',
+    borderRadius: 8,
+    marginBottom: 4,
+  },
+  unreadNotificationItem: {
+    backgroundColor: '#F8FBFF',
+    borderLeftWidth: 3,
+    borderLeftColor: '#4A90E2',
+  },
+  notificationIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  unreadIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FF6B6B',
+  },
+  notificationItemTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 4,
+  },
+  unreadNotificationTitle: {
+    fontWeight: '700',
+    color: '#2C3E50',
+  },
+  notificationItemMessage: {
+    fontSize: 13,
+    color: '#5D6D7E',
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  notificationItemTime: {
+    fontSize: 12,
+    color: '#95A5A6',
+  },
+  respondButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  respondButtonText: {
+    fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  emptyNotifications: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyNotificationsText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7F8C8D',
+    marginTop: 12,
+  },
+  emptyNotificationsSubtext: {
+    fontSize: 12,
+    color: '#BDC3C7',
+    marginTop: 4,
+  },
+  notificationCategories: {
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    marginTop: 8,
+  },
+  categoriesTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 12,
+  },
+  categoriesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
   },
 });
 

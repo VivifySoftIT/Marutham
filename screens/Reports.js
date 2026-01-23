@@ -12,68 +12,385 @@ import {
   RefreshControl,
   Dimensions,
   FlatList,
+  Modal,
+  TextInput,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import * as Print from 'expo-print';
+import * as XLSX from 'xlsx';
+import ApiService from '../service/api';
 
 const { width } = Dimensions.get('window');
 
 const Reports = ({ navigation }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState('monthly');
+  const [selectedPeriod, setSelectedPeriod] = useState('daily');
   const [selectedReportTab, setSelectedReportTab] = useState('attendance');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [reportData, setReportData] = useState(null);
   const [error, setError] = useState(null);
-  const [activeMemberTab, setActiveMemberTab] = useState('present'); // 'present' or 'absent' or 'all'
-  const [activePaymentTab, setActivePaymentTab] = useState('paid'); // 'paid' or 'all'
+  const [activeMemberTab, setActiveMemberTab] = useState('present');
+  const [activePaymentTab, setActivePaymentTab] = useState('paid');
+  const [selectedMemberForReport, setSelectedMemberForReport] = useState(null);
+  const [showMemberListModal, setShowMemberListModal] = useState(false);
+  const [allMembers, setAllMembers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredMembers, setFilteredMembers] = useState([]);
+  
+  // Date picker states
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showCustomDateModal, setShowCustomDateModal] = useState(false);
+  const [fromDate, setFromDate] = useState(new Date());
+  const [toDate, setToDate] = useState(new Date());
+  const [datePickerMode, setDatePickerMode] = useState('from'); // 'from' or 'to'
+
+  // Member ID state
+  const [currentMemberId, setCurrentMemberId] = useState(null);
 
   const reportTabs = [
     { id: 'attendance', title: 'Attendance', icon: 'calendar-check', endpoint: 'attendance' },
     { id: 'tyfcb', title: 'TYFCB', icon: 'handshake', endpoint: 'tyfcb' },
     { id: 'meeting', title: '1:1 Meeting', icon: 'account-multiple', endpoint: 'meeting' },
+    { id: 'alaigalmeeting', title: 'Alaigal Meeting', icon: 'calendar-account', endpoint: 'alaigalmeeting' },
     { id: 'visitor', title: 'Visitor', icon: 'account-plus', endpoint: 'visitor' },
     { id: 'payment', title: 'Payment', icon: 'cash-multiple', endpoint: 'payment' },
     { id: 'referral', title: 'Referral', icon: 'share-variant', endpoint: 'referral' },
   ];
 
   useEffect(() => {
-    fetchReportData();
-  }, [selectedPeriod, selectedReportTab]);
+    getCurrentUserMemberId();
+    loadAllMembers();
+  }, []);
+
+  useEffect(() => {
+    if (currentMemberId) {
+      fetchReportData();
+    }
+  }, [selectedPeriod, selectedReportTab, currentMemberId, selectedMemberForReport]);
+
+  // Get current user's member ID with fallback logic
+  const getCurrentUserMemberId = async () => {
+    try {
+      // First check if memberId is already in AsyncStorage
+      const storedMemberId = await AsyncStorage.getItem('memberId');
+      if (storedMemberId) {
+        console.log('Reports - Member ID found in storage:', storedMemberId);
+        setCurrentMemberId(parseInt(storedMemberId));
+        return parseInt(storedMemberId);
+      }
+
+      console.log('Reports - Member ID not in storage, attempting to look up...');
+
+      // If not, try to get it from user ID
+      const userId = await AsyncStorage.getItem('userId');
+      const fullName = await AsyncStorage.getItem('fullName');
+
+      if (userId) {
+        try {
+          // Try to get member by user ID
+          console.log('Reports - Trying GetByUserId with userId:', userId);
+          const memberData = await ApiService.getMemberByUserId(userId);
+          
+          if (memberData && memberData.id) {
+            await AsyncStorage.setItem('memberId', memberData.id.toString());
+            console.log('Reports - Member found via GetByUserId:', memberData.id);
+            setCurrentMemberId(memberData.id);
+            return memberData.id;
+          }
+        } catch (error) {
+          console.log('Reports - GetByUserId failed, trying name search:', error);
+        }
+      }
+
+      // Fallback: search by name
+      if (fullName) {
+        try {
+          console.log('Reports - Searching members by name:', fullName);
+          const members = await ApiService.getMembers();
+          const member = members.find(m => 
+            m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase()
+          );
+          
+          if (member) {
+            await AsyncStorage.setItem('memberId', member.id.toString());
+            console.log('Reports - Member found by name:', member.id);
+            setCurrentMemberId(member.id);
+            return member.id;
+          }
+        } catch (error) {
+          console.log('Reports - Name search failed:', error);
+        }
+      }
+
+      console.log('Reports - Could not find member ID');
+      return null;
+    } catch (error) {
+      console.error('Reports - Error getting member ID:', error);
+      return null;
+    }
+  };
+
+  // Load all members for selection
+  const loadAllMembers = async () => {
+    try {
+      const members = await ApiService.getMembers();
+      setAllMembers(members);
+      setFilteredMembers(members);
+    } catch (error) {
+      console.error('Error loading members:', error);
+    }
+  };
+
+  // Handle member search
+  const handleMemberSearch = (query) => {
+    setSearchQuery(query);
+    if (query.trim() === '') {
+      setFilteredMembers(allMembers);
+    } else {
+      const filtered = allMembers.filter(member =>
+        member.name?.toLowerCase().includes(query.toLowerCase()) ||
+        member.phone?.includes(query) ||
+        member.business?.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredMembers(filtered);
+    }
+  };
+
+  // Handle member selection for report
+  const handleMemberSelect = (member) => {
+    setSelectedMemberForReport(member);
+    setShowMemberListModal(false);
+    setSearchQuery('');
+    setFilteredMembers(allMembers);
+  };
+
+  // Clear member selection
+  const clearMemberSelection = () => {
+    setSelectedMemberForReport(null);
+  };
 
   const fetchReportData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      let apiUrl = '';
+      if (!currentMemberId) {
+        console.log('Reports - No member ID available, skipping fetch');
+        setLoading(false);
+        return;
+      }
 
-      // Use the correct endpoint based on report type
+      // For attendance report, use the new API
       if (selectedReportTab === 'attendance') {
-        apiUrl = `https://www.vivifysoft.in/AlaigalBE/api/Inventory/reports/attendance?period=${selectedPeriod}`;
+        let attendanceData;
+        
+        if (selectedPeriod === 'custom') {
+          // Use custom date range
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching attendance with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId);
+          attendanceData = await ApiService.getAttendanceWithFilters(formattedFromDate, formattedToDate, null, null, currentMemberId);
+        } else {
+          // Use period (daily, weekly, monthly, yearly)
+          console.log('Reports - Fetching attendance with period:', selectedPeriod, 'Admin Member ID:', currentMemberId);
+          attendanceData = await ApiService.getAttendanceWithFilters(null, null, selectedPeriod, null, currentMemberId);
+        }
+        
+        console.log('Attendance data received:', attendanceData);
+        setReportData(attendanceData);
+      } else if (selectedReportTab === 'tyfcb') {
+        // For TYFCB report, use the new API with member selection
+        let tyfcbData;
+        
+        if (selectedPeriod === 'custom') {
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching TYFCB with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          tyfcbData = await ApiService.getTYFCBReport(
+            formattedFromDate, 
+            formattedToDate, 
+            null,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        } else {
+          console.log('Reports - Fetching TYFCB with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          tyfcbData = await ApiService.getTYFCBReport(
+            null, 
+            null, 
+            selectedPeriod,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        }
+        
+        console.log('TYFCB data received:', tyfcbData);
+        setReportData(tyfcbData);
+      } else if (selectedReportTab === 'meeting') {
+        // For One-to-One Meeting report, use the new API with member selection
+        let meetingData;
+        
+        if (selectedPeriod === 'custom') {
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching One-to-One Meeting with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          meetingData = await ApiService.getOneToOneMeetingReport(
+            formattedFromDate, 
+            formattedToDate, 
+            null,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        } else {
+          console.log('Reports - Fetching One-to-One Meeting with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          meetingData = await ApiService.getOneToOneMeetingReport(
+            null, 
+            null, 
+            selectedPeriod,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        }
+        
+        console.log('One-to-One Meeting data received:', meetingData);
+        setReportData(meetingData);
+      } else if (selectedReportTab === 'referral') {
+        // For Referral report, use the new API with member selection
+        let referralData;
+        
+        if (selectedPeriod === 'custom') {
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching Referral with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          referralData = await ApiService.getReferralReport(
+            formattedFromDate, 
+            formattedToDate, 
+            null,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        } else {
+          console.log('Reports - Fetching Referral with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          referralData = await ApiService.getReferralReport(
+            null, 
+            null, 
+            selectedPeriod,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        }
+        
+        console.log('Referral data received:', referralData);
+        setReportData(referralData);
+      } else if (selectedReportTab === 'payment') {
+        // For Payment report, use the new API with member selection
+        let paymentData;
+        
+        if (selectedPeriod === 'custom') {
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching Payment with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          paymentData = await ApiService.getPaymentReport(
+            formattedFromDate, 
+            formattedToDate, 
+            null,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        } else {
+          console.log('Reports - Fetching Payment with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          paymentData = await ApiService.getPaymentReport(
+            null, 
+            null, 
+            selectedPeriod,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        }
+        
+        console.log('Payment data received:', paymentData);
+        setReportData(paymentData);
+      } else if (selectedReportTab === 'alaigalmeeting') {
+        // For Alaigal Meeting report, use the new API with member selection
+        let alaigalMeetingData;
+        
+        if (selectedPeriod === 'custom') {
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching Alaigal Meeting with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          alaigalMeetingData = await ApiService.getAlaigalMeetingReport(
+            formattedFromDate, 
+            formattedToDate, 
+            null,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        } else {
+          console.log('Reports - Fetching Alaigal Meeting with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          alaigalMeetingData = await ApiService.getAlaigalMeetingReport(
+            null, 
+            null, 
+            selectedPeriod,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        }
+        
+        console.log('Alaigal Meeting data received:', alaigalMeetingData);
+        setReportData(alaigalMeetingData);
+      } else if (selectedReportTab === 'visitor') {
+        // For Visitor report, use the new API with member selection
+        let visitorData;
+        
+        if (selectedPeriod === 'custom') {
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching Visitor with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          visitorData = await ApiService.getVisitorReport(
+            formattedFromDate, 
+            formattedToDate, 
+            null,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        } else {
+          console.log('Reports - Fetching Visitor with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          visitorData = await ApiService.getVisitorReport(
+            null, 
+            null, 
+            selectedPeriod,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        }
+        
+        console.log('Visitor data received:', visitorData);
+        setReportData(visitorData);
       } else {
-        // For other reports, use a generic endpoint (you'll need to create these on backend)
-        apiUrl = `https://www.vivifysoft.in/AlaigalBE/api/Inventory/reports/${selectedReportTab}?period=${selectedPeriod}`;
+        // For other reports, use generic endpoint
+        const apiUrl = `https://www.vivifysoft.in/AlaigalBE/api/Inventory/reports/${selectedReportTab}?period=${selectedPeriod}&memberId=${currentMemberId}`;
+        console.log('Fetching report:', apiUrl);
+
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Report data received:', data);
+        setReportData(data);
       }
-
-      console.log('Fetching report:', apiUrl);
-
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Report data received:', data);
-      setReportData(data);
     } catch (err) {
       console.error('Error fetching report:', err);
       setError(err.message);
@@ -91,53 +408,207 @@ const Reports = ({ navigation }) => {
 
   const downloadReport = async (format) => {
     try {
-      if (!reportData) {
+      if (!reportData || !reportData.data || reportData.data.length === 0) {
         Alert.alert('Error', 'No data to download');
         return;
       }
 
       const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `${selectedReportTab}_report_${timestamp}.${format}`;
-      const filepath = `${FileSystem.documentDirectory}${filename}`;
-
-      let content = '';
+      const attendanceData = reportData.data;
 
       if (format === 'pdf') {
-        content = generatePDFContent();
+        await generatePDF(attendanceData, timestamp);
       } else if (format === 'excel') {
-        content = generateExcelContent();
-      }
-
-      await FileSystem.writeAsStringAsync(filepath, content);
-
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(filepath, {
-          mimeType: format === 'pdf' ? 'application/pdf' : 'application/vnd.ms-excel',
-          dialogTitle: `Share ${selectedReportTab} Report`,
-        });
-      } else {
-        Alert.alert('Success', `Report saved to: ${filepath}`);
+        await generateExcel(attendanceData, timestamp);
       }
     } catch (err) {
       console.error('Download error:', err);
-      Alert.alert('Error', 'Failed to download report');
+      Alert.alert('Error', 'Failed to download report: ' + err.message);
     }
   };
 
-  const generatePDFContent = () => {
-    const tab = reportTabs.find(t => t.id === selectedReportTab);
-    let content = `${tab.title} Report - ${selectedPeriod.toUpperCase()}\n`;
-    content += `Generated: ${new Date().toLocaleString()}\n\n`;
-    content += JSON.stringify(reportData, null, 2);
-    return content;
+  const generatePDF = async (attendanceData, timestamp) => {
+    try {
+      // Create HTML table for PDF
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Attendance Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+            }
+            h1 {
+              color: #4A90E2;
+              text-align: center;
+              margin-bottom: 10px;
+            }
+            .report-info {
+              text-align: center;
+              color: #666;
+              margin-bottom: 20px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+            }
+            th {
+              background-color: #4A90E2;
+              color: white;
+              padding: 12px;
+              text-align: left;
+              font-weight: bold;
+            }
+            td {
+              padding: 10px;
+              border-bottom: 1px solid #ddd;
+            }
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .status-present {
+              color: #4CAF50;
+              font-weight: bold;
+            }
+            .status-absent {
+              color: #F44336;
+              font-weight: bold;
+            }
+            .footer {
+              margin-top: 30px;
+              text-align: center;
+              color: #999;
+              font-size: 12px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Attendance Report</h1>
+          <div class="report-info">
+            <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
+            <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+            <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Member Name</th>
+                <th>Date</th>
+                <th>Check-In Time</th>
+                <th>Check-Out Time</th>
+                <th>Status</th>
+                <th>Batch</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${attendanceData.map((item, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${item.memberName || 'Unknown'}</td>
+                  <td>${new Date(item.attendanceDate).toLocaleDateString()}</td>
+                  <td>${item.checkInTime || '-'}</td>
+                  <td>${item.checkOutTime || '-'}</td>
+                  <td class="status-${item.status?.toLowerCase()}">${item.status || '-'}</td>
+                  <td>${item.batch || '-'}</td>
+                  <td>${item.notes || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="footer">
+            <p>Alaigal Member Management System</p>
+            <p>Report generated on ${new Date().toLocaleString()}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Generate PDF
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+      
+      // Share the PDF
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Share Attendance Report',
+          UTI: 'com.adobe.pdf',
+        });
+        Alert.alert('Success', 'PDF report generated successfully!');
+      } else {
+        Alert.alert('Success', `PDF saved to: ${uri}`);
+      }
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      throw error;
+    }
   };
 
-  const generateExcelContent = () => {
-    const tab = reportTabs.find(t => t.id === selectedReportTab);
-    let content = `${tab.title} Report - ${selectedPeriod.toUpperCase()}\n`;
-    content += `Generated: ${new Date().toLocaleString()}\n\n`;
-    content += JSON.stringify(reportData, null, 2);
-    return content;
+  const generateExcel = async (attendanceData, timestamp) => {
+    try {
+      // Prepare data for Excel
+      const excelData = attendanceData.map((item, index) => ({
+        'S.No': index + 1,
+        'Member Name': item.memberName || 'Unknown',
+        'Date': new Date(item.attendanceDate).toLocaleDateString(),
+        'Check-In Time': item.checkInTime || '-',
+        'Check-Out Time': item.checkOutTime || '-',
+        'Status': item.status || '-',
+        'Batch': item.batch || '-',
+        'Notes': item.notes || '-',
+      }));
+
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData);
+
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 6 },  // S.No
+        { wch: 20 }, // Member Name
+        { wch: 12 }, // Date
+        { wch: 15 }, // Check-In Time
+        { wch: 15 }, // Check-Out Time
+        { wch: 10 }, // Status
+        { wch: 10 }, // Batch
+        { wch: 30 }, // Notes
+      ];
+
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Attendance Report');
+
+      // Generate Excel file
+      const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+      const filename = `attendance_report_${timestamp}.xlsx`;
+      const filepath = `${FileSystem.documentDirectory}${filename}`;
+
+      // Write file
+      await FileSystem.writeAsStringAsync(filepath, wbout, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Share the Excel file
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(filepath, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Share Attendance Report',
+        });
+        Alert.alert('Success', 'Excel report generated successfully!');
+      } else {
+        Alert.alert('Success', `Excel file saved to: ${filepath}`);
+      }
+    } catch (error) {
+      console.error('Excel generation error:', error);
+      throw error;
+    }
   };
 
   const getReportStats = () => {
@@ -145,33 +616,144 @@ const Reports = ({ navigation }) => {
 
     switch (selectedReportTab) {
       case 'attendance':
+        // Handle the new API response structure
+        const attendanceData = reportData.data || [];
+        const totalRecords = reportData.totalRecords || attendanceData.length;
+        const presentCount = attendanceData.filter(a => a.status === 'Present').length;
+        const absentCount = attendanceData.filter(a => a.status === 'Absent').length;
+        
         return {
           stat1: { 
-            label: 'Total Members', 
-            value: reportData.attendance?.totalMembers || 0 
+            label: 'Total Records', 
+            value: totalRecords
           },
           stat2: { 
             label: 'Present', 
-            value: reportData.attendance?.presentCount || 0 
+            value: presentCount
           },
           stat3: { 
             label: 'Absent', 
-            value: reportData.attendance?.absentCount || 0 
+            value: absentCount
+          },
+        };
+      case 'tyfcb':
+        const tyfcbData = reportData.data || [];
+        const totalTYFCB = reportData.totalRecords || tyfcbData.length;
+        const tyfcbTotalAmount = tyfcbData.reduce((sum, t) => sum + (t.amount || 0), 0);
+        const pendingCount = tyfcbData.filter(t => t.status === 'Pending').length;
+        
+        return {
+          stat1: { 
+            label: 'Total Records', 
+            value: totalTYFCB
+          },
+          stat2: { 
+            label: 'Total Amount', 
+            value: `₹${tyfcbTotalAmount.toFixed(2)}`
+          },
+          stat3: { 
+            label: 'Pending', 
+            value: pendingCount
+          },
+        };
+      case 'meeting':
+        const meetingData = reportData.data || [];
+        const totalMeetings = reportData.totalRecords || meetingData.length;
+        const completedCount = meetingData.filter(m => m.status === 'Completed').length;
+        const pendingMeetings = meetingData.filter(m => m.status === 'Pending' || m.status === 'Scheduled').length;
+        
+        return {
+          stat1: { 
+            label: 'Total Meetings', 
+            value: totalMeetings
+          },
+          stat2: { 
+            label: 'Completed', 
+            value: completedCount
+          },
+          stat3: { 
+            label: 'Pending', 
+            value: pendingMeetings
+          },
+        };
+      case 'referral':
+        const referralData = reportData.data || [];
+        const totalReferrals = reportData.totalRecords || referralData.length;
+        const confirmedCount = referralData.filter(r => r.status === 'Confirmed').length;
+        const totalRevenue = referralData.reduce((sum, r) => sum + (r.revenue || 0), 0);
+        
+        return {
+          stat1: { 
+            label: 'Total Referrals', 
+            value: totalReferrals
+          },
+          stat2: { 
+            label: 'Confirmed', 
+            value: confirmedCount
+          },
+          stat3: { 
+            label: 'Revenue', 
+            value: `₹${totalRevenue.toFixed(2)}`
           },
         };
       case 'payment':
+        const paymentData = reportData.data || [];
+        const totalPayments = reportData.totalRecords || paymentData.length;
+        const paymentTotalAmount = reportData.totalAmount || paymentData.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const paidCount = paymentData.filter(p => p.status === 'Paid' || p.status === 'Completed').length;
+        
         return {
           stat1: { 
-            label: 'Total Collected', 
-            value: `₹${reportData.payments?.totalAmountCollected || 0}` 
+            label: 'Total Payments', 
+            value: totalPayments
           },
           stat2: { 
-            label: 'Paid Members', 
-            value: reportData.payments?.totalPaidMembers || 0 
+            label: 'Total Amount', 
+            value: `₹${paymentTotalAmount.toFixed(2)}`
           },
           stat3: { 
-            label: 'Total Members', 
-            value: reportData.members?.allMembers?.length || 0 
+            label: 'Paid', 
+            value: paidCount
+          },
+        };
+      case 'alaigalmeeting':
+        const alaigalMeetingData = reportData.data || [];
+        const totalAlaigalMeetings = reportData.totalRecords || alaigalMeetingData.length;
+        const inPersonCount = alaigalMeetingData.filter(m => m.meetingType === 'In-Person').length;
+        const virtualCount = alaigalMeetingData.filter(m => m.meetingType === 'Virtual').length;
+        
+        return {
+          stat1: { 
+            label: 'Total Meetings', 
+            value: totalAlaigalMeetings
+          },
+          stat2: { 
+            label: 'In-Person', 
+            value: inPersonCount
+          },
+          stat3: { 
+            label: 'Virtual', 
+            value: virtualCount
+          },
+        };
+      case 'visitor':
+        const visitorData = reportData.data || [];
+        const totalVisitors = reportData.totalRecords || visitorData.length;
+        const becameMemberCount = visitorData.filter(v => v.becameMember === true).length;
+        const pendingVisitors = visitorData.filter(v => !v.becameMember).length;
+        
+        return {
+          stat1: { 
+            label: 'Total Visitors', 
+            value: totalVisitors
+          },
+          stat2: { 
+            label: 'Became Members', 
+            value: becameMemberCount
+          },
+          stat3: { 
+            label: 'Pending', 
+            value: pendingVisitors
           },
         };
       default:
@@ -183,44 +765,409 @@ const Reports = ({ navigation }) => {
     }
   };
 
-  const renderMemberItem = (member) => (
+  const renderMemberItem = (attendance) => (
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
-        <Text style={styles.memberName}>{member.name}</Text>
-        <Text style={styles.memberPhone}>{member.phone}</Text>
+        <Text style={styles.memberName}>{attendance.memberName || 'Unknown'}</Text>
+        <View style={[
+          styles.statusBadge,
+          attendance.status === 'Present' && styles.statusPresent,
+          attendance.status === 'Absent' && styles.statusAbsent,
+        ]}>
+          <Text style={styles.statusText}>{attendance.status}</Text>
+        </View>
       </View>
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="account-group" size={14} color="#4A90E2" />
-          <Text style={styles.statBadgeText}>{member.visitorsBrought || 0}</Text>
-        </View>
-        <View style={styles.statBadge}>
-          <Icon name="handshake" size={14} color="#4CAF50" />
+          <Icon name="calendar" size={14} color="#4A90E2" />
           <Text style={styles.statBadgeText}>
-            {member.tyfcbGiven || 0}/{member.tyfcbReceived || 0}
+            {new Date(attendance.attendanceDate).toLocaleDateString()}
           </Text>
         </View>
-        <View style={styles.statBadge}>
-          <Icon name="share-variant" size={14} color="#FF9800" />
-          <Text style={styles.statBadgeText}>
-            {member.referralsGiven || 0}/{member.referralsReceived || 0}
-          </Text>
-        </View>
-        {selectedReportTab === 'attendance' && member.lastVisitDate && (
+        {attendance.checkInTime && (
           <View style={styles.statBadge}>
-            <Icon name="calendar-clock" size={14} color="#E91E63" />
+            <Icon name="clock-in" size={14} color="#4CAF50" />
             <Text style={styles.statBadgeText}>
-              {new Date(member.lastVisitDate).toLocaleDateString()}
+              {attendance.checkInTime}
             </Text>
           </View>
         )}
+        {attendance.checkOutTime && (
+          <View style={styles.statBadge}>
+            <Icon name="clock-out" size={14} color="#FF9800" />
+            <Text style={styles.statBadgeText}>
+              {attendance.checkOutTime}
+            </Text>
+          </View>
+        )}
+        {attendance.batch && (
+          <View style={styles.statBadge}>
+            <Icon name="tag" size={14} color="#9C27B0" />
+            <Text style={styles.statBadgeText}>{attendance.batch}</Text>
+          </View>
+        )}
       </View>
-      {selectedReportTab === 'payment' && member.paymentsThisMonth > 0 && (
-        <View style={styles.paymentInfo}>
-          <Icon name="cash-check" size={16} color="#4CAF50" />
-          <Text style={styles.paymentText}>
-            ₹{member.totalAmountPaidThisMonth || 0} ({member.paymentsThisMonth || 0} payments)
+      {attendance.notes && (
+        <View style={styles.notesContainer}>
+          <Icon name="note-text" size={14} color="#666" />
+          <Text style={styles.notesText}>{attendance.notes}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderTYFCBItem = (tyfcb) => (
+    <View style={styles.memberCard}>
+      <View style={styles.memberHeader}>
+        <View>
+          <Text style={styles.memberName}>{tyfcb.givenByMemberName || 'Unknown'}</Text>
+          <Text style={styles.memberSubtext}>→ {tyfcb.receivedByMemberName || 'Unknown'}</Text>
+        </View>
+        <View style={[
+          styles.statusBadge,
+          tyfcb.status === 'Pending' && styles.statusPending,
+          tyfcb.status === 'Completed' && styles.statusCompleted,
+        ]}>
+          <Text style={styles.statusText}>{tyfcb.status || 'Pending'}</Text>
+        </View>
+      </View>
+      <View style={styles.memberStats}>
+        <View style={styles.statBadge}>
+          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Text style={styles.statBadgeText}>
+            {new Date(tyfcb.visitDate).toLocaleDateString()}
           </Text>
+        </View>
+        {tyfcb.amount && (
+          <View style={styles.statBadge}>
+            <Icon name="currency-inr" size={14} color="#4CAF50" />
+            <Text style={styles.statBadgeText}>₹{tyfcb.amount}</Text>
+          </View>
+        )}
+        {tyfcb.rating && (
+          <View style={styles.statBadge}>
+            <Icon name="star" size={14} color="#FF9800" />
+            <Text style={styles.statBadgeText}>{tyfcb.rating}/5</Text>
+          </View>
+        )}
+        {tyfcb.businessVisited && (
+          <View style={styles.statBadge}>
+            <Icon name="briefcase" size={14} color="#9C27B0" />
+            <Text style={styles.statBadgeText}>{tyfcb.businessVisited}</Text>
+          </View>
+        )}
+      </View>
+      {tyfcb.notes && (
+        <View style={styles.notesContainer}>
+          <Icon name="note-text" size={14} color="#666" />
+          <Text style={styles.notesText}>{tyfcb.notes}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderOneToOneMeetingItem = (meeting) => (
+    <View style={styles.memberCard}>
+      <View style={styles.memberHeader}>
+        <View>
+          <Text style={styles.memberName}>{meeting.member1Name || 'Unknown'}</Text>
+          <Text style={styles.memberSubtext}>↔ {meeting.member2Name || 'Unknown'}</Text>
+        </View>
+        <View style={[
+          styles.statusBadge,
+          meeting.status === 'Pending' && styles.statusPending,
+          meeting.status === 'Scheduled' && styles.statusPending,
+          meeting.status === 'Completed' && styles.statusCompleted,
+        ]}>
+          <Text style={styles.statusText}>{meeting.status || 'Completed'}</Text>
+        </View>
+      </View>
+      <View style={styles.memberStats}>
+        <View style={styles.statBadge}>
+          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Text style={styles.statBadgeText}>
+            {new Date(meeting.meetingDate).toLocaleDateString()}
+          </Text>
+        </View>
+        {meeting.location && (
+          <View style={styles.statBadge}>
+            <Icon name="map-marker" size={14} color="#4CAF50" />
+            <Text style={styles.statBadgeText}>{meeting.location}</Text>
+          </View>
+        )}
+        {meeting.duration && (
+          <View style={styles.statBadge}>
+            <Icon name="clock-outline" size={14} color="#FF9800" />
+            <Text style={styles.statBadgeText}>{meeting.duration} min</Text>
+          </View>
+        )}
+        {meeting.topic && (
+          <View style={styles.statBadge}>
+            <Icon name="comment-text" size={14} color="#9C27B0" />
+            <Text style={styles.statBadgeText}>{meeting.topic}</Text>
+          </View>
+        )}
+      </View>
+      {meeting.notes && (
+        <View style={styles.notesContainer}>
+          <Icon name="note-text" size={14} color="#666" />
+          <Text style={styles.notesText}>{meeting.notes}</Text>
+        </View>
+      )}
+      {meeting.metWith && (
+        <View style={styles.notesContainer}>
+          <Icon name="account-check" size={14} color="#666" />
+          <Text style={styles.notesText}>Met with: {meeting.metWith}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderReferralItem = (referral) => (
+    <View style={styles.memberCard}>
+      <View style={styles.memberHeader}>
+        <View>
+          <Text style={styles.memberName}>{referral.givenByMemberName || 'Unknown'}</Text>
+          <Text style={styles.memberSubtext}>→ {referral.receivedByMemberName || 'Unknown'}</Text>
+        </View>
+        <View style={[
+          styles.statusBadge,
+          referral.status === 'Pending' && styles.statusPending,
+          referral.status === 'Confirmed' && styles.statusCompleted,
+          referral.status === 'Rejected' && styles.statusAbsent,
+        ]}>
+          <Text style={styles.statusText}>{referral.status || 'Pending'}</Text>
+        </View>
+      </View>
+      <View style={styles.memberStats}>
+        <View style={styles.statBadge}>
+          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Text style={styles.statBadgeText}>
+            {new Date(referral.referralDate).toLocaleDateString()}
+          </Text>
+        </View>
+        {referral.clientName && (
+          <View style={styles.statBadge}>
+            <Icon name="account" size={14} color="#4CAF50" />
+            <Text style={styles.statBadgeText}>{referral.clientName}</Text>
+          </View>
+        )}
+        {referral.clientPhone && (
+          <View style={styles.statBadge}>
+            <Icon name="phone" size={14} color="#FF9800" />
+            <Text style={styles.statBadgeText}>{referral.clientPhone}</Text>
+          </View>
+        )}
+        {referral.businessType && (
+          <View style={styles.statBadge}>
+            <Icon name="briefcase" size={14} color="#9C27B0" />
+            <Text style={styles.statBadgeText}>{referral.businessType}</Text>
+          </View>
+        )}
+        {referral.revenue && (
+          <View style={styles.statBadge}>
+            <Icon name="currency-inr" size={14} color="#4CAF50" />
+            <Text style={styles.statBadgeText}>₹{referral.revenue}</Text>
+          </View>
+        )}
+      </View>
+      {referral.clientEmail && (
+        <View style={styles.notesContainer}>
+          <Icon name="email" size={14} color="#666" />
+          <Text style={styles.notesText}>{referral.clientEmail}</Text>
+        </View>
+      )}
+      {referral.notes && (
+        <View style={styles.notesContainer}>
+          <Icon name="note-text" size={14} color="#666" />
+          <Text style={styles.notesText}>{referral.notes}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderPaymentItem = (payment) => (
+    <View style={styles.memberCard}>
+      <View style={styles.memberHeader}>
+        <View>
+          <Text style={styles.memberName}>{payment.memberName || 'Unknown'}</Text>
+          <Text style={styles.memberSubtext}>{payment.paymentForMonth || 'N/A'}</Text>
+        </View>
+        <View style={[
+          styles.statusBadge,
+          payment.status === 'Pending' && styles.statusPending,
+          payment.status === 'Paid' && styles.statusCompleted,
+          payment.status === 'Completed' && styles.statusCompleted,
+          payment.status === 'Failed' && styles.statusAbsent,
+        ]}>
+          <Text style={styles.statusText}>{payment.status || 'Paid'}</Text>
+        </View>
+      </View>
+      <View style={styles.memberStats}>
+        <View style={styles.statBadge}>
+          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Text style={styles.statBadgeText}>
+            {new Date(payment.paymentDate).toLocaleDateString()}
+          </Text>
+        </View>
+        <View style={styles.statBadge}>
+          <Icon name="currency-inr" size={14} color="#4CAF50" />
+          <Text style={styles.statBadgeText}>₹{payment.amount}</Text>
+        </View>
+        {payment.paymentMethod && (
+          <View style={styles.statBadge}>
+            <Icon name="credit-card" size={14} color="#FF9800" />
+            <Text style={styles.statBadgeText}>{payment.paymentMethod}</Text>
+          </View>
+        )}
+        {payment.receiptNumber && (
+          <View style={styles.statBadge}>
+            <Icon name="receipt" size={14} color="#9C27B0" />
+            <Text style={styles.statBadgeText}>{payment.receiptNumber}</Text>
+          </View>
+        )}
+      </View>
+      {payment.transactionId && (
+        <View style={styles.notesContainer}>
+          <Icon name="barcode" size={14} color="#666" />
+          <Text style={styles.notesText}>TXN: {payment.transactionId}</Text>
+        </View>
+      )}
+      {payment.notes && (
+        <View style={styles.notesContainer}>
+          <Icon name="note-text" size={14} color="#666" />
+          <Text style={styles.notesText}>{payment.notes}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderAlaigalMeetingItem = (meeting) => (
+    <View style={styles.memberCard}>
+      <View style={styles.memberHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.memberName}>{meeting.meetingTitle || meeting.meetingCode || 'Untitled Meeting'}</Text>
+          <Text style={styles.memberSubtext}>{meeting.meetingType || 'In-Person'}</Text>
+        </View>
+        <View style={styles.statusBadge}>
+          <Text style={styles.statusText}>{meeting.meetingCode || 'N/A'}</Text>
+        </View>
+      </View>
+      <View style={styles.memberStats}>
+        <View style={styles.statBadge}>
+          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Text style={styles.statBadgeText}>
+            {new Date(meeting.meetingDate).toLocaleDateString()}
+          </Text>
+        </View>
+        {meeting.time && (
+          <View style={styles.statBadge}>
+            <Icon name="clock-outline" size={14} color="#4CAF50" />
+            <Text style={styles.statBadgeText}>{meeting.time}</Text>
+          </View>
+        )}
+        {meeting.place && (
+          <View style={styles.statBadge}>
+            <Icon name="map-marker" size={14} color="#FF9800" />
+            <Text style={styles.statBadgeText}>{meeting.place}</Text>
+          </View>
+        )}
+        {meeting.contactPersonName && (
+          <View style={styles.statBadge}>
+            <Icon name="account" size={14} color="#9C27B0" />
+            <Text style={styles.statBadgeText}>{meeting.contactPersonName}</Text>
+          </View>
+        )}
+      </View>
+      {meeting.contactPersonNum && (
+        <View style={styles.notesContainer}>
+          <Icon name="phone" size={14} color="#666" />
+          <Text style={styles.notesText}>Contact: {meeting.contactPersonNum}</Text>
+        </View>
+      )}
+      {meeting.memberDetails && (
+        <View style={styles.notesContainer}>
+          <Icon name="account-group" size={14} color="#666" />
+          <Text style={styles.notesText}>Members: {meeting.memberDetails}</Text>
+        </View>
+      )}
+      {meeting.description && (
+        <View style={styles.notesContainer}>
+          <Icon name="note-text" size={14} color="#666" />
+          <Text style={styles.notesText}>{meeting.description}</Text>
+        </View>
+      )}
+      {meeting.meetingLink && (
+        <View style={styles.notesContainer}>
+          <Icon name="link" size={14} color="#666" />
+          <Text style={styles.notesText}>{meeting.meetingLink}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  const renderVisitorItem = (visitor) => (
+    <View style={styles.memberCard}>
+      <View style={styles.memberHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.memberName}>{visitor.visitorName || 'Unknown Visitor'}</Text>
+          <Text style={styles.memberSubtext}>Brought by: {visitor.broughtByMemberName || 'Unknown'}</Text>
+        </View>
+        <View style={[
+          styles.statusBadge,
+          visitor.becameMember ? styles.statusCompleted : styles.statusPending,
+        ]}>
+          <Text style={styles.statusText}>{visitor.becameMember ? 'Member' : 'Visitor'}</Text>
+        </View>
+      </View>
+      <View style={styles.memberStats}>
+        <View style={styles.statBadge}>
+          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Text style={styles.statBadgeText}>
+            {new Date(visitor.visitDate).toLocaleDateString()}
+          </Text>
+        </View>
+        {visitor.visitorPhone && (
+          <View style={styles.statBadge}>
+            <Icon name="phone" size={14} color="#4CAF50" />
+            <Text style={styles.statBadgeText}>{visitor.visitorPhone}</Text>
+          </View>
+        )}
+        {visitor.visitorBusiness && (
+          <View style={styles.statBadge}>
+            <Icon name="briefcase" size={14} color="#FF9800" />
+            <Text style={styles.statBadgeText}>{visitor.visitorBusiness}</Text>
+          </View>
+        )}
+        {visitor.visitorCity && (
+          <View style={styles.statBadge}>
+            <Icon name="map-marker" size={14} color="#9C27B0" />
+            <Text style={styles.statBadgeText}>{visitor.visitorCity}</Text>
+          </View>
+        )}
+      </View>
+      {visitor.visitorEmail && (
+        <View style={styles.notesContainer}>
+          <Icon name="email" size={14} color="#666" />
+          <Text style={styles.notesText}>{visitor.visitorEmail}</Text>
+        </View>
+      )}
+      {visitor.company && (
+        <View style={styles.notesContainer}>
+          <Icon name="office-building" size={14} color="#666" />
+          <Text style={styles.notesText}>Company: {visitor.company}</Text>
+        </View>
+      )}
+      {visitor.visitorAddress && (
+        <View style={styles.notesContainer}>
+          <Icon name="home" size={14} color="#666" />
+          <Text style={styles.notesText}>{visitor.visitorAddress}</Text>
+        </View>
+      )}
+      {visitor.notes && (
+        <View style={styles.notesContainer}>
+          <Icon name="note-text" size={14} color="#666" />
+          <Text style={styles.notesText}>{visitor.notes}</Text>
         </View>
       )}
     </View>
@@ -231,19 +1178,26 @@ const Reports = ({ navigation }) => {
 
     switch (selectedReportTab) {
       case 'attendance':
+        const attendanceData = reportData.data || [];
         if (activeMemberTab === 'present') {
-          return reportData.attendance?.presentMembers || [];
+          return attendanceData.filter(a => a.status === 'Present');
         } else if (activeMemberTab === 'absent') {
-          return reportData.attendance?.absentMembers || [];
+          return attendanceData.filter(a => a.status === 'Absent');
         } else {
-          return reportData.members?.allMembers || [];
+          return attendanceData;
         }
+      case 'tyfcb':
+        return reportData.data || [];
+      case 'meeting':
+        return reportData.data || [];
+      case 'referral':
+        return reportData.data || [];
       case 'payment':
-        if (activePaymentTab === 'paid') {
-          return reportData.payments?.paidMembers || [];
-        } else {
-          return reportData.members?.allMembers || [];
-        }
+        return reportData.data || [];
+      case 'alaigalmeeting':
+        return reportData.data || [];
+      case 'visitor':
+        return reportData.data || [];
       default:
         return reportData.members?.allMembers || [];
     }
@@ -284,14 +1238,19 @@ const Reports = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Select Period</Text>
           <View style={styles.periodContainer}>
-            {['daily', 'weekly', 'monthly', 'yearly'].map(period => (
+            {['daily', 'weekly', 'monthly', 'yearly', 'custom'].map(period => (
               <TouchableOpacity
                 key={period}
                 style={[
                   styles.periodButton,
                   selectedPeriod === period && styles.activePeriod
                 ]}
-                onPress={() => setSelectedPeriod(period)}
+                onPress={() => {
+                  if (period === 'custom') {
+                    setShowCustomDateModal(true);
+                  }
+                  setSelectedPeriod(period);
+                }}
               >
                 <Text style={[
                   styles.periodText,
@@ -302,6 +1261,14 @@ const Reports = ({ navigation }) => {
               </TouchableOpacity>
             ))}
           </View>
+          
+          {selectedPeriod === 'custom' && (
+            <View style={styles.customDateDisplay}>
+              <Text style={styles.customDateText}>
+                {fromDate.toLocaleDateString()} - {toDate.toLocaleDateString()}
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Report Tabs */}
@@ -365,10 +1332,9 @@ const Reports = ({ navigation }) => {
                     <Text style={styles.reportSubtitle}>
                       {selectedPeriod.charAt(0).toUpperCase() + selectedPeriod.slice(1)} Report
                     </Text>
-                    {reportData.attendance?.period && (
+                    {reportData.fromDate && reportData.toDate && (
                       <Text style={styles.periodRange}>
-                        {new Date(reportData.attendance.startDate).toLocaleDateString()} - 
-                        {new Date(reportData.attendance.endDate).toLocaleDateString()}
+                        {new Date(reportData.fromDate).toLocaleDateString()} - {new Date(reportData.toDate).toLocaleDateString()}
                       </Text>
                     )}
                   </View>
@@ -420,7 +1386,7 @@ const Reports = ({ navigation }) => {
             </View>
 
             {/* Member Filter Tabs */}
-            {selectedReportTab === 'attendance' && (
+            {selectedReportTab === 'attendance' && reportData && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Attendance Details</Text>
                 <View style={styles.filterTabs}>
@@ -435,7 +1401,7 @@ const Reports = ({ navigation }) => {
                       styles.filterTabText,
                       activeMemberTab === 'all' && styles.activeFilterTabText
                     ]}>
-                      All ({reportData.members?.allMembers?.length || 0})
+                      All ({reportData.totalRecords || 0})
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -449,7 +1415,7 @@ const Reports = ({ navigation }) => {
                       styles.filterTabText,
                       activeMemberTab === 'present' && styles.activeFilterTabText
                     ]}>
-                      Present ({reportData.attendance?.presentCount || 0})
+                      Present ({(reportData.data || []).filter(a => a.status === 'Present').length})
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -463,47 +1429,178 @@ const Reports = ({ navigation }) => {
                       styles.filterTabText,
                       activeMemberTab === 'absent' && styles.activeFilterTabText
                     ]}>
-                      Absent ({reportData.attendance?.absentCount || 0})
+                      Absent ({(reportData.data || []).filter(a => a.status === 'Absent').length})
                     </Text>
                   </TouchableOpacity>
                 </View>
               </View>
             )}
 
-            {/* Payment Filter Tabs */}
+            {/* Payment Member Selection */}
             {selectedReportTab === 'payment' && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Payment Details</Text>
-                <View style={styles.filterTabs}>
+                <Text style={styles.sectionTitle}>Filter by Member</Text>
+                <TouchableOpacity
+                  style={styles.memberSelectButton}
+                  onPress={() => setShowMemberListModal(true)}
+                >
+                  <Icon name="account-search" size={18} color="#4A90E2" />
+                  <Text style={styles.memberSelectText}>
+                    {selectedMemberForReport 
+                      ? selectedMemberForReport.name 
+                      : 'All Members (Tap to filter)'}
+                  </Text>
+                  <Icon name="chevron-right" size={18} color="#4A90E2" />
+                </TouchableOpacity>
+                {selectedMemberForReport && (
                   <TouchableOpacity
-                    style={[
-                      styles.filterTab,
-                      activePaymentTab === 'all' && styles.activeFilterTab
-                    ]}
-                    onPress={() => setActivePaymentTab('all')}
+                    style={styles.clearFilterButton}
+                    onPress={clearMemberSelection}
                   >
-                    <Text style={[
-                      styles.filterTabText,
-                      activePaymentTab === 'all' && styles.activeFilterTabText
-                    ]}>
-                      All ({reportData.members?.allMembers?.length || 0})
-                    </Text>
+                    <Icon name="close-circle" size={16} color="#EF4444" />
+                    <Text style={styles.clearFilterText}>Clear Filter</Text>
                   </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {/* TYFCB Member Selection */}
+            {selectedReportTab === 'tyfcb' && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Filter by Member</Text>
+                <TouchableOpacity
+                  style={styles.memberSelectButton}
+                  onPress={() => setShowMemberListModal(true)}
+                >
+                  <Icon name="account-search" size={18} color="#4A90E2" />
+                  <Text style={styles.memberSelectText}>
+                    {selectedMemberForReport 
+                      ? selectedMemberForReport.name 
+                      : 'All Members (Tap to filter)'}
+                  </Text>
+                  <Icon name="chevron-right" size={18} color="#4A90E2" />
+                </TouchableOpacity>
+                {selectedMemberForReport && (
                   <TouchableOpacity
-                    style={[
-                      styles.filterTab,
-                      activePaymentTab === 'paid' && styles.activeFilterTab
-                    ]}
-                    onPress={() => setActivePaymentTab('paid')}
+                    style={styles.clearFilterButton}
+                    onPress={clearMemberSelection}
                   >
-                    <Text style={[
-                      styles.filterTabText,
-                      activePaymentTab === 'paid' && styles.activeFilterTabText
-                    ]}>
-                      Paid ({reportData.payments?.totalPaidMembers || 0})
-                    </Text>
+                    <Icon name="close-circle" size={16} color="#EF4444" />
+                    <Text style={styles.clearFilterText}>Clear Filter</Text>
                   </TouchableOpacity>
-                </View>
+                )}
+              </View>
+            )}
+
+            {/* One-to-One Meeting Member Selection */}
+            {selectedReportTab === 'meeting' && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Filter by Member</Text>
+                <TouchableOpacity
+                  style={styles.memberSelectButton}
+                  onPress={() => setShowMemberListModal(true)}
+                >
+                  <Icon name="account-search" size={18} color="#4A90E2" />
+                  <Text style={styles.memberSelectText}>
+                    {selectedMemberForReport 
+                      ? selectedMemberForReport.name 
+                      : 'All Members (Tap to filter)'}
+                  </Text>
+                  <Icon name="chevron-right" size={18} color="#4A90E2" />
+                </TouchableOpacity>
+                {selectedMemberForReport && (
+                  <TouchableOpacity
+                    style={styles.clearFilterButton}
+                    onPress={clearMemberSelection}
+                  >
+                    <Icon name="close-circle" size={16} color="#EF4444" />
+                    <Text style={styles.clearFilterText}>Clear Filter</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {/* Referral Member Selection */}
+            {selectedReportTab === 'referral' && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Filter by Member</Text>
+                <TouchableOpacity
+                  style={styles.memberSelectButton}
+                  onPress={() => setShowMemberListModal(true)}
+                >
+                  <Icon name="account-search" size={18} color="#4A90E2" />
+                  <Text style={styles.memberSelectText}>
+                    {selectedMemberForReport 
+                      ? selectedMemberForReport.name 
+                      : 'All Members (Tap to filter)'}
+                  </Text>
+                  <Icon name="chevron-right" size={18} color="#4A90E2" />
+                </TouchableOpacity>
+                {selectedMemberForReport && (
+                  <TouchableOpacity
+                    style={styles.clearFilterButton}
+                    onPress={clearMemberSelection}
+                  >
+                    <Icon name="close-circle" size={16} color="#EF4444" />
+                    <Text style={styles.clearFilterText}>Clear Filter</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {/* Alaigal Meeting Member Selection */}
+            {selectedReportTab === 'alaigalmeeting' && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Filter by Member</Text>
+                <TouchableOpacity
+                  style={styles.memberSelectButton}
+                  onPress={() => setShowMemberListModal(true)}
+                >
+                  <Icon name="account-search" size={18} color="#4A90E2" />
+                  <Text style={styles.memberSelectText}>
+                    {selectedMemberForReport 
+                      ? selectedMemberForReport.name 
+                      : 'All Members (Tap to filter)'}
+                  </Text>
+                  <Icon name="chevron-right" size={18} color="#4A90E2" />
+                </TouchableOpacity>
+                {selectedMemberForReport && (
+                  <TouchableOpacity
+                    style={styles.clearFilterButton}
+                    onPress={clearMemberSelection}
+                  >
+                    <Icon name="close-circle" size={16} color="#EF4444" />
+                    <Text style={styles.clearFilterText}>Clear Filter</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {/* Visitor Member Selection */}
+            {selectedReportTab === 'visitor' && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Filter by Member</Text>
+                <TouchableOpacity
+                  style={styles.memberSelectButton}
+                  onPress={() => setShowMemberListModal(true)}
+                >
+                  <Icon name="account-search" size={18} color="#4A90E2" />
+                  <Text style={styles.memberSelectText}>
+                    {selectedMemberForReport 
+                      ? selectedMemberForReport.name 
+                      : 'All Members (Tap to filter)'}
+                  </Text>
+                  <Icon name="chevron-right" size={18} color="#4A90E2" />
+                </TouchableOpacity>
+                {selectedMemberForReport && (
+                  <TouchableOpacity
+                    style={styles.clearFilterButton}
+                    onPress={clearMemberSelection}
+                  >
+                    <Icon name="close-circle" size={16} color="#EF4444" />
+                    <Text style={styles.clearFilterText}>Clear Filter</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             )}
 
@@ -512,30 +1609,46 @@ const Reports = ({ navigation }) => {
               <View style={styles.membersHeader}>
                 <Text style={styles.sectionTitle}>
                   {selectedReportTab === 'attendance' 
-                    ? activeMemberTab === 'present' ? 'Present Members' 
-                      : activeMemberTab === 'absent' ? 'Absent Members' 
-                      : 'All Members'
+                    ? activeMemberTab === 'present' ? 'Present Records' 
+                      : activeMemberTab === 'absent' ? 'Absent Records' 
+                      : 'All Records'
                     : selectedReportTab === 'payment'
                     ? activePaymentTab === 'paid' ? 'Paid Members' : 'All Members'
-                    : 'Members'}
+                    : 'Records'}
                 </Text>
                 <Text style={styles.memberCount}>
-                  {membersList.length} members
+                  {membersList.length} records
                 </Text>
               </View>
               
               {membersList.length > 0 ? (
                 <FlatList
                   data={membersList}
-                  renderItem={({ item }) => renderMemberItem(item)}
-                  keyExtractor={(item) => item.id.toString()}
+                  renderItem={({ item }) => {
+                    if (selectedReportTab === 'tyfcb') {
+                      return renderTYFCBItem(item);
+                    } else if (selectedReportTab === 'meeting') {
+                      return renderOneToOneMeetingItem(item);
+                    } else if (selectedReportTab === 'referral') {
+                      return renderReferralItem(item);
+                    } else if (selectedReportTab === 'payment') {
+                      return renderPaymentItem(item);
+                    } else if (selectedReportTab === 'alaigalmeeting') {
+                      return renderAlaigalMeetingItem(item);
+                    } else if (selectedReportTab === 'visitor') {
+                      return renderVisitorItem(item);
+                    } else {
+                      return renderMemberItem(item);
+                    }
+                  }}
+                  keyExtractor={(item, index) => item.id?.toString() || index.toString()}
                   scrollEnabled={false}
                   style={styles.membersList}
                 />
               ) : (
                 <View style={styles.emptyContainer}>
-                  <Icon name="account-off" size={48} color="#CCC" />
-                  <Text style={styles.emptyText}>No members found</Text>
+                  <Icon name="clipboard-text-off" size={48} color="#CCC" />
+                  <Text style={styles.emptyText}>No records found</Text>
                 </View>
               )}
             </View>
@@ -552,6 +1665,147 @@ const Reports = ({ navigation }) => {
 
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      {/* Custom Date Range Modal */}
+      <Modal
+        visible={showCustomDateModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowCustomDateModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Date Range</Text>
+              <TouchableOpacity onPress={() => setShowCustomDateModal(false)}>
+                <Icon name="close" size={24} color="#4A90E2" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.dateInputGroup}>
+              <Text style={styles.dateLabel}>From Date</Text>
+              <TouchableOpacity
+                style={styles.dateInput}
+                onPress={() => {
+                  setDatePickerMode('from');
+                  setShowDatePicker(true);
+                }}
+              >
+                <Icon name="calendar" size={18} color="#4A90E2" />
+                <Text style={styles.dateInputText}>{fromDate.toLocaleDateString()}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.dateInputGroup}>
+              <Text style={styles.dateLabel}>To Date</Text>
+              <TouchableOpacity
+                style={styles.dateInput}
+                onPress={() => {
+                  setDatePickerMode('to');
+                  setShowDatePicker(true);
+                }}
+              >
+                <Icon name="calendar" size={18} color="#4A90E2" />
+                <Text style={styles.dateInputText}>{toDate.toLocaleDateString()}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.applyButton}
+              onPress={() => {
+                setShowCustomDateModal(false);
+                if (currentMemberId) {
+                  fetchReportData();
+                }
+              }}
+            >
+              <Text style={styles.applyButtonText}>Apply</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={datePickerMode === 'from' ? fromDate : toDate}
+          mode="date"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (selectedDate) {
+              if (datePickerMode === 'from') {
+                setFromDate(selectedDate);
+              } else {
+                setToDate(selectedDate);
+              }
+            }
+          }}
+          maximumDate={new Date()}
+        />
+      )}
+
+      {/* Member Selection Modal for TYFCB */}
+      <Modal
+        visible={showMemberListModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowMemberListModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Member</Text>
+              <TouchableOpacity onPress={() => setShowMemberListModal(false)}>
+                <Icon name="close" size={24} color="#4A90E2" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Search */}
+            <View style={styles.searchContainer}>
+              <Icon name="magnify" size={18} color="#999" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search members..."
+                value={searchQuery}
+                onChangeText={handleMemberSearch}
+                placeholderTextColor="#999"
+              />
+              {searchQuery !== '' && (
+                <TouchableOpacity onPress={() => handleMemberSearch('')}>
+                  <Icon name="close" size={18} color="#999" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Members List */}
+            <FlatList
+              data={filteredMembers}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.memberSelectItem,
+                    selectedMemberForReport?.id === item.id && styles.memberSelectItemActive
+                  ]}
+                  onPress={() => handleMemberSelect(item)}
+                >
+                  <View style={styles.memberSelectInfo}>
+                    <Text style={styles.memberSelectName}>{item.name}</Text>
+                    <Text style={styles.memberSelectDetails}>
+                      {item.business} • {item.phone}
+                    </Text>
+                  </View>
+                  {selectedMemberForReport?.id === item.id && (
+                    <Icon name="check-circle" size={20} color="#4A90E2" />
+                  )}
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id.toString()}
+              style={styles.memberSelectList}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -590,11 +1844,12 @@ const styles = StyleSheet.create({
   },
   periodContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: 8,
   },
   periodButton: {
     flex: 1,
+    minWidth: '18%',
     paddingVertical: 10,
     borderRadius: 8,
     backgroundColor: '#FFF',
@@ -818,6 +2073,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
   },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#E0E0E0',
+  },
+  statusPresent: {
+    backgroundColor: '#E8F5E9',
+  },
+  statusAbsent: {
+    backgroundColor: '#FFEBEE',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#666',
+  },
+  notesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    gap: 6,
+  },
+  notesText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+  },
   memberStats: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -881,6 +2168,170 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
     textAlign: 'center',
+  },
+  customDateDisplay: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#E3F2FD',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  customDateText: {
+    fontSize: 13,
+    color: '#4A90E2',
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    marginTop: 50,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 15,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#4A90E2',
+  },
+  dateInputGroup: {
+    marginBottom: 15,
+  },
+  dateLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  dateInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F9FC',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#87CEEB',
+    gap: 10,
+  },
+  dateInputText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  applyButton: {
+    backgroundColor: '#4A90E2',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  applyButtonText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  memberSelectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#87CEEB',
+  },
+  memberSelectText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+  },
+  clearFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    paddingVertical: 8,
+  },
+  clearFilterText: {
+    marginLeft: 4,
+    fontSize: 13,
+    color: '#EF4444',
+    fontWeight: '500',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#87CEEB',
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    fontSize: 14,
+    color: '#333',
+  },
+  memberSelectList: {
+    flex: 1,
+  },
+  memberSelectItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFF',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  memberSelectItemActive: {
+    backgroundColor: '#E3F2FD',
+    borderColor: '#4A90E2',
+    borderWidth: 2,
+  },
+  memberSelectInfo: {
+    flex: 1,
+  },
+  memberSelectName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C5F8D',
+    marginBottom: 4,
+  },
+  memberSelectDetails: {
+    fontSize: 12,
+    color: '#666',
+  },
+  memberSubtext: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  statusPending: {
+    backgroundColor: '#FFF3E0',
+  },
+  statusCompleted: {
+    backgroundColor: '#E8F5E9',
   },
 });
 

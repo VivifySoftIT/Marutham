@@ -184,7 +184,7 @@ const TYFCBSlip = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>TYFCB Slip</Text>
+        <Text style={styles.headerTitle}>Thanks Note</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 
@@ -330,7 +330,7 @@ const TYFCBSlip = () => {
             ) : (
               <>
                 <Icon name="check-circle" size={20} color="#FFF" />
-                <Text style={styles.confirmButtonText}>Confirm TYFCB Slip</Text>
+                <Text style={styles.confirmButtonText}>Confirm Thanks Note</Text>
               </>
             )}
           </TouchableOpacity>
@@ -348,7 +348,7 @@ const TYFCBSlip = () => {
               style={styles.successHeader}
             >
               <Icon name="check-circle" size={60} color="#FFF" />
-              <Text style={styles.successTitle}>TYFCB Slip Submitted!</Text>
+              <Text style={styles.successTitle}>Thanks Note Submitted!</Text>
             </LinearGradient>
 
             <View style={styles.successContent}>

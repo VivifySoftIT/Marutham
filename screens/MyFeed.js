@@ -413,7 +413,7 @@ const MyFeed = ({ route }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Feed</Text>
+        <Text style={styles.headerTitle}>My Activity Log</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 
