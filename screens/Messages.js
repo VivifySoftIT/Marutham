@@ -33,7 +33,6 @@ const Messages = ({ navigation }) => {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [recentMessages, setRecentMessages] = useState([]);
   const [adminMemberId, setAdminMemberId] = useState(null);
-  const [adminSubCompanyId, setAdminSubCompanyId] = useState(null);
 
   const [formData, setFormData] = useState({
     toEmail: '',
@@ -49,47 +48,37 @@ const Messages = ({ navigation }) => {
 
   // Load members and messages from API when component mounts
   useEffect(() => {
-    loadAdminMemberInfo();
+    getCurrentUserMemberId();
     loadMembers();
     loadMessages();
   }, []);
 
-  // Three-tier admin member ID lookup (matches Reports.js pattern)
-  const loadAdminMemberInfo = async () => {
+  // Robust function to get current user's member ID (3-tier lookup)
+  const getCurrentUserMemberId = async () => {
     try {
-      // Tier 1: Check AsyncStorage
+      // First check if memberId is already in AsyncStorage
       const storedMemberId = await AsyncStorage.getItem('memberId');
       if (storedMemberId) {
         console.log('Messages - Member ID found in storage:', storedMemberId);
-        const memberId = parseInt(storedMemberId);
-        try {
-          const memberData = await ApiService.getMemberById(memberId);
-          if (memberData && memberData.isActive) {
-            setAdminMemberId(memberId);
-            setAdminSubCompanyId(memberData.subCompanyId);
-            console.log('Messages - Admin member loaded from storage:', memberId, 'SubCompany:', memberData.subCompanyId);
-            return memberId;
-          }
-        } catch (error) {
-          console.log('Messages - Stored member ID invalid, continuing to lookup...');
-        }
+        setAdminMemberId(parseInt(storedMemberId));
+        return parseInt(storedMemberId);
       }
 
       console.log('Messages - Member ID not in storage, attempting to look up...');
 
-      // Tier 2: Get by User ID
+      // If not, try to get it from user ID
       const userId = await AsyncStorage.getItem('userId');
       const fullName = await AsyncStorage.getItem('fullName');
-      
+
       if (userId) {
         try {
+          // Try to get member by user ID
           console.log('Messages - Trying GetByUserId with userId:', userId);
-          const memberData = await ApiService.getMemberByUserId(parseInt(userId));
+          const memberData = await ApiService.getMemberByUserId(userId);
           if (memberData && memberData.id) {
             await AsyncStorage.setItem('memberId', memberData.id.toString());
+            console.log('Messages - Member found via GetByUserId:', memberData.id);
             setAdminMemberId(memberData.id);
-            setAdminSubCompanyId(memberData.subCompanyId);
-            console.log('Messages - Member found via GetByUserId:', memberData.id, 'SubCompany:', memberData.subCompanyId);
             return memberData.id;
           }
         } catch (error) {
@@ -97,21 +86,16 @@ const Messages = ({ navigation }) => {
         }
       }
 
-      // Tier 3: Search by name
+      // Fallback: search by name
       if (fullName) {
         try {
           console.log('Messages - Searching members by name:', fullName);
           const members = await ApiService.getMembers();
-          const member = members.find(m => 
-            m.name && 
-            m.name.trim().toLowerCase() === fullName.trim().toLowerCase() &&
-            m.isActive
-          );
+          const member = members.find(m => m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase());
           if (member) {
             await AsyncStorage.setItem('memberId', member.id.toString());
+            console.log('Messages - Member found by name:', member.id);
             setAdminMemberId(member.id);
-            setAdminSubCompanyId(member.subCompanyId);
-            console.log('Messages - Member found by name:', member.id, 'SubCompany:', member.subCompanyId);
             return member.id;
           }
         } catch (error) {
@@ -119,10 +103,10 @@ const Messages = ({ navigation }) => {
         }
       }
 
-      console.warn('Messages - Could not determine admin member ID');
+      console.log('Messages - Could not find member ID');
       return null;
     } catch (error) {
-      console.error('Messages - Error loading admin member info:', error);
+      console.error('Messages - Error getting member ID:', error);
       return null;
     }
   };
@@ -133,9 +117,17 @@ const Messages = ({ navigation }) => {
       console.log('Messages - Loading members...');
       const members = await ApiService.getMembers();
       console.log('Messages - Raw members response:', members);
-      const activeMembers = (members || []).filter(m => m.isActive);
+      console.log('Messages - First member sample:', members?.[0]);
+      
+      // Filter active members - handle different possible field names
+      const activeMembers = (members || []).filter(m => {
+        // Check various possible active status fields
+        const isActive = m.isActive !== false && m.status !== 'Inactive' && m.status !== 'Deleted';
+        return isActive && m.name; // Also ensure member has a name
+      });
+      
       console.log('Messages - Active members count:', activeMembers.length);
-      console.log('Messages - Active members:', activeMembers);
+      console.log('Messages - Active members sample:', activeMembers.slice(0, 3));
       setAllMembers(activeMembers);
     } catch (error) {
       console.error('Messages - Error loading members:', error);
@@ -301,10 +293,6 @@ const Messages = ({ navigation }) => {
       Alert.alert('Error', 'Admin member ID not found. Please try again.');
       return false;
     }
-    if (!adminSubCompanyId) {
-      Alert.alert('Error', 'Sub-company ID not found. Please try again.');
-      return false;
-    }
     return true;
   };
 
@@ -313,6 +301,14 @@ const Messages = ({ navigation }) => {
 
     setLoading(true);
     try {
+      // Get fresh admin member ID
+      const currentAdminMemberId = await getCurrentUserMemberId();
+      if (!currentAdminMemberId) {
+        Alert.alert('Error', 'Admin member ID not found. Please login again.');
+        setLoading(false);
+        return;
+      }
+
       // Format member IDs as comma-separated string
       let memberIds = null;
       if (formData.recipientType === 'member' && selectedMembers.length > 0) {
@@ -326,8 +322,7 @@ const Messages = ({ navigation }) => {
         Subject: formData.subject.trim(),
         Content: formData.content.trim(),
         AttachmentUrl: attachment?.uri || null,
-        CreatedBy: adminMemberId,
-        SubCompanyId: adminSubCompanyId,
+        CreatedBy: currentAdminMemberId,
       };
 
       // Add payment-specific fields if Payment type

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,10 +18,20 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
-import ApiService from '../service/api'; // Import your API service
+import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
 
 const { width } = Dimensions.get('window');
+
+// Define waterBlueColors outside the component so it's accessible
+const waterBlueColors = {
+  primary: '#4A90E2',
+  light: '#87CEEB',
+  lighter: '#B3E0F2',
+  lightest: '#E0F7FA',
+  dark: '#357ABD',
+  darker: '#1E5A96',
+};
 
 const MemberDashboard = () => {
   const navigation = useNavigation();
@@ -35,65 +45,17 @@ const MemberDashboard = () => {
   const [accountName, setAccountName] = useState('Admin User');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [notificationCount, setNotificationCount] = useState(3);
+  const [notificationCount, setNotificationCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: 'birthday',
-      title: 'Birthday Reminder',
-      message: 'John Doe\'s birthday is today! 🎉',
-      time: '09:00 AM Today',
-      icon: 'cake',
-      color: '#FF6B6B',
-      backgroundColor: '#FFE5E5',
-      isRead: false,
-    },
-    {
-      id: 2,
-      type: 'meeting',
-      title: 'Meeting Reminder',
-      message: 'Monthly board meeting at 2:00 PM',
-      time: '1 hour ago',
-      icon: 'calendar-clock',
-      color: '#4ECDC4',
-      backgroundColor: '#E8F8F7',
-      isRead: false,
-    },
-    {
-      id: 3,
-      type: 'admin',
-      title: 'Admin Notice',
-      message: 'New safety protocols have been updated',
-      time: '2 hours ago',
-      icon: 'information',
-      color: '#45B7D1',
-      backgroundColor: '#E3F2FD',
-      isRead: false,
-    },
-    {
-      id: 4,
-      type: 'payment',
-      title: 'Payment Notification',
-      message: '5 members have pending payments due',
-      time: '3 hours ago',
-      icon: 'credit-card-alert',
-      color: '#FFA726',
-      backgroundColor: '#FFF3E0',
-      isRead: true,
-    },
-    {
-      id: 5,
-      type: 'birthday',
-      title: 'Upcoming Birthday',
-      message: 'Sarah Wilson\'s birthday is tomorrow',
-      time: 'Yesterday',
-      icon: 'cake-variant',
-      color: '#FF6B6B',
-      backgroundColor: '#FFE5E5',
-      isRead: true,
-    },
-  ]);
+  
+  // For swipeable sections
+  const [activeStatIndex, setActiveStatIndex] = useState(0);
+  const [activeQuickActionIndex, setActiveQuickActionIndex] = useState(0);
+  
+  const statsScrollRef = useRef(null);
+  const quickActionsScrollRef = useRef(null);
+  
+  const [notifications, setNotifications] = useState([]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -110,14 +72,12 @@ const MemberDashboard = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Clear all stored data
               await AsyncStorage.removeItem('jwt_token');
               await AsyncStorage.removeItem('token');
               await AsyncStorage.removeItem('authToken');
               await AsyncStorage.removeItem('username');
               await AsyncStorage.removeItem('password');
               
-              // Reset navigation to login screen
               navigation.reset({
                 index: 0,
                 routes: [{ name: 'Login' }],
@@ -142,7 +102,6 @@ const MemberDashboard = () => {
       )
     );
     
-    // Update notification count
     const unreadCount = notifications.filter(n => !n.isRead && n.id !== notificationId).length;
     setNotificationCount(unreadCount);
   };
@@ -151,16 +110,6 @@ const MemberDashboard = () => {
   const clearAllNotifications = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
     setNotificationCount(0);
-  };
-
-  // Water blue color theme
-  const waterBlueColors = {
-    primary: '#4A90E2',
-    light: '#87CEEB',
-    lighter: '#B3E0F2',
-    lightest: '#E0F7FA',
-    dark: '#357ABD',
-    darker: '#1E5A96',
   };
 
   // Set greeting based on time
@@ -183,78 +132,188 @@ const MemberDashboard = () => {
     setGreeting(newGreeting);
     setQuote(newQuote);
     
-    // Load dashboard data
     loadDashboardData();
   }, [t]);
 
-  // Replace the loadDashboardData function with this:
-const loadDashboardData = async () => {
-  try {
-    setLoading(true);
-    console.log('Loading dashboard data...');
-    
-    // Get auth token
-    const token = await AsyncStorage.getItem('token') || 
-                  await AsyncStorage.getItem('jwt_token') || 
-                  await AsyncStorage.getItem('authToken');
-    
-    // Call the API directly
-    const response = await fetch('https://www.vivifysoft.in/AlaigalBE/api/Inventory/dashboard-summary', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-      },
-    });
-    
-    console.log('Dashboard API Status:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Dashboard API Error:', errorText);
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
-    }
-    
-    const data = await response.json();
-    console.log('Dashboard API Data:', data);
-    
-    // Update state with API data
-    if (data) {
-      setTotalMembers(data.totalMembers || 0);
-      setActiveMembers(data.activeMembers || 0);
-      setPendingPayments(data.membersWithPaymentDue || 0);
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      console.log('Loading dashboard data...');
       
-      // For total revenue, you might need a separate API call
-      const revenue = await fetchTotalRevenue();
-      setTotalRevenue(revenue);
+      const token = await AsyncStorage.getItem('token') || 
+                    await AsyncStorage.getItem('jwt_token') || 
+                    await AsyncStorage.getItem('authToken');
+      
+      // Check if we have a token
+      if (!token) {
+        console.log('No authentication token found');
+        setDemoData();
+        return;
+      }
+      
+      const response = await fetch('https://www.vivifysoft.in/AlaigalBE/api/Inventory/dashboard-summary', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      console.log('Dashboard API Status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Dashboard API Error:', errorText);
+        setDemoData();
+        return;
+      }
+      
+      const data = await response.json();
+      console.log('Dashboard API Data:', data);
+      
+      if (data) {
+        setTotalMembers(data.totalMembers || 0);
+        setActiveMembers(data.activeMembers || 0);
+        setPendingPayments(data.membersWithPaymentDue || 0);
+        
+        const revenue = await fetchTotalRevenue();
+        setTotalRevenue(revenue);
+      } else {
+        setDemoData();
+      }
+
+      // Load notifications
+      await loadNotifications();
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      setDemoData();
+      Alert.alert(
+        'Info', 
+        'Using demo data. API connection failed. Please check your network and API configuration.'
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-  } catch (error) {
-    console.error('Error loading dashboard data:', error);
-    // Fallback to static data for testing
+  };
+
+  // Load notifications from API (same as UserDashboard)
+  const loadNotifications = async () => {
+    try {
+      const memberId = await AsyncStorage.getItem('memberId');
+      
+      if (!memberId) {
+        console.log('MemberDashboard - No memberId for notifications');
+        setNotifications([]);
+        setNotificationCount(0);
+        return;
+      }
+
+      console.log('MemberDashboard - Loading notifications for memberId:', memberId);
+      
+      // Load dashboard reminders and message notifications separately with error handling
+      let reminders = null;
+      let messageNotifications = null;
+
+      try {
+        reminders = await ApiService.getDashboardReminders(memberId);
+        console.log('MemberDashboard - Dashboard reminders:', reminders);
+      } catch (error) {
+        console.error('MemberDashboard - Error loading dashboard reminders:', error);
+      }
+
+      try {
+        messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
+        console.log('MemberDashboard - Message notifications:', messageNotifications);
+      } catch (error) {
+        console.error('MemberDashboard - Error loading message notifications:', error);
+      }
+
+      // Convert reminders to notifications format
+      const newNotifications = [];
+
+      // Add birthday notifications
+      if (reminders && reminders.teamBirthdays && reminders.teamBirthdays.length > 0) {
+        reminders.teamBirthdays.forEach((birthday, index) => {
+          newNotifications.push({
+            id: `birthday-${birthday.name}-${index}`,
+            type: 'birthday',
+            title: 'Birthday Reminder',
+            message: birthday.isToday 
+              ? `${birthday.name}'s birthday is today! 🎉`
+              : `${birthday.name}'s birthday in ${birthday.daysUntil} day${birthday.daysUntil > 1 ? 's' : ''}`,
+            time: birthday.isToday ? 'Today' : `In ${birthday.daysUntil} day${birthday.daysUntil > 1 ? 's' : ''}`,
+            icon: 'cake',
+            color: '#FF6B6B',
+            backgroundColor: '#FFE5E5',
+            isRead: false,
+          });
+        });
+      }
+
+      // Add meeting notifications
+      if (reminders && reminders.upcomingMeetings && reminders.upcomingMeetings.length > 0) {
+        reminders.upcomingMeetings.forEach((meeting) => {
+          newNotifications.push({
+            id: `meeting-${meeting.id}`,
+            type: 'meeting',
+            title: 'Meeting Reminder',
+            message: meeting.isToday
+              ? `${meeting.meetingTitle || 'Meeting'} today at ${meeting.time}`
+              : `${meeting.meetingTitle || 'Meeting'} on ${meeting.date} at ${meeting.time}`,
+            time: meeting.isToday ? 'Today' : meeting.date,
+            icon: 'calendar-clock',
+            color: '#4ECDC4',
+            backgroundColor: '#E8F8F7',
+            isRead: false,
+          });
+        });
+      }
+
+      // Add message notifications
+      if (messageNotifications && messageNotifications.length > 0) {
+        messageNotifications.forEach((msg) => {
+          newNotifications.push({
+            id: `message-${msg.id}`,
+            type: msg.messageType?.toLowerCase() || 'admin',
+            title: msg.subject || 'Message Notification',
+            message: msg.content || 'You have a new message',
+            time: msg.createdDate ? new Date(msg.createdDate).toLocaleDateString() : 'Recent',
+            icon: msg.messageType === 'Payment' ? 'credit-card-alert' : 'information',
+            color: msg.messageType === 'Payment' ? '#FFA726' : '#45B7D1',
+            backgroundColor: msg.messageType === 'Payment' ? '#FFF3E0' : '#E3F2FD',
+            isRead: false,
+          });
+        });
+      }
+
+      // Update notifications state
+      if (newNotifications.length > 0) {
+        setNotifications(newNotifications);
+        setNotificationCount(newNotifications.filter(n => !n.isRead).length);
+        console.log('MemberDashboard - Loaded notifications:', newNotifications.length);
+      } else {
+        // Keep empty state if no notifications
+        setNotifications([]);
+        setNotificationCount(0);
+        console.log('MemberDashboard - No notifications available');
+      }
+    } catch (error) {
+      console.error('MemberDashboard - Error loading notifications:', error);
+    }
+  };
+
+  const setDemoData = () => {
     setTotalMembers(125);
     setActiveMembers(98);
     setPendingPayments(27);
     setTotalRevenue('₹2,45,500');
-    
-    Alert.alert(
-      'Info', 
-      'Using demo data. API connection failed. Please check your network and API configuration.'
-    );
-  } finally {
-    setLoading(false);
-    setRefreshing(false);
-  }
-};
+  };
 
-  // Function to fetch total revenue (you might need to adjust this based on your API)
+  // Function to fetch total revenue
   const fetchTotalRevenue = async () => {
     try {
-      // If you have an API for total revenue, call it here
-      // For example: const response = await ApiService.getTotalRevenue();
-      // return `₹${response.totalRevenue.toLocaleString()}`;
-      
-      // For now, return a static value or calculate from payments
-      return '₹2,45,500'; // Replace with actual API call
+      return '₹2,45,500';
     } catch (error) {
       console.error('Error fetching revenue:', error);
       return '₹0';
@@ -267,7 +326,21 @@ const loadDashboardData = async () => {
     loadDashboardData();
   };
 
-  // Dashboard modules with water blue theme
+  // Handle stats scroll
+  const handleStatsScroll = (event) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const newIndex = Math.round(contentOffsetX / 130); // Updated for larger cards
+    setActiveStatIndex(newIndex);
+  };
+
+  // Handle quick actions scroll
+  const handleQuickActionsScroll = (event) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const newIndex = Math.round(contentOffsetX / 120);
+    setActiveQuickActionIndex(newIndex);
+  };
+
+  // Dashboard modules
   const modules = [
     {
       id: 'add-member',
@@ -330,7 +403,14 @@ const loadDashboardData = async () => {
       id: 'generate-report', 
       icon: 'file-document', 
       title: 'Quick Report', 
-      action: () => navigation.navigate('Reports'),
+      action: () => {
+        try {
+          navigation.navigate('Reports');
+        } catch (error) {
+          console.error('Error navigating to reports:', error);
+          Alert.alert('Error', 'Could not load reports at this time.');
+        }
+      },
     },
     { 
       id: 'create-meeting', 
@@ -340,7 +420,12 @@ const loadDashboardData = async () => {
     },
   ];
 
-  // Direct navigation handlers
+  const statsData = [
+    { icon: 'account-group', value: totalMembers, label: 'Total Members' },
+    { icon: 'account-check', value: activeMembers, label: 'Active' },
+    { icon: 'alert-circle', value: pendingPayments, label: 'Dues Outstanding' },
+  ];
+
   const handleModulePress = (module) => {
     module.action();
   };
@@ -349,20 +434,47 @@ const loadDashboardData = async () => {
     action.action();
   };
 
-  const StatCard = ({ icon, value, label, delay }) => (
+  const StatCard = ({ icon, value, label, delay, index }) => (
     <Animatable.View 
       animation="fadeInUp"
       delay={delay}
-      style={styles.statCard}
+      style={[
+        styles.statCard,
+        activeStatIndex === index && styles.activeStatCard
+      ]}
     >
       <LinearGradient
         colors={[waterBlueColors.lightest, '#F0F9FF']}
         style={styles.statCardGradient}
       >
+        <View style={styles.statIconContainer}>
+          <Icon name={icon} size={22} color={waterBlueColors.primary} />
+        </View>
         <Text style={styles.statNumber}>{value}</Text>
         <Text style={styles.statLabel}>{label}</Text>
       </LinearGradient>
     </Animatable.View>
+  );
+
+  const QuickActionCard = ({ action, index }) => (
+    <TouchableOpacity
+      style={[
+        styles.quickActionCard,
+        activeQuickActionIndex === index && styles.activeQuickActionCard
+      ]}
+      onPress={() => handleQuickAction(action)}
+      activeOpacity={0.8}
+    >
+      <LinearGradient
+        colors={[waterBlueColors.light, waterBlueColors.primary]}
+        style={styles.quickActionGradient}
+      >
+        <View style={styles.quickActionIcon}>
+          <Icon name={action.icon} size={20} color="#FFF" />
+        </View>
+        <Text style={styles.quickActionText}>{action.title}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
   );
 
   return (
@@ -411,39 +523,51 @@ const loadDashboardData = async () => {
             </View>
           </View>
           
-          {/* Stats Cards */}
+          {/* Stats Cards - Swipeable */}
           {loading ? (
             <View style={styles.loadingStats}>
               <ActivityIndicator size="small" color="#FFF" />
               <Text style={styles.loadingText}>Loading stats...</Text>
             </View>
           ) : (
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              style={styles.statsScrollView}
-              contentContainerStyle={styles.statsContent}
-            >
-              <StatCard 
-                icon="account-group" 
-                value={totalMembers} 
-                label="Total Members"
-                delay={100}
-              />
-              <StatCard 
-                icon="account-check" 
-                value={activeMembers} 
-                label="Active"
-                delay={200}
-              />
-              <StatCard 
-                icon="alert-circle" 
-                value={pendingPayments} 
-                label="Dues Outstanding"
-                delay={300}
-              />
-             
-            </ScrollView>
+            <View style={styles.statsContainer}>
+              <ScrollView 
+                ref={statsScrollRef}
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.statsScrollView}
+                contentContainerStyle={styles.statsContent}
+                onScroll={handleStatsScroll}
+                scrollEventThrottle={16}
+                pagingEnabled
+                snapToInterval={130} // Updated for larger cards
+                decelerationRate="fast"
+              >
+                {statsData.map((stat, index) => (
+                  <StatCard 
+                    key={stat.label}
+                    icon={stat.icon}
+                    value={stat.value}
+                    label={stat.label}
+                    delay={100 * index}
+                    index={index}
+                  />
+                ))}
+              </ScrollView>
+              
+              {/* Stats Indicators */}
+              <View style={styles.indicatorsContainer}>
+                {statsData.map((_, index) => (
+                  <View 
+                    key={index}
+                    style={[
+                      styles.indicator,
+                      activeStatIndex === index && styles.activeIndicator
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
           )}
         </View>
       </LinearGradient>
@@ -523,10 +647,10 @@ const loadDashboardData = async () => {
                   <Icon name={notification.icon} size={18} color={notification.color} />
                 </View>
                 <View style={styles.notificationSwipeContent}>
-                  <Text style={styles.notificationSwipeTitle} numberOfLines={2}>
+                  <Text style={styles.notificationSwipeTitle} numberOfLines={1}>
                     {notification.title}
                   </Text>
-                  <Text style={styles.notificationSwipeMessage} numberOfLines={2}>
+                  <Text style={styles.notificationSwipeMessage} numberOfLines={1}>
                     {notification.message}
                   </Text>
                   <Text style={styles.notificationSwipeTime}>
@@ -550,46 +674,57 @@ const loadDashboardData = async () => {
           </ScrollView>
         </Animatable.View>
 
-        {/* Quick Actions */}
+        {/* Quick Actions - Swipeable */}
         <Animatable.View 
           animation="fadeInUp"
-          delay={600}
+          delay={700}
           style={styles.sectionContainer}
         >
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
           </View>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.quickActionsScroll}
-            contentContainerStyle={styles.quickActionsContent}
-          >
-            {quickActions.map((action, index) => (
-              <TouchableOpacity
-                key={action.id}
-                style={styles.quickActionCard}
-                onPress={() => handleQuickAction(action)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={[waterBlueColors.light, waterBlueColors.primary]}
-                  style={styles.quickActionGradient}
-                >
-                  <View style={styles.quickActionIcon}>
-                    <Icon name={action.icon} size={24} color="#FFF" />
-                  </View>
-                  <Text style={styles.quickActionText}>{action.title}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          
+          <View style={styles.quickActionsContainer}>
+            <ScrollView 
+              ref={quickActionsScrollRef}
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.quickActionsScroll}
+              contentContainerStyle={styles.quickActionsContent}
+              onScroll={handleQuickActionsScroll}
+              scrollEventThrottle={16}
+              pagingEnabled
+              snapToInterval={120}
+              decelerationRate="fast"
+            >
+              {quickActions.map((action, index) => (
+                <QuickActionCard 
+                  key={action.id}
+                  action={action}
+                  index={index}
+                />
+              ))}
+            </ScrollView>
+            
+            {/* Quick Actions Indicators */}
+            <View style={styles.indicatorsContainer}>
+              {quickActions.map((_, index) => (
+                <View 
+                  key={index}
+                  style={[
+                    styles.indicator,
+                    activeQuickActionIndex === index && styles.activeIndicator
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
         </Animatable.View>
 
         {/* Main Modules */}
         <Animatable.View 
           animation="fadeInUp"
-          delay={700}
+          delay={800}
           style={styles.sectionContainer}
         >
           <View style={styles.sectionHeader}>
@@ -636,7 +771,7 @@ const loadDashboardData = async () => {
         {/* Recent Activity Placeholder */}
         <Animatable.View 
           animation="fadeInUp"
-          delay={800}
+          delay={900}
           style={styles.activitySection}
         >
           <View style={styles.activityHeader}>
@@ -769,8 +904,6 @@ const loadDashboardData = async () => {
           </View>
         </View>
       </Modal>
-
-      {/* Settings Modal - REMOVED */}
     </SafeAreaView>
   );
 };
@@ -778,23 +911,23 @@ const loadDashboardData = async () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FBFF',
+    backgroundColor: '#F0F4F8',
   },
   headerGradient: {
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    elevation: 6,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    elevation: 10,
     shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    height: 190,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    height: 200,
   },
   header: {
     paddingTop: 10,
     paddingHorizontal: 16,
     paddingBottom: 16,
-    height: 190,
+    height: 200, // Increased for larger stat cards
   },
   headerTop: {
     flexDirection: 'row',
@@ -835,30 +968,43 @@ const styles = StyleSheet.create({
   loadingStats: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: 90,
+    height: 110, // Increased for larger cards
   },
   loadingText: {
     color: '#FFF',
     fontSize: 12,
     marginTop: 8,
   },
+  statsContainer: {
+    marginTop: 10,
+  },
   statsScrollView: {
-    marginHorizontal: -16,
+    marginHorizontal: -8,
   },
   statsContent: {
     paddingHorizontal: 16,
   },
   statCard: {
-    width: 130,
-    height: 85,
+    width: 120,
+    height: 110,
     marginRight: 10,
-    borderRadius: 14,
+    borderRadius: 16,
     overflow: 'hidden',
-    elevation: 3,
+    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
+  },
+  activeStatCard: {
+    opacity: 1,
+    transform: [{ scale: 1 }],
+    elevation: 8,
+    shadowColor: waterBlueColors.primary,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   statCardGradient: {
     padding: 14,
@@ -867,9 +1013,10 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   statIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -880,16 +1027,33 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   statNumber: {
-    fontSize: 28,
+    fontSize: 26, // Increased from 22
     fontWeight: '700',
     color: '#2C3E50',
-    marginBottom: 4,
+    marginBottom: 4, // Increased from 3
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11, // Increased from 10
     color: '#666',
     fontWeight: '600',
     textAlign: 'center',
+  },
+  indicatorsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  indicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginHorizontal: 3,
+  },
+  activeIndicator: {
+    width: 10,
+    backgroundColor: '#FFF',
   },
   content: {
     flex: 1,
@@ -898,17 +1062,17 @@ const styles = StyleSheet.create({
   },
   welcomeCard: {
     marginBottom: 16,
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 6,
     shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
     height: 100,
   },
   welcomeCardGradient: {
-    padding: 18,
+    padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -918,15 +1082,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   welcomeTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: '#1A2332',
     marginBottom: 6,
   },
   welcomeText: {
     fontSize: 13,
     color: '#5D6D7E',
-    lineHeight: 18,
+    lineHeight: 19,
     fontWeight: '500',
   },
   welcomeIcon: {
@@ -953,25 +1117,26 @@ const styles = StyleSheet.create({
   },
   notificationCard: {
     backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 18,
+    padding: 18,
     marginBottom: 16,
-    elevation: 4,
+    elevation: 6,
     shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    height: 155,
   },
   notificationCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   notificationCardTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#2C3E50',
+    color: '#1A2332',
   },
   viewAllNotifications: {
     fontSize: 12,
@@ -985,14 +1150,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   notificationSwipeCard: {
-    width: 200,
+    width: 180, // Decreased from 200
     backgroundColor: '#F8FBFF',
     borderRadius: 12,
-    padding: 12,
-    marginRight: 12,
+    padding: 10, // Reduced from 12
+    marginRight: 8, // Reduced from 12
     borderWidth: 1,
     borderColor: '#E8F1FF',
     position: 'relative',
+    height: 80, // Decreased from auto
   },
   unreadNotificationCard: {
     backgroundColor: '#F0F7FF',
@@ -1000,41 +1166,41 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   notificationSwipeIcon: {
-    width: 32,
-    height: 32,
+    width: 28, // Decreased from 32
+    height: 28, // Decreased from 32
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6, // Reduced from 8
   },
   notificationSwipeContent: {
     flex: 1,
   },
   notificationSwipeTitle: {
-    fontSize: 13,
+    fontSize: 12, // Decreased from 13
     fontWeight: '600',
     color: '#2C3E50',
-    marginBottom: 4,
-    lineHeight: 16,
+    marginBottom: 2, // Reduced from 4
+    lineHeight: 14, // Reduced from 16
   },
   notificationSwipeMessage: {
-    fontSize: 11,
+    fontSize: 10, // Decreased from 11
     color: '#5D6D7E',
-    lineHeight: 14,
-    marginBottom: 6,
+    lineHeight: 12, // Reduced from 14
+    marginBottom: 4, // Reduced from 6
   },
   notificationSwipeTime: {
-    fontSize: 10,
+    fontSize: 9, // Decreased from 10
     color: '#95A5A6',
     fontWeight: '500',
   },
   swipeUnreadIndicator: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 6, // Reduced from 8
+    right: 6, // Reduced from 8
+    width: 6, // Reduced from 8
+    height: 6, // Reduced from 8
+    borderRadius: 3, // Reduced from 4
     backgroundColor: '#FF6B6B',
   },
   moreNotificationsCard: {
@@ -1090,46 +1256,54 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginRight: 4,
   },
+  quickActionsContainer: {
+    marginTop: 4,
+  },
   quickActionsScroll: {
-    marginHorizontal: -16,
+    marginHorizontal: -8,
   },
   quickActionsContent: {
-    paddingHorizontal: 16,
-  },
-  quickActionsGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    paddingHorizontal: 8,
   },
   quickActionCard: {
-    width: 140,
-    marginRight: 12,
-    borderRadius: 14,
+    width: 110,
+    height: 85,
+    marginRight: 10,
+    borderRadius: 16,
     overflow: 'hidden',
-    elevation: 2,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    height: 100,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    opacity: 0.7,
+    transform: [{ scale: 0.95 }],
+  },
+  activeQuickActionCard: {
+    opacity: 1,
+    transform: [{ scale: 1 }],
+    elevation: 6,
+    shadowColor: waterBlueColors.primary,
+    shadowOpacity: 0.2,
   },
   quickActionGradient: {
-    padding: 14,
+    padding: 12,
     alignItems: 'center',
     borderRadius: 14,
     height: '100%',
     justifyContent: 'center',
   },
   quickActionIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   quickActionText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#FFF',
     textAlign: 'center',
@@ -1145,17 +1319,17 @@ const styles = StyleSheet.create({
   },
   moduleCard: {
     backgroundColor: '#FFF',
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 16,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#F0F4FF',
-    elevation: 1,
-    shadowColor: '#E3F2FD',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    borderColor: '#E8F0FE',
+    elevation: 3,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
     height: 100,
   },
   moduleCardContent: {
@@ -1265,134 +1439,6 @@ const styles = StyleSheet.create({
     color: '#95A5A6',
     fontWeight: '500',
   },
-  settingsModalOverlay: {
-    flex: 1,
-  },
-  settingsModalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  settingsModalContainer: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    maxHeight: '70%',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-  },
-  settingsModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  settingsModalTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2C3E50',
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  accountInfoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FBFF',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#E3F2FD',
-  },
-  accountAvatar: {
-    marginRight: 14,
-  },
-  avatarGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-  },
-  accountDetails: {
-    flex: 1,
-  },
-  accountName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 4,
-  },
-  accountRole: {
-    fontSize: 14,
-    color: '#4A90E2',
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  accountEmail: {
-    fontSize: 12,
-    color: '#7F8C8D',
-    fontWeight: '500',
-  },
-  settingsOptions: {
-    maxHeight: 280,
-  },
-  settingsOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
-  },
-  optionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  settingsOptionText: {
-    flex: 1,
-    fontSize: 15,
-    color: '#333',
-    fontWeight: '600',
-  },
-  notificationBadge: {
-    backgroundColor: '#FD79A8',
-    borderRadius: 8,
-    minWidth: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  notificationBadgeText: {
-    color: '#FFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
   notificationDot: {
     position: 'absolute',
     top: -5,
@@ -1470,12 +1516,13 @@ const styles = StyleSheet.create({
   notificationItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: 16,
+    paddingVertical: 10, // Reduced from 16
     paddingHorizontal: 4,
     borderBottomWidth: 1,
     borderBottomColor: '#F5F5F5',
     borderRadius: 8,
     marginBottom: 4,
+    minHeight: 70, // Added min height
   },
   unreadNotificationItem: {
     backgroundColor: '#F8FBFF',
@@ -1489,9 +1536,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   unreadIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6, // Reduced from 8
+    height: 6, // Reduced from 8
+    borderRadius: 3, // Reduced from 4
     backgroundColor: '#FF6B6B',
   },
   unreadNotificationTitle: {
@@ -1499,9 +1546,9 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
   },
   notificationItemMessage: {
-    fontSize: 13,
+    fontSize: 12, // Reduced from 13
     color: '#5D6D7E',
-    lineHeight: 18,
+    lineHeight: 16, // Reduced from 18
     marginBottom: 4,
   },
   emptyNotifications: {

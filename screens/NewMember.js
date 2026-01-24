@@ -17,6 +17,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
 
 const NewMember = () => {
@@ -137,6 +138,64 @@ const NewMember = () => {
       Alert.alert('Error', 'Failed to load sub-companies');
     } finally {
       setLoadingSubCompanies(false);
+    }
+  };
+
+  // Robust function to get current user's member ID (3-tier lookup)
+  const getCurrentUserMemberId = async () => {
+    try {
+      // First check if memberId is already in AsyncStorage
+      const storedMemberId = await AsyncStorage.getItem('memberId');
+      if (storedMemberId) {
+        console.log('NewMember - Member ID found in storage:', storedMemberId);
+        return parseInt(storedMemberId);
+      }
+
+      console.log('NewMember - Member ID not in storage, attempting to look up...');
+
+      // If not, try to get it from user ID
+      const userId = await AsyncStorage.getItem('userId');
+      const fullName = await AsyncStorage.getItem('fullName');
+
+      if (userId) {
+        try {
+          // Try to get member by user ID
+          console.log('NewMember - Trying GetByUserId with userId:', userId);
+          const memberData = await ApiService.getMemberByUserId(userId);
+          if (memberData && memberData.id) {
+            await AsyncStorage.setItem('memberId', memberData.id.toString());
+            console.log('NewMember - Member found via GetByUserId:', memberData.id);
+            return memberData.id;
+          }
+        } catch (error) {
+          console.log('NewMember - GetByUserId failed, trying name search:', error);
+        }
+      }
+
+      // Fallback: search by name
+      if (fullName) {
+        try {
+          console.log('NewMember - Searching members by name:', fullName);
+          const members = await ApiService.getMembers();
+          const member = members.find(m => 
+            m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase()
+          );
+          
+          if (member) {
+            await AsyncStorage.setItem('memberId', member.id.toString());
+            console.log('NewMember - Member found by name:', member.id);
+            return member.id;
+          }
+        } catch (error) {
+          console.log('NewMember - Name search failed:', error);
+        }
+      }
+
+      console.log('NewMember - Could not find member ID');
+      return null;
+    } catch (error) {
+      console.error('NewMember - Error getting member ID:', error);
+      return null;
     }
   };
 
@@ -345,23 +404,31 @@ const NewMember = () => {
         ]);
       } else {
         // Create new member
+        // Get admin member ID using robust 3-tier lookup
+        const adminMemberId = await getCurrentUserMemberId();
+        if (!adminMemberId) {
+          Alert.alert("Error", "Admin member ID not found. Please login again.");
+          setLoading(false);
+          return;
+        }
+
         const memberData = {
-          name: memberName,
-          memberId: `MEM${Date.now().toString().slice(-6)}`,
-          phone: mobileNum,
-          email: formData.email || '',
-          joinDate: joiningDate,
-          dateOfBirth: formData.dateOfBirth || '',
-          status: 'Active',
-          feesStatus: 'Unpaid',
-          address: formData.address || '',
-          batch: formData.batch || '',
-          business: business,
-          subCompanyId: formData.subCompanyId,
-          createdBy: 'Admin',
+          Name: memberName,
+          MemberId: `MEM${Date.now().toString().slice(-6)}`,
+          Phone: mobileNum,
+          Email: formData.email || '',
+          DOB: formData.dateOfBirth || null,
+          Address: formData.address || '',
+          Batch: formData.batch || '',
+          Business: business,
+          BusinessCategory: formData.businessCategory || null,
+          MembershipType: formData.membershipType || null,
+          ReferenceId: formData.referenceId || null,
+          CreatedBy: parseInt(adminMemberId), // Pass admin member ID as integer
         };
 
-        console.log('Creating new member:', memberData);
+        console.log('Creating new member with admin ID:', adminMemberId);
+        console.log('Member data:', memberData);
         await ApiService.createMember(memberData);
         
         // Clear all form fields
@@ -528,7 +595,6 @@ const NewMember = () => {
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={handleDOBDateChange}
-            maximumDate={new Date()}
           />
         )}
 
@@ -538,7 +604,6 @@ const NewMember = () => {
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={handleJoiningDateChange}
-            maximumDate={new Date()}
           />
         )}
 

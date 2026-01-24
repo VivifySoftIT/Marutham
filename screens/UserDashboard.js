@@ -306,14 +306,23 @@ const UserDashboard = () => {
 
       console.log('UserDashboard - Loading dashboard reminders for memberId:', memberId);
       
-      // Load both dashboard reminders and message notifications
-      const [reminders, messageNotifications] = await Promise.all([
-        ApiService.getDashboardReminders(memberId),
-        ApiService.getMessageNotificationReport(null, 'daily', memberId)
-      ]);
-      
-      console.log('UserDashboard - Dashboard reminders:', reminders);
-      console.log('UserDashboard - Message notifications:', messageNotifications);
+      // Load dashboard reminders and message notifications separately with error handling
+      let reminders = null;
+      let messageNotifications = null;
+
+      try {
+        reminders = await ApiService.getDashboardReminders(memberId);
+        console.log('UserDashboard - Dashboard reminders:', reminders);
+      } catch (error) {
+        console.error('UserDashboard - Error loading dashboard reminders:', error);
+      }
+
+      try {
+        messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
+        console.log('UserDashboard - Message notifications:', messageNotifications);
+      } catch (error) {
+        console.error('UserDashboard - Error loading message notifications:', error);
+      }
 
       // Convert reminders to notifications format - only if data exists
       const newNotifications = [];
@@ -401,6 +410,7 @@ const UserDashboard = () => {
       setNotificationCount(newNotifications.filter(n => !n.isRead).length);
       
       console.log('UserDashboard - Set notifications from API:', newNotifications.length);
+      console.log('UserDashboard - Notification count:', newNotifications.filter(n => !n.isRead).length);
       
       // If no notifications, log it
       if (newNotifications.length === 0) {
@@ -417,6 +427,7 @@ const UserDashboard = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    await loadDashboardReminders(); // Reload notifications
     if (userData?.memberId) {
       await fetchMemberStats(userData.memberId, selectedPeriod === 'all' ? null : selectedPeriod);
     } else {
@@ -556,7 +567,7 @@ const UserDashboard = () => {
               colors={[waterBlueColors.light, waterBlueColors.primary]}
               style={styles.statIconContainer}
             >
-              <Icon name={icon} size={20} color="#FFF" />
+              <Icon name={icon} size={18} color="#FFF" />
             </LinearGradient>
             <Text style={styles.statValue}>{value}</Text>
             <Text style={styles.statLabel}>{label}</Text>
@@ -578,7 +589,7 @@ const UserDashboard = () => {
             colors={[waterBlueColors.lightest, waterBlueColors.light]}
             style={styles.menuIconContainer}
           >
-            <Icon name={icon} size={22} color={waterBlueColors.primary} />
+            <Icon name={icon} size={20} color={waterBlueColors.primary} />
             {badge && (
               <View style={styles.menuBadge}>
                 <Text style={styles.menuBadgeText}>{badge}</Text>
@@ -586,7 +597,7 @@ const UserDashboard = () => {
             )}
           </LinearGradient>
           <Text style={styles.menuLabel}>{label}</Text>
-          <Icon name="chevron-right" size={18} color="#999" />
+          <Icon name="chevron-right" size={16} color="#999" />
         </View>
       </TouchableOpacity>
     </Animatable.View>
@@ -608,12 +619,12 @@ const UserDashboard = () => {
       >
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            {/* Three Line Menu Button */}
+            {/* Settings Icon */}
             <TouchableOpacity 
-              onPress={() => setShowUserModal(true)} 
-              style={styles.menuButtonHeader}
+              style={styles.settingsIconButton}
+              onPress={() => navigation.navigate('SettingsScreen')}
             >
-              <Icon name="menu" size={28} color="#FFF" />
+              <Icon name="cog" size={22} color="#FFF" />
             </TouchableOpacity>
             
             <View style={styles.headerTitleContainer}>
@@ -643,54 +654,44 @@ const UserDashboard = () => {
             </View>
           </View>
           
-          {/* Enhanced User Info Display with Member ID - Single Line Layout */}
+          {/* Enhanced Member Info Card - My Card Style */}
           <Animatable.View 
             animation="fadeIn"
             delay={200}
-            style={styles.userDisplayCard}
+            style={styles.memberInfoCard}
           >
-            <LinearGradient
-              colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']}
-              style={styles.userDisplayGradient}
-            >
-              <View style={styles.userDisplayContent}>
-                {/* User Avatar */}
+            <View style={styles.memberInfoContent}>
+              {/* Left: Avatar and Name */}
+              <View style={styles.memberInfoLeft}>
                 <LinearGradient
                   colors={[waterBlueColors.light, waterBlueColors.primary]}
-                  style={styles.userDisplayAvatar}
+                  style={styles.memberAvatar}
                 >
-                  <Icon name="account" size={24} color="#FFF" />
+                  <Icon name="account" size={28} color="#FFF" />
                 </LinearGradient>
                 
-                {/* User Info in Single Line */}
-                <View style={styles.userInfoSingleLine}>
-                  <View style={styles.userInfoRow}>
-                    <Text style={styles.userDisplayName}>{userData?.fullName || 'Member'}</Text>
-                    
-                    {userData?.memberId && (
-                      <View style={styles.memberIdBadge}>
-                        <Icon name="id-card" size={12} color="#FFF" style={{ marginRight: 4 }} />
-                        <Text style={styles.memberIdText}>{userData.memberId}</Text>
-                      </View>
-                    )}
-                    
-                    {userData?.memberCode && userData.memberCode !== 'N/A' && (
-                      <View style={styles.memberCodeBadge}>
-                        <Icon name="badge-account" size={12} color="#FFF" style={{ marginRight: 4 }} />
-                        <Text style={styles.memberCodeText}>{userData.memberCode}</Text>
-                      </View>
-                    )}
-                  </View>
-                  
-                  <View style={styles.memberTypeRow}>
-                    <Icon name="shield-account" size={14} color="#FFF" style={{ marginRight: 6, opacity: 0.9 }} />
-                    <Text style={styles.memberTypeText}>
-                      {userData?.memberType || 'Alaigal Network Member'}
-                    </Text>
+                <View style={styles.memberNameSection}>
+                  <Text style={styles.memberName}>{userData?.fullName || 'Member'}</Text>
+                  <View style={styles.memberTypeContainer}>
+                    <Icon name="shield-account" size={12} color={waterBlueColors.primary} />
+                    <Text style={styles.memberTypeLabel}>{userData?.memberType || 'Member'}</Text>
                   </View>
                 </View>
               </View>
-            </LinearGradient>
+
+              {/* Right: Member ID Badge */}
+              <View style={styles.memberInfoRight}>
+                {userData?.memberId && (
+                  <View style={styles.memberIdCard}>
+                    <Icon name="id-card" size={14} color={waterBlueColors.primary} />
+                    <View style={styles.memberIdInfo}>
+                      <Text style={styles.memberIdLabel}>ID</Text>
+                      <Text style={styles.memberIdValue}>{userData.memberId}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            </View>
           </Animatable.View>
         </View>
       </LinearGradient>
@@ -1366,90 +1367,88 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   // Enhanced User Display Card - Single Line Layout
-  userDisplayCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  // Enhanced Member Info Card - My Card Style
+  memberInfoCard: {
+    backgroundColor: '#FFF',
     borderRadius: 16,
-    overflow: 'hidden',
     marginTop: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    marginHorizontal: 15,
     elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
   },
-  userDisplayGradient: {
-    padding: 15,
-  },
-  userDisplayContent: {
+  memberInfoContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 14,
   },
-  userDisplayAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  memberInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  memberAvatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     elevation: 3,
     shadowColor: '#357ABD',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  userInfoSingleLine: {
+  memberNameSection: {
     flex: 1,
   },
-  userInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+  memberName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#2C3E50',
     marginBottom: 4,
   },
-  userDisplayName: {
-    fontSize: 18,
+  memberTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  memberTypeLabel: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  memberInfoRight: {
+    marginLeft: 8,
+  },
+  memberIdCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F4FD',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: waterBlueColors.light,
+    gap: 6,
+  },
+  memberIdInfo: {
+    alignItems: 'center',
+  },
+  memberIdLabel: {
+    fontSize: 9,
+    color: '#666',
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  memberIdValue: {
+    fontSize: 14,
+    color: waterBlueColors.primary,
     fontWeight: '700',
-    color: '#FFF',
-    marginRight: 10,
-  },
-  memberIdBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-    marginRight: 6,
-  },
-  memberIdText: {
-    fontSize: 11,
-    color: '#FFF',
-    fontWeight: '600',
-  },
-  memberCodeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  memberCodeText: {
-    fontSize: 11,
-    color: '#FFF',
-    fontWeight: '500',
-  },
-  memberTypeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  memberTypeText: {
-    fontSize: 13,
-    color: '#FFF',
-    fontWeight: '500',
-    opacity: 0.9,
   },
   content: {
     flex: 1,
@@ -1599,7 +1598,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   statCardGradient: {
-    padding: 15,
+    padding: 12,
     position: 'relative',
   },
   waterEffect: {
@@ -1617,12 +1616,12 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   statIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
     elevation: 3,
     shadowColor: '#357ABD',
     shadowOffset: { width: 0, height: 3 },
@@ -1630,16 +1629,16 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '800',
     color: '#1E5A96',
-    marginBottom: 4,
+    marginBottom: 3,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#357ABD',
     fontWeight: '600',
     textAlign: 'center',
@@ -1704,7 +1703,7 @@ const styles = StyleSheet.create({
   },
   menuButtonWrapper: {
     width: '48%',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   menuButton: {
     backgroundColor: '#FFF',
@@ -1719,15 +1718,15 @@ const styles = StyleSheet.create({
   menuButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 10,
   },
   menuIconContainer: {
-    width: 44,
-    height: 44,
+    width: 38,
+    height: 38,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
     position: 'relative',
     elevation: 2,
     shadowColor: '#87CEEB',
@@ -1760,7 +1759,7 @@ const styles = StyleSheet.create({
   },
   menuLabel: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     color: '#2C3E50',
     fontWeight: '600',
   },
@@ -2102,8 +2101,8 @@ const styles = StyleSheet.create({
   notificationCard: {
     backgroundColor: '#FFF',
     borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
+    padding: 14,
+    marginBottom: 16,
     elevation: 4,
     shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 2 },
@@ -2114,15 +2113,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   notificationCardTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#2C3E50',
   },
   viewAllNotifications: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#4A90E2',
     fontWeight: '600',
   },

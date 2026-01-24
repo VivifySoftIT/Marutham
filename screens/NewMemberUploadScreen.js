@@ -23,6 +23,7 @@ import XLSX from 'xlsx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../service/LanguageContext';
 import API_BASE_URL from '../apiConfig';
+import ApiService from '../service/api';
 
 const { width } = Dimensions.get('window');
 
@@ -38,6 +39,61 @@ const NewMemberUploadScreen = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [showValidation, setShowValidation] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Robust function to get current user's member ID (3-tier lookup)
+  const getCurrentUserMemberId = async () => {
+    try {
+      // First check if memberId is already in AsyncStorage
+      const storedMemberId = await AsyncStorage.getItem('memberId');
+      if (storedMemberId) {
+        console.log('NewMemberUpload - Member ID found in storage:', storedMemberId);
+        return parseInt(storedMemberId);
+      }
+
+      console.log('NewMemberUpload - Member ID not in storage, attempting to look up...');
+
+      // If not, try to get it from user ID
+      const userId = await AsyncStorage.getItem('userId');
+      const fullName = await AsyncStorage.getItem('fullName');
+
+      if (userId) {
+        try {
+          // Try to get member by user ID
+          console.log('NewMemberUpload - Trying GetByUserId with userId:', userId);
+          const memberData = await ApiService.getMemberByUserId(userId);
+          if (memberData && memberData.id) {
+            await AsyncStorage.setItem('memberId', memberData.id.toString());
+            console.log('NewMemberUpload - Member found via GetByUserId:', memberData.id);
+            return memberData.id;
+          }
+        } catch (error) {
+          console.log('NewMemberUpload - GetByUserId failed, trying name search:', error);
+        }
+      }
+
+      // Fallback: search by name
+      if (fullName) {
+        try {
+          console.log('NewMemberUpload - Searching members by name:', fullName);
+          const members = await ApiService.getMembers();
+          const member = members.find(m => m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase());
+          if (member) {
+            await AsyncStorage.setItem('memberId', member.id.toString());
+            console.log('NewMemberUpload - Member found by name:', member.id);
+            return member.id;
+          }
+        } catch (error) {
+          console.log('NewMemberUpload - Name search failed:', error);
+        }
+      }
+
+      console.log('NewMemberUpload - Could not find member ID');
+      return null;
+    } catch (error) {
+      console.error('NewMemberUpload - Error getting member ID:', error);
+      return null;
+    }
+  };
 
   const handleFileUpload = async () => {
     try {
@@ -174,23 +230,46 @@ const NewMemberUploadScreen = () => {
 
       const membersToSave = uploadedMembers
         .filter(m => selectedMembers.has(m.id))
-        .map(member => ({
-          name: member.name.trim(),
-          contact: member.contact.toString().trim(),
-          company: member.company.trim(),
-          business: member.business.trim(),
-          dateOfBirth: member.dob ? member.dob.toString().trim() : null,
-        }));
+        .map(member => {
+          // Generate default email if not provided (required by backend)
+          const email = member.email ? member.email.trim() : `${member.contact.toString().trim()}@alaigal.com`;
+          
+          return {
+            Name: member.name.trim(),
+            Phone: member.contact.toString().trim(),
+            Email: email, // Email is required by backend
+            Business: member.business ? member.business.trim() : null,
+            DOB: member.dob ? member.dob.toString().trim() : null,
+            Address: member.address ? member.address.trim() : null,
+            Batch: member.batch ? member.batch.trim() : null,
+            BusinessCategory: member.businessCategory ? member.businessCategory.trim() : null,
+            MembershipType: member.membershipType ? member.membershipType.trim() : null,
+            ReferenceId: member.referenceId ? parseInt(member.referenceId) : null,
+          };
+        });
 
       console.log('Saving members:', membersToSave);
 
-      const response = await fetch(`${API_BASE_URL}/api/Members/BulkCreate`, {
+      // Get admin member ID using robust 3-tier lookup
+      const adminMemberId = await getCurrentUserMemberId();
+      if (!adminMemberId) {
+        Alert.alert(t('error'), 'Admin member ID not found. Please login again.');
+        setSaving(false);
+        return;
+      }
+
+      console.log('NewMemberUpload - Using admin member ID:', adminMemberId);
+
+      const response = await fetch(`${API_BASE_URL}/api/Members/bulk`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ members: membersToSave }),
+        body: JSON.stringify({ 
+          adminMemberId: parseInt(adminMemberId),
+          members: membersToSave 
+        }),
       });
 
       if (!response.ok) {

@@ -17,6 +17,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as XLSX from 'xlsx';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
 
 const BulkMemberImport = () => {
@@ -25,6 +26,85 @@ const BulkMemberImport = () => {
   const [loading, setLoading] = useState(false);
   const [editingMember, setEditingMember] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+
+  // Robust function to get current user's member ID (3-tier lookup)
+  const getCurrentUserMemberId = async () => {
+    try {
+      // First check if memberId is already in AsyncStorage
+      const storedMemberId = await AsyncStorage.getItem('memberId');
+      if (storedMemberId) {
+        console.log('BulkMemberImport - Member ID found in storage:', storedMemberId);
+        return parseInt(storedMemberId);
+      }
+
+      console.log('BulkMemberImport - Member ID not in storage, attempting to look up...');
+
+      // If not, try to get it from user ID
+      const userId = await AsyncStorage.getItem('userId');
+      const fullName = await AsyncStorage.getItem('fullName');
+
+      if (userId) {
+        try {
+          // Try to get member by user ID
+          console.log('BulkMemberImport - Trying GetByUserId with userId:', userId);
+          const memberData = await ApiService.getMemberByUserId(userId);
+          if (memberData && memberData.id) {
+            await AsyncStorage.setItem('memberId', memberData.id.toString());
+            console.log('BulkMemberImport - Member found via GetByUserId:', memberData.id);
+            return memberData.id;
+          }
+        } catch (error) {
+          console.log('BulkMemberImport - GetByUserId failed, trying name search:', error);
+        }
+      }
+
+      // Fallback: search by name
+      if (fullName) {
+        try {
+          console.log('BulkMemberImport - Searching members by name:', fullName);
+          const members = await ApiService.getMembers();
+          const member = members.find(m => m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase());
+          if (member) {
+            await AsyncStorage.setItem('memberId', member.id.toString());
+            console.log('BulkMemberImport - Member found by name:', member.id);
+            return member.id;
+          }
+        } catch (error) {
+          console.log('BulkMemberImport - Name search failed:', error);
+        }
+      }
+
+      console.log('BulkMemberImport - Could not find member ID');
+      return null;
+    } catch (error) {
+      console.error('BulkMemberImport - Error getting member ID:', error);
+      return null;
+    }
+  };
+
+  // Clear all imported data
+  const handleClearData = () => {
+    if (members.length === 0) {
+      Alert.alert('Info', 'No data to clear');
+      return;
+    }
+
+    Alert.alert(
+      'Clear All Data',
+      'Are you sure you want to clear all imported members? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear',
+          style: 'destructive',
+          onPress: () => {
+            setMembers([]);
+            Alert.alert('Success', 'All imported data has been cleared');
+          },
+        },
+      ]
+    );
+  };
 
   // Pick Excel file
   const pickExcelFile = async () => {
@@ -92,13 +172,15 @@ const BulkMemberImport = () => {
         
         return {
           id: `temp_${index}`,
+          sno: row['S.NO'] || row['S.No'] || row['sno'] || index + 1,
           name: row['MEMBER'] || row['Name'] || row['Member Name'] || row['name'] || '',
           phone: String(row['Contact'] || row['Phone'] || row['Mobile'] || row['phone'] || '').trim(),
           email: row['Email'] || row['email'] || '',
+          company: row['Company Name'] || row['Company_Name'] || row['company'] || row['Company'] || '',
+          business: row['Type Of Business'] || row['Type Of Buissness'] || row['Business'] || row['business'] || '',
           joinDate: row['Join Date'] || row['Joining Date'] || row['joinDate'] || new Date().toISOString(),
           address: row['Address'] || row['address'] || '',
           batch: row['Batch'] || row['batch'] || '',
-          business: row['Type Of Buissness'] || row['Business'] || row['business'] || '',
           status: 'Active',
           feesStatus: 'Unpaid',
           memberId: `MEM${String(Date.now() + index).slice(-6)}`,
@@ -195,18 +277,31 @@ const BulkMemberImport = () => {
           onPress: async () => {
             setLoading(true);
             try {
+              // Get admin member ID using robust 3-tier lookup
+              const adminMemberId = await getCurrentUserMemberId();
+              if (!adminMemberId) {
+                Alert.alert('Error', 'Admin member ID not found. Please login again.');
+                setLoading(false);
+                return;
+              }
+
+              console.log('BulkMemberImport - Using admin member ID:', adminMemberId);
+
+              // Generate default email if not provided (required by backend)
+              const email = member.email || `${member.phone}@alaigal.com`;
+
               const memberData = {
-                name: member.name,
-                memberId: member.memberId,
-                phone: member.phone,
-                email: member.email,
-                joinDate: member.joinDate,
-                status: member.status,
-                feesStatus: member.feesStatus,
-                address: member.address,
-                batch: member.batch,
-                business: member.business,
-                createdBy: 'Admin',
+                Name: member.name,
+                Phone: member.phone,
+                Email: email, // Email is required by backend
+                DOB: member.dateOfBirth || null,
+                Address: member.address || null,
+                Batch: member.batch || null,
+                Business: member.business || null,
+                BusinessCategory: member.businessCategory || null,
+                MembershipType: member.membershipType || null,
+                ReferenceId: member.referenceId ? parseInt(member.referenceId) : null,
+                CreatedBy: adminMemberId,
               };
 
               await ApiService.createMember(memberData);
@@ -261,23 +356,37 @@ const BulkMemberImport = () => {
           text: 'Save All',
           onPress: async () => {
             setLoading(true);
+            
+            // Get admin member ID using robust 3-tier lookup
+            const adminMemberId = await getCurrentUserMemberId();
+            if (!adminMemberId) {
+              Alert.alert('Error', 'Admin member ID not found. Please login again.');
+              setLoading(false);
+              return;
+            }
+
+            console.log('BulkMemberImport - Using admin member ID for bulk save:', adminMemberId);
+
             let successCount = 0;
             let failCount = 0;
 
             for (const member of validMembers) {
               try {
+                // Generate default email if not provided (required by backend)
+                const email = member.email || `${member.phone}@alaigal.com`;
+
                 const memberData = {
-                  name: member.name,
-                  memberId: member.memberId,
-                  phone: member.phone,
-                  email: member.email,
-                  joinDate: member.joinDate,
-                  status: member.status,
-                  feesStatus: member.feesStatus,
-                  address: member.address,
-                  batch: member.batch,
-                  business: member.business,
-                  createdBy: 'Admin',
+                  Name: member.name,
+                  Phone: member.phone,
+                  Email: email, // Email is required by backend
+                  DOB: member.dateOfBirth || null,
+                  Address: member.address || null,
+                  Batch: member.batch || null,
+                  Business: member.business || null,
+                  BusinessCategory: member.businessCategory || null,
+                  MembershipType: member.membershipType || null,
+                  ReferenceId: member.referenceId ? parseInt(member.referenceId) : null,
+                  CreatedBy: adminMemberId,
                 };
 
                 await ApiService.createMember(memberData);
@@ -289,6 +398,12 @@ const BulkMemberImport = () => {
             }
 
             setLoading(false);
+            
+            // Clear the members list after successful save
+            if (successCount > 0) {
+              setMembers([]);
+            }
+            
             Alert.alert(
               'Bulk Save Complete',
               `Successfully saved: ${successCount}\nFailed: ${failCount}`,
@@ -314,7 +429,9 @@ const BulkMemberImport = () => {
     <View style={[styles.memberCard, !item.isValid && styles.invalidCard]}>
       <View style={styles.cardHeader}>
         <View style={styles.memberInfo}>
-          <Text style={styles.memberName}>{item.name}</Text>
+          <Text style={styles.memberName}>
+            {item.sno ? `${item.sno}. ` : ''}{item.name}
+          </Text>
           <Text style={styles.memberId}>ID: {item.memberId}</Text>
         </View>
         <View style={styles.cardActions}>
@@ -342,6 +459,18 @@ const BulkMemberImport = () => {
           <View style={styles.infoRow}>
             <Icon name="email" size={16} color="#666" />
             <Text style={styles.infoText}>{item.email}</Text>
+          </View>
+        )}
+        {item.company && (
+          <View style={styles.infoRow}>
+            <Icon name="office-building" size={16} color="#666" />
+            <Text style={styles.infoText}>{item.company}</Text>
+          </View>
+        )}
+        {item.business && (
+          <View style={styles.infoRow}>
+            <Icon name="briefcase" size={16} color="#666" />
+            <Text style={styles.infoText}>{item.business}</Text>
           </View>
         )}
         {item.batch && (
@@ -427,6 +556,13 @@ const BulkMemberImport = () => {
               </Text>
               <Text style={styles.statLabel}>Errors</Text>
             </View>
+            <TouchableOpacity 
+              style={styles.refreshButton}
+              onPress={handleClearData}
+            >
+              <Icon name="refresh" size={24} color="#F44336" />
+              <Text style={styles.refreshButtonText}>Clear</Text>
+            </TouchableOpacity>
           </View>
 
           <FlatList
@@ -521,6 +657,26 @@ const BulkMemberImport = () => {
                 keyboardType="email-address"
               />
 
+              <Text style={styles.label}>Company Name</Text>
+              <TextInput
+                style={styles.input}
+                value={editingMember?.company}
+                onChangeText={(text) =>
+                  setEditingMember({ ...editingMember, company: text })
+                }
+                placeholder="Enter company name"
+              />
+
+              <Text style={styles.label}>Type Of Business</Text>
+              <TextInput
+                style={styles.input}
+                value={editingMember?.business}
+                onChangeText={(text) =>
+                  setEditingMember({ ...editingMember, business: text })
+                }
+                placeholder="Enter business type"
+              />
+
               <Text style={styles.label}>Address</Text>
               <TextInput
                 style={styles.input}
@@ -539,16 +695,6 @@ const BulkMemberImport = () => {
                   setEditingMember({ ...editingMember, batch: text })
                 }
                 placeholder="Enter batch"
-              />
-
-              <Text style={styles.label}>Business</Text>
-              <TextInput
-                style={styles.input}
-                value={editingMember?.business}
-                onChangeText={(text) =>
-                  setEditingMember({ ...editingMember, business: text })
-                }
-                placeholder="Enter business"
               />
             </ScrollView>
 
@@ -617,6 +763,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     padding: 15,
     justifyContent: 'space-around',
+    alignItems: 'center',
     elevation: 2,
   },
   statItem: {
@@ -631,6 +778,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginTop: 4,
+  },
+  refreshButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#FFE5E5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#F44336',
+  },
+  refreshButtonText: {
+    fontSize: 11,
+    color: '#F44336',
+    fontWeight: '600',
+    marginTop: 2,
   },
   listContent: {
     padding: 15,
