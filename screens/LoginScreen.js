@@ -10,11 +10,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import ApiService from '../service/api';
+import MemberIdService from '../service/MemberIdService';
 import { FontAwesome } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -129,13 +131,13 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
         await AsyncStorage.setItem('username', response.user.username || '');
         await AsyncStorage.setItem('userId', response.user.id?.toString() || '');
 
-        // CRITICAL: Store MemberId if available
+        // CRITICAL: Store MemberId if available using MemberIdService
         if (response.user.memberId) {
-          await AsyncStorage.setItem('memberId', response.user.memberId.toString());
+          await MemberIdService.setMemberId(response.user.memberId);
           console.log('Member ID saved from response:', response.user.memberId);
         } else {
           console.log('No memberId in response. Will try to find it later if needed.');
-          // Don't try to find member ID here - do it in ReferralSlip when needed
+          // Don't try to find member ID here - do it when needed
           // This prevents 405 errors during login
         }
 
@@ -168,23 +170,8 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
     } catch (error) {
       console.error('Login error:', error);
 
-      // Better error messages
-      if (error.response) {
-        // Server responded with error
-        if (error.response.status === 401) {
-          setErrorMessage('Invalid username or password.');
-        } else if (error.response.status === 500) {
-          setErrorMessage('Server error. Please contact support.');
-        } else {
-          setErrorMessage(`Login failed: ${error.response.status} - ${error.response.data?.message || 'Unknown error'}`);
-        }
-      } else if (error.request) {
-        // No response received
-        setErrorMessage('Cannot connect to server. Check your internet connection.');
-      } else {
-        // Other errors
-        setErrorMessage(error.message || 'Login failed. Please try again.');
-      }
+      // Show user-friendly error message for any login failure
+      setErrorMessage('Invalid username and password');
     } finally {
       setIsLoading(false);
     }
@@ -347,7 +334,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
             <Text style={styles.versionText}>
               v{Constants.expoConfig?.version || '1.0.0'}
             </Text>
-            <Text style={styles.copyrightText}>© 2024 Alaigal</Text>
+            <Text style={styles.copyrightText}>© 2026 VivifyTechnocrats</Text>
           </View>
         </View>
       </LinearGradient>
@@ -376,7 +363,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     backgroundColor: '#fff',
     borderRadius: 100,
-    padding: 20,
+    padding: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,

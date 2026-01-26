@@ -24,10 +24,14 @@ import * as Sharing from 'expo-sharing';
 import * as Print from 'expo-print';
 import * as XLSX from 'xlsx';
 import ApiService from '../service/api';
+import MemberIdService from '../service/MemberIdService';
+import { useLanguage } from '../service/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 const { width } = Dimensions.get('window');
 
 const Reports = ({ navigation }) => {
+  const { t } = useLanguage();
   const [selectedPeriod, setSelectedPeriod] = useState('daily');
   const [selectedReportTab, setSelectedReportTab] = useState('attendance');
   const [loading, setLoading] = useState(false);
@@ -63,7 +67,7 @@ const Reports = ({ navigation }) => {
   ];
 
   useEffect(() => {
-    getCurrentUserMemberId();
+    loadCurrentMemberId();
     loadAllMembers();
   }, []);
 
@@ -73,65 +77,18 @@ const Reports = ({ navigation }) => {
     }
   }, [selectedPeriod, selectedReportTab, currentMemberId, selectedMemberForReport]);
 
-  // Get current user's member ID with fallback logic
-  const getCurrentUserMemberId = async () => {
+  // Get current user's member ID using MemberIdService
+  const loadCurrentMemberId = async () => {
     try {
-      // First check if memberId is already in AsyncStorage
-      const storedMemberId = await AsyncStorage.getItem('memberId');
-      if (storedMemberId) {
-        console.log('Reports - Member ID found in storage:', storedMemberId);
-        setCurrentMemberId(parseInt(storedMemberId));
-        return parseInt(storedMemberId);
+      const memberId = await MemberIdService.getCurrentUserMemberId();
+      if (memberId) {
+        console.log('Reports - Member ID loaded:', memberId);
+        setCurrentMemberId(memberId);
+      } else {
+        console.log('Reports - Could not load member ID');
       }
-
-      console.log('Reports - Member ID not in storage, attempting to look up...');
-
-      // If not, try to get it from user ID
-      const userId = await AsyncStorage.getItem('userId');
-      const fullName = await AsyncStorage.getItem('fullName');
-
-      if (userId) {
-        try {
-          // Try to get member by user ID
-          console.log('Reports - Trying GetByUserId with userId:', userId);
-          const memberData = await ApiService.getMemberByUserId(userId);
-          
-          if (memberData && memberData.id) {
-            await AsyncStorage.setItem('memberId', memberData.id.toString());
-            console.log('Reports - Member found via GetByUserId:', memberData.id);
-            setCurrentMemberId(memberData.id);
-            return memberData.id;
-          }
-        } catch (error) {
-          console.log('Reports - GetByUserId failed, trying name search:', error);
-        }
-      }
-
-      // Fallback: search by name
-      if (fullName) {
-        try {
-          console.log('Reports - Searching members by name:', fullName);
-          const members = await ApiService.getMembers();
-          const member = members.find(m => 
-            m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase()
-          );
-          
-          if (member) {
-            await AsyncStorage.setItem('memberId', member.id.toString());
-            console.log('Reports - Member found by name:', member.id);
-            setCurrentMemberId(member.id);
-            return member.id;
-          }
-        } catch (error) {
-          console.log('Reports - Name search failed:', error);
-        }
-      }
-
-      console.log('Reports - Could not find member ID');
-      return null;
     } catch (error) {
-      console.error('Reports - Error getting member ID:', error);
-      return null;
+      console.error('Reports - Error loading member ID:', error);
     }
   };
 
@@ -1851,7 +1808,7 @@ const Reports = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Reports</Text>
+        <Text style={styles.headerTitle}>{t('reports')}</Text>
         <TouchableOpacity onPress={onRefresh}>
           <Icon name="refresh" size={24} color="#FFF" />
         </TouchableOpacity>

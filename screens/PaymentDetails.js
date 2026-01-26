@@ -19,12 +19,15 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
+import { useLanguage } from '../service/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 const { width } = Dimensions.get('window');
 
 const PaymentDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { t } = useLanguage();
   const { memberId } = route.params || {};
   
   const [loading, setLoading] = useState(true);
@@ -243,7 +246,7 @@ const PaymentDetails = () => {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Payment Details</Text>
+          <Text style={styles.headerTitle}>{t('paymentDetails')}</Text>
           <View style={{ width: 24 }} />
         </LinearGradient>
         <View style={styles.loadingContainer}>
@@ -266,7 +269,7 @@ const PaymentDetails = () => {
         >
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment Details</Text>
+        <Text style={styles.headerTitle}>{t('paymentDetails')}</Text>
         <TouchableOpacity 
           onPress={() => setShowMemberSearch(true)}
           style={styles.headerButton}

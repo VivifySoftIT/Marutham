@@ -18,8 +18,11 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
+import { useLanguage } from '../service/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 const Messages = ({ navigation }) => {
+  const { t } = useLanguage();
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showComposeModal, setShowComposeModal] = useState(false);
@@ -713,7 +716,7 @@ const Messages = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Send Messages</Text>
+        <Text style={styles.headerTitle}>{t('messages')}</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 

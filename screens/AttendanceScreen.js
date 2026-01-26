@@ -18,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 import * as Speech from 'expo-speech';
 
 const MemberAttendanceScreen = () => {
@@ -373,17 +374,18 @@ const MemberAttendanceScreen = () => {
           
           <View style={styles.searchContainer}>
             <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
-            <TextInput
+            <SpeechToTextInput
               style={styles.searchInput}
               placeholder={`${t('searchBy')} ${t(searchType)}...`}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
                 <Icon name="close-circle" size={20} color="#666" />
               </TouchableOpacity>
             )}
+          </View>
             
             {/* Voice Search Button */}
             {voiceSupported && (
@@ -688,13 +690,26 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F9FC',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    position: 'relative',
+    marginBottom: 15,
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 12,
+    top: '50%',
+    transform: [{ translateY: -10 }],
+    zIndex: 1,
+  },
+  searchInput: {
+    paddingLeft: 40, // Make space for search icon
+    paddingRight: 50, // Make space for clear button and mic
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 50, // Position before mic button
+    top: '50%',
+    transform: [{ translateY: -10 }],
+    zIndex: 1,
   },
   voiceButton: {
     marginLeft: 8,

@@ -22,6 +22,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import API_BASE_URL from '../apiConfig';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const { width } = Dimensions.get('window');
 
@@ -577,44 +578,32 @@ const testMinimalSubmission = async () => {
             )}
             <View style={styles.section}>
               <Text style={styles.label}>Country *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="earth" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter country"
-                  value={formData.Country}
-                  onChangeText={(text) => handleInputChange('Country', text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Enter country"
+                value={formData.Country}
+                onChangeText={(text) => handleInputChange('Country', text)}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.label}>Region *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="map" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter region"
-                  value={formData.Region}
-                  onChangeText={(text) => handleInputChange('Region', text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Enter region"
+                value={formData.Region}
+                onChangeText={(text) => handleInputChange('Region', text)}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.label}>Chapter *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="book" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter chapter"
-                  value={formData.Chapter}
-                  onChangeText={(text) => handleInputChange('Chapter', text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Enter chapter"
+                value={formData.Chapter}
+                onChangeText={(text) => handleInputChange('Chapter', text)}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.section}>
@@ -645,58 +634,42 @@ const testMinimalSubmission = async () => {
           <View style={styles.tabContent}>
             <View style={styles.section}>
               <Text style={styles.label}>Title *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Mr, Mrs, Ms, Dr"
-                  value={formData.Title}
-                  onChangeText={(text) => handleInputChange('Title', text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Mr, Mrs, Ms, Dr"
+                value={formData.Title}
+                onChangeText={(text) => handleInputChange('Title', text)}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.label}>First Name *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter first name"
-                  value={formData.FirstName}
-                  onChangeText={(text) => handleInputChange('FirstName', text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Enter first name"
+                value={formData.FirstName}
+                onChangeText={(text) => handleInputChange('FirstName', text)}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.label}>Last Name *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter last name"
-                  value={formData.LastName}
-                  onChangeText={(text) => handleInputChange('LastName', text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Enter last name"
+                value={formData.LastName}
+                onChangeText={(text) => handleInputChange('LastName', text)}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.label}>Company *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="briefcase" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter company name"
-                  value={formData.Company}
-                  onChangeText={(text) => handleInputChange('Company', text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Enter company name"
+                value={formData.Company}
+                onChangeText={(text) => handleInputChange('Company', text)}
+                placeholderTextColor="#999"
+              />
             </View>
           </View>
         );
@@ -706,31 +679,24 @@ const testMinimalSubmission = async () => {
           <View style={styles.tabContent}>
             <View style={styles.section}>
               <Text style={styles.label}>Language</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="translate" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter language"
-                  value={formData.Language}
-                  onChangeText={(text) => handleInputChange('Language', text)}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Enter language"
+                value={formData.Language}
+                onChangeText={(text) => handleInputChange('Language', text)}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.section}>
               <Text style={styles.label}>Additional Notes</Text>
-              <View style={[styles.inputContainer, styles.textAreaContainer]}>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder="Enter any additional notes about the visitor"
-                  value={formData.Notes}
-                  onChangeText={(text) => handleInputChange('Notes', text)}
-                  multiline
-                  numberOfLines={4}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                placeholder="Enter any additional notes about the visitor"
+                value={formData.Notes}
+                onChangeText={(text) => handleInputChange('Notes', text)}
+                multiline
+                numberOfLines={4}
+                placeholderTextColor="#999"
+              />
             </View>
           </View>
         );
@@ -742,8 +708,8 @@ const testMinimalSubmission = async () => {
               <Text style={styles.label}>Telephone</Text>
               <View style={styles.inputContainer}>
                 <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
+                <SpeechToTextInput
+                  style={styles.speechInput}
                   placeholder="Enter telephone"
                   value={formData.TelephoneNumber}
                   onChangeText={(text) => handleInputChange('TelephoneNumber', text)}
@@ -757,8 +723,8 @@ const testMinimalSubmission = async () => {
               <Text style={styles.label}>Visitor Email</Text>
               <View style={styles.inputContainer}>
                 <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
+                <SpeechToTextInput
+                  style={styles.speechInput}
                   placeholder="Enter visitor email"
                   value={formData.VisitorEmail}
                   onChangeText={(text) => handleInputChange('VisitorEmail', text)}
@@ -773,8 +739,8 @@ const testMinimalSubmission = async () => {
               <Text style={styles.label}>Mobile Number *</Text>
               <View style={styles.inputContainer}>
                 <Icon name="cellphone" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
+                <SpeechToTextInput
+                  style={styles.speechInput}
                   placeholder="Enter mobile number"
                   value={formData.MobileNumber}
                   onChangeText={(text) => handleInputChange('MobileNumber', text)}
@@ -793,8 +759,8 @@ const testMinimalSubmission = async () => {
               <Text style={styles.label}>Country</Text>
               <View style={styles.inputContainer}>
                 <Icon name="earth" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
+                <SpeechToTextInput
+                  style={styles.speechInput}
                   placeholder="Enter visitor's country"
                   value={formData.VisitorCountry}
                   onChangeText={(text) => handleInputChange('VisitorCountry', text)}
@@ -806,8 +772,8 @@ const testMinimalSubmission = async () => {
             <View style={styles.section}>
               <Text style={styles.label}>Address</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
+                <SpeechToTextInput
+                  style={[styles.speechInput, styles.speechTextArea]}
                   placeholder="Enter address"
                   value={formData.VisitorAddress}
                   onChangeText={(text) => handleInputChange('VisitorAddress', text)}
@@ -822,8 +788,8 @@ const testMinimalSubmission = async () => {
               <Text style={styles.label}>City</Text>
               <View style={styles.inputContainer}>
                 <Icon name="city" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
+                <SpeechToTextInput
+                  style={styles.speechInput}
                   placeholder="Enter city"
                   value={formData.VisitorCity}
                   onChangeText={(text) => handleInputChange('VisitorCity', text)}
@@ -836,8 +802,8 @@ const testMinimalSubmission = async () => {
               <Text style={styles.label}>State</Text>
               <View style={styles.inputContainer}>
                 <Icon name="map" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
+                <SpeechToTextInput
+                  style={styles.speechInput}
                   placeholder="Enter state"
                   value={formData.VisitorState}
                   onChangeText={(text) => handleInputChange('VisitorState', text)}
@@ -850,8 +816,8 @@ const testMinimalSubmission = async () => {
               <Text style={styles.label}>Post Code</Text>
               <View style={styles.inputContainer}>
                 <Icon name="mailbox" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
+                <SpeechToTextInput
+                  style={styles.speechInput}
                   placeholder="Enter post code"
                   value={formData.VisitorPostcode}
                   onChangeText={(text) => handleInputChange('VisitorPostcode', text)}
@@ -1200,6 +1166,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     paddingVertical: 10,
+  },
+  speechInput: {
+    flex: 1,
+    marginLeft: -8, // Compensate for icon margin
+  },
+  speechTextArea: {
+    flex: 1,
+    minHeight: 80,
   },
   textAreaContainer: {
     alignItems: 'flex-start',

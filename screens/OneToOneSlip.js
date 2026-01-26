@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../apiConfig';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const OneToOneSlip = () => {
   const navigation = useNavigation();
@@ -271,8 +272,8 @@ const OneToOneSlip = () => {
             <Text style={styles.label}>Met With *</Text>
             <View style={styles.inputContainer}>
               <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
+              <SpeechToTextInput
+                style={styles.speechInput}
                 placeholder="Enter person name"
                 value={formData.metWith}
                 onChangeText={(text) => handleInputChange('metWith', text)}
@@ -286,8 +287,8 @@ const OneToOneSlip = () => {
             <Text style={styles.label}>Location *</Text>
             <View style={styles.inputContainer}>
               <Icon name="map-marker" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
+              <SpeechToTextInput
+                style={styles.speechInput}
                 placeholder="Enter location"
                 value={formData.location}
                 onChangeText={(text) => handleInputChange('location', text)}
@@ -322,8 +323,8 @@ const OneToOneSlip = () => {
           <View style={styles.section}>
             <Text style={styles.label}>Topic *</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
+              <SpeechToTextInput
+                style={styles.speechTextArea}
                 placeholder="Enter meeting topic"
                 value={formData.topic}
                 onChangeText={(text) => handleInputChange('topic', text)}
@@ -411,6 +412,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#333',
     paddingVertical: 12,
+  },
+  speechInput: {
+    flex: 1,
+    marginLeft: -12, // Compensate for icon margin
+  },
+  speechTextArea: {
+    flex: 1,
+    minHeight: 80,
   },
   dateText: {
     flex: 1,

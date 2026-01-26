@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import ApiService from '../service/api';
+import MemberIdService from '../service/MemberIdService';
 import { useLanguage } from '../service/LanguageContext';
 
 const { width } = Dimensions.get('window');
@@ -200,7 +201,7 @@ const MemberDashboard = () => {
   // Load notifications from API (same as UserDashboard)
   const loadNotifications = async () => {
     try {
-      const memberId = await AsyncStorage.getItem('memberId');
+      const memberId = await MemberIdService.getCurrentUserMemberId();
       
       if (!memberId) {
         console.log('MemberDashboard - No memberId for notifications');
@@ -456,26 +457,39 @@ const MemberDashboard = () => {
     </Animatable.View>
   );
 
-  const QuickActionCard = ({ action, index }) => (
-    <TouchableOpacity
-      style={[
-        styles.quickActionCard,
-        activeQuickActionIndex === index && styles.activeQuickActionCard
-      ]}
-      onPress={() => handleQuickAction(action)}
-      activeOpacity={0.8}
-    >
-      <LinearGradient
-        colors={[waterBlueColors.light, waterBlueColors.primary]}
-        style={styles.quickActionGradient}
+  const QuickActionCard = ({ action, index }) => {
+    // Apply different water blue shades based on action type
+    const getActionColors = () => {
+      if (action.id === 'send-notice') {
+        // Broadcast - dark water blue colors
+        return [waterBlueColors.primary, waterBlueColors.darker];
+      } else {
+        // Quick Report and Create Meeting - light water blue colors
+        return [waterBlueColors.lighter, waterBlueColors.light];
+      }
+    };
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.quickActionCard,
+          activeQuickActionIndex === index && styles.activeQuickActionCard
+        ]}
+        onPress={() => handleQuickAction(action)}
+        activeOpacity={0.8}
       >
-        <View style={styles.quickActionIcon}>
-          <Icon name={action.icon} size={20} color="#FFF" />
-        </View>
-        <Text style={styles.quickActionText}>{action.title}</Text>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
+        <LinearGradient
+          colors={getActionColors()}
+          style={styles.quickActionGradient}
+        >
+          <View style={styles.quickActionIcon}>
+            <Icon name={action.icon} size={20} color="#FFF" />
+          </View>
+          <Text style={styles.quickActionText}>{action.title}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -611,68 +625,70 @@ const MemberDashboard = () => {
           </LinearGradient>
         </Animatable.View>
 
-        {/* Swipeable Notifications Card */}
-        <Animatable.View 
-          animation="fadeInUp"
-          delay={600}
-          style={styles.notificationCard}
-        >
-          <View style={styles.notificationCardHeader}>
-            <Text style={styles.notificationCardTitle}>🔔 Recent Notifications</Text>
-            <TouchableOpacity onPress={() => setShowNotifications(true)}>
-              <Text style={styles.viewAllNotifications}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.notificationScrollView}
-            contentContainerStyle={styles.notificationScrollContent}
+        {/* Swipeable Notifications Card - Only show if there are notifications */}
+        {notifications.length > 0 && (
+          <Animatable.View 
+            animation="fadeInUp"
+            delay={600}
+            style={styles.notificationCard}
           >
-            {notifications.slice(0, 5).map((notification, index) => (
-              <TouchableOpacity
-                key={notification.id}
-                style={[
-                  styles.notificationSwipeCard,
-                  !notification.isRead && styles.unreadNotificationCard
-                ]}
-                onPress={() => markNotificationAsRead(notification.id)}
-                activeOpacity={0.8}
-              >
-                <View style={[
-                  styles.notificationSwipeIcon, 
-                  { backgroundColor: notification.backgroundColor }
-                ]}>
-                  <Icon name={notification.icon} size={18} color={notification.color} />
-                </View>
-                <View style={styles.notificationSwipeContent}>
-                  <Text style={styles.notificationSwipeTitle} numberOfLines={1}>
-                    {notification.title}
-                  </Text>
-                  <Text style={styles.notificationSwipeMessage} numberOfLines={1}>
-                    {notification.message}
-                  </Text>
-                  <Text style={styles.notificationSwipeTime}>
-                    {notification.time}
-                  </Text>
-                </View>
-                {!notification.isRead && (
-                  <View style={styles.swipeUnreadIndicator} />
-                )}
+            <View style={styles.notificationCardHeader}>
+              <Text style={styles.notificationCardTitle}>🔔 Recent Notifications</Text>
+              <TouchableOpacity onPress={() => setShowNotifications(true)}>
+                <Text style={styles.viewAllNotifications}>View All</Text>
               </TouchableOpacity>
-            ))}
+            </View>
             
-            {/* Add more notifications card */}
-            <TouchableOpacity
-              style={styles.moreNotificationsCard}
-              onPress={() => setShowNotifications(true)}
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.notificationScrollView}
+              contentContainerStyle={styles.notificationScrollContent}
             >
-              <Icon name="plus-circle" size={24} color={waterBlueColors.primary} />
-              <Text style={styles.moreNotificationsText}>View More</Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </Animatable.View>
+              {notifications.slice(0, 5).map((notification, index) => (
+                <TouchableOpacity
+                  key={notification.id}
+                  style={[
+                    styles.notificationSwipeCard,
+                    !notification.isRead && styles.unreadNotificationCard
+                  ]}
+                  onPress={() => markNotificationAsRead(notification.id)}
+                  activeOpacity={0.8}
+                >
+                  <View style={[
+                    styles.notificationSwipeIcon, 
+                    { backgroundColor: notification.backgroundColor }
+                  ]}>
+                    <Icon name={notification.icon} size={18} color={notification.color} />
+                  </View>
+                  <View style={styles.notificationSwipeContent}>
+                    <Text style={styles.notificationSwipeTitle} numberOfLines={1}>
+                      {notification.title}
+                    </Text>
+                    <Text style={styles.notificationSwipeMessage} numberOfLines={1}>
+                      {notification.message}
+                    </Text>
+                    <Text style={styles.notificationSwipeTime}>
+                      {notification.time}
+                    </Text>
+                  </View>
+                  {!notification.isRead && (
+                    <View style={styles.swipeUnreadIndicator} />
+                  )}
+                </TouchableOpacity>
+              ))}
+              
+              {/* Add more notifications card */}
+              <TouchableOpacity
+                style={styles.moreNotificationsCard}
+                onPress={() => setShowNotifications(true)}
+              >
+                <Icon name="plus-circle" size={24} color={waterBlueColors.primary} />
+                <Text style={styles.moreNotificationsText}>View More</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </Animatable.View>
+        )}
 
         {/* Quick Actions - Swipeable */}
         <Animatable.View 
@@ -964,6 +980,8 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+    lineHeight: 24,
+    minHeight: 24,
   },
   loadingStats: {
     alignItems: 'center',
@@ -1086,12 +1104,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1A2332',
     marginBottom: 6,
+    lineHeight: 24,
+    minHeight: 24,
   },
   welcomeText: {
     fontSize: 13,
     color: '#5D6D7E',
     lineHeight: 19,
     fontWeight: '500',
+    minHeight: 19,
   },
   welcomeIcon: {
     marginLeft: 12,
@@ -1182,12 +1203,14 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 2, // Reduced from 4
     lineHeight: 14, // Reduced from 16
+    minHeight: 14,
   },
   notificationSwipeMessage: {
     fontSize: 10, // Decreased from 11
     color: '#5D6D7E',
     lineHeight: 12, // Reduced from 14
     marginBottom: 4, // Reduced from 6
+    minHeight: 12,
   },
   notificationSwipeTime: {
     fontSize: 9, // Decreased from 10
@@ -1241,6 +1264,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#2C3E50',
+    lineHeight: 22,
+    minHeight: 22,
   },
   viewAllButton: {
     flexDirection: 'row',
@@ -1267,7 +1292,7 @@ const styles = StyleSheet.create({
   },
   quickActionCard: {
     width: 110,
-    height: 85,
+    height: 90, // Increased from 85 to accommodate Tamil text
     marginRight: 10,
     borderRadius: 16,
     overflow: 'hidden',
@@ -1292,6 +1317,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     height: '100%',
     justifyContent: 'center',
+    minHeight: 90, // Ensure minimum height for Tamil text
   },
   quickActionIcon: {
     width: 36,
@@ -1307,6 +1333,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFF',
     textAlign: 'center',
+    lineHeight: 16,
+    minHeight: 16,
+    flexShrink: 0,
   },
   modulesGrid: {
     flexDirection: 'row',
@@ -1330,7 +1359,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
-    height: 100,
+    minHeight: 105, // Increased from 100 to accommodate Tamil text better
   },
   moduleCardContent: {
     flex: 1,
@@ -1373,12 +1402,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2C3E50',
     marginBottom: 2,
+    lineHeight: 16,
+    minHeight: 16,
   },
   moduleDescription: {
     fontSize: 11,
     color: '#7F8C8D',
     lineHeight: 14,
     fontWeight: '500',
+    minHeight: 14,
   },
   moduleArrow: {
     marginLeft: 6,

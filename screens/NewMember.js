@@ -19,6 +19,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
+import MemberIdService from '../service/MemberIdService';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const NewMember = () => {
   const navigation = useNavigation();
@@ -141,62 +143,9 @@ const NewMember = () => {
     }
   };
 
-  // Robust function to get current user's member ID (3-tier lookup)
+  // Get current user's member ID using MemberIdService
   const getCurrentUserMemberId = async () => {
-    try {
-      // First check if memberId is already in AsyncStorage
-      const storedMemberId = await AsyncStorage.getItem('memberId');
-      if (storedMemberId) {
-        console.log('NewMember - Member ID found in storage:', storedMemberId);
-        return parseInt(storedMemberId);
-      }
-
-      console.log('NewMember - Member ID not in storage, attempting to look up...');
-
-      // If not, try to get it from user ID
-      const userId = await AsyncStorage.getItem('userId');
-      const fullName = await AsyncStorage.getItem('fullName');
-
-      if (userId) {
-        try {
-          // Try to get member by user ID
-          console.log('NewMember - Trying GetByUserId with userId:', userId);
-          const memberData = await ApiService.getMemberByUserId(userId);
-          if (memberData && memberData.id) {
-            await AsyncStorage.setItem('memberId', memberData.id.toString());
-            console.log('NewMember - Member found via GetByUserId:', memberData.id);
-            return memberData.id;
-          }
-        } catch (error) {
-          console.log('NewMember - GetByUserId failed, trying name search:', error);
-        }
-      }
-
-      // Fallback: search by name
-      if (fullName) {
-        try {
-          console.log('NewMember - Searching members by name:', fullName);
-          const members = await ApiService.getMembers();
-          const member = members.find(m => 
-            m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase()
-          );
-          
-          if (member) {
-            await AsyncStorage.setItem('memberId', member.id.toString());
-            console.log('NewMember - Member found by name:', member.id);
-            return member.id;
-          }
-        } catch (error) {
-          console.log('NewMember - Name search failed:', error);
-        }
-      }
-
-      console.log('NewMember - Could not find member ID');
-      return null;
-    } catch (error) {
-      console.error('NewMember - Error getting member ID:', error);
-      return null;
-    }
+    return await MemberIdService.getCurrentUserMemberId();
   };
 
   const initialFormState = {
@@ -490,8 +439,8 @@ const NewMember = () => {
           <Text style={styles.label}>Member Name *</Text>
           <View style={styles.inputContainer}>
             <Icon name="account" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
+            <SpeechToTextInput
+              style={styles.speechInput}
               placeholder="Enter member name"
               value={formData.memberName}
               onChangeText={(text) => handleInputChange("memberName", text)}
@@ -506,8 +455,8 @@ const NewMember = () => {
           <Text style={styles.label}>Mobile Number *</Text>
           <View style={styles.inputContainer}>
             <Icon name="phone" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
+            <SpeechToTextInput
+              style={styles.speechInput}
               placeholder="10-digit mobile number"
               value={formData.mobileNum}
               onChangeText={(text) => handleInputChange("mobileNum", text)}
@@ -524,8 +473,8 @@ const NewMember = () => {
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputContainer}>
             <Icon name="email" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
+            <SpeechToTextInput
+              style={styles.speechInput}
               placeholder="Enter email address"
               value={formData.email}
               onChangeText={(text) => handleInputChange("email", text)}
@@ -612,8 +561,8 @@ const NewMember = () => {
           <Text style={styles.label}>Address</Text>
           <View style={styles.inputContainer}>
             <Icon name="map-marker" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
+            <SpeechToTextInput
+              style={styles.speechInput}
               placeholder="Enter address"
               value={formData.address}
               onChangeText={(text) => handleInputChange("address", text)}
@@ -628,8 +577,8 @@ const NewMember = () => {
           <Text style={styles.label}>Business/Occupation</Text>
           <View style={styles.inputContainer}>
             <Icon name="briefcase" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
+            <SpeechToTextInput
+              style={styles.speechInput}
               placeholder="Enter business or occupation"
               value={formData.business}
               onChangeText={(text) => handleInputChange("business", text)}
@@ -746,6 +695,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     paddingVertical: 10,
+  },
+  speechInput: {
+    flex: 1,
+    marginLeft: -8, // Compensate for icon margin
   },
   calendarIconInside: {
     padding: 5,

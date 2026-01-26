@@ -24,6 +24,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import MemberIdService from '../service/MemberIdService';
 
 const { width } = Dimensions.get('window');
 
@@ -103,26 +104,10 @@ const MyPayments = () => {
 
   const getMemberId = async () => {
     try {
-      const id = await AsyncStorage.getItem('memberId');
-      if (id) {
-        const memberIdInt = parseInt(id, 10);
-        setCurrentMemberId(memberIdInt);
-        return memberIdInt;
-      }
-      
-      // Try to get from user ID
-      const userId = await AsyncStorage.getItem('userId');
-      if (userId) {
-        const response = await fetch(`${API_BASE_URL}/api/Members/GetByUserId/${userId}`);
-        if (response.ok) {
-          const memberData = await response.json();
-          if (memberData && memberData.id) {
-            const memberIdInt = parseInt(memberData.id);
-            await AsyncStorage.setItem('memberId', memberIdInt.toString());
-            setCurrentMemberId(memberIdInt);
-            return memberIdInt;
-          }
-        }
+      const memberId = await MemberIdService.getCurrentUserMemberId();
+      if (memberId) {
+        setCurrentMemberId(memberId);
+        return memberId;
       }
       return null;
     } catch (error) {

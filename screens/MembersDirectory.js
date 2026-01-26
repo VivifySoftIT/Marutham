@@ -15,12 +15,15 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useLanguage } from '../service/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 // Your API URL
 const API_URL = 'https://www.vivifysoft.in/AlaigalBE';
 
 const MembersDirectory = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
@@ -242,7 +245,7 @@ const MembersDirectory = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Members Directory</Text>
+        <Text style={styles.headerTitle}>{t('membersDirectory')}</Text>
         <View style={styles.headerButtons}>
           {/* Debug button - only for development */}
           {__DEV__ && (

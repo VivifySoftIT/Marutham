@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import ApiService from '../service/api';
+import MemberIdService from '../service/MemberIdService';
 
 const { width } = Dimensions.get('window');
 
@@ -98,68 +99,9 @@ const UserDashboard = () => {
     else setGreeting('Good Evening');
   };
 
-  // Get current user's member ID
+  // Get current user's member ID using MemberIdService
   const getCurrentUserMemberId = async () => {
-    try {
-      // First check if memberId is already in AsyncStorage
-      const storedMemberId = await AsyncStorage.getItem('memberId');
-      if (storedMemberId) {
-        console.log('UserDashboard - Member ID found in storage:', storedMemberId);
-        return parseInt(storedMemberId);
-      }
-
-      console.log('UserDashboard - Member ID not in storage, attempting to look up...');
-
-      // If not, try to get it from user ID
-      const userId = await AsyncStorage.getItem('userId');
-      const fullName = await AsyncStorage.getItem('fullName');
-
-      if (userId) {
-        try {
-          // Try to get member by user ID
-          console.log('UserDashboard - Trying GetByUserId with userId:', userId);
-          const response = await fetch(`${API_BASE_URL}/api/Members/GetByUserId/${userId}`);
-          if (response.ok) {
-            const memberData = await response.json();
-            if (memberData && memberData.id) {
-              await AsyncStorage.setItem('memberId', memberData.id.toString());
-              console.log('UserDashboard - Member found via GetByUserId:', memberData.id);
-              return memberData.id;
-            }
-          }
-        } catch (error) {
-          console.log('UserDashboard - GetByUserId failed, trying name search:', error);
-        }
-      }
-
-      // Fallback: search by name
-      if (fullName) {
-        try {
-          console.log('UserDashboard - Searching members by name:', fullName);
-          const response = await fetch(`${API_BASE_URL}/api/Members`);
-          if (response.ok) {
-            const members = await response.json();
-            const member = members.find(m => 
-              m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase()
-            );
-            
-            if (member) {
-              await AsyncStorage.setItem('memberId', member.id.toString());
-              console.log('UserDashboard - Member found by name:', member.id);
-              return member.id;
-            }
-          }
-        } catch (error) {
-          console.log('UserDashboard - Name search failed:', error);
-        }
-      }
-
-      console.log('UserDashboard - Could not find member ID');
-      return null;
-    } catch (error) {
-      console.error('UserDashboard - Error getting member ID:', error);
-      return null;
-    }
+    return await MemberIdService.getCurrentUserMemberId();
   };
 
   const loadUserData = async () => {
@@ -785,23 +727,6 @@ const UserDashboard = () => {
                 <Text style={styles.moreNotificationsText}>View More</Text>
               </TouchableOpacity>
             </ScrollView>
-          </Animatable.View>
-        )}
-
-        {/* No Notifications Message - Only show if there are no notifications */}
-        {notifications.length === 0 && (
-          <Animatable.View 
-            animation="fadeInUp"
-            delay={200}
-            style={styles.noNotificationCard}
-          >
-            <View style={styles.noNotificationContent}>
-              <Icon name="bell-off-outline" size={48} color="#BDC3C7" />
-              <Text style={styles.noNotificationTitle}>No Notifications</Text>
-              <Text style={styles.noNotificationMessage}>
-                You're all caught up! No birthdays, meetings, or messages to display.
-              </Text>
-            </View>
           </Animatable.View>
         )}
 
@@ -2400,37 +2325,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginLeft: 6,
-  },
-  // No Notifications Card Styles
-  noNotificationCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-  noNotificationContent: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  noNotificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#7F8C8D',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  noNotificationMessage: {
-    fontSize: 13,
-    color: '#BDC3C7',
-    textAlign: 'center',
-    lineHeight: 18,
   },
   // Inline Settings Styles
   inlineSettingsContainer: {

@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import API_BASE_URL from '../apiConfig';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const TYFCBSlip = () => {
   const navigation = useNavigation();
@@ -258,8 +259,8 @@ const TYFCBSlip = () => {
             <Text style={styles.label}>Business Visited *</Text>
             <View style={styles.inputContainer}>
               <Icon name="briefcase" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
+              <SpeechToTextInput
+                style={styles.speechInput}
                 placeholder="Enter business name"
                 value={formData.businessVisited}
                 onChangeText={(text) => handleInputChange('businessVisited', text)}
@@ -273,8 +274,8 @@ const TYFCBSlip = () => {
             <Text style={styles.label}>Amount</Text>
             <View style={styles.inputContainer}>
               <Icon name="currency-usd" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
+              <SpeechToTextInput
+                style={styles.speechInput}
                 placeholder="Enter amount (optional)"
                 value={formData.amount}
                 onChangeText={(text) => handleInputChange('amount', text)}
@@ -289,8 +290,8 @@ const TYFCBSlip = () => {
             <Text style={styles.label}>Rating (1-5 stars)</Text>
             <View style={styles.inputContainer}>
               <Icon name="star" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
+              <SpeechToTextInput
+                style={styles.speechInput}
                 placeholder="Enter rating (1-5)"
                 value={formData.rating}
                 onChangeText={(text) => handleInputChange('rating', text)}
@@ -305,8 +306,8 @@ const TYFCBSlip = () => {
           <View style={styles.section}>
             <Text style={styles.label}>Notes</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
+              <SpeechToTextInput
+                style={styles.speechTextArea}
                 placeholder="Enter any notes"
                 value={formData.notes}
                 onChangeText={(text) => handleInputChange('notes', text)}
@@ -473,6 +474,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#333',
     paddingVertical: 12,
+  },
+  speechInput: {
+    flex: 1,
+    marginLeft: -12, // Compensate for icon margin
+  },
+  speechTextArea: {
+    flex: 1,
+    minHeight: 80,
   },
   textAreaContainer: {
     alignItems: 'flex-start',

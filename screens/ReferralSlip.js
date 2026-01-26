@@ -17,6 +17,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../apiConfig';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const ReferralSlip = () => {
   const navigation = useNavigation();
@@ -528,8 +529,8 @@ const ReferralSlip = () => {
             <Text style={styles.label}>Referral Number/Name *</Text>
             <View style={styles.inputContainer}>
               <Icon name="numeric" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
+              <SpeechToTextInput
+                style={styles.speechInput}
                 placeholder="Enter referral number or client name"
                 value={formData.referralNumber}
                 onChangeText={(text) => handleInputChange('referralNumber', text)}
@@ -543,8 +544,8 @@ const ReferralSlip = () => {
             <Text style={styles.label}>Telephone Number *</Text>
             <View style={styles.inputContainer}>
               <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
+              <SpeechToTextInput
+                style={styles.speechInput}
                 placeholder="Enter telephone number (e.g., 123-456-7890)"
                 value={formData.telephone}
                 onChangeText={handlePhoneChange}
@@ -560,8 +561,8 @@ const ReferralSlip = () => {
             <Text style={styles.label}>Email Address</Text>
             <View style={styles.inputContainer}>
               <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
+              <SpeechToTextInput
+                style={styles.speechInput}
                 placeholder="Enter email address (optional)"
                 value={formData.email}
                 onChangeText={(text) => handleInputChange('email', text)}
@@ -576,8 +577,8 @@ const ReferralSlip = () => {
           <View style={styles.section}>
             <Text style={styles.label}>Address</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
+              <SpeechToTextInput
+                style={styles.speechTextArea}
                 placeholder="Enter address"
                 value={formData.address}
                 onChangeText={(text) => handleInputChange('address', text)}
@@ -592,8 +593,8 @@ const ReferralSlip = () => {
           <View style={styles.section}>
             <Text style={styles.label}>Comments</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
+              <SpeechToTextInput
+                style={styles.speechTextArea}
                 placeholder="Enter any comments"
                 value={formData.comments}
                 onChangeText={(text) => handleInputChange('comments', text)}
@@ -709,6 +710,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#333',
     paddingVertical: 12,
+  },
+  speechInput: {
+    flex: 1,
+    marginLeft: -12, // Compensate for icon margin
+  },
+  speechTextArea: {
+    flex: 1,
+    minHeight: 80,
   },
   textAreaContainer: {
     alignItems: 'flex-start',
