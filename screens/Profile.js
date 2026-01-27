@@ -17,9 +17,9 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
-import axios from "axios";
 import API_BASE_URL from "../apiConfig";
 import useHardwareBack from '../service/useHardwareBack';
+
 const MyProfile = () => {
   const [profile, setProfile] = useState({
     name: "",
@@ -28,13 +28,12 @@ const MyProfile = () => {
     gender: "",
     email: "",
     contactNumber: "",
-    emergencyContact: "",
     contactAddress: "",
-    permanentAddress: "",
-    temporaryAddress: "",
     profileImage: null,
-    branch: "", // Add branch field
-    photoPath: "", // Add photoPath field
+    status: "",
+    joinDate: "",
+    dob: "",
+    subCompanyId: null,
   });
 
   const [activeTab, setActiveTab] = useState("personal");
@@ -46,43 +45,47 @@ const MyProfile = () => {
 
   const navigation = useNavigation();
   useHardwareBack(navigation);
+
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
-        const token = await AsyncStorage.getItem("jwt_token");
-        if (!token) {
-          console.error("Authentication token not found");
+        const memberId = await getCurrentUserMemberId();
+        
+        if (!memberId) {
+          console.log('Member ID not found');
+          setLoading(false);
           return;
         }
 
+        const response = await fetch(`${API_BASE_URL}/api/Members/GetMemberDetails/${memberId}`);
+        
+        if (!response.ok) {
+          console.error('Failed to fetch member details');
+          setLoading(false);
+          return;
+        }
+
+        const memberData = await response.json();
+        console.log('Member details loaded:', memberData);
+
         const savedImage = await AsyncStorage.getItem("profileImage");
 
-        const response = await axios.get(`${API_BASE_URL}/api/Security/GetEmployeeInfo`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        setProfile({
+          name: memberData.name || "",
+          employeeNo: memberData.memberId || memberData.id?.toString() || "",
+          designation: memberData.business || "",
+          gender: "",
+          email: memberData.email || "",
+          contactNumber: memberData.phone || "",
+          contactAddress: memberData.address || "",
+          profileImage: savedImage,
+          status: memberData.status || "",
+          joinDate: memberData.joinDate || "",
+          dob: memberData.dob || "",
+          subCompanyId: memberData.subCompanyId || null,
         });
-
-        if (response.data.statusCode === 200) {
-          const data = response.data.result;
-          setProfile({
-            name: data.name || "",
-            employeeNo: data.empNo?.toString() || "",
-            designation: data.designationDesc || "",
-            gender: data.gender || "",
-            email: data.emailID || "",
-            contactNumber: data.contactNumber || "",
-            emergencyContact: data.emergencyNumber || "",
-            contactAddress: data.contAddress || "",
-            permanentAddress: data.permAddress || "",
-            temporaryAddress: "",
-            profileImage: savedImage, // Set the saved profile image
-            branch: data.branchDesc || "", // Extract branchDesc from API response
-            photoPath: data.photoPath || "", // Extract photoPath from API response
-          });
-        }
       } catch (error) {
-        console.error("Error fetching profile data:", error);
+        console.error("Error fetching member profile:", error);
       } finally {
         setLoading(false);
       }
@@ -91,8 +94,66 @@ const MyProfile = () => {
     fetchProfileData();
   }, []);
 
+  const getCurrentUserMemberId = async () => {
+    try {
+      const storedMemberId = await AsyncStorage.getItem('memberId');
+      if (storedMemberId) {
+        console.log('Member ID found in storage:', storedMemberId);
+        return parseInt(storedMemberId);
+      }
+
+      console.log('Member ID not in storage, attempting to look up...');
+      const userId = await AsyncStorage.getItem('userId');
+      const fullName = await AsyncStorage.getItem('fullName');
+
+      if (userId) {
+        try {
+          console.log('Trying GetByUserId with userId:', userId);
+          const response = await fetch(`${API_BASE_URL}/api/Members/GetByUserId/${userId}`);
+          if (response.ok) {
+            const memberData = await response.json();
+            if (memberData && memberData.id) {
+              await AsyncStorage.setItem('memberId', memberData.id.toString());
+              console.log('Member found via GetByUserId:', memberData.id);
+              return memberData.id;
+            }
+          }
+        } catch (error) {
+          console.log('GetByUserId failed, trying name search:', error);
+        }
+      }
+
+      if (fullName) {
+        try {
+          console.log('Searching members by name:', fullName);
+          const response = await fetch(`${API_BASE_URL}/api/Members`);
+          if (response.ok) {
+            const members = await response.json();
+            const member = members.find(m => 
+              m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase()
+            );
+
+            if (member) {
+              await AsyncStorage.setItem('memberId', member.id.toString());
+              console.log('Member found by name:', member.id);
+              return member.id;
+            }
+          }
+        } catch (error) {
+          console.log('Name search failed:', error);
+        }
+      }
+
+      console.log('Could not find member ID');
+      return null;
+    } catch (error) {
+      console.error('Error getting member ID:', error);
+      return null;
+    }
+  };
+
   const handleSave = (field) => {
-    if ((field === "contactNumber" || field === "emergencyContact") && profile[field].length < 10) {
+    if (field === "contactNumber" && profile[field].length < 10) {
       alert("Phone number must be exactly 10 digits.");
       return;
     }
@@ -105,81 +166,109 @@ const MyProfile = () => {
       alert("Contact number must be exactly 10 digits.");
       return;
     }
-    if (profile.emergencyContact.length !== 10) {
-      alert("Emergency contact number must be exactly 10 digits.");
-      return;
-    }
-  
+
     try {
-      const token = await AsyncStorage.getItem("jwt_token");
-      if (!token) {
-        alert("Authentication token not found");
+      const memberId = await getCurrentUserMemberId();
+      if (!memberId) {
+        alert("Member ID not found. Please try logging in again.");
         return;
       }
-  
-      const formData = new FormData();
-      formData.append("name", profile.name);
-      formData.append("empNo", profile.employeeNo);
-      formData.append("designationDesc", profile.designation);
-      formData.append("contactNumber", profile.contactNumber);
-      formData.append("emergencyNumber", profile.emergencyContact);
-      formData.append("contAddress", profile.contactAddress);
-      formData.append("permAddress", profile.permanentAddress);
-      formData.append("gender", profile.gender);
-      formData.append("emailID", profile.email);
-  
-      // Include the profile image if it exists
-      if (tempImage) {
-        formData.append("PhotoFilePath", {
-          uri: tempImage,
-          name: "profile.jpg",
-          type: "image/jpeg",
-        });
-      } else if (profile.profileImage) {
-        formData.append("PhotoFilePath", {
-          uri: profile.profileImage,
-          name: "profile.jpg",
-          type: "image/jpeg",
-        });
-      }
-  
-      console.log("Payload being sent:", formData);
-  
-      const response = await axios.post(`${API_BASE_URL}/api/Security/UpdateEmpInfo`, formData, {
+
+      // Helper function to format date to ISO string or null
+      const formatDate = (dateString) => {
+        if (!dateString || dateString.trim() === "") return null;
+        
+        try {
+          // Try to parse the date
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return null;
+          return date.toISOString();
+        } catch (error) {
+          console.log("Error formatting date:", dateString, error);
+          return null;
+        }
+      };
+
+      // Prepare update data matching UpdateMemberDto
+      // Only send fields that the API accepts
+      const updateData = {
+        Name: profile.name || null,
+        Phone: profile.contactNumber || null,
+        Email: profile.email || null,
+        DOB: formatDate(profile.dob),
+        JoinDate: formatDate(profile.joinDate),
+        Address: profile.contactAddress || null,
+        Business: profile.designation || null,
+        Status: profile.status || null,
+        ProfileImage: profile.profileImage || null,
+        SubCompanyId: profile.subCompanyId || null,
+      };
+
+      console.log("Updating member profile:", JSON.stringify(updateData, null, 2));
+
+      const response = await fetch(`${API_BASE_URL}/api/Members/${memberId}/edit`, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify(updateData),
       });
-  
-      if (response.data.statusCode === 200) {
-        alert(response.data.statusDesc);
-  
-        // Fetch updated profile data to get the new photoPath
-        const updatedResponse = await axios.get(`${API_BASE_URL}/api/Security/GetEmployeeInfo`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
-        if (updatedResponse.data.statusCode === 200) {
-          const updatedData = updatedResponse.data.result;
-          setProfile((prev) => ({
-            ...prev,
-            photoPath: updatedData.photoPath || "", // Update photoPath
-          }));
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Profile updated successfully:', result);
+        alert("Profile updated successfully!");
+        
+        // Refresh profile data using GetMemberDetails
+        const updatedResponse = await fetch(`${API_BASE_URL}/api/Members/GetMemberDetails/${memberId}`);
+        if (updatedResponse.ok) {
+          const memberData = await updatedResponse.json();
+          const savedImage = await AsyncStorage.getItem("profileImage");
+          
+          // Helper to format date for display
+          const formatDateForDisplay = (dateString) => {
+            if (!dateString) return "";
+            try {
+              const date = new Date(dateString);
+              if (isNaN(date.getTime())) return "";
+              return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+            } catch (error) {
+              return dateString;
+            }
+          };
+          
+          setProfile({
+            name: memberData.name || "",
+            employeeNo: memberData.memberId || memberData.id?.toString() || "",
+            designation: memberData.business || "",
+            gender: "",
+            email: memberData.email || "",
+            contactNumber: memberData.phone || "",
+            contactAddress: memberData.address || "",
+            profileImage: savedImage,
+            status: memberData.status || "",
+            joinDate: formatDateForDisplay(memberData.joinDate),
+            dob: formatDateForDisplay(memberData.dob),
+            subCompanyId: memberData.subCompanyId || null,
+          });
         }
       } else {
-        alert("Failed to update profile.");
+        const errorText = await response.text();
+        console.error('Update failed:', errorText);
+        
+        try {
+          const errorJson = JSON.parse(errorText);
+          alert(`Failed to update profile: ${errorJson.title || 'Unknown error'}`);
+        } catch (e) {
+          alert("Failed to update profile. Please try again.");
+        }
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      if (error.response) {
-        console.error("Server response:", error.response.data);
-      }
       alert("An error occurred while updating the profile.");
     }
   };
+
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
@@ -205,8 +294,6 @@ const MyProfile = () => {
       try {
         await AsyncStorage.setItem("profileImage", tempImage);
         setProfile((prev) => ({ ...prev, profileImage: tempImage }));
-  
-        // Call handleUpdate to send the updated profile image to the server
         await handleUpdate();
       } catch (error) {
         console.error("Error saving image:", error);
@@ -221,65 +308,74 @@ const MyProfile = () => {
     setShowModal(false);
   };
 
- const handleLongPress = () => {
-  if (profile.profileImage || profile.photoPath) {
-    setFullScreenImage(profile.profileImage || profile.photoPath);
-  }
-};
+  const handleLongPress = () => {
+    if (profile.profileImage || profile.photoPath) {
+      setFullScreenImage(profile.profileImage || profile.photoPath);
+    }
+  };
 
   const renderEditableField = (label, fieldName, value, isMultiline = false) => {
     const isEditing = editingField === fieldName;
-    const isReadOnly =
-      activeTab === "professional" ||
-      fieldName === "gender" ||
-      fieldName === "contactAddress" ||
-      fieldName === "permanentAddress" ||
-      fieldName === "email"; // Disable editing for email field
-  
-    const isNumberField = fieldName === "contactNumber" || fieldName === "emergencyContact";
-  
+    const isNumberField = fieldName === "contactNumber";
+    const isDateField = fieldName === "joinDate" || fieldName === "dob";
+
     return (
       <View style={styles.fieldContainer}>
         <Text style={styles.editLabel}>{label}</Text>
         <View style={styles.inputWithIcon}>
-          <TextInput
-            value={value}
-            onChangeText={(text) => {
-              if (isNumberField) {
-                // Ensure only digits are entered and limit to 10 characters
-                const sanitizedText = text.replace(/\D/g, ""); // Only numbers
-                if (sanitizedText.length > 10) {
-                  alert("Input cannot exceed 10 digits.");
-                  return; // Prevent updating state with invalid input
-                }
-                setProfile((prev) => ({ ...prev, [fieldName]: sanitizedText }));
-              } else {
+          {isDateField && isEditing ? (
+            <TextInput
+              value={value}
+              onChangeText={(text) => {
                 setProfile((prev) => ({ ...prev, [fieldName]: text }));
-              }
-            }}
-            editable={!isReadOnly}
-            multiline={isMultiline}
-            keyboardType={isNumberField ? "numeric" : "default"}
-            maxLength={isNumberField ? 10 : undefined} // Limit to 10 digits for number fields
-            style={styles.input}
-          />
-          {!isReadOnly && (
-            <TouchableOpacity
-              onPress={() => (isEditing ? handleSave(fieldName) : setEditingField(fieldName))}
-              style={styles.iconContainer}
-            >
-              <Icon
-  name={isEditing ? "check" : "pencil"}
-  size={20}
-  color={isEditing ? "#28A745" : "#007BFF"} // Green for "check", Blue for "pencil"
-/>
-            </TouchableOpacity>
+              }}
+              placeholder="YYYY-MM-DD or DD/MM/YYYY"
+              placeholderTextColor="#999"
+              style={[styles.input, isMultiline && styles.inputMultiline]}
+            />
+          ) : (
+            <TextInput
+              value={value}
+              onChangeText={(text) => {
+                if (isNumberField) {
+                  const sanitizedText = text.replace(/\D/g, "");
+                  if (sanitizedText.length > 10) {
+                    alert("Input cannot exceed 10 digits.");
+                    return;
+                  }
+                  setProfile((prev) => ({ ...prev, [fieldName]: sanitizedText }));
+                } else {
+                  setProfile((prev) => ({ ...prev, [fieldName]: text }));
+                }
+              }}
+              editable={true}
+              multiline={isMultiline}
+              keyboardType={isNumberField ? "numeric" : "default"}
+              maxLength={isNumberField ? 10 : undefined}
+              placeholder={isDateField ? "Enter date (YYYY-MM-DD)" : ""}
+              placeholderTextColor={isDateField ? "#999" : undefined}
+              style={[styles.input, isMultiline && styles.inputMultiline]}
+            />
           )}
+          <TouchableOpacity
+            onPress={() => (isEditing ? handleSave(fieldName) : setEditingField(fieldName))}
+            style={styles.iconContainer}
+          >
+            <Icon
+              name={isEditing ? "check" : "pencil"}
+              size={20}
+              color={isEditing ? "#28A745" : "#4A90E2"}
+            />
+          </TouchableOpacity>
         </View>
+        {isDateField && !isEditing && value && (
+          <Text style={styles.dateHint}>
+            Format as YYYY-MM-DD when editing
+          </Text>
+        )}
       </View>
     );
   };
-  
 
   if (loading) {
     return (
@@ -342,50 +438,56 @@ const MyProfile = () => {
             </View>
           </Modal>
 
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "personal" && styles.activeTab]}
-            onPress={() => setActiveTab("personal")}
-          >
-            <Text style={[styles.tabText, activeTab === "personal" && styles.activeTabText]}>
-              Personal
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "professional" && styles.activeTab]}
-            onPress={() => setActiveTab("professional")}
-          >
-            <Text style={[styles.tabText, activeTab === "professional" && styles.activeTabText]}>
-              Professional
-            </Text>
-          </TouchableOpacity>
-        </View>
-       
-        {activeTab === "personal" && (
-          <View style={styles.formSection}>
-            {renderEditableField("Name", "name", profile.name)}
-            {renderEditableField("Gender", "gender", profile.gender)}
-            {renderEditableField("Email", "email", profile.email)}
-            {renderEditableField("Contact Number", "contactNumber", profile.contactNumber)}
-            {renderEditableField("Emergency Number", "emergencyContact", profile.emergencyContact)}
-            {renderEditableField("Contact Address", "contactAddress", profile.contactAddress, true)}
-            {renderEditableField("Permanent Address", "permanentAddress", profile.permanentAddress, true)}
-            <TouchableOpacity 
-              style={styles.updateButton} 
-              onPress={handleUpdate}
+          <View style={styles.tabContainer}>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "personal" && styles.activeTab]}
+              onPress={() => setActiveTab("personal")}
             >
-              <Text style={styles.updateButtonText}>Save Changes</Text>
+              <Text style={[styles.tabText, activeTab === "personal" && styles.activeTabText]}>
+                Personal
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === "professional" && styles.activeTab]}
+              onPress={() => setActiveTab("professional")}
+            >
+              <Text style={[styles.tabText, activeTab === "professional" && styles.activeTabText]}>
+                Professional
+              </Text>
             </TouchableOpacity>
           </View>
-        )}
+       
+          {activeTab === "personal" && (
+            <View style={styles.formSection}>
+              {renderEditableField("Name", "name", profile.name)}
+              {renderEditableField("Gender", "gender", profile.gender)}
+              {renderEditableField("Email", "email", profile.email)}
+              {renderEditableField("Contact Number", "contactNumber", profile.contactNumber)}
+              {renderEditableField("Date of Birth", "dob", profile.dob)}
+              {renderEditableField("Address", "contactAddress", profile.contactAddress, true)}
+              <TouchableOpacity 
+                style={styles.updateButton} 
+                onPress={handleUpdate}
+              >
+                <Text style={styles.updateButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-        {activeTab === "professional" && (
-          <View style={styles.formSection}>
-            {renderEditableField("Employee Code", "employeeNo", profile.employeeNo)}
-            {renderEditableField("Designation", "designation", profile.designation)}
-            {renderEditableField("Branch", "branch", profile.branch)}
-          </View>
-        )}
+          {activeTab === "professional" && (
+            <View style={styles.formSection}>
+              {renderEditableField("Member ID", "employeeNo", profile.employeeNo)}
+              {renderEditableField("Business", "designation", profile.designation)}
+              {renderEditableField("Status", "status", profile.status)}
+              {renderEditableField("Join Date", "joinDate", profile.joinDate)}
+              <TouchableOpacity 
+                style={styles.updateButton} 
+                onPress={handleUpdate}
+              >
+                <Text style={styles.updateButtonText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
       </View>
 
@@ -423,8 +525,8 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingHorizontal: 15,
-    paddingVertical: 15,
-    paddingTop: StatusBar.currentHeight || 10,
+    paddingVertical: 12,
+    paddingTop: StatusBar.currentHeight || 8,
   },
   headerContent: {
     flexDirection: 'row',
@@ -440,24 +542,24 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 15,
-    paddingVertical: 20,
-    paddingBottom: 30,
+    paddingVertical: 10,
+    paddingBottom: 20,
   },
   profileSection: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 10,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     borderWidth: 3,
     borderColor: '#4A90E2',
   },
   profileImagePlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#E8F4F8',
     justifyContent: 'center',
     alignItems: 'center',
@@ -469,30 +571,30 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: '#4A90E2',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#FFF',
   },
   profileName: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#1E1E66',
-    marginTop: 15,
+    marginTop: 10,
   },
   profileHint: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#999',
-    marginTop: 5,
+    marginTop: 3,
   },
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     paddingHorizontal: 15,
-    marginBottom: 20,
+    marginBottom: 15,
     gap: 10,
   },
   tab: {
@@ -544,9 +646,21 @@ const styles = StyleSheet.create({
     color: '#333',
     paddingVertical: 0,
   },
+  inputMultiline: {
+    height: 80,
+    textAlignVertical: 'top',
+    paddingTop: 12,
+  },
   iconContainer: {
     padding: 8,
     marginLeft: 8,
+  },
+  dateHint: {
+    fontSize: 11,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 4,
+    marginLeft: 4,
   },
   updateButton: {
     backgroundColor: '#4A90E2',

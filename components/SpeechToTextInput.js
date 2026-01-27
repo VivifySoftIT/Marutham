@@ -32,6 +32,7 @@ const SpeechToTextInput = ({
   multiline = false,
   numberOfLines = 1,
   editable = true,
+  inputStyle,
   ...textInputProps
 }) => {
   const [isListening, setIsListening] = useState(false);
@@ -51,7 +52,7 @@ const SpeechToTextInput = ({
     try {
       const { status } = await Audio.requestPermissionsAsync();
       setHasPermission(status === 'granted');
-      
+
       if (status !== 'granted') {
         Alert.alert(
           'Permission Required',
@@ -65,46 +66,66 @@ const SpeechToTextInput = ({
   };
 
   const startListening = async () => {
-    if (!hasPermission) {
-      await requestPermissions();
-      return;
-    }
+    // Web Speech API
+    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
+      try {
+        const recognition = new window.webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US'; // Default to English, could be parameterized
 
-    try {
-      setIsListening(true);
-      
-      // Configure audio mode for recording
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
 
-      // Simulate speech recognition with a timeout
-      setTimeout(() => {
+        recognition.onresult = (event) => {
+          const spokenText = event.results[0][0].transcript;
+          onChangeText(value ? `${value} ${spokenText}` : spokenText);
+          setIsListening(false);
+        };
+
+        recognition.onerror = (event) => {
+          console.error('Speech recognition error', event.error);
+          setIsListening(false);
+          Alert.alert('Error', 'Voice recognition failed. Please try again.');
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+
+        recognition.start();
+      } catch (error) {
+        console.error('Web speech error:', error);
         setIsListening(false);
-        // Add sample voice input text
-        const sampleTexts = [
-          'Sample voice input text',
-          'Voice recognition placeholder',
-          'Spoken text will appear here',
-        ];
-        const randomText = sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
-        onChangeText(value ? `${value} ${randomText}` : randomText);
-      }, 2000);
-
-    } catch (error) {
-      console.error('Error starting speech recognition:', error);
-      setIsListening(false);
-      Alert.alert('Error', 'Failed to start speech recognition. Please try again.');
+      }
+    } else {
+      // Mobile/Fallback: Show input dialog since Expo Speech is TTS only
+      Alert.prompt(
+        'Voice Input',
+        'Please speak your text (Simulated for this demo)',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Done',
+            onPress: (text) => {
+              if (text) {
+                onChangeText(value ? `${value} ${text}` : text);
+              }
+            },
+          },
+        ],
+        'plain-text'
+      );
     }
   };
 
   const stopListening = () => {
     setIsListening(false);
-    if (recording) {
-      recording.stopAndUnloadAsync();
-      setRecording(null);
-    }
+    // For web speech, the onend handler will clean up
   };
 
   return (
@@ -117,13 +138,14 @@ const SpeechToTextInput = ({
           styles.textInput,
           multiline && styles.multilineInput,
           !editable && styles.disabledInput,
+          inputStyle,
         ]}
         multiline={multiline}
         numberOfLines={numberOfLines}
         editable={editable}
         {...textInputProps}
       />
-      
+
       {/* Microphone Button - Positioned in right corner */}
       <TouchableOpacity
         style={[

@@ -107,6 +107,9 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
     try {
       console.log('Attempting login with:', username);
 
+      // Explicitly clear any previous member ID session data
+      await MemberIdService.clearMemberId();
+
       const response = await ApiService.login(username, passwordInput);
 
       console.log('Login response:', response);
@@ -131,14 +134,20 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
         await AsyncStorage.setItem('username', response.user.username || '');
         await AsyncStorage.setItem('userId', response.user.id?.toString() || '');
 
-        // CRITICAL: Store MemberId if available using MemberIdService
+        // CRITICAL: Store or Resolve MemberId
         if (response.user.memberId) {
           await MemberIdService.setMemberId(response.user.memberId);
           console.log('Member ID saved from response:', response.user.memberId);
         } else {
-          console.log('No memberId in response. Will try to find it later if needed.');
-          // Don't try to find member ID here - do it when needed
-          // This prevents 405 errors during login
+          console.log('No memberId in response. Resolving immediately...');
+          // Force resolution now using the just-saved userId/fullName
+          const resolvedId = await MemberIdService.getCurrentUserMemberId();
+          if (resolvedId) {
+            console.log('Member ID resolved and saved:', resolvedId);
+            // Verify it matches what we expect? No, just trust the service logic which uses userId
+          } else {
+            console.warn('Could not resolve Member ID during login.');
+          }
         }
 
         console.log('Login successful. User data:', response.user);

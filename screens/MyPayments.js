@@ -35,9 +35,9 @@ const ApiService = {
   async request(method, url, data = null) {
     try {
       // Try different token storage keys
-      const token = await AsyncStorage.getItem('jwt_token') || 
-                    await AsyncStorage.getItem('token') || 
-                    await AsyncStorage.getItem('authToken');
+      const token = await AsyncStorage.getItem('jwt_token') ||
+        await AsyncStorage.getItem('token') ||
+        await AsyncStorage.getItem('authToken');
 
       const config = {
         method,
@@ -52,7 +52,7 @@ const ApiService = {
       console.log(`${method} ${url}`, data ? `with data: ${JSON.stringify(data)}` : '');
 
       const response = await fetch(`${API_BASE_URL}${url}`, config);
-      
+
       const responseText = await response.text();
       console.log(`Response status: ${response.status}`, responseText);
 
@@ -122,238 +122,238 @@ const MyPayments = () => {
     }, [])
   );
 
-const loadPaymentData = async () => {
-  try {
-    setLoading(true);
-    const memberId = await getMemberId();
-    if (!memberId) {
-      Alert.alert('Error', 'Member ID not found. Please log in again.');
-      return;
+  const loadPaymentData = async () => {
+    try {
+      setLoading(true);
+      const memberId = await getMemberId();
+      if (!memberId) {
+        Alert.alert('Error', 'Member ID not found. Please log in again.');
+        return;
+      }
+
+      // Get payment data from backend
+      const response = await ApiService.get(`/api/Payments/member/${memberId}`);
+
+      console.log('API Response:', JSON.stringify(response, null, 2));
+
+      // Map payments for UI - using correct field names from API
+      const mappedPayments = (response.payments || []).map((p, index) => ({
+        id: p.paymentId?.toString() || index.toString(),
+        month: p.paymentForMonth || 'Unknown', // Changed from PaymentForMonth
+        amount: p.amount || 0,
+        status: p.receiptNo ? 'Paid' : 'Unpaid', // Changed from ReceiptNo
+        dueDate: p.paymentEndDate ? new Date(p.paymentEndDate).toISOString().split('T')[0] : 'N/A',
+        paidDate: p.paymentDate ? new Date(p.paymentDate).toISOString().split('T')[0] : null,
+        type: 'Monthly',
+        receiptId: p.receiptNo || null, // Changed from ReceiptNo
+        transactionId: p.transactionId || null, // Note: API returns transactionId
+        paymentMethod: p.paymentMethod || 'Unknown',
+      }));
+
+      console.log('Mapped payments:', mappedPayments);
+
+      setPayments(mappedPayments);
+      setDueMonths(response.dueMonths || []);
+      setTotalPaid(response.totalPaidAmount || 0);
+      setTotalDue(response.totalDueAmount || 0);
+      setMemberName(response.memberName || '');
+    } catch (error) {
+      console.error('Load Payments Error:', error);
+      Alert.alert('Error', error.message || 'Failed to load payment data');
+    } finally {
+      setLoading(false);
     }
-
-    // Get payment data from backend
-    const response = await ApiService.get(`/api/Payments/member/${memberId}`);
-    
-    console.log('API Response:', JSON.stringify(response, null, 2));
-    
-    // Map payments for UI - using correct field names from API
-    const mappedPayments = (response.payments || []).map((p, index) => ({
-      id: p.paymentId?.toString() || index.toString(),
-      month: p.paymentForMonth || 'Unknown', // Changed from PaymentForMonth
-      amount: p.amount || 0,
-      status: p.receiptNo ? 'Paid' : 'Unpaid', // Changed from ReceiptNo
-      dueDate: p.paymentEndDate ? new Date(p.paymentEndDate).toISOString().split('T')[0] : 'N/A',
-      paidDate: p.paymentDate ? new Date(p.paymentDate).toISOString().split('T')[0] : null,
-      type: 'Monthly',
-      receiptId: p.receiptNo || null, // Changed from ReceiptNo
-      transactionId: p.transactionId || null, // Note: API returns transactionId
-      paymentMethod: p.paymentMethod || 'Unknown',
-    }));
-
-    console.log('Mapped payments:', mappedPayments);
-
-    setPayments(mappedPayments);
-    setDueMonths(response.dueMonths || []);
-    setTotalPaid(response.totalPaidAmount || 0);
-    setTotalDue(response.totalDueAmount || 0);
-    setMemberName(response.memberName || '');
-  } catch (error) {
-    console.error('Load Payments Error:', error);
-    Alert.alert('Error', error.message || 'Failed to load payment data');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
     await loadPaymentData();
     setRefreshing(false);
   };
-const handleAddPayment = async () => {
-  // Validation
-  if (!paymentForm.amount.trim() || isNaN(paymentForm.amount) || parseFloat(paymentForm.amount) <= 0) {
-    Alert.alert('Validation Error', 'Please enter a valid amount');
-    return;
-  }
-  if (!paymentForm.transactionId.trim()) {
-    Alert.alert('Validation Error', 'Please enter Transaction ID');
-    return;
-  }
-  if (!paymentForm.paymentForMonth.trim()) {
-    Alert.alert('Validation Error', 'Please enter month (e.g., Jan or January)');
-    return;
-  }
-
-  const memberId = await getMemberId();
-  if (!memberId) {
-    Alert.alert('Error', 'Member ID not found. Please log in again.');
-    return;
-  }
-
-  // Get auth token
-  let authToken;
-  try {
-    authToken = await AsyncStorage.getItem('userToken') || 
-                await AsyncStorage.getItem('jwt_token') || 
-                await AsyncStorage.getItem('token') || 
-                await AsyncStorage.getItem('authToken');
-    
-    if (!authToken) {
-      Alert.alert('Authentication Error', 'Please login again. Token not found.');
-      navigation.navigate('Login');
+  const handleAddPayment = async () => {
+    // Validation
+    if (!paymentForm.amount.trim() || isNaN(paymentForm.amount) || parseFloat(paymentForm.amount) <= 0) {
+      Alert.alert('Validation Error', 'Please enter a valid amount');
       return;
     }
-  } catch (error) {
-    console.error('Error getting token:', error);
-    Alert.alert('Error', 'Unable to retrieve authentication token');
-    return;
-  }
-
-  // Format month properly - single month only (not multiple)
-  const monthInput = paymentForm.paymentForMonth.trim();
-  let formattedMonth = '';
-  
-  // Convert to proper month name format
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-  
-  const monthAbbreviations = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  
-  // Check if input is a valid month (full name or abbreviation)
-  const lowerInput = monthInput.toLowerCase();
-  let isValidMonth = false;
-  
-  // Check full month names
-  for (let i = 0; i < monthNames.length; i++) {
-    if (lowerInput === monthNames[i].toLowerCase() || 
-        lowerInput === monthAbbreviations[i].toLowerCase()) {
-      formattedMonth = monthAbbreviations[i]; // Use abbreviated month name (Jan, Feb, etc.)
-      isValidMonth = true;
-      break;
+    if (!paymentForm.transactionId.trim()) {
+      Alert.alert('Validation Error', 'Please enter Transaction ID');
+      return;
     }
-  }
-  
-  // Check month abbreviations
-  if (!isValidMonth) {
-    Alert.alert('Validation Error', 'Please enter a valid month name (e.g., Jan or January)');
-    return;
-  }
-
-  // Create payload matching backend DTO structure
-  const payload = {
-    MemberId: parseInt(memberId),
-    Amount: parseFloat(paymentForm.amount),
-    PaymentType: "Monthly", // According to your backend, this is required
-    PaymentMethod: paymentForm.paymentMethod || "UPI",
-    TransactionId: paymentForm.transactionId.trim(),
-    PaymentForMonth: formattedMonth, // Single month name like "January"
-    PaymentDate: paymentForm.paymentDate.toISOString().split('T')[0], // YYYY-MM-DD format
-    Status: "Paid", // Default status
-    CreatedBy: "Member" // Or get from user info
-  };
-
-  console.log('Submitting payment with payload:', JSON.stringify(payload, null, 2));
-
-  setLoading(true);
-  
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/payments`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(payload),
-    });
-
-    console.log('Response status:', response.status);
-    
-    const responseText = await response.text();
-    console.log('Response text:', responseText);
-
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: `;
-      try {
-        const errorData = JSON.parse(responseText);
-        errorMessage += errorData.message || errorData.error || errorData.title || responseText;
-      } catch (e) {
-        errorMessage += responseText || 'Unknown error occurred';
-      }
-      throw new Error(errorMessage);
+    if (!paymentForm.paymentForMonth.trim()) {
+      Alert.alert('Validation Error', 'Please enter month (e.g., Jan or January)');
+      return;
     }
 
-    // Parse response
-    let result = {};
-    if (responseText) {
-      try {
-        result = JSON.parse(responseText);
-        console.log('Payment created successfully:', result);
-      } catch (e) {
-        console.warn('Response parsing warning:', e.message);
-        result = { message: 'Payment submitted successfully' };
-      }
+    const memberId = await getMemberId();
+    if (!memberId) {
+      Alert.alert('Error', 'Member ID not found. Please log in again.');
+      return;
     }
 
-    // Show success message with receipt number
-    const receiptNumber = result.receiptNumber || result.data?.receiptNumber;
-    const successMessage = receiptNumber 
-      ? `Payment submitted successfully!\nReceipt Number: ${receiptNumber}`
-      : 'Payment submitted successfully!';
+    // Get auth token
+    let authToken;
+    try {
+      authToken = await AsyncStorage.getItem('userToken') ||
+        await AsyncStorage.getItem('jwt_token') ||
+        await AsyncStorage.getItem('token') ||
+        await AsyncStorage.getItem('authToken');
 
-    Alert.alert('Success', successMessage);
-    
-    // Reset form
-    setPaymentForm({
-      amount: '',
-      paymentMethod: 'UPI',
-      transactionId: '',
-      paymentForMonth: '',
-      paymentDate: new Date(),
-    });
-    setShowAddPaymentModal(false);
-    
-    // Refresh payment list
-    setTimeout(() => {
-      loadPaymentData();
-    }, 1000);
-    
-  } catch (error) {
-    console.error('Submit Payment Error:', error);
-    
-    let errorMsg = error.message || 'Failed to submit payment';
-    if (error.message.includes('Network request failed')) {
-      errorMsg = 'Network error. Please check your internet connection.';
-    } else if (error.message.includes('401')) {
-      errorMsg = 'Session expired. Please login again.';
-    } else if (error.message.includes('403')) {
-      errorMsg = 'Access denied. Please check your permissions.';
-    } else if (error.message.includes('500')) {
-      errorMsg = 'Server error. Please try again later.';
-    } else if (error.message.includes('400')) {
-      errorMsg = 'Invalid payment data. Please check your inputs.';
-    } else if (error.message.includes('member not found')) {
-      errorMsg = 'Member not found. Please check your member ID.';
-    }
-    
-    Alert.alert('Payment Error', errorMsg);
-    
-    // Redirect to login on auth errors
-    if (error.message.includes('401') || error.message.includes('403')) {
-      setTimeout(() => {
+      if (!authToken) {
+        Alert.alert('Authentication Error', 'Please login again. Token not found.');
         navigation.navigate('Login');
-      }, 2000);
+        return;
+      }
+    } catch (error) {
+      console.error('Error getting token:', error);
+      Alert.alert('Error', 'Unable to retrieve authentication token');
+      return;
     }
-  } finally {
-    setLoading(false);
-  }
-};
+
+    // Format month properly - single month only (not multiple)
+    const monthInput = paymentForm.paymentForMonth.trim();
+    let formattedMonth = '';
+
+    // Convert to proper month name format
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const monthAbbreviations = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+
+    // Check if input is a valid month (full name or abbreviation)
+    const lowerInput = monthInput.toLowerCase();
+    let isValidMonth = false;
+
+    // Check full month names
+    for (let i = 0; i < monthNames.length; i++) {
+      if (lowerInput === monthNames[i].toLowerCase() ||
+        lowerInput === monthAbbreviations[i].toLowerCase()) {
+        formattedMonth = monthAbbreviations[i]; // Use abbreviated month name (Jan, Feb, etc.)
+        isValidMonth = true;
+        break;
+      }
+    }
+
+    // Check month abbreviations
+    if (!isValidMonth) {
+      Alert.alert('Validation Error', 'Please enter a valid month name (e.g., Jan or January)');
+      return;
+    }
+
+    // Create payload matching backend DTO structure
+    const payload = {
+      MemberId: parseInt(memberId),
+      Amount: parseFloat(paymentForm.amount),
+      PaymentType: "Monthly", // According to your backend, this is required
+      PaymentMethod: paymentForm.paymentMethod || "UPI",
+      TransactionId: paymentForm.transactionId.trim(),
+      PaymentForMonth: formattedMonth, // Single month name like "January"
+      PaymentDate: paymentForm.paymentDate.toISOString().split('T')[0], // YYYY-MM-DD format
+      Status: "Paid", // Default status
+      CreatedBy: "Member" // Or get from user info
+    };
+
+    console.log('Submitting payment with payload:', JSON.stringify(payload, null, 2));
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/Inventory/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload),
+      });
+
+      console.log('Response status:', response.status);
+
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: `;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage += errorData.message || errorData.error || errorData.title || responseText;
+        } catch (e) {
+          errorMessage += responseText || 'Unknown error occurred';
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Parse response
+      let result = {};
+      if (responseText) {
+        try {
+          result = JSON.parse(responseText);
+          console.log('Payment created successfully:', result);
+        } catch (e) {
+          console.warn('Response parsing warning:', e.message);
+          result = { message: 'Payment submitted successfully' };
+        }
+      }
+
+      // Show success message with receipt number
+      const receiptNumber = result.receiptNumber || result.data?.receiptNumber;
+      const successMessage = receiptNumber
+        ? `Payment submitted successfully!\nReceipt Number: ${receiptNumber}`
+        : 'Payment submitted successfully!';
+
+      Alert.alert('Success', successMessage);
+
+      // Reset form
+      setPaymentForm({
+        amount: '',
+        paymentMethod: 'UPI',
+        transactionId: '',
+        paymentForMonth: '',
+        paymentDate: new Date(),
+      });
+      setShowAddPaymentModal(false);
+
+      // Refresh payment list
+      setTimeout(() => {
+        loadPaymentData();
+      }, 1000);
+
+    } catch (error) {
+      console.error('Submit Payment Error:', error);
+
+      let errorMsg = error.message || 'Failed to submit payment';
+      if (error.message.includes('Network request failed')) {
+        errorMsg = 'Network error. Please check your internet connection.';
+      } else if (error.message.includes('401')) {
+        errorMsg = 'Session expired. Please login again.';
+      } else if (error.message.includes('403')) {
+        errorMsg = 'Access denied. Please check your permissions.';
+      } else if (error.message.includes('500')) {
+        errorMsg = 'Server error. Please try again later.';
+      } else if (error.message.includes('400')) {
+        errorMsg = 'Invalid payment data. Please check your inputs.';
+      } else if (error.message.includes('member not found')) {
+        errorMsg = 'Member not found. Please check your member ID.';
+      }
+
+      Alert.alert('Payment Error', errorMsg);
+
+      // Redirect to login on auth errors
+      if (error.message.includes('401') || error.message.includes('403')) {
+        setTimeout(() => {
+          navigation.navigate('Login');
+        }, 2000);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePaymentDateChange = (event, selectedDate) => {
     setShowPaymentDatePicker(false);
@@ -424,17 +424,19 @@ This is an electronically generated receipt.
   const handlePayNow = (payment) => {
     Alert.alert('Make Payment', `Pay ₹${payment.amount} for ${payment.month}?`, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Pay Now', onPress: () => {
-        // For unpaid items, open add payment modal with pre-filled data
-        setPaymentForm({
-          amount: payment.amount.toString(),
-          paymentMethod: 'UPI',
-          transactionId: '',
-          paymentForMonth: payment.month,
-          paymentDate: new Date(),
-        });
-        setShowAddPaymentModal(true);
-      }},
+      {
+        text: 'Pay Now', onPress: () => {
+          // For unpaid items, open add payment modal with pre-filled data
+          setPaymentForm({
+            amount: payment.amount.toString(),
+            paymentMethod: 'UPI',
+            transactionId: '',
+            paymentForMonth: payment.month,
+            paymentDate: new Date(),
+          });
+          setShowAddPaymentModal(true);
+        }
+      },
     ]);
   };
 
@@ -484,7 +486,7 @@ This is an electronically generated receipt.
         </TouchableOpacity>
       )}
       {item.status === 'Paid' && (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.receiptButton}
           onPress={() => handleViewReceipt(item)}
         >
@@ -514,7 +516,7 @@ This is an electronically generated receipt.
           <Icon name="plus-circle" size={24} color="#FFF" />
         </TouchableOpacity>
       </LinearGradient>
-      
+
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4A90E2" />
@@ -553,9 +555,9 @@ This is an electronically generated receipt.
             {dueMonths.length > 0 && (
               <View style={styles.dueMonthsSection}>
                 <Text style={styles.sectionTitle}>Pending Payments</Text>
-                <FlatList 
-                  data={dueMonths} 
-                  renderItem={renderDueMonthItem} 
+                <FlatList
+                  data={dueMonths}
+                  renderItem={renderDueMonthItem}
                   keyExtractor={(item, index) => index.toString()}
                   scrollEnabled={false}
                 />
@@ -571,11 +573,11 @@ This is an electronically generated receipt.
                   <Text style={styles.emptyStateText}>No payments found</Text>
                 </View>
               ) : (
-                <FlatList 
-                  data={payments} 
-                  renderItem={renderPaymentItem} 
-                  keyExtractor={item => item.id} 
-                  scrollEnabled={false} 
+                <FlatList
+                  data={payments}
+                  renderItem={renderPaymentItem}
+                  keyExtractor={item => item.id}
+                  scrollEnabled={false}
                 />
               )}
             </View>
@@ -679,23 +681,23 @@ This is an electronically generated receipt.
               </View>
 
               {/* Payment For Month */}
-         {/* Payment For Month - Update the hint text */}
-<View style={styles.formGroup}>
-  <Text style={styles.formLabel}>Payment For Month *</Text>
-  <Text style={styles.formHint}>
-    Enter month abbreviation (e.g., Jan, Feb, Mar)
-  </Text>
-  <View style={styles.inputContainer}>
-    <Icon name="calendar-month" size={18} color="#4A90E2" style={styles.inputIcon} />
-    <TextInput
-      style={styles.input}
-      placeholder="e.g., Jan"
-      value={paymentForm.paymentForMonth}
-      onChangeText={(text) => setPaymentForm(prev => ({ ...prev, paymentForMonth: text }))}
-      placeholderTextColor="#999"
-    />
-  </View>
-</View>
+              {/* Payment For Month - Update the hint text */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Payment For Month *</Text>
+                <Text style={styles.formHint}>
+                  Enter month abbreviation (e.g., Jan, Feb, Mar)
+                </Text>
+                <View style={styles.inputContainer}>
+                  <Icon name="calendar-month" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g., Jan"
+                    value={paymentForm.paymentForMonth}
+                    onChangeText={(text) => setPaymentForm(prev => ({ ...prev, paymentForMonth: text }))}
+                    placeholderTextColor="#999"
+                  />
+                </View>
+              </View>
 
               {/* Submit Button */}
               <TouchableOpacity
@@ -855,7 +857,7 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: 15 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 10, color: '#4A90E2', fontSize: 14 },
-  
+
   memberInfoCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -867,12 +869,12 @@ const styles = StyleSheet.create({
     borderLeftColor: '#4A90E2',
   },
   memberInfoText: { marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#1976D2' },
-  
+
   summaryContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, gap: 10 },
   summaryCard: { flex: 1, borderRadius: 12, padding: 15, alignItems: 'center', elevation: 3 },
   summaryLabel: { fontSize: 12, color: '#FFF', marginTop: 8, opacity: 0.9 },
   summaryAmount: { fontSize: 20, fontWeight: 'bold', color: '#FFF', marginTop: 4 },
-  
+
   dueMonthsSection: { marginBottom: 20 },
   dueMonthCard: {
     flexDirection: 'row',
@@ -887,13 +889,13 @@ const styles = StyleSheet.create({
   },
   dueMonthText: { fontSize: 14, fontWeight: '600', color: '#333' },
   dueAmountText: { fontSize: 16, fontWeight: 'bold', color: '#FF9800' },
-  
+
   historySection: { marginBottom: 20 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#4A90E2', marginBottom: 12 },
-  
+
   emptyState: { alignItems: 'center', padding: 40 },
   emptyStateText: { marginTop: 10, color: '#999', fontSize: 14 },
-  
+
   paymentCard: { backgroundColor: '#FFF', borderRadius: 12, padding: 15, marginBottom: 12, elevation: 2 },
   paymentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
   paymentInfo: { flex: 1 },
@@ -909,10 +911,10 @@ const styles = StyleSheet.create({
   payButtonText: { color: '#FFF', fontSize: 14, fontWeight: '600', marginLeft: 8 },
   receiptButton: { backgroundColor: '#E3F2FD', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8 },
   receiptButtonText: { color: '#4A90E2', fontSize: 14, fontWeight: '600', marginLeft: 8 },
-  
+
   infoCard: { flexDirection: 'row', backgroundColor: '#E3F2FD', padding: 15, borderRadius: 12, marginBottom: 20 },
   infoText: { flex: 1, fontSize: 13, color: '#1976D2', marginLeft: 10, lineHeight: 20 },
-  
+
   // Modal Styles
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
   modalContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%' },

@@ -17,7 +17,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import API_BASE_URL from '../apiConfig';
-import SpeechToTextInput from '../components/SpeechToTextInput';
+
+import MemberIdService from '../service/MemberIdService';
 
 const TYFCBSlip = () => {
   const navigation = useNavigation();
@@ -64,11 +65,11 @@ const TYFCBSlip = () => {
         },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const responseData = await response.json();
       return responseData;
     } catch (error) {
@@ -91,8 +92,8 @@ const TYFCBSlip = () => {
   };
 
   const handleSelectMember = (member) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       memberName: member.name,
       memberId: member.id,
     }));
@@ -124,17 +125,25 @@ const TYFCBSlip = () => {
 
     setLoading(true);
     try {
-      const currentUserName = await AsyncStorage.getItem('fullName');
-      
-      let givenByMemberId = null;
-      try {
-        const members = await apiGet('/api/Members');
-        const currentMember = members.find(m => m.name === currentUserName);
-        if (currentMember) {
-          givenByMemberId = currentMember.id;
+      let givenByMemberId = await MemberIdService.getCurrentUserMemberId();
+
+      // Fallback: If service returns null, try manual lookup (original logic)
+      if (!givenByMemberId) {
+        console.log('MemberIdService failed, trying manual fallback...');
+        const currentUserName = await AsyncStorage.getItem('fullName');
+        if (currentUserName) {
+          try {
+            const members = await apiGet('/api/Members');
+            const currentMember = members.find(m => m.name === currentUserName);
+            if (currentMember) {
+              givenByMemberId = currentMember.id;
+              // Update service for next time
+              await MemberIdService.setMemberId(givenByMemberId);
+            }
+          } catch (error) {
+            console.error('Manual fallback failed:', error);
+          }
         }
-      } catch (error) {
-        console.error('Error fetching current user member ID:', error);
       }
 
       if (!givenByMemberId) {
@@ -156,9 +165,9 @@ const TYFCBSlip = () => {
       };
 
       console.log('Sending TYFCB data:', tyfcbData);
-      
+
       await apiPost('/api/TYFCB', tyfcbData);
-      
+
       setSavedData({
         memberName: formData.memberName,
         businessVisited: formData.businessVisited,
@@ -259,8 +268,8 @@ const TYFCBSlip = () => {
             <Text style={styles.label}>Business Visited *</Text>
             <View style={styles.inputContainer}>
               <Icon name="briefcase" size={20} color="#4A90E2" style={styles.icon} />
-              <SpeechToTextInput
-                style={styles.speechInput}
+              <TextInput
+                style={styles.input}
                 placeholder="Enter business name"
                 value={formData.businessVisited}
                 onChangeText={(text) => handleInputChange('businessVisited', text)}
@@ -274,8 +283,8 @@ const TYFCBSlip = () => {
             <Text style={styles.label}>Amount</Text>
             <View style={styles.inputContainer}>
               <Icon name="currency-usd" size={20} color="#4A90E2" style={styles.icon} />
-              <SpeechToTextInput
-                style={styles.speechInput}
+              <TextInput
+                style={styles.input}
                 placeholder="Enter amount (optional)"
                 value={formData.amount}
                 onChangeText={(text) => handleInputChange('amount', text)}
@@ -290,8 +299,8 @@ const TYFCBSlip = () => {
             <Text style={styles.label}>Rating (1-5 stars)</Text>
             <View style={styles.inputContainer}>
               <Icon name="star" size={20} color="#4A90E2" style={styles.icon} />
-              <SpeechToTextInput
-                style={styles.speechInput}
+              <TextInput
+                style={styles.input}
                 placeholder="Enter rating (1-5)"
                 value={formData.rating}
                 onChangeText={(text) => handleInputChange('rating', text)}
@@ -306,8 +315,8 @@ const TYFCBSlip = () => {
           <View style={styles.section}>
             <Text style={styles.label}>Notes</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <SpeechToTextInput
-                style={styles.speechTextArea}
+              <TextInput
+                style={[styles.input, styles.textArea]}
                 placeholder="Enter any notes"
                 value={formData.notes}
                 onChangeText={(text) => handleInputChange('notes', text)}

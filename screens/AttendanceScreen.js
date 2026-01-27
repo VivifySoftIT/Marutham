@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
 import SpeechToTextInput from '../components/SpeechToTextInput';
+import MemberIdService from '../service/MemberIdService';
 import * as Speech from 'expo-speech';
 
 const MemberAttendanceScreen = () => {
@@ -33,7 +34,7 @@ const MemberAttendanceScreen = () => {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('name'); // 'name', 'business', 'id'
-  
+
   // Voice search states
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
@@ -95,16 +96,16 @@ const MemberAttendanceScreen = () => {
 
   const handleVoiceSearchResult = (spokenText) => {
     // Auto-search for the member and mark attendance if found
-    const foundMember = members.find(member => 
+    const foundMember = members.find(member =>
       member.name.toLowerCase().includes(spokenText.toLowerCase())
     );
-    
+
     if (foundMember) {
       setAttendanceData(prev => ({
         ...prev,
         [foundMember.id]: true,
       }));
-      
+
       // Provide audio feedback
       Speech.speak(
         `${t('markedPresent')}: ${foundMember.name}`,
@@ -114,7 +115,7 @@ const MemberAttendanceScreen = () => {
           rate: 0.8,
         }
       );
-      
+
       Alert.alert(
         t('success'),
         `${t('markedPresent')}: ${foundMember.name}`,
@@ -129,7 +130,7 @@ const MemberAttendanceScreen = () => {
           rate: 0.8,
         }
       );
-      
+
       Alert.alert(
         t('noMemberFound'),
         `${t('noMemberFoundMessage')}: "${spokenText}"`,
@@ -143,11 +144,11 @@ const MemberAttendanceScreen = () => {
     try {
       setLoading(true);
       console.log('Loading members for attendance...');
-      
+
       const data = await ApiService.getMembers();
-      
+
       console.log('Members loaded:', data.length);
-      
+
       if (Array.isArray(data)) {
         // Map API data to our format with business field
         const mappedMembers = data.map(member => ({
@@ -163,7 +164,7 @@ const MemberAttendanceScreen = () => {
           status: member.status || 'Active',
           profilePhoto: member.profilePhoto || null,
         }));
-        
+
         setMembers(mappedMembers);
         console.log('Mapped members:', mappedMembers.slice(0, 3)); // Log first 3 members for debugging
       } else {
@@ -210,34 +211,44 @@ const MemberAttendanceScreen = () => {
 
     setSaving(true);
     try {
+      // Get Admin Member ID
+      const adminMemberId = await MemberIdService.getCurrentUserMemberId();
+
+      if (!adminMemberId) {
+        Alert.alert('Error', 'Unable to verify admin identity. Please re-login.');
+        setSaving(false);
+        return;
+      }
+
       let successCount = 0;
       let errorCount = 0;
-      
+
       for (const memberId of presentMembers) {
         try {
           console.log('Saving attendance for member ID:', memberId);
-          
+
           // Prepare the request data according to your backend
           const requestData = {
             MemberId: memberId,
+            AdminMemberId: adminMemberId,
             Notes: `Marked via Attendance Screen on ${new Date().toLocaleString()}`,
-            CreatedBy: 'Admin' // You can get this from user context
+            CreatedBy: adminMemberId.toString()
           };
 
           console.log('Request data:', requestData);
-          
+
           // Call the API service
           const result = await ApiService.createAttendance(requestData);
           console.log('Attendance saved successfully:', result);
           successCount++;
-          
+
         } catch (error) {
           console.error('Error saving attendance for member:', memberId, error);
-          
+
           // Check if it's a duplicate attendance error
-          if (error.response?.data?.includes('already exists') || 
-              error.message?.includes('already exists') ||
-              error.response?.status === 409) {
+          if (error.response?.data?.includes('already exists') ||
+            error.message?.includes('already exists') ||
+            error.response?.status === 409) {
             console.log('Attendance already recorded for today');
             successCount++; // Count as success since attendance is already recorded
           } else {
@@ -250,8 +261,8 @@ const MemberAttendanceScreen = () => {
         'Attendance Result',
         `Successfully recorded: ${successCount} members\nFailed: ${errorCount} members`,
         [
-          { 
-            text: 'OK', 
+          {
+            text: 'OK',
             onPress: () => {
               setAttendanceData({});
               // Reload members to refresh any status changes
@@ -271,9 +282,9 @@ const MemberAttendanceScreen = () => {
   // Filter members based on search query and search type
   const filteredMembers = members.filter(member => {
     if (!searchQuery.trim()) return true;
-    
+
     const query = searchQuery.toLowerCase();
-    
+
     switch (searchType) {
       case 'name':
         return member.name.toLowerCase().includes(query);
@@ -300,7 +311,7 @@ const MemberAttendanceScreen = () => {
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('markAttendance')}</Text>
-        
+
         {/* Refresh button */}
         <TouchableOpacity onPress={loadMembers}>
           <Icon name="refresh" size={24} color="#FFF" />
@@ -329,11 +340,11 @@ const MemberAttendanceScreen = () => {
             </Text>
             <Icon name="chevron-down" size={18} color="#4A90E2" />
           </TouchableOpacity>
-          
+
           <Text style={styles.dateNote}>
             Note: Attendance will be recorded for today's date automatically by the system
           </Text>
-          
+
           {showDatePicker && (
             <DateTimePicker
               value={selectedDate}
@@ -350,7 +361,7 @@ const MemberAttendanceScreen = () => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('search')} {t('members')}</Text>
           </View>
-          
+
           {/* Search Type Tabs */}
           <View style={styles.searchTypeContainer}>
             {['name', 'business', 'id', 'phone'].map((type) => (
@@ -371,7 +382,7 @@ const MemberAttendanceScreen = () => {
               </TouchableOpacity>
             ))}
           </View>
-          
+
           <View style={styles.searchContainer}>
             <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
             <SpeechToTextInput
@@ -386,31 +397,31 @@ const MemberAttendanceScreen = () => {
               </TouchableOpacity>
             )}
           </View>
-            
-            {/* Voice Search Button */}
-            {voiceSupported && (
-              <TouchableOpacity
-                style={[
-                  styles.voiceButton,
-                  isListening && styles.voiceButtonActive
-                ]}
-                onPress={startVoiceSearch}
-              >
-                <Icon 
-                  name={isListening ? "microphone" : "microphone-outline"} 
-                  size={20} 
-                  color={isListening ? "#FF6B6B" : "#4A90E2"} 
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-          
+
+          {/* Voice Search Button */}
+          {voiceSupported && (
+            <TouchableOpacity
+              style={[
+                styles.voiceButton,
+                isListening && styles.voiceButtonActive
+              ]}
+              onPress={startVoiceSearch}
+            >
+              <Icon
+                name={isListening ? "microphone" : "microphone-outline"}
+                size={20}
+                color={isListening ? "#FF6B6B" : "#4A90E2"}
+              />
+            </TouchableOpacity>
+          )}
+
+
           {searchQuery && searchType === 'business' && (
             <Text style={styles.searchHint}>
               {t('searchBy')} {t('business')}: "{searchQuery}"
             </Text>
           )}
-          
+
           {/* Voice Search Hint */}
           <View style={styles.voiceHintContainer}>
             <Icon name="information" size={14} color="#4A90E2" />
@@ -436,7 +447,7 @@ const MemberAttendanceScreen = () => {
                 <Text style={styles.summaryLabel}>{t('totalMembers')}</Text>
               </View>
             </View>
-            
+
             <View style={styles.summaryItem}>
               <View style={[styles.summaryIcon, { backgroundColor: '#E8F5E9' }]}>
                 <Icon name="check-circle" size={24} color="#4CAF50" />
@@ -446,7 +457,7 @@ const MemberAttendanceScreen = () => {
                 <Text style={styles.summaryLabel}>{t('present')}</Text>
               </View>
             </View>
-            
+
             <View style={styles.summaryItem}>
               <View style={[styles.summaryIcon, { backgroundColor: '#FFEBEE' }]}>
                 <Icon name="close-circle" size={24} color="#F44336" />
@@ -459,7 +470,7 @@ const MemberAttendanceScreen = () => {
               </View>
             </View>
           </View>
-          
+
           {searchQuery && (
             <View style={styles.searchResultsInfo}>
               <Icon name="information" size={16} color="#666" />
@@ -487,8 +498,8 @@ const MemberAttendanceScreen = () => {
               <Icon name="account-multiple-off" size={60} color="#ccc" />
               <Text style={styles.emptyText}>{t('noMemberFound')}</Text>
               <Text style={styles.emptySubtext}>
-                {members.length === 0 ? 'Failed to load members' : 
-                 searchQuery ? 'No members match your search' : 'No members available'}
+                {members.length === 0 ? 'Failed to load members' :
+                  searchQuery ? 'No members match your search' : 'No members available'}
               </Text>
               {members.length === 0 ? (
                 <TouchableOpacity style={styles.retryButton} onPress={loadMembers}>
@@ -517,7 +528,7 @@ const MemberAttendanceScreen = () => {
                       <Text style={styles.memberId}>ID: {member.employeeId}</Text>
                     </View>
                   </View>
-                  
+
                   {/* Business Information */}
                   <View style={styles.businessContainer}>
                     <Icon name="office-building" size={16} color="#4A90E2" />
@@ -525,7 +536,7 @@ const MemberAttendanceScreen = () => {
                       {member.business}
                     </Text>
                   </View>
-                  
+
                   {/* Additional Info */}
                   <View style={styles.extraInfoContainer}>
                     <View style={styles.extraInfoItem}>
@@ -540,7 +551,7 @@ const MemberAttendanceScreen = () => {
                     )}
                   </View>
                 </View>
-                
+
                 <TouchableOpacity
                   style={[
                     styles.attendanceButton,
@@ -587,7 +598,7 @@ const MemberAttendanceScreen = () => {
             </TouchableOpacity>
           </View>
         )}
-        
+
         <View style={{ height: 20 }} />
       </ScrollView>
     </SafeAreaView>

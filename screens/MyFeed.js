@@ -55,10 +55,10 @@ const MyFeed = ({ route }) => {
           const response = await fetch(`${API_BASE_URL}/api/Members`);
           if (response.ok) {
             const members = await response.json();
-            const member = members.find(m => 
+            const member = members.find(m =>
               m.name && m.name.trim().toLowerCase() === fullName.trim().toLowerCase()
             );
-            
+
             if (member) {
               await AsyncStorage.setItem('memberId', member.id.toString());
               return member.id;
@@ -79,7 +79,7 @@ const MyFeed = ({ route }) => {
   const loadFeedData = async () => {
     try {
       setLoading(true);
-      
+
       const memberId = await getCurrentUserMemberId();
       if (!memberId) {
         Alert.alert('Error', 'Could not find your member ID. Please try logging in again.');
@@ -88,7 +88,7 @@ const MyFeed = ({ route }) => {
       }
 
       let endpoint = `/api/Feed/member/${memberId}`;
-      
+
       if (activeTab === 'referral') {
         endpoint = `/api/Feed/member/${memberId}/referrals`;
       } else if (activeTab === 'tyfcb') {
@@ -98,9 +98,9 @@ const MyFeed = ({ route }) => {
       }
 
       console.log('Fetching feed from:', `${API_BASE_URL}${endpoint}`);
-      
+
       const response = await fetch(`${API_BASE_URL}${endpoint}`);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error:', errorText);
@@ -109,7 +109,7 @@ const MyFeed = ({ route }) => {
 
       const data = await response.json();
       console.log('API Response:', data);
-      
+
       if (Array.isArray(data)) {
         setFeedData(data);
       } else if (data && Array.isArray(data.result)) {
@@ -137,10 +137,10 @@ const MyFeed = ({ route }) => {
   const updateReferralStatus = async (referralId, status) => {
     try {
       setUpdatingItemId(referralId);
-      
-      const token = await AsyncStorage.getItem('jwt_token') || 
-                    await AsyncStorage.getItem('token') || 
-                    await AsyncStorage.getItem('authToken');
+
+      const token = await AsyncStorage.getItem('jwt_token') ||
+        await AsyncStorage.getItem('token') ||
+        await AsyncStorage.getItem('authToken');
 
       if (!token) {
         Alert.alert('Error', 'Authentication token not found. Please login again.');
@@ -148,47 +148,84 @@ const MyFeed = ({ route }) => {
         return;
       }
 
-      console.log('Updating referral status:', { referralId, status });
-      
-      const response = await fetch(`${API_BASE_URL}/api/Referrals/status`, {
+      // Find the actual item to get the entity ID
+      const item = feedData.find(i => i.id === referralId);
+      console.log('Found feed item for Referral update:', JSON.stringify(item, null, 2));
+
+      // Try to get the actual entity ID from various possible fields
+      let numericId = item?.entityId || item?.referralId || item?.referenceId;
+
+      // If no entity ID field found, try extracting from composite ID
+      if (!numericId) {
+        numericId = referralId;
+        if (typeof referralId === 'string' && referralId.includes('_')) {
+          const parts = referralId.split('_');
+          numericId = parts[parts.length - 1];
+          console.log('Extracted numeric ID from composite:', referralId, '->', numericId);
+        }
+      } else {
+        console.log('Using entity ID from feed item:', numericId);
+      }
+
+      const endpoint = `${API_BASE_URL}/api/Referrals/status`;
+      const payload = {
+        Id: parseInt(numericId),
+        Status: status
+      };
+
+      console.log('Referral API Call:', {
+        endpoint,
+        method: 'POST',
+        payload,
+        hasToken: !!token
+      });
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          Id: referralId,
-          Status: status
-        }),
+        body: JSON.stringify(payload),
       });
 
-      const responseText = await response.text();
-      console.log('Status update response:', responseText);
+      console.log('Referral Response Status:', response.status, response.statusText);
 
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: `;
+      const responseText = await response.text();
+      console.log('Referral Response Body:', responseText);
+
+      if (response.ok) {
+        let result = {};
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (e) {
+          console.log('Response is not JSON, treating as success');
+        }
+
+        console.log('Referral status update successful:', result);
+
+        setFeedData(prevData =>
+          prevData.map(item =>
+            item.id === referralId
+              ? { ...item, status: status, updatedDate: new Date().toISOString() }
+              : item
+          )
+        );
+
+        Alert.alert('Success', `Referral ${status.toLowerCase()} successfully!`);
+        setShowDetailModal(false);
+      } else {
+        let errorMessage = `HTTP ${response.status}`;
         try {
           const errorData = JSON.parse(responseText);
-          errorMessage += errorData.error || errorData.message || responseText;
+          errorMessage = errorData.message || errorData.error || responseText || errorMessage;
         } catch (e) {
-          errorMessage += responseText || 'Unknown error occurred';
+          errorMessage = responseText || errorMessage;
         }
+        console.error('Referral API Error:', errorMessage);
         throw new Error(errorMessage);
       }
 
-      const result = responseText ? JSON.parse(responseText) : {};
-      
-      setFeedData(prevData => 
-        prevData.map(item => 
-          item.id === referralId 
-            ? { ...item, status: status, updatedDate: new Date().toISOString() }
-            : item
-        )
-      );
-
-      Alert.alert('Success', `Referral ${status.toLowerCase()} successfully!`);
-      setShowDetailModal(false);
-      
     } catch (error) {
       console.error('Error updating referral status:', error);
       Alert.alert('Error', error.message || 'Failed to update referral status');
@@ -200,10 +237,10 @@ const MyFeed = ({ route }) => {
   const updateTYFCBStatus = async (tyfcbId, status) => {
     try {
       setUpdatingItemId(tyfcbId);
-      
-      const token = await AsyncStorage.getItem('jwt_token') || 
-                    await AsyncStorage.getItem('token') || 
-                    await AsyncStorage.getItem('authToken');
+
+      const token = await AsyncStorage.getItem('jwt_token') ||
+        await AsyncStorage.getItem('token') ||
+        await AsyncStorage.getItem('authToken');
 
       if (!token) {
         Alert.alert('Error', 'Authentication token not found. Please login again.');
@@ -211,44 +248,81 @@ const MyFeed = ({ route }) => {
         return;
       }
 
-      console.log('Updating TYFCB status:', { tyfcbId, status });
-      
-      // Assuming you have a similar endpoint for TYFCB
-      const response = await fetch(`${API_BASE_URL}/api/TYFCB/status`, {
+      // Find the actual item to get the entity ID
+      const item = feedData.find(i => i.id === tyfcbId);
+      console.log('Found feed item for TYFCB update:', JSON.stringify(item, null, 2));
+
+      // Try to get the actual entity ID from various possible fields
+      let numericId = item?.entityId || item?.tyfcbId || item?.referenceId;
+
+      // If no entity ID field found, try extracting from composite ID
+      if (!numericId) {
+        numericId = tyfcbId;
+        if (typeof tyfcbId === 'string' && tyfcbId.includes('_')) {
+          const parts = tyfcbId.split('_');
+          numericId = parts[parts.length - 1];
+          console.log('Extracted numeric ID from composite:', tyfcbId, '->', numericId);
+        }
+      } else {
+        console.log('Using entity ID from feed item:', numericId);
+      }
+
+      const endpoint = `${API_BASE_URL}/api/TYFCB/tyfcb/${numericId}/status`;
+      const payload = { Status: status };
+
+      console.log('TYFCB API Call:', {
+        endpoint,
+        method: 'POST',
+        payload,
+        hasToken: !!token
+      });
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          Id: tyfcbId,
-          Status: status
-        }),
+        body: JSON.stringify(payload),
       });
 
+      console.log('TYFCB Response Status:', response.status, response.statusText);
+
+      const responseText = await response.text();
+      console.log('TYFCB Response Body:', responseText);
+
       if (response.ok) {
-        setFeedData(prevData => 
-          prevData.map(item => 
-            item.id === tyfcbId 
+        let result = {};
+        try {
+          result = responseText ? JSON.parse(responseText) : {};
+        } catch (e) {
+          console.log('Response is not JSON, treating as success');
+        }
+
+        console.log('TYFCB status update successful:', result);
+
+        setFeedData(prevData =>
+          prevData.map(item =>
+            item.id === tyfcbId
               ? { ...item, status: status, updatedDate: new Date().toISOString() }
               : item
           )
         );
 
-        Alert.alert('Success', `TYFCB ${status.toLowerCase()} successfully!`);
+        Alert.alert('Success', `TYFCB ${status.toLowerCase()}ed successfully!`);
         setShowDetailModal(false);
       } else {
-        Alert.alert('Info', 'TYFCB status updated locally. Please check backend implementation.');
-        setFeedData(prevData => 
-          prevData.map(item => 
-            item.id === tyfcbId 
-              ? { ...item, status: status, updatedDate: new Date().toISOString() }
-              : item
-          )
-        );
-        setShowDetailModal(false);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.message || errorData.error || responseText || errorMessage;
+        } catch (e) {
+          errorMessage = responseText || errorMessage;
+        }
+        console.error('TYFCB API Error:', errorMessage);
+        throw new Error(errorMessage);
       }
-      
+
     } catch (error) {
       console.error('Error updating TYFCB status:', error);
       Alert.alert('Error', error.message || 'Failed to update TYFCB status');
@@ -258,11 +332,14 @@ const MyFeed = ({ route }) => {
   };
 
   const handleItemPress = (item) => {
+    console.log('Feed item pressed:', JSON.stringify(item, null, 2));
+
     // Only show detail modal for received items that are pending
-    const isReceivableItem = 
-      (item.type === 'referral_received' && referralTab === 'my') ||
-      (item.type === 'tyfcb_received' && activeTab === 'tyfcb');
-    
+    // Allow action regardless of current tab (e.g. from 'All' tab)
+    const isReceivableItem =
+      item.type === 'referral_received' ||
+      item.type === 'tyfcb_received';
+
     const isPending = !item.status || item.status === 'Pending' || item.status === 'pending';
 
     if (isReceivableItem && isPending) {
@@ -279,7 +356,7 @@ const MyFeed = ({ route }) => {
 
   const confirmStatusUpdate = () => {
     if (!selectedItem) return;
-    
+
     if (detailModalType === 'referral') {
       updateReferralStatus(selectedItem.id, 'Confirmed');
     } else if (detailModalType === 'tyfcb') {
@@ -289,11 +366,11 @@ const MyFeed = ({ route }) => {
 
   const rejectStatusUpdate = () => {
     if (!selectedItem) return;
-    
+
     if (detailModalType === 'referral') {
       updateReferralStatus(selectedItem.id, 'Rejected');
     } else if (detailModalType === 'tyfcb') {
-      updateTYFCBStatus(selectedItem.id, 'Rejected');
+      updateTYFCBStatus(selectedItem.id, 'Reject');
     }
   };
 
@@ -326,8 +403,8 @@ const MyFeed = ({ route }) => {
   const renderFeedItem = ({ item }) => {
     let iconName = 'information';
     let iconColor = '#4A90E2';
-    
-    switch(item.type) {
+
+    switch (item.type) {
       case 'referral_given':
         iconName = 'account-arrow-right';
         iconColor = '#4CAF50';
@@ -364,8 +441,8 @@ const MyFeed = ({ route }) => {
     const isClickable = true; // All items are now clickable
 
     return (
-      <TouchableOpacity 
-        style={styles.feedCard} 
+      <TouchableOpacity
+        style={styles.feedCard}
         onPress={() => handleItemPress(item)}
         activeOpacity={0.7}
       >
@@ -391,14 +468,14 @@ const MyFeed = ({ route }) => {
           </Text>
 
           {/* Show click hint for receivable items */}
-          {((item.type === 'referral_received' && referralTab === 'my') ||
-            (item.type === 'tyfcb_received' && activeTab === 'tyfcb')) &&
-           (!item.status || item.status === 'Pending' || item.status === 'pending') && (
-            <View style={styles.clickHint}>
-              <Icon name="hand-pointing-right" size={14} color="#4A90E2" />
-              <Text style={styles.clickHintText}>Tap to view and take action</Text>
-            </View>
-          )}
+          {((item.type === 'referral_received') ||
+            (item.type === 'tyfcb_received')) &&
+            (!item.status || item.status === 'Pending' || item.status === 'pending') && (
+              <View style={styles.clickHint}>
+                <Icon name="hand-pointing-right" size={14} color="#4A90E2" />
+                <Text style={styles.clickHintText}>Tap to view and take action</Text>
+              </View>
+            )}
         </View>
       </TouchableOpacity>
     );
@@ -418,26 +495,26 @@ const MyFeed = ({ route }) => {
       </LinearGradient>
 
       <View style={styles.tabBar}>
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'all' && styles.tabButtonActive]} 
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'all' && styles.tabButtonActive]}
           onPress={() => setActiveTab('all')}
         >
           <Text style={[styles.tabButtonText, activeTab === 'all' && styles.tabButtonTextActive]}>All</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'referral' && styles.tabButtonActive]} 
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'referral' && styles.tabButtonActive]}
           onPress={() => setActiveTab('referral')}
         >
           <Text style={[styles.tabButtonText, activeTab === 'referral' && styles.tabButtonTextActive]}>Referrals</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'tyfcb' && styles.tabButtonActive]} 
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'tyfcb' && styles.tabButtonActive]}
           onPress={() => setActiveTab('tyfcb')}
         >
           <Text style={[styles.tabButtonText, activeTab === 'tyfcb' && styles.tabButtonTextActive]}>TYFCB</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tabButton, activeTab === 'one_to_one' && styles.tabButtonActive]} 
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'one_to_one' && styles.tabButtonActive]}
           onPress={() => setActiveTab('one_to_one')}
         >
           <Text style={[styles.tabButtonText, activeTab === 'one_to_one' && styles.tabButtonTextActive]}>Meetings</Text>
@@ -446,15 +523,15 @@ const MyFeed = ({ route }) => {
 
       {activeTab === 'referral' && (
         <View style={styles.referralToggle}>
-          <TouchableOpacity 
-            style={[styles.toggleButton, referralTab === 'give' && styles.toggleButtonActive]} 
+          <TouchableOpacity
+            style={[styles.toggleButton, referralTab === 'give' && styles.toggleButtonActive]}
             onPress={() => setReferralTab('give')}
           >
             <Icon name="account-arrow-right" size={18} color={referralTab === 'give' ? '#FFF' : '#4A90E2'} />
             <Text style={[styles.toggleText, referralTab === 'give' && styles.toggleTextActive]}>Given</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.toggleButton, referralTab === 'my' && styles.toggleButtonActive]} 
+          <TouchableOpacity
+            style={[styles.toggleButton, referralTab === 'my' && styles.toggleButtonActive]}
             onPress={() => setReferralTab('my')}
           >
             <Icon name="account-arrow-left" size={18} color={referralTab === 'my' ? '#FFF' : '#4A90E2'} />
@@ -473,19 +550,19 @@ const MyFeed = ({ route }) => {
           style={styles.backgroundImage}
           imageStyle={styles.backgroundImageStyle}
         >
-          <FlatList 
-            data={filteredData} 
-            renderItem={renderFeedItem} 
+          <FlatList
+            data={filteredData}
+            renderItem={renderFeedItem}
             keyExtractor={(item, index) => `${item.type}-${item.id}-${index}`}
-            contentContainerStyle={styles.feedList} 
+            contentContainerStyle={styles.feedList}
             refreshControl={
-              <RefreshControl 
-                refreshing={refreshing} 
+              <RefreshControl
+                refreshing={refreshing}
                 onRefresh={onRefresh}
                 colors={['#4A90E2']}
                 tintColor="#4A90E2"
               />
-            } 
+            }
           />
         </ImageBackground>
       ) : (
@@ -503,7 +580,7 @@ const MyFeed = ({ route }) => {
               Your activities will appear here
             </Text>
             {!loading && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.refreshButton}
                 onPress={loadFeedData}
               >
@@ -526,32 +603,32 @@ const MyFeed = ({ route }) => {
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {detailModalType === 'referral' ? 'Referral Details' : 
-                 detailModalType === 'tyfcb' ? 'TYFCB Details' : 'Activity Details'}
+                {detailModalType === 'referral' ? 'Referral Details' :
+                  detailModalType === 'tyfcb' ? 'Thanks Note' : 'Activity Details'}
               </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowDetailModal(false)}
                 style={styles.closeButton}
               >
                 <Icon name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.modalContent}>
               {selectedItem && (
                 <>
                   {/* Icon and Title */}
                   <View style={styles.detailHeader}>
-                    <View style={[styles.detailIconContainer, { 
-                      backgroundColor: selectedItem.type === 'referral_received' ? '#2196F320' : 
-                                      selectedItem.type === 'tyfcb_received' ? '#E91E6320' : '#4A90E220' 
+                    <View style={[styles.detailIconContainer, {
+                      backgroundColor: selectedItem.type === 'referral_received' ? '#2196F320' :
+                        selectedItem.type === 'tyfcb_received' ? '#E91E6320' : '#4A90E220'
                     }]}>
-                      <Icon 
-                        name={selectedItem.type === 'referral_received' ? 'account-arrow-left' : 
-                              selectedItem.type === 'tyfcb_received' ? 'hand-heart' : 'information'} 
-                        size={32} 
-                        color={selectedItem.type === 'referral_received' ? '#2196F3' : 
-                               selectedItem.type === 'tyfcb_received' ? '#E91E63' : '#4A90E2'} 
+                      <Icon
+                        name={selectedItem.type === 'referral_received' ? 'account-arrow-left' :
+                          selectedItem.type === 'tyfcb_received' ? 'hand-heart' : 'information'}
+                        size={32}
+                        color={selectedItem.type === 'referral_received' ? '#2196F3' :
+                          selectedItem.type === 'tyfcb_received' ? '#E91E63' : '#4A90E2'}
                       />
                     </View>
                     <Text style={styles.detailTitle}>{selectedItem.title || 'Activity'}</Text>
@@ -559,9 +636,9 @@ const MyFeed = ({ route }) => {
 
                   {/* Status Badge */}
                   {selectedItem.status && (
-                    <View style={[styles.detailStatusBadge, { 
-                      backgroundColor: selectedItem.status === 'Confirmed' ? '#4CAF50' : 
-                                      selectedItem.status === 'Rejected' ? '#F44336' : '#FF9800'
+                    <View style={[styles.detailStatusBadge, {
+                      backgroundColor: selectedItem.status === 'Confirmed' ? '#4CAF50' :
+                        selectedItem.status === 'Rejected' ? '#F44336' : '#FF9800'
                     }]}>
                       <Text style={styles.detailStatusText}>
                         Status: {selectedItem.status}
@@ -570,7 +647,9 @@ const MyFeed = ({ route }) => {
                   )}
 
                   {/* Details Grid */}
+                  {/* Details Grid - 2 columns layout */}
                   <View style={styles.detailsGrid}>
+                    {/* Row 1: Date and Member */}
                     <View style={styles.detailItem}>
                       <Icon name="calendar" size={20} color="#666" />
                       <Text style={styles.detailLabel}>Date</Text>
@@ -579,36 +658,33 @@ const MyFeed = ({ route }) => {
                       </Text>
                     </View>
 
-                    {selectedItem.memberName && (
-                      <View style={styles.detailItem}>
-                        <Icon name="account" size={20} color="#666" />
-                        <Text style={styles.detailLabel}>Member</Text>
-                        <Text style={styles.detailValue}>{selectedItem.memberName}</Text>
-                      </View>
-                    )}
+                    <View style={styles.detailItem}>
+                      <Icon name="account" size={20} color="#666" />
+                      <Text style={styles.detailLabel}>Member</Text>
+                      <Text style={styles.detailValue}>
+                        {selectedItem.memberName || 'N/A'}
+                      </Text>
+                    </View>
 
-                    {selectedItem.amount > 0 && (
-                      <View style={styles.detailItem}>
-                        <Icon name="currency-usd" size={20} color="#666" />
-                        <Text style={styles.detailLabel}>Amount</Text>
-                        <Text style={[styles.detailValue, { color: '#4CAF50', fontWeight: 'bold' }]}>
-                          ${selectedItem.amount}
-                        </Text>
-                      </View>
-                    )}
+                    {/* Row 2: Amount and Type */}
+                    <View style={styles.detailItem}>
+                      <Icon name="currency-usd" size={20} color="#666" />
+                      <Text style={styles.detailLabel}>Amount</Text>
+                      <Text style={[styles.detailValue, { color: selectedItem.amount > 0 ? '#4CAF50' : '#666', fontWeight: 'bold' }]}>
+                        {selectedItem.amount > 0 ? `$${selectedItem.amount}` : 'N/A'}
+                      </Text>
+                    </View>
 
-                    {selectedItem.type && (
-                      <View style={styles.detailItem}>
-                        <Icon name="shape" size={20} color="#666" />
-                        <Text style={styles.detailLabel}>Type</Text>
-                        <Text style={styles.detailValue}>
-                          {selectedItem.type === 'referral_received' ? 'Referral Received' : 
-                           selectedItem.type === 'referral_given' ? 'Referral Given' :
-                           selectedItem.type === 'tyfcb_received' ? 'TYFCB Received' :
-                           selectedItem.type === 'tyfcb_given' ? 'TYFCB Given' : 'Activity'}
-                        </Text>
-                      </View>
-                    )}
+                    <View style={styles.detailItem}>
+                      <Icon name="shape" size={20} color="#666" />
+                      <Text style={styles.detailLabel}>Type</Text>
+                      <Text style={styles.detailValue}>
+                        {selectedItem.type === 'referral_received' ? 'Referral Received' :
+                          selectedItem.type === 'referral_given' ? 'Referral Given' :
+                            selectedItem.type === 'tyfcb_received' ? 'TYFCB Received' :
+                              selectedItem.type === 'tyfcb_given' ? 'TYFCB Given' : 'Activity'}
+                      </Text>
+                    </View>
                   </View>
 
                   {/* Description */}
@@ -627,52 +703,55 @@ const MyFeed = ({ route }) => {
                     </View>
                   )}
 
-                  {/* Action Buttons (only for pending received items) */}
-                  {((selectedItem.type === 'referral_received' && referralTab === 'my') ||
-                    (selectedItem.type === 'tyfcb_received' && activeTab === 'tyfcb')) &&
-                   (!selectedItem.status || selectedItem.status === 'Pending' || selectedItem.status === 'pending') ? (
-                    <View style={styles.actionButtonsContainer}>
-                      <Text style={styles.actionTitle}>Take Action</Text>
-                      <View style={styles.actionButtons}>
-                        <TouchableOpacity
-                          style={[styles.actionButton, styles.confirmActionButton]}
-                          onPress={confirmStatusUpdate}
-                          disabled={updatingItemId === selectedItem.id}
-                        >
-                          {updatingItemId === selectedItem.id ? (
-                            <ActivityIndicator size="small" color="#FFF" />
-                          ) : (
-                            <>
-                              <Icon name="check-circle" size={20} color="#FFF" />
-                              <Text style={styles.actionButtonText}>Confirm</Text>
-                            </>
-                          )}
-                        </TouchableOpacity>
-                        
-                        <TouchableOpacity
-                          style={[styles.actionButton, styles.rejectActionButton]}
-                          onPress={rejectStatusUpdate}
-                          disabled={updatingItemId === selectedItem.id}
-                        >
-                          {updatingItemId === selectedItem.id ? (
-                            <ActivityIndicator size="small" color="#FFF" />
-                          ) : (
-                            <>
-                              <Icon name="close-circle" size={20} color="#FFF" />
-                              <Text style={styles.actionButtonText}>Reject</Text>
-                            </>
-                          )}
-                        </TouchableOpacity>
+                  {/* Action Buttons - Always visible for received items */}
+                  {((selectedItem.type === 'referral_received') ||
+                    (selectedItem.type === 'tyfcb_received')) && (
+                      <View style={styles.actionButtonsContainer}>
+                        <Text style={styles.actionTitle}>
+                          {(!selectedItem.status || selectedItem.status === 'Pending' || selectedItem.status === 'pending')
+                            ? 'Take Action'
+                            : 'Actions'}
+                        </Text>
+                        <View style={styles.actionButtons}>
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.confirmActionButton]}
+                            onPress={confirmStatusUpdate}
+                            disabled={updatingItemId === selectedItem.id ||
+                              (selectedItem.status && selectedItem.status !== 'Pending' && selectedItem.status !== 'pending')}
+                          >
+                            {updatingItemId === selectedItem.id ? (
+                              <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                              <>
+                                <Icon name="check-circle" size={20} color="#FFF" />
+                                <Text style={styles.actionButtonText}>Confirm</Text>
+                              </>
+                            )}
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.rejectActionButton]}
+                            onPress={rejectStatusUpdate}
+                            disabled={updatingItemId === selectedItem.id ||
+                              (selectedItem.status && selectedItem.status !== 'Pending' && selectedItem.status !== 'pending')}
+                          >
+                            {updatingItemId === selectedItem.id ? (
+                              <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                              <>
+                                <Icon name="close-circle" size={20} color="#FFF" />
+                                <Text style={styles.actionButtonText}>Reject</Text>
+                              </>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                        {selectedItem.status && selectedItem.status !== 'Pending' && selectedItem.status !== 'pending' && (
+                          <Text style={styles.actionHint}>
+                            This item has already been {selectedItem.status.toLowerCase()}
+                          </Text>
+                        )}
                       </View>
-                    </View>
-                  ) : (
-                    <View style={styles.readOnlyMessage}>
-                      <Icon name="information" size={24} color="#666" />
-                      <Text style={styles.readOnlyText}>
-                        This item has already been processed.
-                      </Text>
-                    </View>
-                  )}
+                    )}
                 </>
               )}
             </ScrollView>
@@ -685,147 +764,147 @@ const MyFeed = ({ route }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F9FC' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 15, 
-    paddingVertical: 15 
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 15
   },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
-    color: '#FFF' 
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFF'
   },
-  tabBar: { 
-    flexDirection: 'row', 
-    backgroundColor: '#FFF', 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#E0E0E0', 
-    paddingHorizontal: 10, 
-    paddingVertical: 8 
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: 10,
+    paddingVertical: 8
   },
-  tabButton: { 
-    paddingHorizontal: 12, 
-    paddingVertical: 8, 
-    marginHorizontal: 2, 
-    borderRadius: 20, 
+  tabButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginHorizontal: 2,
+    borderRadius: 20,
     backgroundColor: '#F0F0F0',
     flex: 1,
     alignItems: 'center'
   },
-  tabButtonActive: { 
-    backgroundColor: '#4A90E2' 
+  tabButtonActive: {
+    backgroundColor: '#4A90E2'
   },
-  tabButtonText: { 
-    fontSize: 12, 
-    fontWeight: '600', 
-    color: '#666' 
+  tabButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666'
   },
-  tabButtonTextActive: { 
-    color: '#FFF' 
+  tabButtonTextActive: {
+    color: '#FFF'
   },
-  referralToggle: { 
-    flexDirection: 'row', 
-    backgroundColor: '#FFF', 
-    paddingHorizontal: 15, 
-    paddingVertical: 10, 
-    gap: 10, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#E0E0E0' 
+  referralToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0'
   },
-  toggleButton: { 
-    flex: 1, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    paddingVertical: 8, 
-    borderRadius: 8, 
-    backgroundColor: '#F0F0F0', 
-    gap: 6 
+  toggleButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: '#F0F0F0',
+    gap: 6
   },
-  toggleButtonActive: { 
-    backgroundColor: '#4A90E2' 
+  toggleButtonActive: {
+    backgroundColor: '#4A90E2'
   },
-  toggleText: { 
-    fontSize: 12, 
-    fontWeight: '600', 
-    color: '#666' 
+  toggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666'
   },
-  toggleTextActive: { 
-    color: '#FFF' 
+  toggleTextActive: {
+    color: '#FFF'
   },
-  backgroundImage: { 
-    flex: 1 
+  backgroundImage: {
+    flex: 1
   },
-  backgroundImageStyle: { 
+  backgroundImageStyle: {
     opacity: 0.1,
     resizeMode: 'contain'
   },
-  feedList: { 
-    padding: 15, 
-    paddingBottom: 30 
+  feedList: {
+    padding: 15,
+    paddingBottom: 30
   },
-  feedCard: { 
-    flexDirection: 'row', 
-    backgroundColor: '#FFF', 
-    borderRadius: 12, 
-    padding: 15, 
-    marginBottom: 12, 
+  feedCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2
   },
-  iconContainer: { 
-    width: 50, 
-    height: 50, 
-    borderRadius: 25, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    marginRight: 15 
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15
   },
-  feedContent: { 
-    flex: 1 
+  feedContent: {
+    flex: 1
   },
-  feedHeader: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    marginBottom: 6 
+  feedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6
   },
-  feedTitle: { 
-    fontSize: 15, 
-    fontWeight: 'bold', 
-    color: '#333', 
-    flex: 1 
+  feedTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#333',
+    flex: 1
   },
-  statusBadge: { 
-    paddingHorizontal: 10, 
-    paddingVertical: 4, 
-    borderRadius: 12, 
-    marginLeft: 10 
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 10
   },
-  statusText: { 
-    fontSize: 11, 
-    fontWeight: '600', 
-    color: '#FFF' 
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#FFF'
   },
-  feedDescription: { 
-    fontSize: 13, 
-    color: '#666', 
-    marginBottom: 4, 
-    lineHeight: 18 
+  feedDescription: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 4,
+    lineHeight: 18
   },
-  memberName: { 
-    fontSize: 12, 
-    color: '#4A90E2', 
-    fontWeight: '500', 
-    marginBottom: 4 
+  memberName: {
+    fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '500',
+    marginBottom: 4
   },
-  feedDate: { 
-    fontSize: 12, 
+  feedDate: {
+    fontSize: 12,
     color: '#999',
     marginBottom: 8
   },
@@ -845,27 +924,27 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 6
   },
-  loadingContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
-  emptyContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
     padding: 20
   },
-  emptyText: { 
-    fontSize: 16, 
-    fontWeight: '600', 
-    color: '#666', 
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
     marginTop: 15,
     textAlign: 'center'
   },
-  emptySubtext: { 
-    fontSize: 14, 
-    color: '#999', 
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
     marginTop: 5,
     textAlign: 'center'
   },
@@ -959,13 +1038,15 @@ const styles = StyleSheet.create({
     fontSize: 14
   },
   detailsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     marginBottom: 20,
-    gap: 15
+    gap: 12
+  },
+  detailRow: {
+    flexDirection: 'row',
+    gap: 12
   },
   detailItem: {
-    width: '48%',
+    flex: 1,
     backgroundColor: '#F8F9FA',
     padding: 15,
     borderRadius: 10,
@@ -1052,6 +1133,13 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600'
+  },
+  actionHint: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
+    fontStyle: 'italic'
   },
   readOnlyMessage: {
     flexDirection: 'row',

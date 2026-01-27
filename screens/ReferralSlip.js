@@ -55,14 +55,14 @@ const ReferralSlip = () => {
       const userData = await AsyncStorage.getItem('userData');
       const userId = await AsyncStorage.getItem('userId');
       const fullName = await AsyncStorage.getItem('fullName');
-      
+
       if (userData && userId) {
         const user = JSON.parse(userData);
-        
+
         try {
           // Try to get member by user ID
           const memberData = await apiGet(`/api/Members/GetByUserId/${userId}`);
-          
+
           if (memberData && memberData.id) {
             await AsyncStorage.setItem('memberId', memberData.id.toString());
             setCurrentUser({
@@ -91,13 +91,13 @@ const ReferralSlip = () => {
   const findMemberByName = async (name) => {
     try {
       if (!name) return;
-      
+
       const members = await apiGet('/api/Members/GetMemberNames');
       if (members && Array.isArray(members)) {
-        const member = members.find(m => 
+        const member = members.find(m =>
           m.name && m.name.trim().toLowerCase() === name.trim().toLowerCase()
         );
-        
+
         if (member) {
           await AsyncStorage.setItem('memberId', member.id.toString());
           setCurrentUser({
@@ -136,13 +136,13 @@ const ReferralSlip = () => {
         },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.log('Server error response:', errorText);
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
-      
+
       const responseData = await response.json();
       return responseData;
     } catch (error) {
@@ -155,7 +155,7 @@ const ReferralSlip = () => {
     try {
       setLoadingMembers(true);
       const members = await apiGet('/api/Members/GetMemberNames');
-      
+
       if (members && Array.isArray(members)) {
         const formattedMembers = members.map(member => ({
           id: member.id,
@@ -164,12 +164,12 @@ const ReferralSlip = () => {
           phone: member.phone || '',
           memberId: member.memberId || `MEM${member.id}`
         }));
-        
+
         setAllMembers(formattedMembers);
       } else {
         setAllMembers([]);
       }
-      
+
     } catch (error) {
       console.error('Error loading members:', error);
       Alert.alert('Error', 'Failed to load members. Please try again.');
@@ -182,14 +182,14 @@ const ReferralSlip = () => {
     try {
       const userName = await AsyncStorage.getItem('fullName');
       if (!userName) return null;
-      
+
       const members = await apiGet('/api/Members');
       if (members && Array.isArray(members)) {
         const currentMember = members.find(m => {
           if (!m.name) return false;
           return m.name.trim().toLowerCase() === userName.trim().toLowerCase();
         });
-        
+
         if (currentMember) {
           console.log('Found member ID from name:', currentMember.id);
           await AsyncStorage.setItem('memberId', currentMember.id.toString());
@@ -203,8 +203,8 @@ const ReferralSlip = () => {
   };
 
   const handleSelectMember = (member) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       memberName: member.name,
       memberId: member.id,
       email: member.email || '',
@@ -233,8 +233,8 @@ const ReferralSlip = () => {
         'Please make sure you are properly logged in as a member.',
         [
           { text: 'OK' },
-          { 
-            text: 'Re-login', 
+          {
+            text: 'Re-login',
             onPress: () => navigation.navigate('Login')
           }
         ]
@@ -262,13 +262,13 @@ const ReferralSlip = () => {
       Alert.alert('Validation Error', 'Please enter telephone number');
       return false;
     }
-    
+
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(formData.telephone.replace(/\D/g, ''))) {
       Alert.alert('Validation Error', 'Please enter a valid 10-digit telephone number');
       return false;
     }
-    
+
     if (formData.email && formData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
@@ -276,7 +276,7 @@ const ReferralSlip = () => {
         return false;
       }
     }
-    
+
     return true;
   };
 
@@ -287,7 +287,7 @@ const ReferralSlip = () => {
     try {
       console.log('Current user memberId:', currentUser.memberId);
       console.log('Selected memberId:', formData.memberId);
-      
+
       if (!currentUser.memberId) {
         throw new Error('Your member ID is not available. Please re-login.');
       }
@@ -307,9 +307,9 @@ const ReferralSlip = () => {
       };
 
       console.log('Sending referral data:', JSON.stringify(referralData, null, 2));
-      
+
       const result = await apiPost('/api/Referrals', referralData);
-      
+
       setSavedData({
         memberName: formData.memberName,
         referralType: formData.referralType,
@@ -319,12 +319,12 @@ const ReferralSlip = () => {
         status: 'Pending', // Always shows Pending
       });
       setShowSuccessScreen(true);
-      
+
     } catch (error) {
       console.error('Error submitting referral:', error);
-      
+
       let errorMessage = error.message || 'Failed to submit referral';
-      
+
       if (error.message.includes('400')) {
         if (error.message.includes('GivenByMember is required')) {
           errorMessage = 'Your member information is missing. Please ensure you are registered as a member.';
@@ -336,7 +336,7 @@ const ReferralSlip = () => {
       } else if (error.message.includes('500')) {
         errorMessage = 'Server error. Please try again later.';
       }
-      
+
       Alert.alert('Submission Error', errorMessage);
     } finally {
       setLoading(false);
@@ -345,28 +345,44 @@ const ReferralSlip = () => {
 
   const formatPhoneNumber = (text) => {
     const cleaned = text.replace(/\D/g, '');
-    
+
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
-    
+
     if (match) {
       const part1 = match[1];
       const part2 = match[2];
       const part3 = match[3];
-      
+
       let formatted = '';
       if (part1) formatted += part1;
       if (part2) formatted += '-' + part2;
       if (part3) formatted += '-' + part3;
-      
+
       return formatted;
     }
-    
+
     return text;
   };
 
   const handlePhoneChange = (text) => {
     const formatted = formatPhoneNumber(text);
     handleInputChange('telephone', formatted);
+  };
+
+  const handleReset = () => {
+    setShowSuccessScreen(false);
+    setFormData({
+      memberName: '',
+      memberId: '',
+      referralType: '',
+      referralStatus: [],
+      referralNumber: '',
+      telephone: '',
+      email: '',
+      address: '',
+      comments: '',
+    });
+    setSavedData(null);
   };
 
   return (
@@ -524,13 +540,12 @@ const ReferralSlip = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Referral Number */}
           <View style={styles.section}>
             <Text style={styles.label}>Referral Number/Name *</Text>
             <View style={styles.inputContainer}>
               <Icon name="numeric" size={20} color="#4A90E2" style={styles.icon} />
-              <SpeechToTextInput
-                style={styles.speechInput}
+              <TextInput
+                style={styles.input}
                 placeholder="Enter referral number or client name"
                 value={formData.referralNumber}
                 onChangeText={(text) => handleInputChange('referralNumber', text)}
@@ -544,8 +559,8 @@ const ReferralSlip = () => {
             <Text style={styles.label}>Telephone Number *</Text>
             <View style={styles.inputContainer}>
               <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
-              <SpeechToTextInput
-                style={styles.speechInput}
+              <TextInput
+                style={styles.input}
                 placeholder="Enter telephone number (e.g., 123-456-7890)"
                 value={formData.telephone}
                 onChangeText={handlePhoneChange}
@@ -561,8 +576,8 @@ const ReferralSlip = () => {
             <Text style={styles.label}>Email Address</Text>
             <View style={styles.inputContainer}>
               <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
-              <SpeechToTextInput
-                style={styles.speechInput}
+              <TextInput
+                style={styles.input}
                 placeholder="Enter email address (optional)"
                 value={formData.email}
                 onChangeText={(text) => handleInputChange('email', text)}
@@ -577,8 +592,8 @@ const ReferralSlip = () => {
           <View style={styles.section}>
             <Text style={styles.label}>Address</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <SpeechToTextInput
-                style={styles.speechTextArea}
+              <TextInput
+                style={[styles.input, styles.textArea]}
                 placeholder="Enter address"
                 value={formData.address}
                 onChangeText={(text) => handleInputChange('address', text)}
@@ -593,8 +608,8 @@ const ReferralSlip = () => {
           <View style={styles.section}>
             <Text style={styles.label}>Comments</Text>
             <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <SpeechToTextInput
-                style={styles.speechTextArea}
+              <TextInput
+                style={[styles.input, styles.textArea]}
                 placeholder="Enter any comments"
                 value={formData.comments}
                 onChangeText={(text) => handleInputChange('comments', text)}
@@ -626,6 +641,62 @@ const ReferralSlip = () => {
           <View style={{ height: 30 }} />
         </ScrollView>
       </ImageBackground>
+      {/* Success Screen */}
+      {showSuccessScreen && (
+        <View style={styles.successOverlay}>
+          <View style={styles.successCard}>
+            <LinearGradient
+              colors={['#4A90E2', '#87CEEB']}
+              style={styles.successHeader}
+            >
+              <Icon name="check-circle" size={60} color="#FFF" />
+              <Text style={styles.successTitle}>Referral Submitted!</Text>
+            </LinearGradient>
+
+            <View style={styles.successContent}>
+              <View style={styles.successDetailRow}>
+                <Text style={styles.successLabel}>To Member:</Text>
+                <Text style={styles.successValue}>{savedData?.memberName}</Text>
+              </View>
+
+              <View style={styles.successDetailRow}>
+                <Text style={styles.successLabel}>Referral For:</Text>
+                <Text style={styles.successValue}>{savedData?.referralNumber}</Text>
+              </View>
+
+              <View style={styles.successDetailRow}>
+                <Text style={styles.successLabel}>Type:</Text>
+                <Text style={styles.successValue}>
+                  {savedData?.referralType === 'inside' ? 'Inside' : 'Outside'}
+                </Text>
+              </View>
+
+              <View style={styles.successDetailRow}>
+                <Text style={styles.successLabel}>Phone:</Text>
+                <Text style={styles.successValue}>{savedData?.telephone}</Text>
+              </View>
+            </View>
+
+            <View style={styles.successActions}>
+              <TouchableOpacity
+                style={styles.successButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Icon name="arrow-left" size={20} color="#FFF" />
+                <Text style={styles.successButtonText}>Back</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.successButton, styles.successButtonPrimary]}
+                onPress={handleReset}
+              >
+                <Icon name="plus-circle" size={20} color="#FFF" />
+                <Text style={styles.successButtonText}>Add Another</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -851,6 +922,94 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  // Success Screen Styles
+  successOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    zIndex: 1000,
+  },
+  successCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    width: '100%',
+    maxWidth: 350,
+  },
+  successHeader: {
+    alignItems: 'center',
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  successContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  successDetailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  successLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4A90E2',
+    flex: 1,
+  },
+  successValue: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
+    flex: 1,
+    textAlign: 'right',
+  },
+  successActions: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  successButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: '#87CEEB',
+    gap: 6,
+  },
+  successButtonPrimary: {
+    backgroundColor: '#4A90E2',
+  },
+  successButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

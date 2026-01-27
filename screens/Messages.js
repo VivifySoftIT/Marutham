@@ -12,8 +12,10 @@ import {
   Modal,
   FlatList,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -36,6 +38,8 @@ const Messages = ({ navigation }) => {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [recentMessages, setRecentMessages] = useState([]);
   const [adminMemberId, setAdminMemberId] = useState(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [tempDate, setTempDate] = useState(new Date());
 
   const [formData, setFormData] = useState({
     toEmail: '',
@@ -47,6 +51,7 @@ const Messages = ({ navigation }) => {
     messageType: 'Welcome',
     paymentMonth: new Date().getMonth() + 1, // Current month (1-12)
     paymentYear: new Date().getFullYear(),
+    eventDate: '', // For Event and Meeting types
   });
 
   // Load members and messages from API when component mounts
@@ -239,6 +244,7 @@ const Messages = ({ navigation }) => {
       messageType: template.messageType,
       paymentMonth: currentMonth,
       paymentYear: currentYear,
+      eventDate: '', // Reset event date
     });
     setSelectedMembers([]);
     setShowTemplateModal(false);
@@ -328,6 +334,11 @@ const Messages = ({ navigation }) => {
         CreatedBy: currentAdminMemberId,
       };
 
+      // Add date field for Event and Meeting types
+      if ((formData.messageType === 'Event' || formData.messageType === 'Meeting') && formData.eventDate) {
+        notificationData.Date = formData.eventDate;
+      }
+
       // Add payment-specific fields if Payment type
       if (formData.messageType === 'Payment') {
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
@@ -364,6 +375,7 @@ const Messages = ({ navigation }) => {
                 messageType: 'Welcome',
                 paymentMonth: currentMonth,
                 paymentYear: currentYear,
+                eventDate: '', // Reset event date
               });
               setSelectedMembers([]);
               setAttachment(null);
@@ -567,6 +579,118 @@ const Messages = ({ navigation }) => {
                   This message will be sent to all active members in your sub-company
                 </Text>
               </View>
+            )}
+
+            {/* Event/Meeting Date Picker - Only for Event and Meeting types */}
+            {(formData.messageType === 'Event' || formData.messageType === 'Meeting') && (
+              <View style={styles.section}>
+                <Text style={styles.label}>
+                  {formData.messageType === 'Event' ? 'Event Date' : 'Meeting Date'} *
+                </Text>
+                <View style={styles.dateInputRow}>
+                  {/* Text Input for manual entry */}
+                  <View style={[styles.inputContainer, { flex: 1 }]}>
+                    <Icon name="calendar" size={20} color="#4A90E2" style={styles.icon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="YYYY-MM-DD (e.g., 2025-02-15)"
+                      value={formData.eventDate}
+                      onChangeText={(text) => handleInputChange('eventDate', text)}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                  
+                  {/* Calendar Button to open date picker */}
+                  <TouchableOpacity
+                    style={styles.calendarButton}
+                    onPress={() => {
+                      // Set initial date for picker
+                      if (formData.eventDate) {
+                        try {
+                          const parsedDate = new Date(formData.eventDate);
+                          if (!isNaN(parsedDate.getTime())) {
+                            setTempDate(parsedDate);
+                          } else {
+                            setTempDate(new Date());
+                          }
+                        } catch {
+                          setTempDate(new Date());
+                        }
+                      } else {
+                        setTempDate(new Date());
+                      }
+                      setShowDatePicker(true);
+                    }}
+                  >
+                    <Icon name="calendar-month" size={24} color="#FFF" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.dateHint}>
+                  Enter date manually or tap the calendar button to select
+                </Text>
+              </View>
+            )}
+
+            {/* Date Picker Modal */}
+            {showDatePicker && (
+              <Modal
+                transparent={true}
+                animationType="slide"
+                visible={showDatePicker}
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.datePickerModalOverlay}>
+                  <View style={styles.datePickerModalContent}>
+                    <View style={styles.datePickerHeader}>
+                      <Text style={styles.datePickerTitle}>Select Date</Text>
+                      <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                        <Icon name="close" size={24} color="#333" />
+                      </TouchableOpacity>
+                    </View>
+                    
+                    <DateTimePicker
+                      value={tempDate}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={(event, selectedDate) => {
+                        if (Platform.OS === 'android') {
+                          setShowDatePicker(false);
+                          if (event.type === 'set' && selectedDate) {
+                            const formattedDate = selectedDate.toISOString().split('T')[0];
+                            handleInputChange('eventDate', formattedDate);
+                          }
+                        } else {
+                          if (selectedDate) {
+                            setTempDate(selectedDate);
+                          }
+                        }
+                      }}
+                      minimumDate={new Date()}
+                    />
+                    
+                    {Platform.OS === 'ios' && (
+                      <View style={styles.datePickerButtons}>
+                        <TouchableOpacity
+                          style={[styles.datePickerButton, styles.datePickerCancelButton]}
+                          onPress={() => setShowDatePicker(false)}
+                        >
+                          <Text style={styles.datePickerCancelText}>Cancel</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.datePickerButton, styles.datePickerConfirmButton]}
+                          onPress={() => {
+                            const formattedDate = tempDate.toISOString().split('T')[0];
+                            handleInputChange('eventDate', formattedDate);
+                            setShowDatePicker(false);
+                          }}
+                        >
+                          <Text style={styles.datePickerConfirmText}>Confirm</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </Modal>
             )}
 
             {/* Payment Type Warning */}
@@ -1528,6 +1652,89 @@ const styles = StyleSheet.create({
     color: '#4A90E2',
     marginTop: 8,
     fontWeight: '600',
+  },
+  dateHint: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
+  dateInputRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
+  calendarButton: {
+    backgroundColor: '#4A90E2',
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  datePickerModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  datePickerModalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  datePickerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  datePickerButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 20,
+  },
+  datePickerButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  datePickerCancelButton: {
+    backgroundColor: '#F0F0F0',
+  },
+  datePickerConfirmButton: {
+    backgroundColor: '#4A90E2',
+  },
+  datePickerCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#666',
+  },
+  datePickerConfirmText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFF',
   },
 });
 

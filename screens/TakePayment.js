@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,20 +7,59 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../apiConfig';
+import MemberIdService from '../service/MemberIdService';
 
 const TakePayment = ({ navigation }) => {
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [searchQuery, setSearchQuery] = useState('');
+  const [members, setMembers] = useState([]);
+  const [filteredMembers, setFilteredMembers] = useState([]);
 
-  const members = [
-    { id: 1, name: 'Rajesh Kumar', phone: '9876543210', dueAmount: 5000 },
-    { id: 2, name: 'Priya Sharma', phone: '9876543211', dueAmount: 4500 },
-    { id: 3, name: 'Amit Singh', phone: '9876543212', dueAmount: 6000 },
-  ];
+  useEffect(() => {
+    fetchMembers();
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const filtered = members.filter(m =>
+        m.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.phone?.includes(searchQuery)
+      );
+      setFilteredMembers(filtered);
+    } else {
+      setFilteredMembers(members);
+    }
+  }, [searchQuery, members]);
+
+  const fetchMembers = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/api/Members`);
+      if (response.ok) {
+        const data = await response.json();
+        // Filter active members only
+        const activeMembers = data.filter(m => m.isActive);
+        setMembers(activeMembers);
+        setFilteredMembers(activeMembers);
+      } else {
+        Alert.alert('Error', 'Failed to load members');
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      Alert.alert('Error', 'Network error while loading members');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const paymentMethods = [
     { id: 'cash', label: 'Cash', icon: 'cash' },
@@ -29,7 +68,7 @@ const TakePayment = ({ navigation }) => {
     { id: 'bank', label: 'Bank Transfer', icon: 'bank' },
   ];
 
-  const handlePayment = () => {
+  const handlePayment = async () => {
     if (!selectedMember) {
       Alert.alert('Error', 'Please select a member');
       return;
@@ -38,9 +77,56 @@ const TakePayment = ({ navigation }) => {
       Alert.alert('Error', 'Please enter a valid amount');
       return;
     }
-    Alert.alert('Success', `Payment of ₹${amount} received from ${selectedMember.name}`);
-    setSelectedMember(null);
-    setAmount('');
+
+    setSubmitting(true);
+    try {
+      const currentAdminId = await MemberIdService.getCurrentUserMemberId();
+      const currentMonth = new Date().toLocaleString('default', { month: 'short' }); // e.g., "Jan"
+
+      const requestData = {
+        MemberId: selectedMember.id,
+        Amount: parseFloat(amount),
+        PaymentType: 'Membership Fees', // Default
+        PaymentMethod: paymentMethods.find(m => m.id === paymentMethod)?.label || 'Cash',
+        PaymentForMonth: currentMonth,
+        CreatedBy: currentAdminId ? currentAdminId.toString() : 'Admin',
+        Status: 'Paid'
+      };
+
+      console.log('Creating payment:', requestData);
+
+      const token = await AsyncStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/Inventory/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      const responseText = await response.text();
+      console.log('Payment response:', responseText);
+
+      if (response.ok) {
+        Alert.alert('Success', `Payment of ₹${amount} received from ${selectedMember.name}`);
+        setSelectedMember(null);
+        setAmount('');
+        // Optional: refresh dashboard or navigate back
+      } else {
+        let errorMessage = 'Payment failed';
+        try {
+          const errorJson = JSON.parse(responseText);
+          errorMessage = errorJson.message || errorJson.error || errorMessage;
+        } catch (e) { }
+        Alert.alert('Error', errorMessage);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      Alert.alert('Error', 'Network error creating payment');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -58,33 +144,39 @@ const TakePayment = ({ navigation }) => {
               onChangeText={setSearchQuery}
             />
           </View>
-          
+
           <View style={styles.membersList}>
-            {members.map(member => (
-              <TouchableOpacity
-                key={member.id}
-                style={[
-                  styles.memberCard,
-                  selectedMember?.id === member.id && styles.selectedMember
-                ]}
-                onPress={() => {
-                  setSelectedMember(member);
-                  setAmount(member.dueAmount.toString());
-                }}
-              >
-                <View style={styles.memberAvatar}>
-                  <Text style={styles.avatarText}>{member.name.charAt(0)}</Text>
-                </View>
-                <View style={styles.memberInfo}>
-                  <Text style={styles.memberName}>{member.name}</Text>
-                  <Text style={styles.memberPhone}>{member.phone}</Text>
-                </View>
-                <View style={styles.dueAmount}>
-                  <Text style={styles.dueLabel}>Due</Text>
-                  <Text style={styles.dueValue}>₹{member.dueAmount}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
+            {loading ? (
+              <ActivityIndicator size="small" color="#212c62" style={{ padding: 20 }} />
+            ) : filteredMembers.length > 0 ? (
+              filteredMembers.map(member => (
+                <TouchableOpacity
+                  key={member.id}
+                  style={[
+                    styles.memberCard,
+                    selectedMember?.id === member.id && styles.selectedMember
+                  ]}
+                  onPress={() => {
+                    setSelectedMember(member);
+                    // If member object had dueAmount, we could set it, but basic member object might not have it
+                    // Leaving amount blank for manual entry is safer
+                  }}
+                >
+                  <View style={styles.memberAvatar}>
+                    <Text style={styles.avatarText}>{(member.name || '?').charAt(0)}</Text>
+                  </View>
+                  <View style={styles.memberInfo}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberPhone}>{member.phone || 'No phone'}</Text>
+                  </View>
+                  <View style={styles.dueAmount}>
+                    <Text style={[styles.dueLabel, { color: '#4CAF50' }]}>ID: {member.memberId || member.id}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={{ textAlign: 'center', padding: 20, color: '#999' }}>No members found</Text>
+            )}
           </View>
         </View>
 
@@ -118,10 +210,10 @@ const TakePayment = ({ navigation }) => {
                     ]}
                     onPress={() => setPaymentMethod(method.id)}
                   >
-                    <Icon 
-                      name={method.icon} 
-                      size={20} 
-                      color={paymentMethod === method.id ? '#FFF' : '#666'} 
+                    <Icon
+                      name={method.icon}
+                      size={20}
+                      color={paymentMethod === method.id ? '#FFF' : '#666'}
                     />
                     <Text style={[
                       styles.methodText,
@@ -134,9 +226,19 @@ const TakePayment = ({ navigation }) => {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.submitButton} onPress={handlePayment}>
-              <Icon name="check-circle" size={20} color="#FFF" />
-              <Text style={styles.submitButtonText}>Confirm Payment</Text>
+            <TouchableOpacity
+              style={[styles.submitButton, submitting && { opacity: 0.7 }]}
+              onPress={handlePayment}
+              disabled={submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <>
+                  <Icon name="check-circle" size={20} color="#FFF" />
+                  <Text style={styles.submitButtonText}>Confirm Payment</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </View>

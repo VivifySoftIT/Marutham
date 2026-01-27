@@ -215,7 +215,8 @@ class ApiService {
   }
 
   async updateMember(id, memberData) {
-    return await this.request(`/api/Members/${id}`, 'PUT', memberData);
+    // Use the new edit endpoint: POST /api/Members/{id}/edit
+    return await this.request(`/api/Members/${id}/edit`, 'POST', memberData);
   }
 
   async deleteMember(id) {
@@ -675,6 +676,10 @@ class ApiService {
     return await this.request(`/api/TYFCB/${id}`, 'PUT', tyfcbData);
   }
 
+  async updateTYFCBStatus(id, status) {
+    return await this.request(`/api/TYFCB/${id}/status`, 'POST', { Status: status });
+  }
+
   async deleteTYFCB(id) {
     return await this.request(`/api/TYFCB/${id}`, 'DELETE');
   }
@@ -702,6 +707,10 @@ class ApiService {
 
   async updateReferral(id, referralData) {
     return await this.request(`/api/Referrals/${id}`, 'PUT', referralData);
+  }
+
+  async updateReferralStatus(id, status) {
+    return await this.request(`/api/Referrals/${id}/status`, 'POST', { Status: status });
   }
 
   async deleteReferral(id) {

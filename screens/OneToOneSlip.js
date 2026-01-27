@@ -26,6 +26,7 @@ const OneToOneSlip = () => {
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [allMembers, setAllMembers] = useState([]);
   const [formData, setFormData] = useState({
     memberName: '',
@@ -64,11 +65,11 @@ const OneToOneSlip = () => {
         },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const responseData = await response.json();
       return responseData;
     } catch (error) {
@@ -91,11 +92,12 @@ const OneToOneSlip = () => {
   };
 
   const handleSelectMember = (member) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       memberName: member.name,
       memberId: member.id,
     }));
+    setMemberSearchQuery('');
     setShowMemberDropdown(false);
   };
 
@@ -115,10 +117,6 @@ const OneToOneSlip = () => {
       Alert.alert('Validation Error', 'Please select a member');
       return false;
     }
-    if (!formData.metWith.trim()) {
-      Alert.alert('Validation Error', 'Please enter who you met with');
-      return false;
-    }
     if (!formData.location.trim()) {
       Alert.alert('Validation Error', 'Please enter location');
       return false;
@@ -136,7 +134,7 @@ const OneToOneSlip = () => {
     setLoading(true);
     try {
       const currentUserName = await AsyncStorage.getItem('fullName');
-      
+
       // Get the logged-in user's member ID from database
       let givenByMemberId = null;
       try {
@@ -159,7 +157,8 @@ const OneToOneSlip = () => {
       const meetingData = {
         member1Id: givenByMemberId,
         member2Id: parseInt(formData.memberId),
-        metWith: formData.metWith,
+        member2Id: parseInt(formData.memberId),
+        metWith: formData.memberName || 'Member', // Use member name since text field removed
         location: formData.location,
         meetingDate: formData.date.toISOString(),
         topic: formData.topic,
@@ -167,10 +166,10 @@ const OneToOneSlip = () => {
       };
 
       console.log('Sending OneToOne meeting data:', meetingData);
-      
+
       // Send to OneToOneMeeting API
       await apiPost('/api/OneToOneMeeting', meetingData);
-      
+
       Alert.alert(
         'Success',
         'One-to-One meeting slip submitted successfully!',
@@ -208,87 +207,80 @@ const OneToOneSlip = () => {
         imageStyle={styles.backgroundImageStyle}
       >
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Member Name Dropdown */}
+          {/* Member Name Dropdown - Searchable */}
           <View style={styles.section}>
-            <Text style={styles.label}>Member *</Text>
-            <TouchableOpacity
-              style={styles.memberDropdownButton}
-              onPress={() => setShowMemberDropdown(!showMemberDropdown)}
-            >
-              <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-              <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
-                {formData.memberName || 'Select member'}
-              </Text>
-              <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
-            </TouchableOpacity>
+            <Text style={styles.label}>Met with *</Text>
+            <View style={styles.dropdownContainer}>
+              <View style={styles.inputContainer}>
+                <Icon name="account-search" size={20} color="#4A90E2" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Type to search member..."
+                  value={showMemberDropdown ? memberSearchQuery : (formData.memberName || '')}
+                  onChangeText={(text) => {
+                    setMemberSearchQuery(text);
+                    if (!showMemberDropdown) setShowMemberDropdown(true);
+                  }}
+                  onFocus={() => setShowMemberDropdown(true)}
+                  placeholderTextColor="#999"
+                />
+                <TouchableOpacity onPress={() => setShowMemberDropdown(!showMemberDropdown)}>
+                  <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
+                </TouchableOpacity>
+              </View>
 
-            {showMemberDropdown && (
-              <ScrollView style={styles.memberDropdownList} nestedScrollEnabled={true}>
-                {loadingMembers ? (
-                  <View style={styles.noMembersContainer}>
-                    <ActivityIndicator size="small" color="#4A90E2" />
-                    <Text style={styles.noMembersText}>Loading members...</Text>
-                  </View>
-                ) : allMembers && allMembers.length > 0 ? (
-                  allMembers.map(member => (
-                    <TouchableOpacity
-                      key={member.id}
-                      style={styles.memberDropdownItem}
-                      onPress={() => handleSelectMember(member)}
-                    >
-                      <View style={styles.memberItemContent}>
-                        <Text style={styles.memberName}>{member.name}</Text>
-                        <View style={styles.memberDetailsRow}>
-                          <Text style={styles.memberDetail}>
-                            <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
-                          </Text>
-                          <Text style={styles.memberDetail}>
-                            <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
-                          </Text>
-                        </View>
-                        {member.email && (
-                          <Text style={styles.memberEmail}>
-                            <Icon name="email" size={12} color="#999" /> {member.email}
-                          </Text>
-                        )}
-                      </View>
-                      {formData.memberId === member.id && (
-                        <Icon name="check" size={20} color="#4A90E2" />
-                      )}
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <View style={styles.noMembersContainer}>
-                    <Icon name="account-alert" size={24} color="#999" />
-                    <Text style={styles.noMembersText}>No members available</Text>
-                  </View>
-                )}
-              </ScrollView>
-            )}
-          </View>
+              {showMemberDropdown && (
+                <View style={styles.memberDropdownList}>
+                  <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
+                    {loadingMembers ? (
+                      <ActivityIndicator size="small" color="#4A90E2" style={{ padding: 20 }} />
+                    ) : (
+                      (() => {
+                        const filtered = allMembers.filter(m =>
+                          (m.name || '').toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+                          (m.memberId || '').toLowerCase().includes(memberSearchQuery.toLowerCase())
+                        );
 
-          {/* Met With */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Met With *</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-              <SpeechToTextInput
-                style={styles.speechInput}
-                placeholder="Enter person name"
-                value={formData.metWith}
-                onChangeText={(text) => handleInputChange('metWith', text)}
-                placeholderTextColor="#999"
-              />
+                        return filtered.length > 0 ? (
+                          filtered.map(member => (
+                            <TouchableOpacity
+                              key={member.id}
+                              style={styles.memberDropdownItem}
+                              onPress={() => handleSelectMember(member)}
+                            >
+                              <View style={styles.memberItemContent}>
+                                <Text style={styles.memberName}>{member.name}</Text>
+                                <Text style={styles.memberDetail}>{member.memberId || 'N/A'} - {member.business || 'Member'}</Text>
+                              </View>
+                              {formData.memberId === member.id && (
+                                <Icon name="check" size={20} color="#4A90E2" />
+                              )}
+                            </TouchableOpacity>
+                          ))
+                        ) : (
+                          <View style={styles.noMembersContainer}>
+                            <Text style={styles.noMembersText}>No members found</Text>
+                          </View>
+                        );
+                      })()
+                    )}
+                  </ScrollView>
+                </View>
+              )}
             </View>
           </View>
+
+          {/* Met With (Guest) */}
+
 
           {/* Location */}
           <View style={styles.section}>
             <Text style={styles.label}>Location *</Text>
-            <View style={styles.inputContainer}>
+            <View style={styles.rowContainer}>
               <Icon name="map-marker" size={20} color="#4A90E2" style={styles.icon} />
               <SpeechToTextInput
                 style={styles.speechInput}
+                inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }} // Remove internal border
                 placeholder="Enter location"
                 value={formData.location}
                 onChangeText={(text) => handleInputChange('location', text)}
@@ -322,9 +314,10 @@ const OneToOneSlip = () => {
           {/* Topic */}
           <View style={styles.section}>
             <Text style={styles.label}>Topic *</Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer]}>
+            <View style={[styles.rowContainer, styles.textAreaContainer]}>
               <SpeechToTextInput
                 style={styles.speechTextArea}
+                inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 80 }} // Remove internal border
                 placeholder="Enter meeting topic"
                 value={formData.topic}
                 onChangeText={(text) => handleInputChange('topic', text)}
@@ -404,6 +397,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     minHeight: 50,
   },
+  rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 12,
+    minHeight: 50,
+  },
+  dropdownContainer: {
+    position: 'relative',
+    zIndex: 1000,
+  },
   icon: {
     marginRight: 10,
   },
@@ -415,7 +422,8 @@ const styles = StyleSheet.create({
   },
   speechInput: {
     flex: 1,
-    marginLeft: -12, // Compensate for icon margin
+    // Fix margins to align with icon
+    marginLeft: 0,
   },
   speechTextArea: {
     flex: 1,

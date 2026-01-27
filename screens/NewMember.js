@@ -20,7 +20,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
 import MemberIdService from '../service/MemberIdService';
-import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const NewMember = () => {
   const navigation = useNavigation();
@@ -37,6 +36,7 @@ const NewMember = () => {
     address: "",
     batch: "",
     subCompanyId: null,
+    gender: "", // Male or Female
   });
 
   const [showJoiningDatePicker, setShowJoiningDatePicker] = useState(false);
@@ -68,6 +68,7 @@ const NewMember = () => {
         address: member.address || "",
         batch: member.batch || "",
         subCompanyId: member.subCompanyId || null,
+        gender: member.gender || "",
       });
       
       // Set the joining date if available
@@ -373,6 +374,7 @@ const NewMember = () => {
           BusinessCategory: formData.businessCategory || null,
           MembershipType: formData.membershipType || null,
           ReferenceId: formData.referenceId || null,
+          Gender: formData.gender || null, // Add Gender field
           CreatedBy: parseInt(adminMemberId), // Pass admin member ID as integer
         };
 
@@ -439,8 +441,8 @@ const NewMember = () => {
           <Text style={styles.label}>Member Name *</Text>
           <View style={styles.inputContainer}>
             <Icon name="account" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <SpeechToTextInput
-              style={styles.speechInput}
+            <TextInput
+              style={styles.input}
               placeholder="Enter member name"
               value={formData.memberName}
               onChangeText={(text) => handleInputChange("memberName", text)}
@@ -455,8 +457,8 @@ const NewMember = () => {
           <Text style={styles.label}>Mobile Number *</Text>
           <View style={styles.inputContainer}>
             <Icon name="phone" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <SpeechToTextInput
-              style={styles.speechInput}
+            <TextInput
+              style={styles.input}
               placeholder="10-digit mobile number"
               value={formData.mobileNum}
               onChangeText={(text) => handleInputChange("mobileNum", text)}
@@ -473,8 +475,8 @@ const NewMember = () => {
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputContainer}>
             <Icon name="email" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <SpeechToTextInput
-              style={styles.speechInput}
+            <TextInput
+              style={styles.input}
               placeholder="Enter email address"
               value={formData.email}
               onChangeText={(text) => handleInputChange("email", text)}
@@ -483,6 +485,34 @@ const NewMember = () => {
               placeholderTextColor="#999"
               editable={!loading}
             />
+          </View>
+        </View>
+
+        {/* Gender Radio Buttons */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Gender</Text>
+          <View style={styles.radioGroup}>
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => handleInputChange("gender", "Male")}
+              disabled={loading}
+            >
+              <View style={[styles.radioCircle, formData.gender === "Male" && styles.radioCircleSelected]}>
+                {formData.gender === "Male" && <View style={styles.radioInner} />}
+              </View>
+              <Text style={styles.radioLabel}>Male</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.radioButton}
+              onPress={() => handleInputChange("gender", "Female")}
+              disabled={loading}
+            >
+              <View style={[styles.radioCircle, formData.gender === "Female" && styles.radioCircleSelected]}>
+                {formData.gender === "Female" && <View style={styles.radioInner} />}
+              </View>
+              <Text style={styles.radioLabel}>Female</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -561,13 +591,15 @@ const NewMember = () => {
           <Text style={styles.label}>Address</Text>
           <View style={styles.inputContainer}>
             <Icon name="map-marker" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <SpeechToTextInput
-              style={styles.speechInput}
+            <TextInput
+              style={[styles.input, styles.textArea]}
               placeholder="Enter address"
               value={formData.address}
               onChangeText={(text) => handleInputChange("address", text)}
               placeholderTextColor="#999"
               editable={!loading}
+              multiline
+              numberOfLines={3}
             />
           </View>
         </View>
@@ -577,8 +609,8 @@ const NewMember = () => {
           <Text style={styles.label}>Business/Occupation</Text>
           <View style={styles.inputContainer}>
             <Icon name="briefcase" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <SpeechToTextInput
-              style={styles.speechInput}
+            <TextInput
+              style={styles.input}
               placeholder="Enter business or occupation"
               value={formData.business}
               onChangeText={(text) => handleInputChange("business", text)}
@@ -696,10 +728,7 @@ const styles = StyleSheet.create({
     color: '#333',
     paddingVertical: 10,
   },
-  speechInput: {
-    flex: 1,
-    marginLeft: -8, // Compensate for icon margin
-  },
+
   calendarIconInside: {
     padding: 5,
     marginLeft: 5,
@@ -799,6 +828,41 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginTop: 2,
+  },
+  // Radio button styles
+  radioGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 30,
+    paddingVertical: 8,
+  },
+  radioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  radioCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  radioCircleSelected: {
+    borderColor: '#4A90E2',
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4A90E2',
+  },
+  radioLabel: {
+    fontSize: 15,
+    color: '#333',
+    fontWeight: '500',
   },
 });
 

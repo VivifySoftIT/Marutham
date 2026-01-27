@@ -1408,6 +1408,70 @@ const Reports = ({ navigation }) => {
     </View>
   );
 
+  const handleTYFCBStatusUpdate = async (tyfcbId, status) => {
+    try {
+      Alert.alert(
+        `${status} TYFCB`,
+        `Are you sure you want to ${status.toLowerCase()} this TYFCB record?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: status,
+            style: status === 'Reject' ? 'destructive' : 'default',
+            onPress: async () => {
+              try {
+                setLoading(true);
+                await ApiService.updateTYFCBStatus(tyfcbId, status);
+                Alert.alert('Success', `TYFCB ${status.toLowerCase()}ed successfully`);
+                // Reload the report data
+                await loadReportData();
+              } catch (error) {
+                console.error(`Error ${status.toLowerCase()}ing TYFCB:`, error);
+                Alert.alert('Error', `Failed to ${status.toLowerCase()} TYFCB`);
+              } finally {
+                setLoading(false);
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in handleTYFCBStatusUpdate:', error);
+    }
+  };
+
+  const handleReferralStatusUpdate = async (referralId, status) => {
+    try {
+      Alert.alert(
+        `${status} Referral`,
+        `Are you sure you want to ${status.toLowerCase()} this referral?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: status,
+            style: status === 'Reject' ? 'destructive' : 'default',
+            onPress: async () => {
+              try {
+                setLoading(true);
+                await ApiService.updateReferralStatus(referralId, status);
+                Alert.alert('Success', `Referral ${status.toLowerCase()}ed successfully`);
+                // Reload the report data
+                await loadReportData();
+              } catch (error) {
+                console.error(`Error ${status.toLowerCase()}ing referral:`, error);
+                Alert.alert('Error', `Failed to ${status.toLowerCase()} referral`);
+              } finally {
+                setLoading(false);
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in handleReferralStatusUpdate:', error);
+    }
+  };
+
   const renderTYFCBItem = (tyfcb) => (
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
@@ -1419,6 +1483,8 @@ const Reports = ({ navigation }) => {
           styles.statusBadge,
           tyfcb.status === 'Pending' && styles.statusPending,
           tyfcb.status === 'Completed' && styles.statusCompleted,
+          tyfcb.status === 'Confirm' && styles.statusConfirmed,
+          tyfcb.status === 'Reject' && styles.statusRejected,
         ]}>
           <Text style={styles.statusText}>{tyfcb.status || 'Pending'}</Text>
         </View>
@@ -1453,6 +1519,26 @@ const Reports = ({ navigation }) => {
         <View style={styles.notesContainer}>
           <Icon name="note-text" size={14} color="#666" />
           <Text style={styles.notesText}>{tyfcb.notes}</Text>
+        </View>
+      )}
+      
+      {/* Confirm/Reject Buttons - Only show if status is Pending */}
+      {(!tyfcb.status || tyfcb.status === 'Pending') && (
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.confirmButton]}
+            onPress={() => handleTYFCBStatusUpdate(tyfcb.id, 'Confirm')}
+          >
+            <Icon name="check-circle" size={16} color="#FFF" />
+            <Text style={styles.actionButtonText}>Confirm</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.rejectButton]}
+            onPress={() => handleTYFCBStatusUpdate(tyfcb.id, 'Reject')}
+          >
+            <Icon name="close-circle" size={16} color="#FFF" />
+            <Text style={styles.actionButtonText}>Reject</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -1526,7 +1612,9 @@ const Reports = ({ navigation }) => {
           styles.statusBadge,
           referral.status === 'Pending' && styles.statusPending,
           referral.status === 'Confirmed' && styles.statusCompleted,
+          referral.status === 'Confirm' && styles.statusConfirmed,
           referral.status === 'Rejected' && styles.statusAbsent,
+          referral.status === 'Reject' && styles.statusRejected,
         ]}>
           <Text style={styles.statusText}>{referral.status || 'Pending'}</Text>
         </View>
@@ -1573,6 +1661,26 @@ const Reports = ({ navigation }) => {
         <View style={styles.notesContainer}>
           <Icon name="note-text" size={14} color="#666" />
           <Text style={styles.notesText}>{referral.notes}</Text>
+        </View>
+      )}
+      
+      {/* Confirm/Reject Buttons - Only show if status is Pending */}
+      {(!referral.status || referral.status === 'Pending') && (
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.confirmButton]}
+            onPress={() => handleReferralStatusUpdate(referral.id, 'Confirm')}
+          >
+            <Icon name="check-circle" size={16} color="#FFF" />
+            <Text style={styles.actionButtonText}>Confirm</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.rejectButton]}
+            onPress={() => handleReferralStatusUpdate(referral.id, 'Reject')}
+          >
+            <Icon name="close-circle" size={16} color="#FFF" />
+            <Text style={styles.actionButtonText}>Reject</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -2924,6 +3032,40 @@ const styles = StyleSheet.create({
   },
   statusCompleted: {
     backgroundColor: '#E8F5E9',
+  },
+  statusConfirmed: {
+    backgroundColor: '#E8F5E9',
+  },
+  statusRejected: {
+    backgroundColor: '#FFEBEE',
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 10,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+    gap: 6,
+  },
+  confirmButton: {
+    backgroundColor: '#4CAF50',
+  },
+  rejectButton: {
+    backgroundColor: '#F44336',
+  },
+  actionButtonText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
 
