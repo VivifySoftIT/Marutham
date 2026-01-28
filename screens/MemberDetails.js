@@ -17,9 +17,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const MemberDetails = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { member } = route.params || {};
-
-  const [memberData] = useState(member || {
+  
+  // Get member data from navigation params (passed from MembersDirectory)
+  const passedMember = route.params?.memberData || route.params?.member;
+  
+  const [memberData, setMemberData] = useState(passedMember || {
     id: 1,
     name: 'John Doe',
     memberId: 'ALG-001',
@@ -34,6 +36,7 @@ const MemberDetails = () => {
   });
 
   const [userRole, setUserRole] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const checkUserRole = async () => {
@@ -45,7 +48,13 @@ const MemberDetails = () => {
       }
     };
     checkUserRole();
-  }, []);
+    
+    // Log received member data for debugging
+    if (passedMember) {
+      console.log('Received member data:', passedMember);
+      console.log('Member fields:', Object.keys(passedMember));
+    }
+  }, [passedMember]);
 
   const isAdmin = userRole === 'Admin';
 
@@ -88,13 +97,23 @@ const MemberDetails = () => {
         {/* Member Avatar Card */}
         <View style={styles.avatarCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{memberData.name?.charAt(0)}</Text>
+            <Text style={styles.avatarText}>
+              {memberData.name?.charAt(0)?.toUpperCase() || '?'}
+            </Text>
           </View>
-          <Text style={styles.memberName}>{memberData.name}</Text>
-          <Text style={styles.memberId}>{memberData.memberId}</Text>
-          <View style={[styles.statusBadge, { backgroundColor: memberData.status === 'Active' ? '#E8F5E9' : '#FFF3E0' }]}>
-            <Text style={[styles.statusText, { color: memberData.status === 'Active' ? '#4CAF50' : '#FF9800' }]}>
-              {memberData.status}
+          <Text style={styles.memberName}>{memberData.name || 'Unknown'}</Text>
+          <Text style={styles.memberId}>
+            ID: {memberData.memberId || memberData.id || 'N/A'}
+          </Text>
+          <View style={[
+            styles.statusBadge, 
+            { backgroundColor: memberData.status === 'Active' || memberData.isActive ? '#E8F5E9' : '#FFF3E0' }
+          ]}>
+            <Text style={[
+              styles.statusText, 
+              { color: memberData.status === 'Active' || memberData.isActive ? '#4CAF50' : '#FF9800' }
+            ]}>
+              {memberData.status || (memberData.isActive ? 'Active' : 'Inactive')}
             </Text>
           </View>
         </View>
@@ -107,7 +126,9 @@ const MemberDetails = () => {
               <Icon name="phone" size={20} color="#4A90E2" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Phone</Text>
-                <Text style={styles.infoValue}>{memberData.phone}</Text>
+                <Text style={styles.infoValue}>
+                  {memberData.phone || memberData.mobile || memberData.telephone || 'Not provided'}
+                </Text>
               </View>
             </View>
             <View style={styles.divider} />
@@ -115,17 +136,25 @@ const MemberDetails = () => {
               <Icon name="email" size={20} color="#4A90E2" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Email</Text>
-                <Text style={styles.infoValue}>{memberData.email}</Text>
+                <Text style={styles.infoValue}>
+                  {memberData.email || 'Not provided'}
+                </Text>
               </View>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Icon name="map-marker" size={20} color="#4A90E2" />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Address</Text>
-                <Text style={styles.infoValue}>{memberData.address}</Text>
-              </View>
-            </View>
+            {(memberData.address || memberData.Address) && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <Icon name="map-marker" size={20} color="#4A90E2" />
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Address</Text>
+                    <Text style={styles.infoValue}>
+                      {memberData.address || memberData.Address}
+                    </Text>
+                  </View>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
@@ -133,39 +162,85 @@ const MemberDetails = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Membership Information</Text>
           <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <Icon name="calendar" size={20} color="#4A90E2" />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Join Date</Text>
-                <Text style={styles.infoValue}>{memberData.joinDate}</Text>
+            {(memberData.joinDate || memberData.JoinDate) && (
+              <>
+                <View style={styles.infoRow}>
+                  <Icon name="calendar" size={20} color="#4A90E2" />
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Join Date</Text>
+                    <Text style={styles.infoValue}>
+                      {new Date(memberData.joinDate || memberData.JoinDate).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
+            {(memberData.dob || memberData.DOB) && (
+              <>
+                <View style={styles.infoRow}>
+                  <Icon name="cake" size={20} color="#4A90E2" />
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Date of Birth</Text>
+                    <Text style={styles.infoValue}>
+                      {new Date(memberData.dob || memberData.DOB).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
+            {(memberData.business || memberData.businessName || memberData.Business) && (
+              <>
+                <View style={styles.infoRow}>
+                  <Icon name="briefcase" size={20} color="#4A90E2" />
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Business</Text>
+                    <Text style={styles.infoValue}>
+                      {memberData.business || memberData.businessName || memberData.Business}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
+            {(memberData.businessCategory || memberData.BusinessCategory) && (
+              <>
+                <View style={styles.infoRow}>
+                  <Icon name="tag" size={20} color="#4A90E2" />
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Business Category</Text>
+                    <Text style={styles.infoValue}>
+                      {memberData.businessCategory || memberData.BusinessCategory}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
+            {memberData.gender && (
+              <>
+                <View style={styles.infoRow}>
+                  <Icon name="gender-male-female" size={20} color="#4A90E2" />
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Gender</Text>
+                    <Text style={styles.infoValue}>{memberData.gender}</Text>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
+            {(memberData.subCompanyId || memberData.SubCompanyId) && (
+              <View style={styles.infoRow}>
+                <Icon name="office-building" size={20} color="#4A90E2" />
+                <View style={styles.infoContent}>
+                  <Text style={styles.infoLabel}>Sub Company ID</Text>
+                  <Text style={styles.infoValue}>
+                    {memberData.subCompanyId || memberData.SubCompanyId}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Icon name="clock" size={20} color="#4A90E2" />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Batch</Text>
-                <Text style={styles.infoValue}>{memberData.batch}</Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Icon name="briefcase" size={20} color="#4A90E2" />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Business</Text>
-                <Text style={styles.infoValue}>{memberData.business}</Text>
-              </View>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Icon name="credit-card" size={20} color="#4A90E2" />
-              <View style={styles.infoContent}>
-                <Text style={styles.infoLabel}>Fees Status</Text>
-                <Text style={[styles.infoValue, { color: memberData.feesStatus === 'Paid' ? '#4CAF50' : '#FF9800' }]}>
-                  {memberData.feesStatus}
-                </Text>
-              </View>
-            </View>
+            )}
           </View>
         </View>
 

@@ -24,6 +24,88 @@ import { useLanguage } from '../service/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
+// Birthday Wishes Section Component for MemberDashboard
+const BirthdayWishesSection = ({ memberId }) => {
+  const [birthdayWish, setBirthdayWish] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (memberId) {
+      loadBirthdayWish();
+    }
+  }, [memberId]);
+
+  const loadBirthdayWish = async () => {
+    try {
+      setLoading(true);
+      const wish = await ApiService.getTodaysBirthdayWish(memberId);
+      if (wish) {
+        console.log('Birthday wish received:', wish);
+        setBirthdayWish(wish);
+      } else {
+        // No wish found - this is normal, don't log as error
+        setBirthdayWish(null);
+      }
+    } catch (error) {
+      // Only log if it's a real error (not just "not found")
+      if (!error.message || !error.message.includes('No birthday wish found')) {
+        console.error('Error loading birthday wish:', error);
+      }
+      setBirthdayWish(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Animatable.View
+        animation="fadeInUp"
+        delay={650}
+        style={styles.sectionContainer}
+      >
+        <View style={styles.birthdayWishCard}>
+          <ActivityIndicator size="small" color="#4A90E2" />
+          <Text style={styles.birthdayWishLoading}>Checking for birthday wishes...</Text>
+        </View>
+      </Animatable.View>
+    );
+  }
+
+  if (!birthdayWish) {
+    return null; // Don't show anything if no birthday wish
+  }
+
+  return (
+    <Animatable.View
+      animation="bounceIn"
+      delay={650}
+      style={styles.sectionContainer}
+    >
+      <LinearGradient
+        colors={['#FFE5E5', '#FFF0F0']}
+        style={styles.birthdayWishCard}
+      >
+        <View style={styles.birthdayWishHeader}>
+          <Icon name="cake-variant" size={40} color="#FF6B6B" />
+          <View style={styles.birthdayWishContent}>
+            <Text style={styles.birthdayWishTitle}>🎉 Birthday Wish Received!</Text>
+            <Text style={styles.birthdayWishMessage}>
+              {birthdayWish.senderName || 'A member'} sent you birthday wishes today!
+            </Text>
+            <Text style={styles.birthdayWishTime}>
+              {new Date(birthdayWish.sentDate).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </Text>
+          </View>
+        </View>
+      </LinearGradient>
+    </Animatable.View>
+  );
+};
+
 // Define waterBlueColors outside the component so it's accessible
 const waterBlueColors = {
   primary: '#4A90E2',
@@ -48,6 +130,7 @@ const MemberDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [currentMemberId, setCurrentMemberId] = useState(null);
 
   // For swipeable sections
   const [activeStatIndex, setActiveStatIndex] = useState(0);
@@ -137,7 +220,13 @@ const MemberDashboard = () => {
     setQuote(newQuote);
 
     loadDashboardData();
+    loadCurrentMemberId();
   }, [t]);
+
+  const loadCurrentMemberId = async () => {
+    const memberId = await MemberIdService.getCurrentUserMemberId();
+    setCurrentMemberId(memberId);
+  };
 
   const loadDashboardData = async () => {
     try {
@@ -215,16 +304,8 @@ const MemberDashboard = () => {
 
       console.log('MemberDashboard - Loading notifications for memberId:', memberId);
 
-      // Load dashboard reminders and message notifications separately with error handling
-      let reminders = null;
+      // Load message notifications (includes Birthday, NewMember, Event, Meeting, Payment, etc.)
       let messageNotifications = null;
-
-      try {
-        reminders = await ApiService.getDashboardReminders(memberId);
-        console.log('MemberDashboard - Dashboard reminders:', reminders);
-      } catch (error) {
-        console.error('MemberDashboard - Error loading dashboard reminders:', error);
-      }
 
       try {
         messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
@@ -243,46 +324,8 @@ const MemberDashboard = () => {
         messageNotifications = [];
       }
 
-      // Convert reminders to notifications format
+      // Convert message notifications to UI format
       const newNotifications = [];
-
-      // Add birthday notifications
-      if (reminders && reminders.teamBirthdays && reminders.teamBirthdays.length > 0) {
-        reminders.teamBirthdays.forEach((birthday, index) => {
-          newNotifications.push({
-            id: `birthday-${birthday.name}-${index}`,
-            type: 'birthday',
-            title: 'Birthday Reminder',
-            message: birthday.isToday
-              ? `${birthday.name}'s birthday is today! 🎉`
-              : `${birthday.name}'s birthday in ${birthday.daysUntil} day${birthday.daysUntil > 1 ? 's' : ''}`,
-            time: birthday.isToday ? 'Today' : `In ${birthday.daysUntil} day${birthday.daysUntil > 1 ? 's' : ''}`,
-            icon: 'cake',
-            color: '#FF6B6B',
-            backgroundColor: '#FFE5E5',
-            isRead: false,
-          });
-        });
-      }
-
-      // Add meeting notifications
-      if (reminders && reminders.upcomingMeetings && reminders.upcomingMeetings.length > 0) {
-        reminders.upcomingMeetings.forEach((meeting) => {
-          newNotifications.push({
-            id: `meeting-${meeting.id}`,
-            type: 'meeting',
-            title: 'Meeting Reminder',
-            message: meeting.isToday
-              ? `${meeting.meetingTitle || 'Meeting'} today at ${meeting.time}`
-              : `${meeting.meetingTitle || 'Meeting'} on ${meeting.date} at ${meeting.time}`,
-            time: meeting.isToday ? 'Today' : meeting.date,
-            icon: 'calendar-clock',
-            color: '#4ECDC4',
-            backgroundColor: '#E8F8F7',
-            isRead: false,
-          });
-        });
-      }
 
       // Add message notifications from API
       if (messageNotifications && messageNotifications.length > 0) {
@@ -733,6 +776,9 @@ const MemberDashboard = () => {
             </ScrollView>
           </Animatable.View>
         )}
+
+        {/* Birthday Wishes Received Section */}
+        <BirthdayWishesSection memberId={currentMemberId} />
 
         {/* Quick Actions - Swipeable */}
         <Animatable.View
@@ -1701,6 +1747,45 @@ const styles = StyleSheet.create({
   notificationItemTime: {
     fontSize: 12,
     color: '#95A5A6',
+  },
+  birthdayWishCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 15,
+    elevation: 3,
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  birthdayWishHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  birthdayWishContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  birthdayWishTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF6B6B',
+    marginBottom: 4,
+  },
+  birthdayWishMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  birthdayWishTime: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
+  },
+  birthdayWishLoading: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
   },
 });
 

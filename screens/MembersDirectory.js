@@ -127,11 +127,19 @@ const MembersDirectory = () => {
     });
   };
 
-  // If you want to give referral (optional button)
+  // If you want to give referral - Navigate to ReferralSlip with member data
   const handleGiveReferral = (member, e) => {
     e?.stopPropagation(); // Prevent navigating to details
     console.log('Give referral to:', member.name);
-    Alert.alert('Give Referral', `Would give referral to ${member.name}`);
+    navigation.navigate('ReferralSlip', {
+      selectedMember: {
+        id: member.id,
+        name: member.name,
+        email: member.email || '',
+        phone: member.phone || member.mobile || member.telephone || '',
+        memberId: member.memberId || member.id
+      }
+    });
   };
 
   // Format phone number for display
@@ -199,6 +207,7 @@ const MembersDirectory = () => {
               onPress={(e) => handleGiveReferral(item, e)}
             >
               <Icon name="account-arrow-right" size={18} color="#4A90E2" />
+              <Text style={styles.referralButtonText}>Refer</Text>
             </TouchableOpacity>
             <Icon name="chevron-right" size={24} color="#999" />
           </View>
@@ -448,10 +457,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   referralButton: {
-    padding: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     marginRight: 8,
-    borderRadius: 4,
+    borderRadius: 6,
     backgroundColor: '#F0F7FF',
+    borderWidth: 1,
+    borderColor: '#4A90E2',
+  },
+  referralButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#4A90E2',
   },
   statsRow: {
     flexDirection: 'row',

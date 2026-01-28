@@ -21,7 +21,9 @@
         "NSFaceIDUsageDescription": "We use Face ID to ensure secure check-in and check-out.",
         "NSPhotoLibraryUsageDescription": "We need access to your photos to update your profile picture .",
         "NSPhotoLibraryAddUsageDescription": "We need access to your photos to update your profile picture .",
-        "NSUserNotificationsUsageDescription": "We use notifications to keep you updated on important alerts and messages."
+        "NSUserNotificationsUsageDescription": "We use notifications to keep you updated on important alerts and messages.",
+        "NSMicrophoneUsageDescription": "We need access to your microphone for voice search functionality.",
+        "NSSpeechRecognitionUsageDescription": "We need access to speech recognition for voice search functionality."
       },
       "bundleIdentifier": "com.vivify.safety"
     },
@@ -36,7 +38,8 @@
         "ACCESS_FINE_LOCATION",
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
-        "POST_NOTIFICATIONS"
+        "POST_NOTIFICATIONS",
+        "RECORD_AUDIO"
       ],
       "package": "com.alaigal"
     },
@@ -53,7 +56,14 @@
           "photosPermission": "We need access to your photos to update your profile picture."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "We need access to your microphone for voice search.",
+          "speechRecognitionPermission": "We need access to speech recognition for voice search."
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   SafeAreaView,
   StatusBar,
   TextInput,
   Alert,
   ActivityIndicator,
   ImageBackground,
+  Platform,
+  FlatList,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import API_BASE_URL from '../apiConfig';
-
 import MemberIdService from '../service/MemberIdService';
+import Voice from '@react-native-voice/voice';
 
 const TYFCBSlip = () => {
   const navigation = useNavigation();
@@ -26,8 +28,13 @@ const TYFCBSlip = () => {
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
+  const [filteredMembers, setFilteredMembers] = useState([]);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [savedData, setSavedData] = useState(null);
+  const [isListening, setIsListening] = useState(null);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const searchInputRef = useRef(null);
+  
   const [formData, setFormData] = useState({
     memberName: '',
     memberId: '',
@@ -35,12 +42,27 @@ const TYFCBSlip = () => {
     amount: '',
     notes: '',
     rating: '',
-    // Status field completely removed
   });
 
   useEffect(() => {
     loadMembers();
   }, []);
+
+  // Filter members based on search query
+  useEffect(() => {
+    if (memberSearchQuery.trim() === '') {
+      setFilteredMembers(allMembers);
+    } else {
+      const query = memberSearchQuery.toLowerCase();
+      const filtered = allMembers.filter(member => 
+        member.name?.toLowerCase().includes(query) ||
+        member.email?.toLowerCase().includes(query) ||
+        member.phone?.includes(query) ||
+        member.memberId?.toString().toLowerCase().includes(query)
+      );
+      setFilteredMembers(filtered);
+    }
+  }, [memberSearchQuery, allMembers]);
 
   const apiGet = async (endpoint) => {
     try {
@@ -82,10 +104,20 @@ const TYFCBSlip = () => {
     try {
       setLoadingMembers(true);
       const members = await apiGet('/api/Members');
-      setAllMembers(members || []);
+      const formattedMembers = (members || []).map(member => ({
+        ...member,
+        name: member.name || 'Unknown Member',
+        memberId: member.memberId || member.id,
+        phone: member.phone || '',
+        email: member.email || '',
+      }));
+      setAllMembers(formattedMembers);
+      setFilteredMembers(formattedMembers);
     } catch (error) {
       console.error('Error loading members:', error);
       Alert.alert('Error', 'Failed to load members list');
+      setAllMembers([]);
+      setFilteredMembers([]);
     } finally {
       setLoadingMembers(false);
     }
@@ -98,6 +130,7 @@ const TYFCBSlip = () => {
       memberId: member.id,
     }));
     setShowMemberDropdown(false);
+    setMemberSearchQuery('');
   };
 
   const handleInputChange = (field, value) => {
@@ -117,7 +150,147 @@ const TYFCBSlip = () => {
       Alert.alert('Validation Error', 'Amount must be a valid positive number');
       return false;
     }
+    if (formData.rating && (isNaN(formData.rating) || parseInt(formData.rating) < 1 || parseInt(formData.rating) > 5)) {
+      Alert.alert('Validation Error', 'Rating must be between 1 and 5');
+      return false;
+    }
     return true;
+  };
+
+  // Voice input functionality
+  const startVoiceInput = async (fieldName) => {
+    // For Web Platform
+    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
+      const recognition = new window.webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN';
+
+      recognition.onstart = () => {
+        setIsListening(fieldName);
+      };
+
+      recognition.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript.trim();
+        console.log('Voice input:', spokenText);
+        
+        if (event.results[0].isFinal) {
+          handleInputChange(fieldName, spokenText);
+          setIsListening(null);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Voice error:', event.error);
+        setIsListening(null);
+        
+        if (event.error === 'not-allowed') {
+          Alert.alert('Permission Denied', 'Please allow microphone access in browser settings.');
+        } else if (event.error === 'no-speech') {
+          Alert.alert('No Speech', 'No speech detected. Please try again.');
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(null);
+      };
+
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error('Error starting recognition:', error);
+        setIsListening(null);
+        Alert.alert('Error', 'Could not start voice recognition.');
+      }
+    } 
+    // For Mobile Platform
+    else if (Platform.OS !== 'web' && Voice !== null && Voice !== undefined && typeof Voice.start === 'function') {
+      try {
+        setIsListening(fieldName);
+
+        Voice.onSpeechStart = () => {
+          console.log('Voice started');
+        };
+
+        Voice.onSpeechResults = (event) => {
+          console.log('Voice results:', event.value);
+          if (event.value && event.value.length > 0) {
+            const spokenText = event.value[0];
+            handleInputChange(fieldName, spokenText);
+            setIsListening(null);
+          }
+        };
+
+        Voice.onSpeechError = (event) => {
+          console.error('Voice error:', event.error);
+          setIsListening(null);
+          Alert.alert('Voice Error', 'Could not recognize speech. Please try again.');
+        };
+
+        Voice.onSpeechEnd = () => {
+          setIsListening(null);
+        };
+
+        await Voice.start('en-IN');
+      } catch (error) {
+        console.error('Error starting mobile voice:', error);
+        setIsListening(null);
+        Alert.alert('Error', 'Voice recognition error. Please try again.');
+      }
+    } 
+    // Fallback
+    else {
+      Alert.alert(
+        'Voice Input - Web Only',
+        'Voice input is currently available on web browser only.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  // Function to handle member search with voice
+  const startMemberVoiceSearch = () => {
+    startVoiceInputForMember();
+  };
+
+  const startVoiceInputForMember = async () => {
+    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
+      const recognition = new window.webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN';
+
+      recognition.onstart = () => {
+        setIsListening('memberSearch');
+      };
+
+      recognition.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript.trim();
+        
+        if (event.results[0].isFinal) {
+          setMemberSearchQuery(spokenText);
+          setIsListening(null);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Voice error:', event.error);
+        setIsListening(null);
+      };
+
+      recognition.onend = () => {
+        setIsListening(null);
+      };
+
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error('Error starting recognition:', error);
+        setIsListening(null);
+      }
+    } else {
+      Alert.alert('Voice Search', 'Voice search is available on web only.');
+    }
   };
 
   const handleConfirm = async () => {
@@ -127,7 +300,6 @@ const TYFCBSlip = () => {
     try {
       let givenByMemberId = await MemberIdService.getCurrentUserMemberId();
 
-      // Fallback: If service returns null, try manual lookup (original logic)
       if (!givenByMemberId) {
         console.log('MemberIdService failed, trying manual fallback...');
         const currentUserName = await AsyncStorage.getItem('fullName');
@@ -137,7 +309,6 @@ const TYFCBSlip = () => {
             const currentMember = members.find(m => m.name === currentUserName);
             if (currentMember) {
               givenByMemberId = currentMember.id;
-              // Update service for next time
               await MemberIdService.setMemberId(givenByMemberId);
             }
           } catch (error) {
@@ -152,7 +323,6 @@ const TYFCBSlip = () => {
         return;
       }
 
-      // Create TYFCB record WITHOUT status field
       const tyfcbData = {
         givenByMemberId: givenByMemberId,
         receivedByMemberId: parseInt(formData.memberId),
@@ -161,7 +331,6 @@ const TYFCBSlip = () => {
         rating: formData.rating ? parseInt(formData.rating) : null,
         amount: formData.amount ? parseFloat(formData.amount) : null,
         visitDate: new Date().toISOString(),
-        // Status field removed from data
       };
 
       console.log('Sending TYFCB data:', tyfcbData);
@@ -174,7 +343,6 @@ const TYFCBSlip = () => {
         amount: formData.amount,
         rating: formData.rating,
         notes: formData.notes,
-        // No status in saved data
       });
       setShowSuccessScreen(true);
     } catch (error) {
@@ -184,6 +352,252 @@ const TYFCBSlip = () => {
       setLoading(false);
     }
   };
+
+  const renderMemberItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.memberDropdownItem}
+      onPress={() => handleSelectMember(item)}
+    >
+      <View style={styles.memberItemContent}>
+        <Text style={styles.memberName}>{item.name}</Text>
+        <View style={styles.memberDetailsRow}>
+          {item.memberId && (
+            <Text style={styles.memberDetail}>
+              <Icon name="id-card" size={12} color="#999" /> ID: {item.memberId}
+            </Text>
+          )}
+          {item.phone && (
+            <Text style={styles.memberDetail}>
+              <Icon name="phone" size={12} color="#999" /> {item.phone}
+            </Text>
+          )}
+        </View>
+        {item.email && (
+          <Text style={styles.memberEmail}>
+            <Icon name="email" size={12} color="#999" /> {item.email}
+          </Text>
+        )}
+      </View>
+      {formData.memberId === item.id && (
+        <Icon name="check" size={20} color="#4A90E2" />
+      )}
+    </TouchableOpacity>
+  );
+
+  const renderFormContent = () => (
+    <>
+      {/* Member Selection with Search */}
+      <View style={styles.section}>
+        <Text style={styles.label}>To Member *</Text>
+        <TouchableOpacity
+          style={styles.memberDropdownButton}
+          onPress={() => {
+            setShowMemberDropdown(!showMemberDropdown);
+            if (!showMemberDropdown) {
+              setTimeout(() => {
+                searchInputRef.current?.focus();
+              }, 100);
+            }
+          }}
+        >
+          <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
+          <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
+            {formData.memberName || 'Select or type member name'}
+          </Text>
+          <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
+        </TouchableOpacity>
+
+        {showMemberDropdown && (
+          <View style={styles.memberDropdownList}>
+            {/* Search Bar inside dropdown */}
+            <View style={styles.searchContainer}>
+              <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
+              <TextInput
+                ref={searchInputRef}
+                style={styles.searchInput}
+                placeholder="Search members by name, ID, phone or email..."
+                value={memberSearchQuery}
+                onChangeText={setMemberSearchQuery}
+                placeholderTextColor="#999"
+              />
+              {memberSearchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setMemberSearchQuery('')} style={styles.clearButton}>
+                  <Icon name="close-circle" size={20} color="#666" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.voiceSearchButton}
+                onPress={startMemberVoiceSearch}
+              >
+                <Icon
+                  name={isListening === 'memberSearch' ? "microphone" : "microphone-outline"}
+                  size={20}
+                  color={isListening === 'memberSearch' ? "#FF4444" : "#4A90E2"}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Members List */}
+            {loadingMembers ? (
+              <View style={styles.noMembersContainer}>
+                <ActivityIndicator size="small" color="#4A90E2" />
+                <Text style={styles.noMembersText}>Loading members...</Text>
+              </View>
+            ) : filteredMembers.length > 0 ? (
+              <View style={styles.memberListContainer}>
+                <FlatList
+                  data={filteredMembers}
+                  renderItem={renderMemberItem}
+                  keyExtractor={(item) => item.id.toString()}
+                  nestedScrollEnabled={true}
+                  ListEmptyComponent={
+                    <View style={styles.noMembersContainer}>
+                      <Icon name="account-search" size={24} color="#999" />
+                      <Text style={styles.noMembersText}>No members found</Text>
+                    </View>
+                  }
+                  ListFooterComponent={
+                    <View style={styles.memberCountContainer}>
+                      <Text style={styles.memberCountText}>
+                        {filteredMembers.length} member{filteredMembers.length !== 1 ? 's' : ''} found
+                      </Text>
+                    </View>
+                  }
+                />
+              </View>
+            ) : (
+              <View style={styles.noMembersContainer}>
+                <Icon name="account-alert" size={24} color="#999" />
+                <Text style={styles.noMembersText}>No members available</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+
+      {/* Business Visited */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Business Visited *</Text>
+        <View style={styles.inputContainer}>
+          <Icon name="briefcase" size={20} color="#4A90E2" style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter business name"
+            value={formData.businessVisited}
+            onChangeText={(text) => handleInputChange('businessVisited', text)}
+            placeholderTextColor="#999"
+          />
+          <TouchableOpacity 
+            onPress={() => startVoiceInput('businessVisited')}
+            style={styles.micButton}
+          >
+            <Icon 
+              name={isListening === 'businessVisited' ? "microphone" : "microphone-outline"} 
+              size={22} 
+              color={isListening === 'businessVisited' ? "#FF4444" : "#4A90E2"} 
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Amount */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Amount</Text>
+        <View style={styles.inputContainer}>
+          <Icon name="currency-usd" size={20} color="#4A90E2" style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter amount (optional)"
+            value={formData.amount}
+            onChangeText={(text) => handleInputChange('amount', text)}
+            keyboardType="decimal-pad"
+            placeholderTextColor="#999"
+          />
+          <TouchableOpacity 
+            onPress={() => startVoiceInput('amount')}
+            style={styles.micButton}
+          >
+            <Icon 
+              name={isListening === 'amount' ? "microphone" : "microphone-outline"} 
+              size={22} 
+              color={isListening === 'amount' ? "#FF4444" : "#4A90E2"} 
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Rating */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Rating (1-5 stars)</Text>
+        <View style={styles.inputContainer}>
+          <Icon name="star" size={20} color="#4A90E2" style={styles.icon} />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter rating (1-5)"
+            value={formData.rating}
+            onChangeText={(text) => handleInputChange('rating', text)}
+            keyboardType="numeric"
+            maxLength={1}
+            placeholderTextColor="#999"
+          />
+          <TouchableOpacity 
+            onPress={() => startVoiceInput('rating')}
+            style={styles.micButton}
+          >
+            <Icon 
+              name={isListening === 'rating' ? "microphone" : "microphone-outline"} 
+              size={22} 
+              color={isListening === 'rating' ? "#FF4444" : "#4A90E2"} 
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Notes */}
+      <View style={styles.section}>
+        <Text style={styles.label}>Notes</Text>
+        <View style={[styles.inputContainer, styles.textAreaContainer]}>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Enter any notes"
+            value={formData.notes}
+            onChangeText={(text) => handleInputChange('notes', text)}
+            multiline
+            numberOfLines={4}
+            placeholderTextColor="#999"
+          />
+          <TouchableOpacity 
+            onPress={() => startVoiceInput('notes')}
+            style={[styles.micButton, styles.micButtonTextArea]}
+          >
+            <Icon 
+              name={isListening === 'notes' ? "microphone" : "microphone-outline"} 
+              size={22} 
+              color={isListening === 'notes' ? "#FF4444" : "#4A90E2"} 
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Confirm Button */}
+      <TouchableOpacity
+        style={[styles.confirmButton, (!formData.memberName || !formData.businessVisited) && styles.confirmButtonDisabled]}
+        onPress={handleConfirm}
+        disabled={loading || !formData.memberName || !formData.businessVisited}
+      >
+        {loading ? (
+          <ActivityIndicator color="#FFF" />
+        ) : (
+          <>
+            <Icon name="check-circle" size={20} color="#FFF" />
+            <Text style={styles.confirmButtonText}>Confirm Thanks Note</Text>
+          </>
+        )}
+      </TouchableOpacity>
+
+      <View style={{ height: 30 }} />
+    </>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -203,153 +617,23 @@ const TYFCBSlip = () => {
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Member Name Dropdown */}
-          <View style={styles.section}>
-            <Text style={styles.label}>To Member *</Text>
-            <TouchableOpacity
-              style={styles.memberDropdownButton}
-              onPress={() => setShowMemberDropdown(!showMemberDropdown)}
-            >
-              <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-              <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
-                {formData.memberName || 'Select member'}
-              </Text>
-              <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
-            </TouchableOpacity>
-
-            {showMemberDropdown && (
-              <ScrollView style={styles.memberDropdownList} nestedScrollEnabled={true}>
-                {loadingMembers ? (
-                  <View style={styles.noMembersContainer}>
-                    <ActivityIndicator size="small" color="#4A90E2" />
-                    <Text style={styles.noMembersText}>Loading members...</Text>
-                  </View>
-                ) : allMembers && allMembers.length > 0 ? (
-                  allMembers.map(member => (
-                    <TouchableOpacity
-                      key={member.id}
-                      style={styles.memberDropdownItem}
-                      onPress={() => handleSelectMember(member)}
-                    >
-                      <View style={styles.memberItemContent}>
-                        <Text style={styles.memberName}>{member.name}</Text>
-                        <View style={styles.memberDetailsRow}>
-                          <Text style={styles.memberDetail}>
-                            <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
-                          </Text>
-                          <Text style={styles.memberDetail}>
-                            <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
-                          </Text>
-                        </View>
-                        {member.email && (
-                          <Text style={styles.memberEmail}>
-                            <Icon name="email" size={12} color="#999" /> {member.email}
-                          </Text>
-                        )}
-                      </View>
-                      {formData.memberId === member.id && (
-                        <Icon name="check" size={20} color="#4A90E2" />
-                      )}
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <View style={styles.noMembersContainer}>
-                    <Icon name="account-alert" size={24} color="#999" />
-                    <Text style={styles.noMembersText}>No members available</Text>
-                  </View>
-                )}
-              </ScrollView>
-            )}
-          </View>
-
-          {/* Business Visited */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Business Visited *</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="briefcase" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter business name"
-                value={formData.businessVisited}
-                onChangeText={(text) => handleInputChange('businessVisited', text)}
-                placeholderTextColor="#999"
-              />
-            </View>
-          </View>
-
-          {/* Amount */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Amount</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="currency-usd" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter amount (optional)"
-                value={formData.amount}
-                onChangeText={(text) => handleInputChange('amount', text)}
-                keyboardType="decimal-pad"
-                placeholderTextColor="#999"
-              />
-            </View>
-          </View>
-
-          {/* Rating */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Rating (1-5 stars)</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="star" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter rating (1-5)"
-                value={formData.rating}
-                onChangeText={(text) => handleInputChange('rating', text)}
-                keyboardType="numeric"
-                maxLength={1}
-                placeholderTextColor="#999"
-              />
-            </View>
-          </View>
-
-          {/* Notes */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Notes</Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Enter any notes"
-                value={formData.notes}
-                onChangeText={(text) => handleInputChange('notes', text)}
-                multiline
-                numberOfLines={4}
-                placeholderTextColor="#999"
-              />
-            </View>
-          </View>
-
-          {/* STATUS SECTION COMPLETELY REMOVED */}
-
-          {/* Confirm Button */}
-          <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={handleConfirm}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <>
-                <Icon name="check-circle" size={20} color="#FFF" />
-                <Text style={styles.confirmButtonText}>Confirm Thanks Note</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <View style={{ height: 30 }} />
-        </ScrollView>
+        <KeyboardAvoidingView 
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        >
+          <FlatList
+            data={[]} // Empty array since we're not using FlatList for data
+            renderItem={null}
+            ListHeaderComponent={renderFormContent}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          />
+        </KeyboardAvoidingView>
       </ImageBackground>
 
-      {/* Success Screen - Updated to remove status display */}
+      {/* Success Screen */}
       {showSuccessScreen && (
         <View style={styles.successOverlay}>
           <View style={styles.successCard}>
@@ -414,8 +698,8 @@ const TYFCBSlip = () => {
                     amount: '',
                     notes: '',
                     rating: '',
-                    // Status removed
                   });
+                  setMemberSearchQuery('');
                 }}
               >
                 <Icon name="plus-circle" size={20} color="#FFF" />
@@ -433,6 +717,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F9FC',
+  },
+  scrollContent: {
+    padding: 15,
   },
   header: {
     flexDirection: 'row',
@@ -484,14 +771,6 @@ const styles = StyleSheet.create({
     color: '#333',
     paddingVertical: 12,
   },
-  speechInput: {
-    flex: 1,
-    marginLeft: -12, // Compensate for icon margin
-  },
-  speechTextArea: {
-    flex: 1,
-    minHeight: 80,
-  },
   textAreaContainer: {
     alignItems: 'flex-start',
     paddingVertical: 8,
@@ -499,6 +778,16 @@ const styles = StyleSheet.create({
   textArea: {
     textAlignVertical: 'top',
     paddingTop: 12,
+    minHeight: 100,
+  },
+  micButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  micButtonTextArea: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
   },
   memberDropdownButton: {
     flexDirection: 'row',
@@ -516,8 +805,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     marginTop: 8,
-    maxHeight: 250,
+    maxHeight: 400,
     elevation: 3,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    paddingVertical: 8,
+  },
+  clearButton: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  voiceSearchButton: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  memberListContainer: {
+    maxHeight: 280,
   },
   memberDropdownItem: {
     flexDirection: 'row',
@@ -545,6 +862,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 4,
     gap: 12,
+    flexWrap: 'wrap',
   },
   memberDetail: {
     fontSize: 11,
@@ -553,11 +871,25 @@ const styles = StyleSheet.create({
   noMembersContainer: {
     padding: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 100,
   },
   noMembersText: {
     fontSize: 14,
     color: '#999',
     marginTop: 8,
+  },
+  memberCountContainer: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+    alignItems: 'center',
+  },
+  memberCountText: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
   },
   confirmButton: {
     backgroundColor: '#4A90E2',
@@ -567,6 +899,10 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginTop: 20,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: '#87CEEB',
+    opacity: 0.7,
   },
   confirmButtonText: {
     color: '#FFF',
@@ -596,6 +932,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     maxWidth: '90%',
+    width: '100%',
+    maxWidth: 400,
   },
   successHeader: {
     alignItems: 'center',

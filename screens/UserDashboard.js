@@ -24,6 +24,88 @@ import MemberIdService from '../service/MemberIdService';
 
 const { width } = Dimensions.get('window');
 
+// Birthday Wishes Section Component
+const BirthdayWishesSection = ({ memberId }) => {
+  const [birthdayWish, setBirthdayWish] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (memberId) {
+      loadBirthdayWish();
+    }
+  }, [memberId]);
+
+  const loadBirthdayWish = async () => {
+    try {
+      setLoading(true);
+      const wish = await ApiService.getTodaysBirthdayWish(memberId);
+      if (wish) {
+        console.log('Birthday wish received:', wish);
+        setBirthdayWish(wish);
+      } else {
+        // No wish found - this is normal, don't log as error
+        setBirthdayWish(null);
+      }
+    } catch (error) {
+      // Only log if it's a real error (not just "not found")
+      if (!error.message || !error.message.includes('No birthday wish found')) {
+        console.error('Error loading birthday wish:', error);
+      }
+      setBirthdayWish(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Animatable.View
+        animation="fadeInUp"
+        delay={500}
+        style={styles.sectionContainer}
+      >
+        <View style={styles.birthdayWishCard}>
+          <ActivityIndicator size="small" color="#4A90E2" />
+          <Text style={styles.birthdayWishLoading}>Checking for birthday wishes...</Text>
+        </View>
+      </Animatable.View>
+    );
+  }
+
+  if (!birthdayWish) {
+    return null; // Don't show anything if no birthday wish
+  }
+
+  return (
+    <Animatable.View
+      animation="bounceIn"
+      delay={500}
+      style={styles.sectionContainer}
+    >
+      <LinearGradient
+        colors={['#FFE5E5', '#FFF0F0']}
+        style={styles.birthdayWishCard}
+      >
+        <View style={styles.birthdayWishHeader}>
+          <Icon name="cake-variant" size={40} color="#FF6B6B" />
+          <View style={styles.birthdayWishContent}>
+            <Text style={styles.birthdayWishTitle}>🎉 Birthday Wish Received!</Text>
+            <Text style={styles.birthdayWishMessage}>
+              {birthdayWish.senderName || 'A member'} sent you birthday wishes today!
+            </Text>
+            <Text style={styles.birthdayWishTime}>
+              {new Date(birthdayWish.sentDate).toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </Text>
+          </View>
+        </View>
+      </LinearGradient>
+    </Animatable.View>
+  );
+};
+
 // Define waterBlueColors OUTSIDE the component
 const waterBlueColors = {
   primary: '#4A90E2',
@@ -248,16 +330,8 @@ const loadDashboardReminders = async () => {
 
     console.log('UserDashboard - Loading dashboard reminders for memberId:', memberId);
 
-    // Load dashboard reminders and message notifications
-    let reminders = null;
+    // Load message notifications (includes Birthday, NewMember, Event, Meeting, Payment, etc.)
     let messageNotifications = null;
-
-    try {
-      reminders = await ApiService.getDashboardReminders(memberId);
-      console.log('UserDashboard - Dashboard reminders:', reminders);
-    } catch (error) {
-      console.error('UserDashboard - Error loading dashboard reminders:', error);
-    }
 
     try {
       messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
@@ -276,68 +350,8 @@ const loadDashboardReminders = async () => {
       messageNotifications = [];
     }
 
-    // Convert reminders to notifications format
+    // Convert message notifications to UI format
     const newNotifications = [];
-
-    // Add birthday notifications with memberId
-    if (reminders && reminders.teamBirthdays && reminders.teamBirthdays.length > 0) {
-      console.log('UserDashboard - Processing birthday reminders:', reminders.teamBirthdays);
-      
-      reminders.teamBirthdays.forEach((birthday, index) => {
-        // Extract member ID from various possible fields
-        const recipientMemberId = birthday.memberId || birthday.id || birthday.memberid || birthday.MemberId;
-        
-        console.log('UserDashboard - Birthday notification:', {
-          name: birthday.name,
-          memberId: recipientMemberId,
-          rawBirthday: birthday,
-          allFields: Object.keys(birthday)
-        });
-        
-        newNotifications.push({
-          id: `birthday-${birthday.name}-${index}`,
-          type: 'birthday',
-          title: 'Birthday Reminder',
-          message: birthday.isToday
-            ? `${birthday.name}'s birthday is today! 🎉`
-            : `${birthday.name}'s birthday in ${birthday.daysUntil} day${birthday.daysUntil > 1 ? 's' : ''}`,
-          time: birthday.isToday ? 'Today' : `In ${birthday.daysUntil} day${birthday.daysUntil > 1 ? 's' : ''}`,
-          icon: 'cake',
-          color: '#FF6B6B',
-          backgroundColor: '#FFE5E5',
-          isRead: false,
-          canRespond: recipientMemberId ? true : false, // Only allow response if we have member ID
-          recipientName: birthday.name,
-          recipientMemberId: recipientMemberId,
-          birthdayDate: birthday.birthday,
-        });
-      });
-    }
-
-    // Add meeting notifications
-    if (reminders && reminders.upcomingMeetings && reminders.upcomingMeetings.length > 0) {
-      reminders.upcomingMeetings.forEach((meeting) => {
-        newNotifications.push({
-          id: `meeting-${meeting.id}`,
-          type: 'meeting',
-          title: 'Meeting Reminder',
-          message: meeting.isToday
-            ? `${meeting.meetingTitle || 'Meeting'} today at ${meeting.time}`
-            : `${meeting.meetingTitle || 'Meeting'} in ${meeting.daysUntil} day${meeting.daysUntil > 1 ? 's' : ''}`,
-          time: meeting.isToday ? 'Today' : `In ${meeting.daysUntil} day${meeting.daysUntil > 1 ? 's' : ''}`,
-          icon: 'calendar-clock',
-          color: '#4ECDC4',
-          backgroundColor: '#E8F8F7',
-          isRead: false,
-          canRespond: true,
-          meetingTitle: meeting.meetingTitle,
-          meetingDate: meeting.meetingDate,
-          meetingTime: meeting.time,
-          meetingPlace: meeting.place,
-          meetingType: meeting.meetingType,
-        });
-      });
-    }
 
     // Add message notifications from API (includes Event, Meeting, Payment, Welcome, NewMember, Birthday)
     if (messageNotifications && messageNotifications.length > 0) {
@@ -391,7 +405,7 @@ const loadDashboardReminders = async () => {
           }
         }
 
-        newNotifications.push({
+        const notificationObj = {
           id: `message-${msg.id}`,
           type: 'message',
           messageType: msg.messageType,
@@ -408,7 +422,17 @@ const loadDashboardReminders = async () => {
           createdBy: msg.createdBy,
           recipientMemberId: recipientMemberId,
           recipientName: recipientName || msg.content,
+        };
+
+        console.log('Created message notification:', {
+          id: notificationObj.id,
+          messageType: notificationObj.messageType,
+          canRespond: notificationObj.canRespond,
+          recipientMemberId: notificationObj.recipientMemberId,
+          recipientName: notificationObj.recipientName
         });
+
+        newNotifications.push(notificationObj);
       });
     }
 
@@ -503,10 +527,40 @@ const handleBirthdayResponse = async (notification) => {
       return;
     }
 
-    // Get recipient's member ID from notification
-    // Note: You need to ensure the birthday notification contains recipient's memberId
-    // Currently, notification only has recipientName, so you might need to modify your API
-    // to return memberId in the birthday reminder response
+    // Get recipient's member ID - if not available, try to fetch by name
+    let recipientMemberId = notification.recipientMemberId;
+    
+    if (!recipientMemberId && notification.recipientName) {
+      try {
+        console.log('Fetching member ID for:', notification.recipientName);
+        setLoading(true);
+        
+        // Get all members and search by name
+        const allMembers = await ApiService.getMembers();
+        const member = allMembers.find(m => 
+          m.name && m.name.toLowerCase() === notification.recipientName.toLowerCase()
+        );
+        
+        if (member) {
+          recipientMemberId = member.id;
+          console.log('Found member ID:', recipientMemberId);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching member:', error);
+        setLoading(false);
+      }
+    }
+    
+    // Final validation
+    if (!recipientMemberId) {
+      Alert.alert(
+        'Member Not Found',
+        `Could not find member ID for ${notification.recipientName}. Please try again later.`
+      );
+      return;
+    }
     
     Alert.alert(
       'Send Birthday Wishes',
@@ -518,19 +572,10 @@ const handleBirthdayResponse = async (notification) => {
           onPress: async () => {
             try {
               setLoading(true);
-              
-              // Validate that we have a recipient member ID FIRST
-              if (!notification.recipientMemberId) {
-                console.error('Birthday wish error: No recipient member ID found');
-                console.error('Notification object:', notification);
-                Alert.alert('Error', 'Cannot send birthday wish: Member ID not found.');
-                setLoading(false);
-                return;
-              }
 
               // Prepare the request data according to SendBirthdayWishDto
               const requestData = {
-                MemberId: notification.recipientMemberId,
+                MemberId: recipientMemberId,
                 CreatedBy: senderMemberId,
                 CustomMessage: null // Optional: You can add custom message input if needed
               };
@@ -579,7 +624,7 @@ const handleBirthdayResponse = async (notification) => {
               
               Alert.alert(
                 'Success',
-                `Birthday wishes sent to ${notification.recipientName}!`,
+                `Birthday wishes sent to ${notification.recipientName}! 🎉`,
                 [{ text: 'OK' }]
               );
               
@@ -637,16 +682,28 @@ const handleBirthdayResponse = async (notification) => {
 
   // Handle notification press
   const handleNotificationPress = (notification) => {
+    console.log('Notification pressed:', {
+      id: notification.id,
+      type: notification.type,
+      messageType: notification.messageType,
+      canRespond: notification.canRespond,
+      recipientMemberId: notification.recipientMemberId
+    });
+
     if (notification.canRespond) {
       if (notification.type === 'birthday') {
+        console.log('Handling birthday response from dashboard reminders');
         handleBirthdayResponse(notification);
       } else if (notification.type === 'message' && (notification.messageType === 'Birthday' || notification.messageType === 'NewMember')) {
         // Handle birthday/new member wishes from message notifications
+        console.log('Handling wish response from message notifications');
         handleWishResponse(notification);
       } else if (notification.type === 'meeting') {
+        console.log('Handling meeting response');
         handleMeetingResponse(notification);
       }
     } else {
+      console.log('Notification cannot respond, marking as read');
       markNotificationAsRead(notification.id);
     }
   };
@@ -662,12 +719,13 @@ const handleBirthdayResponse = async (notification) => {
         return;
       }
 
-      const wishType = notification.messageType === 'Birthday' ? 'birthday wishes' : 'welcome wishes';
+      const isBirthday = notification.messageType === 'Birthday';
+      const wishType = isBirthday ? 'Birthday Wishes' : 'Welcome Wishes';
       const recipientName = notification.recipientName || 'member';
       
       Alert.alert(
-        `Send ${wishType === 'birthday wishes' ? 'Birthday' : 'Welcome'} Wishes`,
-        `Send ${wishType} to ${recipientName}?`,
+        `Send ${wishType}`,
+        `Send ${wishType.toLowerCase()} to ${recipientName}?`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -685,20 +743,21 @@ const handleBirthdayResponse = async (notification) => {
                   return;
                 }
 
-                // Prepare the request data
+                // Prepare the request data according to SendBirthdayWishDto
                 const requestData = {
                   MemberId: notification.recipientMemberId,
                   CreatedBy: senderMemberId,
-                  CustomMessage: null
+                  CustomMessage: null // Optional: You can add custom message input if needed
                 };
 
                 // Log the request for debugging
                 console.log(`Sending ${wishType}:`, requestData);
 
-                // Call the appropriate API endpoint
-                const endpoint = notification.messageType === 'Birthday' 
+                // Use birthday wish endpoint for both (or create separate endpoint for welcome)
+                // For now, using birthday wish endpoint as the structure is the same
+                const endpoint = isBirthday 
                   ? '/api/MessageNotifications/birthday/wish'
-                  : '/api/MessageNotifications/welcome/wish';
+                  : '/api/MessageNotifications/birthday/wish'; // TODO: Change to welcome endpoint when available
 
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                   method: 'POST',
@@ -714,7 +773,7 @@ const handleBirthdayResponse = async (notification) => {
                   console.error(`${wishType} API error - Status:`, response.status);
                   console.error(`${wishType} API error - Response:`, errorText);
                   
-                  let errorMessage = `Failed to send ${wishType}. Please try again.`;
+                  let errorMessage = `Failed to send ${wishType.toLowerCase()}. Please try again.`;
                   
                   try {
                     const errorJson = JSON.parse(errorText);
@@ -739,7 +798,7 @@ const handleBirthdayResponse = async (notification) => {
                 
                 Alert.alert(
                   'Success',
-                  `${wishType === 'birthday wishes' ? 'Birthday' : 'Welcome'} wishes sent to ${recipientName}!`,
+                  `${wishType} sent to ${recipientName}! 🎉`,
                   [{ text: 'OK' }]
                 );
                 
@@ -1098,14 +1157,14 @@ const handleBirthdayResponse = async (notification) => {
             />
             <StatCard
               icon="handshake"
-              label="TYFCB Given"
+              label="ThanksNote Given"
               value={stats.tyfcbGiven}
               delay={200}
               onPress={() => navigation.navigate('MyFeed', { tab: 'tyfcb' })}
             />
             <StatCard
               icon="hand-heart"
-              label="TYFCB Received"
+              label="ThanksNote Received"
               value={stats.tyfcbReceived}
               delay={250}
               onPress={() => navigation.navigate('MyFeed', { tab: 'tyfcb' })}
@@ -1154,6 +1213,9 @@ const handleBirthdayResponse = async (notification) => {
             </View>
           </LinearGradient>
         </Animatable.View>
+
+        {/* Birthday Wishes Received Section */}
+        <BirthdayWishesSection memberId={userData?.memberId} />
 
         {/* Quick Actions */}
         <Animatable.View
@@ -2671,6 +2733,45 @@ const styles = StyleSheet.create({
     color: '#666',
     fontStyle: 'italic',
     fontWeight: '500',
+  },
+  birthdayWishCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 15,
+    elevation: 3,
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  birthdayWishHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  birthdayWishContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  birthdayWishTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF6B6B',
+    marginBottom: 4,
+  },
+  birthdayWishMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  birthdayWishTime: {
+    fontSize: 12,
+    color: '#999',
+    fontStyle: 'italic',
+  },
+  birthdayWishLoading: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
   },
 });
 

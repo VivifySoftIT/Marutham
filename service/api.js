@@ -67,7 +67,12 @@ class ApiService {
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
+        
+        // Don't log error for 404 on birthday-wish endpoint (expected when no wish found)
+        const isBirthdayWishNotFound = endpoint.includes('birthday-wish') && response.status === 404;
+        if (!isBirthdayWishNotFound) {
+          console.error('API Error Response:', errorText);
+        }
         
         let errorData;
         try {
@@ -88,7 +93,13 @@ class ApiService {
       console.log('API Response Data:', data);
       return data;
     } catch (error) {
-      console.error(`API Error (${endpoint}):`, error);
+      // Don't log error for 404 on birthday-wish endpoint (expected when no wish found)
+      const isBirthdayWishNotFound = endpoint.includes('birthday-wish') && 
+                                      error.message && 
+                                      error.message.includes('No birthday wish found');
+      if (!isBirthdayWishNotFound) {
+        console.error(`API Error (${endpoint}):`, error);
+      }
       throw error;
     }
   }
@@ -873,6 +884,28 @@ class ApiService {
 
   async getSubCompanyMembers(id) {
     return await this.request(`/api/SubCompanies/${id}/members`);
+  }
+
+  // ==================== BIRTHDAY WISH APIs ====================
+  async getTodaysBirthdayWish(memberId) {
+    try {
+      return await this.request(`/api/MessageNotifications/birthday-wish/${memberId}`);
+    } catch (error) {
+      // If no birthday wish found (404), return null instead of throwing error
+      if (error.message && error.message.includes('No birthday wish found')) {
+        return null;
+      }
+      // For other errors, throw them
+      throw error;
+    }
+  }
+
+  async sendBirthdayWish(recipientMemberId, senderMemberId, customMessage = null) {
+    return await this.request('/api/MessageNotifications/birthday/wish', 'POST', {
+      MemberId: recipientMemberId,
+      CreatedBy: senderMemberId,
+      CustomMessage: customMessage
+    });
   }
 }
 

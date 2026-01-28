@@ -21,6 +21,9 @@ import { useLanguage } from '../service/LanguageContext';
 import SpeechToTextInput from '../components/SpeechToTextInput';
 import MemberIdService from '../service/MemberIdService';
 import * as Speech from 'expo-speech';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as XLSX from 'xlsx';
 
 const MemberAttendanceScreen = () => {
   const navigation = useNavigation();
@@ -33,110 +36,220 @@ const MemberAttendanceScreen = () => {
   const [attendanceData, setAttendanceData] = useState({});
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchType, setSearchType] = useState('name'); // 'name', 'business', 'id'
+  const [searchType, setSearchType] = useState('name');
 
   // Voice search states
   const [isListening, setIsListening] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(true);
+  const [lastSpokenName, setLastSpokenName] = useState('');
+  const [uploading, setUploading] = useState(false);
 
-  // Voice search functionality using Web Speech API (for web) or simple text-to-speech feedback
-  const startVoiceSearch = () => {
+
+
+  // Function to find and mark member as present
+  const findAndMarkMember = (spokenText) => {
+    console.log('Finding member for voice search:', spokenText);
+
+    const cleanedText = spokenText
+      .replace(/^(search for|find|show me|look for|mark|attendance for|mark attendance for)\s+/i, '')
+      .replace(/\s+attendance$/i, '')
+      .trim()
+      .toLowerCase();
+
+    console.log('Cleaned search text:', cleanedText);
+
+    if (!cleanedText) {
+      Alert.alert('No Name Provided', 'Please speak a member name clearly.');
+      return;
+    }
+
+    // Find matching members
+    const matchingMembers = members.filter(member => {
+      const memberName = member.name.toLowerCase();
+
+      // Exact match
+      if (memberName === cleanedText) {
+        return true;
+      }
+
+      // Contains match
+      if (memberName.includes(cleanedText)) {
+        return true;
+      }
+
+      // First name match
+      const memberFirstName = memberName.split(' ')[0];
+      const spokenFirstName = cleanedText.split(' ')[0];
+      if (memberFirstName === spokenFirstName) {
+        return true;
+      }
+
+      return false;
+    });
+
+    if (matchingMembers.length === 0) {
+      Alert.alert(
+        'No Match Found',
+        `No member found matching "${spokenText}".\n\nPlease try speaking the full name clearly or type manually.`,
+        [
+          { text: 'Try Again', onPress: () => setTimeout(startVoiceSearch, 500) },
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+      return;
+    }
+
+    if (matchingMembers.length === 1) {
+      const member = matchingMembers[0];
+      setAttendanceData(prev => ({
+        ...prev,
+        [member.id]: true,
+      }));
+
+      Alert.alert(
+        'Marked Present!',
+        `Successfully marked "${member.name}" as present.`,
+        [{ text: 'OK' }]
+      );
+
+      setSearchQuery('');
+      setLastSpokenName(member.name);
+    } else {
+      Alert.alert(
+        'Multiple Matches Found',
+        `Found ${matchingMembers.length} members matching "${spokenText}".\n\nSelect one to mark as present:`,
+        [
+          ...matchingMembers.slice(0, 5).map((member, index) => ({
+            text: `${member.name} (${member.business || 'N/A'})`,
+            onPress: () => {
+              setAttendanceData(prev => ({
+                ...prev,
+                [member.id]: true,
+              }));
+              setSearchQuery('');
+              setLastSpokenName(member.name);
+              Alert.alert('Marked Present!', `Successfully marked "${member.name}" as present.`);
+            }
+          })),
+          { text: 'Cancel', style: 'cancel' }
+        ]
+      );
+    }
+  };
+
+  // Voice search functionality
+  const startVoiceSearch = async () => {
+    // For Web Platform
     if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
       const recognition = new window.webkitSpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = false;
-      recognition.lang = language === 'ta' ? 'ta-IN' : 'en-US';
+      recognition.lang = 'en-IN';
+      recognition.maxAlternatives = 5;
 
       recognition.onstart = () => {
+        console.log('Voice recognition started');
         setIsListening(true);
+
+        Alert.alert(
+          'Listening...',
+          'Please speak the member name clearly',
+          [],
+          { cancelable: false }
+        );
       };
 
       recognition.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript;
-        setSearchQuery(spokenText);
-        handleVoiceSearchResult(spokenText);
+        const results = event.results[event.results.length - 1];
+        const spokenText = results[0].transcript.trim();
+
+        console.log('Voice recognition raw result:', spokenText);
+        console.log('Is final:', results.isFinal);
+        console.log('Confidence:', results[0].confidence);
+
+        if (results.isFinal) {
+          console.log('Final result accepted:', spokenText);
+
+          setSearchQuery(spokenText);
+          setIsListening(false);
+          findAndMarkMember(spokenText);
+        }
       };
 
-      recognition.onerror = () => {
+      recognition.onerror = (event) => {
+        console.error('Voice recognition error:', event.error);
         setIsListening(false);
-        Alert.alert(t('voiceError'), t('voiceErrorMessage'));
+
+        let errorMessage = 'Could not recognize speech';
+        if (event.error === 'no-speech') {
+          errorMessage = 'No speech detected. Please speak clearly.';
+        } else if (event.error === 'audio-capture') {
+          errorMessage = 'Microphone not found.';
+        } else if (event.error === 'not-allowed') {
+          errorMessage = 'Microphone permission denied.';
+        }
+
+        Alert.alert('Voice Error', errorMessage, [
+          { text: 'OK' },
+          { text: 'Try Again', onPress: () => setTimeout(startVoiceSearch, 500) }
+        ]);
       };
 
       recognition.onend = () => {
         setIsListening(false);
       };
 
-      recognition.start();
-    } else {
-      // For mobile, show a simple input dialog
-      Alert.prompt(
-        t('voiceSearch'),
-        t('speakMemberName'),
-        [
-          {
-            text: t('cancel'),
-            style: 'cancel',
-          },
-          {
-            text: t('search'),
-            onPress: (text) => {
-              if (text) {
-                setSearchQuery(text);
-                handleVoiceSearchResult(text);
-              }
-            },
-          },
-        ],
-        'plain-text',
-        '',
-        'default'
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error('Error starting recognition:', error);
+        setIsListening(false);
+        Alert.alert('Error', 'Could not start voice recognition. Please check microphone permissions.');
+      }
+    }
+    // Mobile - Voice not available without native rebuild
+    else {
+      setIsListening(false);
+      Alert.alert(
+        'Voice Search - Web Only',
+        'Voice search is currently available on web browser only.\n\nOn mobile, please type the member name in the search box.',
+        [{ text: 'OK' }]
       );
     }
   };
 
-  const handleVoiceSearchResult = (spokenText) => {
-    // Auto-search for the member and mark attendance if found
-    const foundMember = members.find(member =>
-      member.name.toLowerCase().includes(spokenText.toLowerCase())
+  // Function to automatically mark all matching members as present
+  const markAllMatching = (searchText) => {
+    if (!searchText.trim()) return;
+
+    const query = searchText.toLowerCase();
+    const matchingMembers = members.filter(member =>
+      member.name.toLowerCase().includes(query) ||
+      member.business?.toLowerCase().includes(query) ||
+      member.employeeId?.toLowerCase().includes(query)
     );
 
-    if (foundMember) {
-      setAttendanceData(prev => ({
-        ...prev,
-        [foundMember.id]: true,
-      }));
-
-      // Provide audio feedback
-      Speech.speak(
-        `${t('markedPresent')}: ${foundMember.name}`,
-        {
-          language: language === 'ta' ? 'ta' : 'en',
-          pitch: 1.0,
-          rate: 0.8,
-        }
-      );
-
-      Alert.alert(
-        t('success'),
-        `${t('markedPresent')}: ${foundMember.name}`,
-        [{ text: t('ok') }]
-      );
-    } else {
-      Speech.speak(
-        `${t('noMemberFound')}: ${spokenText}`,
-        {
-          language: language === 'ta' ? 'ta' : 'en',
-          pitch: 1.0,
-          rate: 0.8,
-        }
-      );
-
-      Alert.alert(
-        t('noMemberFound'),
-        `${t('noMemberFoundMessage')}: "${spokenText}"`,
-        [{ text: t('ok') }]
-      );
+    if (matchingMembers.length === 0) {
+      Alert.alert('No Matches', `No members found matching "${searchText}"`);
+      return;
     }
+
+    const updatedAttendance = { ...attendanceData };
+    let newlyMarked = 0;
+
+    matchingMembers.forEach(member => {
+      if (!updatedAttendance[member.id]) {
+        updatedAttendance[member.id] = true;
+        newlyMarked++;
+      }
+    });
+
+    setAttendanceData(updatedAttendance);
+
+    Alert.alert(
+      'Batch Mark Complete',
+      `Marked ${newlyMarked} member(s) as present.\nTotal present: ${Object.values(updatedAttendance).filter(status => status).length}`
+    );
   };
 
   // Load members from API
@@ -147,10 +260,9 @@ const MemberAttendanceScreen = () => {
 
       const data = await ApiService.getMembers();
 
-      console.log('Members loaded:', data.length);
+      console.log('Members loaded:', data?.length || 0);
 
       if (Array.isArray(data)) {
-        // Map API data to our format with business field
         const mappedMembers = data.map(member => ({
           id: member.id,
           memberId: member.memberId || member.id,
@@ -166,7 +278,6 @@ const MemberAttendanceScreen = () => {
         }));
 
         setMembers(mappedMembers);
-        console.log('Mapped members:', mappedMembers.slice(0, 3)); // Log first 3 members for debugging
       } else {
         console.log('Invalid members data:', data);
         setMembers([]);
@@ -183,6 +294,94 @@ const MemberAttendanceScreen = () => {
   useEffect(() => {
     loadMembers();
   }, []);
+
+  const handleExcelUpload = async () => {
+    try {
+      setUploading(true);
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) {
+        setUploading(false);
+        return;
+      }
+
+      const file = result.assets[0];
+      const fileUri = file.uri;
+
+      const fileContent = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const workbook = XLSX.read(fileContent, { type: 'base64' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+      if (jsonData.length === 0) {
+        Alert.alert('Empty File', 'The Excel file contains no data.');
+        setUploading(false);
+        return;
+      }
+
+      const adminMemberId = await MemberIdService.getCurrentUserMemberId();
+      if (!adminMemberId) {
+        Alert.alert('Error', 'Unable to verify admin identity. Please re-login.');
+        setUploading(false);
+        return;
+      }
+
+      // Map to the format expected by the API
+      const attendances = jsonData.map(row => {
+        // Find member by name to get ID (though API now handles names, let's provide what we can)
+        const memberName = row.MemberName || row.name || row['Member Name'];
+        const member = members.find(m => m.name.toLowerCase() === memberName?.toString().toLowerCase());
+
+        return {
+          MemberId: member ? member.id : 0,
+          MemberName: memberName?.toString() || '',
+          AttendanceDate: selectedDate.toISOString(),
+          Notes: row.Notes || row.notes || 'Bulk Uploaded',
+          Batch: row.Batch || row.batch || '',
+          AdminMemberId: adminMemberId
+        };
+      }).filter(a => a.MemberName);
+
+      if (attendances.length === 0) {
+        Alert.alert('Error', 'No valid member names found in the Excel file.');
+        setUploading(false);
+        return;
+      }
+
+      const bulkRequest = {
+        AdminMemberId: adminMemberId,
+        Attendances: attendances
+      };
+
+      const apiResult = await ApiService.createBulkAttendance(bulkRequest);
+
+      Alert.alert(
+        'Bulk Upload Complete',
+        `Successfully processed: ${apiResult.successCount}\nFailed: ${apiResult.failCount}`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              loadMembers();
+            }
+          }
+        ]
+      );
+
+    } catch (error) {
+      console.error('Excel Upload Error:', error);
+      Alert.alert('Upload Failed', error.message || 'An error occurred during file upload');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
@@ -211,7 +410,6 @@ const MemberAttendanceScreen = () => {
 
     setSaving(true);
     try {
-      // Get Admin Member ID
       const adminMemberId = await MemberIdService.getCurrentUserMemberId();
 
       if (!adminMemberId) {
@@ -227,7 +425,6 @@ const MemberAttendanceScreen = () => {
         try {
           console.log('Saving attendance for member ID:', memberId);
 
-          // Prepare the request data according to your backend
           const requestData = {
             MemberId: memberId,
             AdminMemberId: adminMemberId,
@@ -235,9 +432,6 @@ const MemberAttendanceScreen = () => {
             CreatedBy: adminMemberId.toString()
           };
 
-          console.log('Request data:', requestData);
-
-          // Call the API service
           const result = await ApiService.createAttendance(requestData);
           console.log('Attendance saved successfully:', result);
           successCount++;
@@ -245,12 +439,11 @@ const MemberAttendanceScreen = () => {
         } catch (error) {
           console.error('Error saving attendance for member:', memberId, error);
 
-          // Check if it's a duplicate attendance error
           if (error.response?.data?.includes('already exists') ||
             error.message?.includes('already exists') ||
             error.response?.status === 409) {
             console.log('Attendance already recorded for today');
-            successCount++; // Count as success since attendance is already recorded
+            successCount++;
           } else {
             errorCount++;
           }
@@ -265,7 +458,7 @@ const MemberAttendanceScreen = () => {
             text: 'OK',
             onPress: () => {
               setAttendanceData({});
-              // Reload members to refresh any status changes
+              setLastSpokenName('');
               loadMembers();
             }
           }
@@ -301,6 +494,39 @@ const MemberAttendanceScreen = () => {
 
   const presentCount = Object.values(attendanceData).filter(status => status === true).length;
 
+  // Quick action buttons
+  const quickMarkButtons = [
+    {
+      title: 'Mark All Present',
+      icon: 'check-all',
+      color: '#4CAF50',
+      onPress: () => {
+        const updatedAttendance = {};
+        members.forEach(member => {
+          updatedAttendance[member.id] = true;
+        });
+        setAttendanceData(updatedAttendance);
+        Alert.alert('All Marked', `Marked all ${members.length} members as present.`);
+      }
+    },
+    {
+      title: 'Clear All',
+      icon: 'close-box-multiple',
+      color: '#F44336',
+      onPress: () => {
+        setAttendanceData({});
+        setLastSpokenName('');
+        Alert.alert('Cleared', 'Cleared all attendance marks.');
+      }
+    },
+    {
+      title: 'Mark by Voice',
+      icon: 'microphone',
+      color: '#FF9800',
+      onPress: startVoiceSearch
+    }
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
@@ -310,19 +536,52 @@ const MemberAttendanceScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('markAttendance')}</Text>
-
-        {/* Refresh button */}
+        <Text style={styles.headerTitle}>Mark Attendance</Text>
+        <TouchableOpacity onPress={handleExcelUpload} style={{ marginRight: 15 }} disabled={uploading}>
+          {uploading ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <Icon name="file-excel" size={24} color="#FFF" />
+          )}
+        </TouchableOpacity>
         <TouchableOpacity onPress={loadMembers}>
           <Icon name="refresh" size={24} color="#FFF" />
         </TouchableOpacity>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Date Selection Card */}
+        {/* Quick Actions */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('selectDate')}</Text>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+          </View>
+          <View style={styles.quickActionsContainer}>
+            {quickMarkButtons.map((action, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[styles.quickActionButton, { borderLeftColor: action.color }]}
+                onPress={action.onPress}
+              >
+                <Icon name={action.icon} size={20} color={action.color} />
+                <Text style={styles.quickActionText}>{action.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {lastSpokenName && (
+            <View style={styles.lastMarkedContainer}>
+              <Icon name="check-circle" size={16} color="#4CAF50" />
+              <Text style={styles.lastMarkedText}>
+                Last marked via voice: <Text style={styles.lastMarkedName}>{lastSpokenName}</Text>
+              </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Date Selection */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t('selectDate') || 'Select Date'}</Text>
             <TouchableOpacity
               onPress={() => setShowDatePicker(true)}
               style={styles.dateButton}
@@ -359,7 +618,16 @@ const MemberAttendanceScreen = () => {
         {/* Search Card */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('search')} {t('members')}</Text>
+            <Text style={styles.sectionTitle}>{t('search') || 'Search'} {t('members') || 'Members'}</Text>
+            {searchQuery && (
+              <TouchableOpacity
+                style={styles.markAllButton}
+                onPress={() => markAllMatching(searchQuery)}
+              >
+                <Icon name="check-all" size={16} color="#4CAF50" />
+                <Text style={styles.markAllText}>Mark All Matching</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Search Type Tabs */}
@@ -377,7 +645,7 @@ const MemberAttendanceScreen = () => {
                   styles.searchTypeText,
                   searchType === type && styles.searchTypeTextActive
                 ]}>
-                  {t(type)}
+                  {t(type) || type}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -385,24 +653,21 @@ const MemberAttendanceScreen = () => {
 
           <View style={styles.searchContainer}>
             <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
-            <SpeechToTextInput
+            <TextInput
               style={styles.searchInput}
-              placeholder={`${t('searchBy')} ${t(searchType)}...`}
+              placeholder={`Search by ${searchType}...`}
               value={searchQuery}
               onChangeText={setSearchQuery}
+              placeholderTextColor="#999"
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
                 <Icon name="close-circle" size={20} color="#666" />
               </TouchableOpacity>
             )}
-          </View>
-
-          {/* Voice Search Button */}
-          {voiceSupported && (
             <TouchableOpacity
               style={[
-                styles.voiceButton,
+                styles.voiceButtonInline,
                 isListening && styles.voiceButtonActive
               ]}
               onPress={startVoiceSearch}
@@ -413,28 +678,29 @@ const MemberAttendanceScreen = () => {
                 color={isListening ? "#FF6B6B" : "#4A90E2"}
               />
             </TouchableOpacity>
-          )}
-
-
-          {searchQuery && searchType === 'business' && (
-            <Text style={styles.searchHint}>
-              {t('searchBy')} {t('business')}: "{searchQuery}"
-            </Text>
-          )}
-
-          {/* Voice Search Hint */}
-          <View style={styles.voiceHintContainer}>
-            <Icon name="information" size={14} color="#4A90E2" />
-            <Text style={styles.voiceHint}>
-              {t('tapToSpeak')} - {t('speakMemberName')}
-            </Text>
           </View>
+
+          {isListening ? (
+            <View style={styles.listeningIndicator}>
+              <Icon name="microphone" size={16} color="#FF6B6B" />
+              <Text style={styles.listeningText}>
+                Listening... Speak the member name clearly
+              </Text>
+            </View>
+          ) : (
+            <View style={styles.voiceHintContainer}>
+              <Icon name="information" size={14} color="#4A90E2" />
+              <Text style={styles.voiceHint}>
+                Tap microphone icon to search by voice and auto-mark present
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Statistics Cards */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('attendance')} {t('summary')}</Text>
+            <Text style={styles.sectionTitle}>Attendance Summary</Text>
             <Text style={styles.summaryDate}>{selectedDate.toDateString()}</Text>
           </View>
           <View style={styles.summaryGrid}>
@@ -444,7 +710,7 @@ const MemberAttendanceScreen = () => {
               </View>
               <View style={styles.summaryText}>
                 <Text style={styles.summaryNumber}>{members.length}</Text>
-                <Text style={styles.summaryLabel}>{t('totalMembers')}</Text>
+                <Text style={styles.summaryLabel}>Total Members</Text>
               </View>
             </View>
 
@@ -454,7 +720,7 @@ const MemberAttendanceScreen = () => {
               </View>
               <View style={styles.summaryText}>
                 <Text style={[styles.summaryNumber, { color: '#4CAF50' }]}>{presentCount}</Text>
-                <Text style={styles.summaryLabel}>{t('present')}</Text>
+                <Text style={styles.summaryLabel}>Present</Text>
               </View>
             </View>
 
@@ -466,7 +732,7 @@ const MemberAttendanceScreen = () => {
                 <Text style={[styles.summaryNumber, { color: '#F44336' }]}>
                   {members.length - presentCount}
                 </Text>
-                <Text style={styles.summaryLabel}>{t('absent')}</Text>
+                <Text style={styles.summaryLabel}>Absent</Text>
               </View>
             </View>
           </View>
@@ -476,6 +742,7 @@ const MemberAttendanceScreen = () => {
               <Icon name="information" size={16} color="#666" />
               <Text style={styles.searchResultsText}>
                 Showing {filteredMembers.length} of {members.length} members
+                {filteredMembers.length > 0 && ` • ${filteredMembers.filter(m => attendanceData[m.id]).length} marked present`}
               </Text>
             </View>
           )}
@@ -484,19 +751,19 @@ const MemberAttendanceScreen = () => {
         {/* Members List */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('membersList')}</Text>
+            <Text style={styles.sectionTitle}>Members List</Text>
             <Text style={styles.memberCount}>{filteredMembers.length} members</Text>
           </View>
 
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#4A90E2" />
-              <Text style={styles.loadingText}>{t('loading')}</Text>
+              <Text style={styles.loadingText}>Loading...</Text>
             </View>
           ) : filteredMembers.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Icon name="account-multiple-off" size={60} color="#ccc" />
-              <Text style={styles.emptyText}>{t('noMemberFound')}</Text>
+              <Text style={styles.emptyText}>No Members Found</Text>
               <Text style={styles.emptySubtext}>
                 {members.length === 0 ? 'Failed to load members' :
                   searchQuery ? 'No members match your search' : 'No members available'}
@@ -504,18 +771,27 @@ const MemberAttendanceScreen = () => {
               {members.length === 0 ? (
                 <TouchableOpacity style={styles.retryButton} onPress={loadMembers}>
                   <Icon name="refresh" size={16} color="#FFF" />
-                  <Text style={styles.retryButtonText}>{t('tryAgain')}</Text>
+                  <Text style={styles.retryButtonText}>Try Again</Text>
                 </TouchableOpacity>
               ) : searchQuery ? (
                 <TouchableOpacity style={styles.retryButton} onPress={() => setSearchQuery('')}>
                   <Icon name="close" size={16} color="#FFF" />
-                  <Text style={styles.retryButtonText}>{t('cancel')} {t('search')}</Text>
+                  <Text style={styles.retryButtonText}>Cancel Search</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
           ) : (
             filteredMembers.map(member => (
-              <View key={member.id} style={styles.memberCard}>
+              <View
+                key={member.id}
+                style={[
+                  styles.memberCard,
+                  {
+                    borderLeftColor: attendanceData[member.id] ? '#4CAF50' : '#4A90E2',
+                    borderColor: attendanceData[member.id] ? '#E8F5E9' : '#E8F1FF'
+                  }
+                ]}
+              >
                 <View style={styles.memberInfo}>
                   <View style={styles.memberHeader}>
                     <View style={styles.memberAvatar}>
@@ -565,7 +841,7 @@ const MemberAttendanceScreen = () => {
                     color={attendanceData[member.id] ? '#4CAF50' : '#666'}
                   />
                   <Text style={styles.attendanceText}>
-                    {attendanceData[member.id] ? t('present') : t('markAttendance')}
+                    {attendanceData[member.id] ? 'Present' : 'Mark Attendance'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -584,14 +860,16 @@ const MemberAttendanceScreen = () => {
               {saving ? (
                 <View style={styles.savingContainer}>
                   <ActivityIndicator size="small" color="white" />
-                  <Text style={styles.saveButtonText}>{t('saving')}...</Text>
+                  <Text style={styles.saveButtonText}>Saving...</Text>
                 </View>
               ) : (
                 <>
                   <Icon name="content-save" size={24} color="white" />
                   <View style={styles.saveButtonContent}>
-                    <Text style={styles.saveButtonText}>{t('saveAttendance')}</Text>
-
+                    <Text style={styles.saveButtonText}>Save Attendance</Text>
+                    <Text style={styles.saveButtonSubtext}>
+                      {presentCount} member(s) marked as present
+                    </Text>
                   </View>
                 </>
               )}
@@ -649,6 +927,60 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#4A90E2',
+  },
+  quickActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  quickActionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    marginHorizontal: 4,
+    backgroundColor: '#F8FBFF',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+  },
+  quickActionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginLeft: 6,
+  },
+  lastMarkedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+  lastMarkedText: {
+    fontSize: 13,
+    color: '#666',
+    marginLeft: 6,
+  },
+  lastMarkedName: {
+    fontWeight: 'bold',
+    color: '#4CAF50',
+  },
+  markAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 6,
+  },
+  markAllText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4CAF50',
+    marginLeft: 4,
   },
   dateButton: {
     padding: 5,
@@ -712,21 +1044,32 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   searchInput: {
-    paddingLeft: 40, // Make space for search icon
-    paddingRight: 50, // Make space for clear button and mic
+    paddingLeft: 40,
+    paddingRight: 80,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: '#333',
+    backgroundColor: '#F8FBFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
   },
   clearButton: {
     position: 'absolute',
-    right: 50, // Position before mic button
+    right: 45,
     top: '50%',
     transform: [{ translateY: -10 }],
     zIndex: 1,
   },
-  voiceButton: {
-    marginLeft: 8,
+  voiceButtonInline: {
+    position: 'absolute',
+    right: 10,
+    top: '50%',
+    transform: [{ translateY: -10 }],
     padding: 8,
     borderRadius: 20,
     backgroundColor: '#E3F2FD',
+    zIndex: 1,
   },
   voiceButtonActive: {
     backgroundColor: '#FFE5E5',
@@ -743,20 +1086,22 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontStyle: 'italic',
   },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#333',
-  },
-  searchHint: {
-    fontSize: 12,
-    color: '#666',
+  listeningIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 8,
-    fontStyle: 'italic',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    backgroundColor: '#FFE5E5',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+  },
+  listeningText: {
+    fontSize: 12,
+    color: '#FF6B6B',
+    marginLeft: 6,
+    fontWeight: '600',
   },
   summaryDate: {
     fontSize: 12,
@@ -820,7 +1165,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E8F1FF',
+    borderLeftWidth: 4,
   },
   memberInfo: {
     flex: 1,
@@ -906,12 +1251,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 13,
     fontWeight: '600',
-  },
-  presentText: {
-    color: '#4CAF50',
-  },
-  absentText: {
-    color: '#666',
   },
   emptyContainer: {
     alignItems: 'center',

@@ -19,8 +19,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../apiConfig';
 import SpeechToTextInput from '../components/SpeechToTextInput';
 
-const ReferralSlip = () => {
+const ReferralSlip = ({ route }) => {
   const navigation = useNavigation();
+  const selectedMember = route?.params?.selectedMember; // Get member from navigation
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
@@ -36,7 +37,7 @@ const ReferralSlip = () => {
     memberName: '',
     memberId: '',
     referralType: '',
-    referralStatus: [],
+    referralCategory: '', // Changed from referralStatus
     referralNumber: '',
     telephone: '',
     email: '',
@@ -44,11 +45,23 @@ const ReferralSlip = () => {
     comments: '',
     // Status is always 'Pending' and removed from UI
   });
+  const [memberSearchQuery, setMemberSearchQuery] = useState(''); // For searching members
 
   useEffect(() => {
     loadCurrentUser();
     loadMemberNames();
-  }, []);
+    
+    // Pre-fill member data if coming from MembersDirectory
+    if (selectedMember) {
+      setFormData(prev => ({
+        ...prev,
+        memberName: selectedMember.name,
+        memberId: selectedMember.id,
+        email: selectedMember.email || '',
+        telephone: selectedMember.phone || '',
+      }));
+    }
+  }, [selectedMember]);
 
   const loadCurrentUser = async () => {
     try {
@@ -218,12 +231,11 @@ const ReferralSlip = () => {
   };
 
   const toggleReferralStatus = (status) => {
-    setFormData(prev => {
-      const newStatus = prev.referralStatus.includes(status)
-        ? prev.referralStatus.filter(s => s !== status)
-        : [...prev.referralStatus, status];
-      return { ...prev, referralStatus: newStatus };
-    });
+    // Changed to single selection instead of multiple
+    setFormData(prev => ({
+      ...prev,
+      referralCategory: prev.referralCategory === status ? '' : status
+    }));
   };
 
   const validateForm = () => {
@@ -250,8 +262,8 @@ const ReferralSlip = () => {
       Alert.alert('Validation Error', 'Please select referral type');
       return false;
     }
-    if (formData.referralStatus.length === 0) {
-      Alert.alert('Validation Error', 'Please select at least one referral status');
+    if (!formData.referralCategory.trim()) {
+      Alert.alert('Validation Error', 'Please select referral category');
       return false;
     }
     if (!formData.referralNumber.trim()) {
@@ -297,7 +309,7 @@ const ReferralSlip = () => {
         givenByMemberId: currentUser.memberId,
         givenToMemberId: parseInt(formData.memberId),
         referralType: formData.referralType,
-        referralStatus: formData.referralStatus.join(','),
+        referralStatus: formData.referralCategory, // Changed from array to single value
         referralNumber: formData.referralNumber,
         telephone: formData.telephone,
         email: formData.email || null,
@@ -375,7 +387,7 @@ const ReferralSlip = () => {
       memberName: '',
       memberId: '',
       referralType: '',
-      referralStatus: [],
+      referralCategory: '',
       referralNumber: '',
       telephone: '',
       email: '',
@@ -383,6 +395,7 @@ const ReferralSlip = () => {
       comments: '',
     });
     setSavedData(null);
+    setMemberSearchQuery('');
   };
 
   return (
@@ -415,7 +428,17 @@ const ReferralSlip = () => {
             )}
           </View>
 
-          {/* Member Name Dropdown */}
+          {/* Pre-selected Member Info */}
+          {selectedMember && (
+            <View style={styles.preSelectedMemberBanner}>
+              <Icon name="information" size={20} color="#4A90E2" />
+              <Text style={styles.preSelectedMemberText}>
+                Referral for: <Text style={styles.preSelectedMemberName}>{selectedMember.name}</Text>
+              </Text>
+            </View>
+          )}
+
+          {/* Member Name Dropdown with Search */}
           <View style={styles.section}>
             <Text style={styles.label}>To Member *</Text>
             <TouchableOpacity
@@ -430,47 +453,75 @@ const ReferralSlip = () => {
             </TouchableOpacity>
 
             {showMemberDropdown && (
-              <ScrollView style={styles.memberDropdownList} nestedScrollEnabled={true}>
-                {loadingMembers ? (
-                  <View style={styles.noMembersContainer}>
-                    <ActivityIndicator size="small" color="#4A90E2" />
-                    <Text style={styles.noMembersText}>Loading members...</Text>
-                  </View>
-                ) : allMembers && allMembers.length > 0 ? (
-                  allMembers.map(member => (
-                    <TouchableOpacity
-                      key={member.id}
-                      style={styles.memberDropdownItem}
-                      onPress={() => handleSelectMember(member)}
-                    >
-                      <View style={styles.memberItemContent}>
-                        <Text style={styles.memberName}>{member.name}</Text>
-                        <View style={styles.memberDetailsRow}>
-                          <Text style={styles.memberDetail}>
-                            <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
-                          </Text>
-                          <Text style={styles.memberDetail}>
-                            <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
-                          </Text>
-                        </View>
-                        {member.email && (
-                          <Text style={styles.memberEmail}>
-                            <Icon name="email" size={12} color="#999" /> {member.email}
-                          </Text>
-                        )}
-                      </View>
-                      {formData.memberId === member.id && (
-                        <Icon name="check" size={20} color="#4A90E2" />
-                      )}
+              <View style={styles.memberDropdownList}>
+                {/* Search Input */}
+                <View style={styles.searchContainer}>
+                  <Icon name="magnify" size={20} color="#4A90E2" />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search members..."
+                    value={memberSearchQuery}
+                    onChangeText={setMemberSearchQuery}
+                    placeholderTextColor="#999"
+                  />
+                  {memberSearchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
+                      <Icon name="close-circle" size={20} color="#999" />
                     </TouchableOpacity>
-                  ))
-                ) : (
-                  <View style={styles.noMembersContainer}>
-                    <Icon name="account-alert" size={24} color="#999" />
-                    <Text style={styles.noMembersText}>No members available</Text>
-                  </View>
-                )}
-              </ScrollView>
+                  )}
+                </View>
+
+                <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
+                  {loadingMembers ? (
+                    <View style={styles.noMembersContainer}>
+                      <ActivityIndicator size="small" color="#4A90E2" />
+                      <Text style={styles.noMembersText}>Loading members...</Text>
+                    </View>
+                  ) : allMembers && allMembers.length > 0 ? (
+                    allMembers
+                      .filter(member => 
+                        member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+                        member.phone?.includes(memberSearchQuery) ||
+                        member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
+                      )
+                      .map(member => (
+                        <TouchableOpacity
+                          key={member.id}
+                          style={styles.memberDropdownItem}
+                          onPress={() => {
+                            handleSelectMember(member);
+                            setMemberSearchQuery('');
+                          }}
+                        >
+                          <View style={styles.memberItemContent}>
+                            <Text style={styles.memberName}>{member.name}</Text>
+                            <View style={styles.memberDetailsRow}>
+                              <Text style={styles.memberDetail}>
+                                <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
+                              </Text>
+                              <Text style={styles.memberDetail}>
+                                <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
+                              </Text>
+                            </View>
+                            {member.email && (
+                              <Text style={styles.memberEmail}>
+                                <Icon name="email" size={12} color="#999" /> {member.email}
+                              </Text>
+                            )}
+                          </View>
+                          {formData.memberId === member.id && (
+                            <Icon name="check" size={20} color="#4A90E2" />
+                          )}
+                        </TouchableOpacity>
+                      ))
+                  ) : (
+                    <View style={styles.noMembersContainer}>
+                      <Icon name="account-alert" size={24} color="#999" />
+                      <Text style={styles.noMembersText}>No members available</Text>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
             )}
           </View>
 
@@ -513,40 +564,62 @@ const ReferralSlip = () => {
             </View>
           </View>
 
-          {/* Referral Status Checkboxes */}
+          {/* Referral Category Dropdown */}
           <View style={styles.section}>
-            <Text style={styles.label}>Referral Status *</Text>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => toggleReferralStatus('told_call')}
-            >
-              <View style={[styles.checkbox, formData.referralStatus.includes('told_call') && styles.checkboxActive]}>
-                {formData.referralStatus.includes('told_call') && (
-                  <Icon name="check" size={16} color="#FFF" />
-                )}
-              </View>
-              <Text style={styles.checkboxLabel}>Told them you would call</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => toggleReferralStatus('given_card')}
-            >
-              <View style={[styles.checkbox, formData.referralStatus.includes('given_card') && styles.checkboxActive]}>
-                {formData.referralStatus.includes('given_card') && (
-                  <Icon name="check" size={16} color="#FFF" />
-                )}
-              </View>
-              <Text style={styles.checkboxLabel}>Given your card</Text>
-            </TouchableOpacity>
+            <Text style={styles.label}>Referral Category *</Text>
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  formData.referralCategory === 'Business' && styles.toggleButtonActive,
+                ]}
+                onPress={() => handleInputChange('referralCategory', 'Business')}
+              >
+                <Icon 
+                  name="briefcase" 
+                  size={18} 
+                  color={formData.referralCategory === 'Business' ? '#FFF' : '#4A90E2'} 
+                />
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    formData.referralCategory === 'Business' && styles.toggleButtonTextActive,
+                  ]}
+                >
+                  Business
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  formData.referralCategory === 'Personal' && styles.toggleButtonActive,
+                ]}
+                onPress={() => handleInputChange('referralCategory', 'Personal')}
+              >
+                <Icon 
+                  name="account" 
+                  size={18} 
+                  color={formData.referralCategory === 'Personal' ? '#FFF' : '#4A90E2'} 
+                />
+                <Text
+                  style={[
+                    styles.toggleButtonText,
+                    formData.referralCategory === 'Personal' && styles.toggleButtonTextActive,
+                  ]}
+                >
+                  Personal
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.label}>Referral Number/Name *</Text>
+            <Text style={styles.label}> Company Name*</Text>
             <View style={styles.inputContainer}>
-              <Icon name="numeric" size={20} color="#4A90E2" style={styles.icon} />
+              <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
               <TextInput
                 style={styles.input}
-                placeholder="Enter referral number or client name"
+                placeholder="Enter client name or company name"
                 value={formData.referralNumber}
                 onChangeText={(text) => handleInputChange('referralNumber', text)}
                 placeholderTextColor="#999"
@@ -556,7 +629,7 @@ const ReferralSlip = () => {
 
           {/* Telephone Number Field */}
           <View style={styles.section}>
-            <Text style={styles.label}>Telephone Number *</Text>
+            <Text style={styles.label}>Mobile Number *</Text>
             <View style={styles.inputContainer}>
               <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
               <TextInput
@@ -573,7 +646,7 @@ const ReferralSlip = () => {
 
           {/* Email Field */}
           <View style={styles.section}>
-            <Text style={styles.label}>Email Address</Text>
+            <Text style={styles.label}>Email </Text>
             <View style={styles.inputContainer}>
               <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
               <TextInput
@@ -754,6 +827,26 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
     fontStyle: 'italic',
   },
+  preSelectedMemberBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F4FD',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4A90E2',
+  },
+  preSelectedMemberText: {
+    fontSize: 14,
+    color: '#4A90E2',
+    marginLeft: 8,
+    flex: 1,
+  },
+  preSelectedMemberName: {
+    fontWeight: '600',
+    color: '#2C5F8D',
+  },
   section: {
     marginBottom: 20,
   },
@@ -814,8 +907,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     marginTop: 8,
-    maxHeight: 250,
+    maxHeight: 300,
     elevation: 3,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#F8F9FA',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    marginLeft: 8,
+    paddingVertical: 4,
+  },
+  memberScrollView: {
+    maxHeight: 250,
   },
   memberDropdownItem: {
     flexDirection: 'row',
@@ -862,12 +974,15 @@ const styles = StyleSheet.create({
   },
   toggleButton: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     paddingVertical: 12,
     borderRadius: 8,
     backgroundColor: '#FFF',
     borderWidth: 1,
     borderColor: '#87CEEB',
-    alignItems: 'center',
   },
   toggleButtonActive: {
     backgroundColor: '#4A90E2',
