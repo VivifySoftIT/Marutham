@@ -338,7 +338,7 @@ const BulkMemberImport = () => {
     );
   };
 
-  // Bulk save all members
+  // Bulk save all members using bulk API
   const handleBulkSave = async () => {
     const validMembers = members.filter(m => m.isValid);
     
@@ -357,67 +357,81 @@ const BulkMemberImport = () => {
           onPress: async () => {
             setLoading(true);
             
-            // Get admin member ID using robust 3-tier lookup
-            const adminMemberId = await getCurrentUserMemberId();
-            if (!adminMemberId) {
-              Alert.alert('Error', 'Admin member ID not found. Please login again.');
-              setLoading(false);
-              return;
-            }
-
-            console.log('BulkMemberImport - Using admin member ID for bulk save:', adminMemberId);
-
-            let successCount = 0;
-            let failCount = 0;
-
-            for (const member of validMembers) {
-              try {
-                // Generate default email if not provided (required by backend)
-                const email = member.email || `${member.phone}@alaigal.com`;
-
-                const memberData = {
-                  Name: member.name,
-                  Phone: member.phone,
-                  Email: email, // Email is required by backend
-                  DOB: member.dateOfBirth || null,
-                  Address: member.address || null,
-                  Batch: member.batch || null,
-                  Business: member.business || null,
-                  BusinessCategory: member.businessCategory || null,
-                  MembershipType: member.membershipType || null,
-                  ReferenceId: member.referenceId ? parseInt(member.referenceId) : null,
-                  CreatedBy: adminMemberId,
-                };
-
-                await ApiService.createMember(memberData);
-                successCount++;
-              } catch (error) {
-                failCount++;
-                console.error('Failed to save member:', member.name, error);
+            try {
+              // Get admin member ID using robust 3-tier lookup
+              const adminMemberId = await getCurrentUserMemberId();
+              if (!adminMemberId) {
+                Alert.alert('Error', 'Admin member ID not found. Please login again.');
+                setLoading(false);
+                return;
               }
-            }
 
-            setLoading(false);
-            
-            // Clear the members list after successful save
-            if (successCount > 0) {
-              setMembers([]);
-            }
-            
-            Alert.alert(
-              'Bulk Save Complete',
-              `Successfully saved: ${successCount}\nFailed: ${failCount}`,
-              [
-                {
-                  text: 'OK',
-                  onPress: () => {
-                    if (successCount > 0) {
-                      navigation.goBack();
-                    }
+              console.log('BulkMemberImport - Using admin member ID for bulk save:', adminMemberId);
+
+              // Prepare members array for bulk API
+              const membersForBulk = validMembers.map(member => {
+                // Generate email from name if not provided
+                let email = member.email;
+                if (!email || email.trim() === '') {
+                  // Convert name to email format: "John Doe" -> "johndoe@alaigal.com"
+                  const namePart = member.name.toLowerCase().replace(/\s+/g, '');
+                  email = `${namePart}@alaigal.com`;
+                }
+
+                return {
+                  Name: member.name.trim(),
+                  Phone: member.phone.trim(),
+                  Email: email.trim(),
+                  Business: member.business ? member.business.trim() : null,
+                };
+              });
+
+              console.log('Sending bulk members:', JSON.stringify({ AdminMemberId: adminMemberId, Members: membersForBulk }, null, 2));
+
+              // Call bulk create API
+              const result = await ApiService.createBulkMembers({
+                AdminMemberId: adminMemberId,
+                Members: membersForBulk
+              });
+
+              console.log('Bulk save result:', result);
+
+              setLoading(false);
+              
+              // Clear the members list after successful save
+              if (result.successCount > 0) {
+                setMembers([]);
+              }
+              
+              // Show detailed results
+              let message = `Successfully saved: ${result.successCount}\nFailed: ${result.failCount}`;
+              
+              if (result.errors && result.errors.length > 0) {
+                message += '\n\nErrors:\n' + result.errors.slice(0, 5).join('\n');
+                if (result.errors.length > 5) {
+                  message += `\n... and ${result.errors.length - 5} more errors`;
+                }
+              }
+              
+              Alert.alert(
+                'Bulk Save Complete',
+                message,
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      if (result.successCount > 0) {
+                        navigation.goBack();
+                      }
+                    },
                   },
-                },
-              ]
-            );
+                ]
+              );
+            } catch (error) {
+              console.error('Bulk save error:', error);
+              setLoading(false);
+              Alert.alert('Error', 'Failed to save members: ' + error.message);
+            }
           },
         },
       ]

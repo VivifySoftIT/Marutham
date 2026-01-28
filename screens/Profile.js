@@ -74,7 +74,7 @@ const MyProfile = () => {
           name: memberData.name || "",
           employeeNo: memberData.memberId || memberData.id?.toString() || "",
           designation: memberData.business || "",
-          gender: "",
+          gender: memberData.gender || "",
           email: memberData.email || "",
           contactNumber: memberData.phone || "",
           contactAddress: memberData.address || "",
@@ -195,6 +195,7 @@ const MyProfile = () => {
         Name: profile.name || null,
         Phone: profile.contactNumber || null,
         Email: profile.email || null,
+        Gender: profile.gender || null,
         DOB: formatDate(profile.dob),
         JoinDate: formatDate(profile.joinDate),
         Address: profile.contactAddress || null,
@@ -241,7 +242,7 @@ const MyProfile = () => {
             name: memberData.name || "",
             employeeNo: memberData.memberId || memberData.id?.toString() || "",
             designation: memberData.business || "",
-            gender: "",
+            gender: memberData.gender || "",
             email: memberData.email || "",
             contactNumber: memberData.phone || "",
             contactAddress: memberData.address || "",
@@ -318,6 +319,42 @@ const MyProfile = () => {
     const isEditing = editingField === fieldName;
     const isNumberField = fieldName === "contactNumber";
     const isDateField = fieldName === "joinDate" || fieldName === "dob";
+    const isGenderField = fieldName === "gender";
+
+    // Gender dropdown options
+    if (isGenderField) {
+      return (
+        <View style={styles.fieldContainer}>
+          <Text style={styles.editLabel}>{label}</Text>
+          <View style={styles.inputWithIcon}>
+            <View style={styles.genderPickerContainer}>
+              {['Male', 'Female', 'Other'].map((option) => (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.genderOption,
+                    profile.gender === option && styles.genderOptionSelected
+                  ]}
+                  onPress={() => setProfile((prev) => ({ ...prev, gender: option }))}
+                >
+                  <Icon 
+                    name={profile.gender === option ? "radiobox-marked" : "radiobox-blank"} 
+                    size={20} 
+                    color={profile.gender === option ? "#4A90E2" : "#999"} 
+                  />
+                  <Text style={[
+                    styles.genderOptionText,
+                    profile.gender === option && styles.genderOptionTextSelected
+                  ]}>
+                    {option}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      );
+    }
 
     return (
       <View style={styles.fieldContainer}>
@@ -525,7 +562,7 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingTop: StatusBar.currentHeight || 8,
   },
   headerContent: {
@@ -774,6 +811,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F5F9FC',
+  },
+  genderPickerContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 8,
+  },
+  genderOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#F5F9FC',
+  },
+  genderOptionSelected: {
+    backgroundColor: '#E3F2FD',
+  },
+  genderOptionText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 6,
+  },
+  genderOptionTextSelected: {
+    color: '#4A90E2',
+    fontWeight: '600',
   },
 });
 

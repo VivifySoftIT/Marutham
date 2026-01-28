@@ -309,7 +309,7 @@ const MyFeed = ({ route }) => {
           )
         );
 
-        Alert.alert('Success', `TYFCB ${status.toLowerCase()}ed successfully!`);
+        Alert.alert('Success', `ThanksNote ${status.toLowerCase()}ed successfully!`);
         setShowDetailModal(false);
       } else {
         let errorMessage = `HTTP ${response.status}`;
@@ -324,8 +324,8 @@ const MyFeed = ({ route }) => {
       }
 
     } catch (error) {
-      console.error('Error updating TYFCB status:', error);
-      Alert.alert('Error', error.message || 'Failed to update TYFCB status');
+      console.error('Error updating ThanksNote status:', error);
+      Alert.alert('Error', error.message || 'Failed to update ThanksNote status');
     } finally {
       setUpdatingItemId(null);
     }
@@ -511,7 +511,7 @@ const MyFeed = ({ route }) => {
           style={[styles.tabButton, activeTab === 'tyfcb' && styles.tabButtonActive]}
           onPress={() => setActiveTab('tyfcb')}
         >
-          <Text style={[styles.tabButtonText, activeTab === 'tyfcb' && styles.tabButtonTextActive]}>TYFCB</Text>
+          <Text style={[styles.tabButtonText, activeTab === 'tyfcb' && styles.tabButtonTextActive]}>ThanksNote</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'one_to_one' && styles.tabButtonActive]}
@@ -681,8 +681,8 @@ const MyFeed = ({ route }) => {
                       <Text style={styles.detailValue}>
                         {selectedItem.type === 'referral_received' ? 'Referral Received' :
                           selectedItem.type === 'referral_given' ? 'Referral Given' :
-                            selectedItem.type === 'tyfcb_received' ? 'TYFCB Received' :
-                              selectedItem.type === 'tyfcb_given' ? 'TYFCB Given' : 'Activity'}
+                            selectedItem.type === 'tyfcb_received' ? 'ThanksNote Received' :
+                              selectedItem.type === 'tyfcb_given' ? 'ThanksNote Given' : 'Activity'}
                       </Text>
                     </View>
                   </View>

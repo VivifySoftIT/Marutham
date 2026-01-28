@@ -30,6 +30,157 @@ import LanguageSelector from '../components/LanguageSelector';
 
 const { width } = Dimensions.get('window');
 
+// Graph View Component
+const GraphView = ({ reportType, data, stats }) => {
+  if (!data || data.length === 0) {
+    return (
+      <View style={styles.graphContainer}>
+        <Text style={styles.graphEmptyText}>No data available for graph</Text>
+      </View>
+    );
+  }
+
+  // Prepare data for different report types
+  const getGraphData = () => {
+    switch (reportType) {
+      case 'attendance':
+        const presentCount = data.filter(d => d.status === 'Present').length;
+        const absentCount = data.filter(d => d.status === 'Absent').length;
+        return {
+          labels: ['Present', 'Absent'],
+          values: [presentCount, absentCount],
+          colors: ['#4CAF50', '#F44336'],
+        };
+      
+      case 'tyfcb':
+        const tyfcbByMonth = {};
+        data.forEach(item => {
+          const month = new Date(item.visitDate).toLocaleDateString('en-US', { month: 'short' });
+          tyfcbByMonth[month] = (tyfcbByMonth[month] || 0) + 1;
+        });
+        return {
+          labels: Object.keys(tyfcbByMonth),
+          values: Object.values(tyfcbByMonth),
+          colors: ['#4A90E2', '#87CEEB', '#5DADE2', '#2C5F8D'],
+        };
+      
+      case 'payment':
+        const paidCount = data.filter(d => d.status === 'Paid' || d.status === 'Completed').length;
+        const pendingCount = data.length - paidCount;
+        return {
+          labels: ['Paid', 'Pending'],
+          values: [paidCount, pendingCount],
+          colors: ['#4CAF50', '#FF9800'],
+        };
+      
+      case 'meeting':
+        const completedCount = data.filter(d => d.status === 'Completed').length;
+        const pendingMeetings = data.length - completedCount;
+        return {
+          labels: ['Completed', 'Pending'],
+          values: [completedCount, pendingMeetings],
+          colors: ['#4CAF50', '#FF9800'],
+        };
+      
+      case 'referral':
+        const confirmedCount = data.filter(d => d.status === 'Confirmed' || d.status === 'Confirm').length;
+        const pendingReferrals = data.filter(d => d.status === 'Pending').length;
+        const rejectedCount = data.filter(d => d.status === 'Rejected' || d.status === 'Reject').length;
+        return {
+          labels: ['Confirmed', 'Pending', 'Rejected'],
+          values: [confirmedCount, pendingReferrals, rejectedCount],
+          colors: ['#4CAF50', '#FF9800', '#F44336'],
+        };
+      
+      case 'visitor':
+        const becameMemberCount = data.filter(d => d.becameMember).length;
+        const stillVisitor = data.length - becameMemberCount;
+        return {
+          labels: ['Became Members', 'Still Visitors'],
+          values: [becameMemberCount, stillVisitor],
+          colors: ['#4CAF50', '#4A90E2'],
+        };
+      
+      default:
+        return {
+          labels: ['Total'],
+          values: [data.length],
+          colors: ['#4A90E2'],
+        };
+    }
+  };
+
+  const graphData = getGraphData();
+  const maxValue = Math.max(...graphData.values);
+
+  return (
+    <View style={styles.graphContainer}>
+      <View style={styles.graphContent}>
+        <Text style={styles.graphTitle}>
+          {reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report Graph
+        </Text>
+        
+        {/* Simple Bar Chart */}
+        <View style={styles.barChartContainer}>
+          {graphData.labels.map((label, index) => {
+            const value = graphData.values[index];
+            const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
+            
+            return (
+              <View key={index} style={styles.barChartItem}>
+                <View style={styles.barChartLabelContainer}>
+                  <Text style={styles.barChartLabel}>{label}</Text>
+                  <Text style={styles.barChartValue}>{value}</Text>
+                </View>
+                <View style={styles.barChartBarContainer}>
+                  <View 
+                    style={[
+                      styles.barChartBar,
+                      { 
+                        width: `${percentage}%`,
+                        backgroundColor: graphData.colors[index % graphData.colors.length]
+                      }
+                    ]}
+                  />
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* Summary Stats */}
+        <View style={styles.graphSummary}>
+          <View style={styles.graphSummaryItem}>
+            <Icon name="chart-line" size={24} color="#4A90E2" />
+            <Text style={styles.graphSummaryLabel}>Total Records</Text>
+            <Text style={styles.graphSummaryValue}>{data.length}</Text>
+          </View>
+          
+          {stats && (
+            <>
+              {stats.stat2 && (
+                <View style={styles.graphSummaryItem}>
+                  <Icon name="check-circle" size={24} color="#4CAF50" />
+                  <Text style={styles.graphSummaryLabel}>{stats.stat2.label}</Text>
+                  <Text style={styles.graphSummaryValue}>{stats.stat2.value}</Text>
+                </View>
+              )}
+              
+              {stats.stat3 && (
+                <View style={styles.graphSummaryItem}>
+                  <Icon name="alert-circle" size={24} color="#FF9800" />
+                  <Text style={styles.graphSummaryLabel}>{stats.stat3.label}</Text>
+                  <Text style={styles.graphSummaryValue}>{stats.stat3.value}</Text>
+                </View>
+              )}
+            </>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const Reports = ({ navigation }) => {
   const { t } = useLanguage();
   const [selectedPeriod, setSelectedPeriod] = useState('daily');
@@ -46,6 +197,9 @@ const Reports = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMembers, setFilteredMembers] = useState([]);
   
+  // View mode state - 'list' or 'graph'
+  const [viewMode, setViewMode] = useState('list');
+  
   // Date picker states
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCustomDateModal, setShowCustomDateModal] = useState(false);
@@ -58,7 +212,7 @@ const Reports = ({ navigation }) => {
 
   const reportTabs = [
     { id: 'attendance', title: 'Attendance', icon: 'calendar-check', endpoint: 'attendance' },
-    { id: 'tyfcb', title: 'TYFCB', icon: 'handshake', endpoint: 'tyfcb' },
+    { id: 'tyfcb', title: 'ThanksNote', icon: 'handshake', endpoint: 'tyfcb' },
     { id: 'meeting', title: '1:1 Meeting', icon: 'account-multiple', endpoint: 'meeting' },
     { id: 'alaigalmeeting', title: 'Alaigal Meeting', icon: 'calendar-account', endpoint: 'alaigalmeeting' },
     { id: 'visitor', title: 'Visitor', icon: 'account-plus', endpoint: 'visitor' },
@@ -161,13 +315,13 @@ const Reports = ({ navigation }) => {
         console.log('Attendance data received:', attendanceData);
         setReportData(attendanceData);
       } else if (selectedReportTab === 'tyfcb') {
-        // For TYFCB report, use the new API with member selection
+        // For ThanksNote report, use the new API with member selection
         let tyfcbData;
         
         if (selectedPeriod === 'custom') {
           const formattedFromDate = fromDate.toISOString().split('T')[0];
           const formattedToDate = toDate.toISOString().split('T')[0];
-          console.log('Reports - Fetching TYFCB with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          console.log('Reports - Fetching ThanksNote with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           tyfcbData = await ApiService.getTYFCBReport(
             formattedFromDate, 
             formattedToDate, 
@@ -176,7 +330,7 @@ const Reports = ({ navigation }) => {
             currentMemberId
           );
         } else {
-          console.log('Reports - Fetching TYFCB with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          console.log('Reports - Fetching ThanksNote with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           tyfcbData = await ApiService.getTYFCBReport(
             null, 
             null, 
@@ -186,7 +340,7 @@ const Reports = ({ navigation }) => {
           );
         }
         
-        console.log('TYFCB data received:', tyfcbData);
+        console.log('ThanksNote data received:', tyfcbData);
         setReportData(tyfcbData);
       } else if (selectedReportTab === 'meeting') {
         // For One-to-One Meeting report, use the new API with member selection
@@ -504,7 +658,7 @@ const Reports = ({ navigation }) => {
     `;
   };
 
-  // Generate TYFCB PDF Content
+  // Generate ThanksNote PDF Content
   const generateTYFCBPDFContent = (data, title) => {
     return `
       <!DOCTYPE html>
@@ -964,8 +1118,8 @@ const Reports = ({ navigation }) => {
             { wch: 12 }, // Status
             { wch: 30 }, // Notes
           ];
-          sheetName = 'TYFCB Report';
-          filename = `tyfcb_report_${timestamp}.xlsx`;
+          sheetName = 'ThanksNote Report';
+          filename = `thanksnote_report_${timestamp}.xlsx`;
           break;
 
         case 'meeting':
@@ -1113,7 +1267,7 @@ const Reports = ({ navigation }) => {
     }));
   };
 
-  // Generate TYFCB Excel Data
+  // Generate ThanksNote Excel Data
   const generateTYFCBExcelData = (data) => {
     return data.map((item, index) => ({
       'S.No': index + 1,
@@ -1411,8 +1565,8 @@ const Reports = ({ navigation }) => {
   const handleTYFCBStatusUpdate = async (tyfcbId, status) => {
     try {
       Alert.alert(
-        `${status} TYFCB`,
-        `Are you sure you want to ${status.toLowerCase()} this TYFCB record?`,
+        `${status} ThanksNote`,
+        `Are you sure you want to ${status.toLowerCase()} this ThanksNote record?`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -1422,12 +1576,12 @@ const Reports = ({ navigation }) => {
               try {
                 setLoading(true);
                 await ApiService.updateTYFCBStatus(tyfcbId, status);
-                Alert.alert('Success', `TYFCB ${status.toLowerCase()}ed successfully`);
+                Alert.alert('Success', `ThanksNote ${status.toLowerCase()}ed successfully`);
                 // Reload the report data
                 await loadReportData();
               } catch (error) {
-                console.error(`Error ${status.toLowerCase()}ing TYFCB:`, error);
-                Alert.alert('Error', `Failed to ${status.toLowerCase()} TYFCB`);
+                console.error(`Error ${status.toLowerCase()}ing ThanksNote:`, error);
+                Alert.alert('Error', `Failed to ${status.toLowerCase()} ThanksNote`);
               } finally {
                 setLoading(false);
               }
@@ -1519,26 +1673,6 @@ const Reports = ({ navigation }) => {
         <View style={styles.notesContainer}>
           <Icon name="note-text" size={14} color="#666" />
           <Text style={styles.notesText}>{tyfcb.notes}</Text>
-        </View>
-      )}
-      
-      {/* Confirm/Reject Buttons - Only show if status is Pending */}
-      {(!tyfcb.status || tyfcb.status === 'Pending') && (
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.confirmButton]}
-            onPress={() => handleTYFCBStatusUpdate(tyfcb.id, 'Confirm')}
-          >
-            <Icon name="check-circle" size={16} color="#FFF" />
-            <Text style={styles.actionButtonText}>Confirm</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.rejectButton]}
-            onPress={() => handleTYFCBStatusUpdate(tyfcb.id, 'Reject')}
-          >
-            <Icon name="close-circle" size={16} color="#FFF" />
-            <Text style={styles.actionButtonText}>Reject</Text>
-          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -1661,26 +1795,6 @@ const Reports = ({ navigation }) => {
         <View style={styles.notesContainer}>
           <Icon name="note-text" size={14} color="#666" />
           <Text style={styles.notesText}>{referral.notes}</Text>
-        </View>
-      )}
-      
-      {/* Confirm/Reject Buttons - Only show if status is Pending */}
-      {(!referral.status || referral.status === 'Pending') && (
-        <View style={styles.actionButtonsContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.confirmButton]}
-            onPress={() => handleReferralStatusUpdate(referral.id, 'Confirm')}
-          >
-            <Icon name="check-circle" size={16} color="#FFF" />
-            <Text style={styles.actionButtonText}>Confirm</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.rejectButton]}
-            onPress={() => handleReferralStatusUpdate(referral.id, 'Reject')}
-          >
-            <Icon name="close-circle" size={16} color="#FFF" />
-            <Text style={styles.actionButtonText}>Reject</Text>
-          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -2307,44 +2421,87 @@ const Reports = ({ navigation }) => {
             {/* Members List */}
             <View style={styles.section}>
               <View style={styles.membersHeader}>
-                <Text style={styles.sectionTitle}>
-                  {selectedReportTab === 'attendance' 
-                    ? activeMemberTab === 'present' ? 'Present Records' 
-                      : activeMemberTab === 'absent' ? 'Absent Records' 
-                      : 'All Records'
-                    : selectedReportTab === 'payment'
-                    ? activePaymentTab === 'paid' ? 'Paid Members' : 'All Members'
-                    : 'Records'}
-                </Text>
-                <Text style={styles.memberCount}>
-                  {membersList.length} records
-                </Text>
+                <View style={styles.membersHeaderLeft}>
+                  <Text style={styles.sectionTitle}>
+                    {selectedReportTab === 'attendance' 
+                      ? activeMemberTab === 'present' ? 'Present Records' 
+                        : activeMemberTab === 'absent' ? 'Absent Records' 
+                        : 'All Records'
+                      : selectedReportTab === 'payment'
+                      ? activePaymentTab === 'paid' ? 'Paid Members' : 'All Members'
+                      : 'Records'}
+                  </Text>
+                  <Text style={styles.memberCount}>
+                    {membersList.length} records
+                  </Text>
+                </View>
+                
+                {/* View Toggle Button */}
+                <View style={styles.viewToggleContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.viewToggleButton,
+                      viewMode === 'list' && styles.viewToggleButtonActive
+                    ]}
+                    onPress={() => setViewMode('list')}
+                  >
+                    <Icon 
+                      name="format-list-bulleted" 
+                      size={18} 
+                      color={viewMode === 'list' ? '#FFF' : '#4A90E2'} 
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.viewToggleButton,
+                      viewMode === 'graph' && styles.viewToggleButtonActive
+                    ]}
+                    onPress={() => setViewMode('graph')}
+                  >
+                    <Icon 
+                      name="chart-bar" 
+                      size={18} 
+                      color={viewMode === 'graph' ? '#FFF' : '#4A90E2'} 
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
               
               {membersList.length > 0 ? (
-                <FlatList
-                  data={membersList}
-                  renderItem={({ item }) => {
-                    if (selectedReportTab === 'tyfcb') {
-                      return renderTYFCBItem(item);
-                    } else if (selectedReportTab === 'meeting') {
-                      return renderOneToOneMeetingItem(item);
-                    } else if (selectedReportTab === 'referral') {
-                      return renderReferralItem(item);
-                    } else if (selectedReportTab === 'payment') {
-                      return renderPaymentItem(item);
-                    } else if (selectedReportTab === 'alaigalmeeting') {
-                      return renderAlaigalMeetingItem(item);
-                    } else if (selectedReportTab === 'visitor') {
-                      return renderVisitorItem(item);
-                    } else {
-                      return renderMemberItem(item);
-                    }
-                  }}
-                  keyExtractor={(item, index) => item.id?.toString() || index.toString()}
-                  scrollEnabled={false}
-                  style={styles.membersList}
-                />
+                viewMode === 'list' ? (
+                  <View style={styles.membersListContainer}>
+                    {membersList.map((item, index) => {
+                      let renderedItem;
+                      if (selectedReportTab === 'tyfcb') {
+                        renderedItem = renderTYFCBItem(item);
+                      } else if (selectedReportTab === 'meeting') {
+                        renderedItem = renderOneToOneMeetingItem(item);
+                      } else if (selectedReportTab === 'referral') {
+                        renderedItem = renderReferralItem(item);
+                      } else if (selectedReportTab === 'payment') {
+                        renderedItem = renderPaymentItem(item);
+                      } else if (selectedReportTab === 'alaigalmeeting') {
+                        renderedItem = renderAlaigalMeetingItem(item);
+                      } else if (selectedReportTab === 'visitor') {
+                        renderedItem = renderVisitorItem(item);
+                      } else {
+                        renderedItem = renderMemberItem(item);
+                      }
+                      
+                      return (
+                        <View key={item.id?.toString() || index.toString()}>
+                          {renderedItem}
+                        </View>
+                      );
+                    })}
+                  </View>
+                ) : (
+                  <GraphView 
+                    reportType={selectedReportTab}
+                    data={membersList}
+                    stats={stats}
+                  />
+                )
               ) : (
                 <View style={styles.emptyContainer}>
                   <Icon name="clipboard-text-off" size={48} color="#CCC" />
@@ -2743,12 +2900,118 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  membersHeaderLeft: {
+    flex: 1,
+  },
+  viewToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F5F9FC',
+    borderRadius: 8,
+    padding: 2,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  viewToggleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginHorizontal: 2,
+  },
+  viewToggleButtonActive: {
+    backgroundColor: '#4A90E2',
+  },
   memberCount: {
     fontSize: 12,
     color: '#999',
   },
   membersList: {
-    maxHeight: 400,
+    maxHeight: 600,
+  },
+  membersListContainer: {
+    paddingBottom: 10,
+  },
+  membersListContent: {
+    paddingBottom: 10,
+  },
+  graphContainer: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    padding: 15,
+    marginTop: 10,
+  },
+  graphContent: {
+    paddingBottom: 20,
+  },
+  graphTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4A90E2',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  graphEmptyText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    paddingVertical: 40,
+  },
+  barChartContainer: {
+    marginBottom: 20,
+  },
+  barChartItem: {
+    marginBottom: 15,
+  },
+  barChartLabelContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  barChartLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+  },
+  barChartValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#4A90E2',
+  },
+  barChartBarContainer: {
+    height: 30,
+    backgroundColor: '#F5F9FC',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  barChartBar: {
+    height: '100%',
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 8,
+  },
+  graphSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  graphSummaryItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  graphSummaryLabel: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  graphSummaryValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#4A90E2',
+    marginTop: 4,
   },
   memberCard: {
     backgroundColor: '#FFF',
