@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   ImageBackground,
   Platform,
-  FlatList,
+  ScrollView,
   KeyboardAvoidingView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -28,12 +28,10 @@ const TYFCBSlip = () => {
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
-  const [filteredMembers, setFilteredMembers] = useState([]);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [savedData, setSavedData] = useState(null);
   const [isListening, setIsListening] = useState(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
-  const searchInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     memberName: '',
@@ -47,22 +45,6 @@ const TYFCBSlip = () => {
   useEffect(() => {
     loadMembers();
   }, []);
-
-  // Filter members based on search query
-  useEffect(() => {
-    if (memberSearchQuery.trim() === '') {
-      setFilteredMembers(allMembers);
-    } else {
-      const query = memberSearchQuery.toLowerCase();
-      const filtered = allMembers.filter(member => 
-        member.name?.toLowerCase().includes(query) ||
-        member.email?.toLowerCase().includes(query) ||
-        member.phone?.includes(query) ||
-        member.memberId?.toString().toLowerCase().includes(query)
-      );
-      setFilteredMembers(filtered);
-    }
-  }, [memberSearchQuery, allMembers]);
 
   const apiGet = async (endpoint) => {
     try {
@@ -104,6 +86,7 @@ const TYFCBSlip = () => {
     try {
       setLoadingMembers(true);
       const members = await apiGet('/api/Members');
+      console.log('TYFCBSlip - Total members loaded:', members?.length || 0);
       const formattedMembers = (members || []).map(member => ({
         ...member,
         name: member.name || 'Unknown Member',
@@ -111,13 +94,12 @@ const TYFCBSlip = () => {
         phone: member.phone || '',
         email: member.email || '',
       }));
+      console.log('TYFCBSlip - Formatted members:', formattedMembers.length);
       setAllMembers(formattedMembers);
-      setFilteredMembers(formattedMembers);
     } catch (error) {
       console.error('Error loading members:', error);
       Alert.alert('Error', 'Failed to load members list');
       setAllMembers([]);
-      setFilteredMembers([]);
     } finally {
       setLoadingMembers(false);
     }
@@ -248,50 +230,7 @@ const TYFCBSlip = () => {
     }
   };
 
-  // Function to handle member search with voice
-  const startMemberVoiceSearch = () => {
-    startVoiceInputForMember();
-  };
 
-  const startVoiceInputForMember = async () => {
-    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
-      const recognition = new window.webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-IN';
-
-      recognition.onstart = () => {
-        setIsListening('memberSearch');
-      };
-
-      recognition.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript.trim();
-        
-        if (event.results[0].isFinal) {
-          setMemberSearchQuery(spokenText);
-          setIsListening(null);
-        }
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Voice error:', event.error);
-        setIsListening(null);
-      };
-
-      recognition.onend = () => {
-        setIsListening(null);
-      };
-
-      try {
-        recognition.start();
-      } catch (error) {
-        console.error('Error starting recognition:', error);
-        setIsListening(null);
-      }
-    } else {
-      Alert.alert('Voice Search', 'Voice search is available on web only.');
-    }
-  };
 
   const handleConfirm = async () => {
     if (!validateForm()) return;
@@ -353,127 +292,96 @@ const TYFCBSlip = () => {
     }
   };
 
-  const renderMemberItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.memberDropdownItem}
-      onPress={() => handleSelectMember(item)}
-    >
-      <View style={styles.memberItemContent}>
-        <Text style={styles.memberName}>{item.name}</Text>
-        <View style={styles.memberDetailsRow}>
-          {item.memberId && (
-            <Text style={styles.memberDetail}>
-              <Icon name="id-card" size={12} color="#999" /> ID: {item.memberId}
-            </Text>
-          )}
-          {item.phone && (
-            <Text style={styles.memberDetail}>
-              <Icon name="phone" size={12} color="#999" /> {item.phone}
-            </Text>
-          )}
-        </View>
-        {item.email && (
-          <Text style={styles.memberEmail}>
-            <Icon name="email" size={12} color="#999" /> {item.email}
-          </Text>
-        )}
-      </View>
-      {formData.memberId === item.id && (
-        <Icon name="check" size={20} color="#4A90E2" />
-      )}
-    </TouchableOpacity>
-  );
+
 
   const renderFormContent = () => (
     <>
       {/* Member Selection with Search */}
-      <View style={styles.section}>
-        <Text style={styles.label}>To Member *</Text>
-        <TouchableOpacity
-          style={styles.memberDropdownButton}
-          onPress={() => {
-            setShowMemberDropdown(!showMemberDropdown);
-            if (!showMemberDropdown) {
-              setTimeout(() => {
-                searchInputRef.current?.focus();
-              }, 100);
-            }
-          }}
-        >
-          <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-          <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
-            {formData.memberName || 'Select or type member name'}
-          </Text>
-          <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
-        </TouchableOpacity>
-
-        {showMemberDropdown && (
-          <View style={styles.memberDropdownList}>
-            {/* Search Bar inside dropdown */}
-            <View style={styles.searchContainer}>
-              <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
-              <TextInput
-                ref={searchInputRef}
-                style={styles.searchInput}
-                placeholder="Search members by name, ID, phone or email..."
-                value={memberSearchQuery}
-                onChangeText={setMemberSearchQuery}
-                placeholderTextColor="#999"
-              />
-              {memberSearchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setMemberSearchQuery('')} style={styles.clearButton}>
-                  <Icon name="close-circle" size={20} color="#666" />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={styles.voiceSearchButton}
-                onPress={startMemberVoiceSearch}
-              >
-                <Icon
-                  name={isListening === 'memberSearch' ? "microphone" : "microphone-outline"}
-                  size={20}
-                  color={isListening === 'memberSearch' ? "#FF4444" : "#4A90E2"}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* Members List */}
-            {loadingMembers ? (
-              <View style={styles.noMembersContainer}>
-                <ActivityIndicator size="small" color="#4A90E2" />
-                <Text style={styles.noMembersText}>Loading members...</Text>
-              </View>
-            ) : filteredMembers.length > 0 ? (
-              <View style={styles.memberListContainer}>
-                <FlatList
-                  data={filteredMembers}
-                  renderItem={renderMemberItem}
-                  keyExtractor={(item) => item.id.toString()}
-                  nestedScrollEnabled={true}
-                  ListEmptyComponent={
-                    <View style={styles.noMembersContainer}>
-                      <Icon name="account-search" size={24} color="#999" />
-                      <Text style={styles.noMembersText}>No members found</Text>
-                    </View>
-                  }
-                  ListFooterComponent={
-                    <View style={styles.memberCountContainer}>
-                      <Text style={styles.memberCountText}>
-                        {filteredMembers.length} member{filteredMembers.length !== 1 ? 's' : ''} found
-                      </Text>
-                    </View>
-                  }
-                />
-              </View>
-            ) : (
-              <View style={styles.noMembersContainer}>
-                <Icon name="account-alert" size={24} color="#999" />
-                <Text style={styles.noMembersText}>No members available</Text>
-              </View>
-            )}
-          </View>
-        )}
-      </View>
+     <View style={styles.section}>
+               <Text style={styles.label}>To Member *</Text>
+               <TouchableOpacity
+                 style={styles.memberDropdownButton}
+                 onPress={() => setShowMemberDropdown(!showMemberDropdown)}
+               >
+                 <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
+                 <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
+                   {formData.memberName || 'Select member'}
+                 </Text>
+                 <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
+               </TouchableOpacity>
+   
+               {showMemberDropdown && (
+                 <View style={styles.memberDropdownList}>
+                   {/* Search Input */}
+                   <View style={styles.searchContainer}>
+                     <Icon name="magnify" size={20} color="#4A90E2" />
+                     <TextInput
+                       style={styles.searchInput}
+                       placeholder="Search members..."
+                       value={memberSearchQuery}
+                       onChangeText={setMemberSearchQuery}
+                       placeholderTextColor="#999"
+                     />
+                     {memberSearchQuery.length > 0 && (
+                       <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
+                         <Icon name="close-circle" size={20} color="#999" />
+                       </TouchableOpacity>
+                     )}
+                   </View>
+   
+                   <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
+                     {loadingMembers ? (
+                       <View style={styles.noMembersContainer}>
+                         <ActivityIndicator size="small" color="#4A90E2" />
+                         <Text style={styles.noMembersText}>Loading members...</Text>
+                       </View>
+                     ) : allMembers && allMembers.length > 0 ? (
+                       allMembers
+                         .filter(member =>
+                           member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+                           member.phone?.includes(memberSearchQuery) ||
+                           member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
+                         )
+                         .map(member => (
+                           <TouchableOpacity
+                             key={member.id}
+                             style={styles.memberDropdownItem}
+                             onPress={() => {
+                               handleSelectMember(member);
+                               setMemberSearchQuery('');
+                             }}
+                           >
+                             <View style={styles.memberItemContent}>
+                               <Text style={styles.memberName}>{member.name}</Text>
+                               <View style={styles.memberDetailsRow}>
+                                 <Text style={styles.memberDetail}>
+                                   <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
+                                 </Text>
+                                 <Text style={styles.memberDetail}>
+                                   <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
+                                 </Text>
+                               </View>
+                               {member.email && (
+                                 <Text style={styles.memberEmail}>
+                                   <Icon name="email" size={12} color="#999" /> {member.email}
+                                 </Text>
+                               )}
+                             </View>
+                             {formData.memberId === member.id && (
+                               <Icon name="check" size={20} color="#4A90E2" />
+                             )}
+                           </TouchableOpacity>
+                         ))
+                     ) : (
+                       <View style={styles.noMembersContainer}>
+                         <Icon name="account-alert" size={24} color="#999" />
+                         <Text style={styles.noMembersText}>No members available</Text>
+                       </View>
+                     )}
+                   </ScrollView>
+                 </View>
+               )}
+             </View>
 
       {/* Business Visited */}
       <View style={styles.section}>
@@ -504,7 +412,7 @@ const TYFCBSlip = () => {
       <View style={styles.section}>
         <Text style={styles.label}>Amount</Text>
         <View style={styles.inputContainer}>
-          <Icon name="currency-usd" size={20} color="#4A90E2" style={styles.icon} />
+          <Icon name="currency-inr" size={20} color="#4A90E2" style={styles.icon} />
           <TextInput
             style={styles.input}
             placeholder="Enter amount (optional)"
@@ -620,16 +528,17 @@ const TYFCBSlip = () => {
         <KeyboardAvoidingView 
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
         >
-          <FlatList
-            data={[]} // Empty array since we're not using FlatList for data
-            renderItem={null}
-            ListHeaderComponent={renderFormContent}
+          <ScrollView 
+            style={styles.content} 
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
-          />
+            keyboardDismissMode="on-drag"
+          >
+            {renderFormContent()}
+          </ScrollView>
         </KeyboardAvoidingView>
       </ImageBackground>
 
@@ -720,6 +629,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 15,
+    paddingBottom: 50, // Extra padding for keyboard
   },
   header: {
     flexDirection: 'row',
@@ -736,6 +646,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 15,
+    paddingBottom: 50, // Extra padding for keyboard
   },
   backgroundImage: {
     flex: 1,
@@ -789,7 +700,7 @@ const styles = StyleSheet.create({
     right: 8,
     top: 8,
   },
-  memberDropdownButton: {
+memberDropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
@@ -797,7 +708,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     paddingHorizontal: 12,
-    minHeight: 50,
+    minHeight: 45,
   },
   memberDropdownList: {
     backgroundColor: '#FFF',
@@ -805,36 +716,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     marginTop: 8,
-    maxHeight: 400,
+    maxHeight: 300,
     elevation: 3,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  searchIcon: {
-    marginRight: 8,
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#F8F9FA',
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
     color: '#333',
-    paddingVertical: 8,
+    marginLeft: 8,
+    paddingVertical: 4,
   },
-  clearButton: {
-    padding: 4,
-    marginLeft: 4,
-  },
-  voiceSearchButton: {
-    padding: 4,
-    marginLeft: 4,
-  },
-  memberListContainer: {
-    maxHeight: 280,
+  memberScrollView: {
+    maxHeight: 250,
   },
   memberDropdownItem: {
     flexDirection: 'row',
@@ -862,7 +764,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 4,
     gap: 12,
-    flexWrap: 'wrap',
   },
   memberDetail: {
     fontSize: 11,
@@ -871,25 +772,10 @@ const styles = StyleSheet.create({
   noMembersContainer: {
     padding: 20,
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 100,
   },
   noMembersText: {
     fontSize: 14,
     color: '#999',
-    marginTop: 8,
-  },
-  memberCountContainer: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-    alignItems: 'center',
-  },
-  memberCountText: {
-    fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic',
   },
   confirmButton: {
     backgroundColor: '#4A90E2',

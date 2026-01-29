@@ -83,11 +83,11 @@ const BirthdayWishesSection = ({ memberId }) => {
       style={styles.sectionContainer}
     >
       <LinearGradient
-        colors={['#FFE5E5', '#FFF0F0']}
+        colors={['#E8F5E9', '#F1F8E9']}
         style={styles.birthdayWishCard}
       >
         <View style={styles.birthdayWishHeader}>
-          <Icon name="cake-variant" size={40} color="#FF6B6B" />
+          <Icon name="cake-variant" size={40} color="#4CAF50" />
           <View style={styles.birthdayWishContent}>
             <Text style={styles.birthdayWishTitle}>🎉 Birthday Wish Received!</Text>
             <Text style={styles.birthdayWishMessage}>
@@ -330,123 +330,144 @@ const loadDashboardReminders = async () => {
 
     console.log('UserDashboard - Loading dashboard reminders for memberId:', memberId);
 
-    // Load message notifications (includes Birthday, NewMember, Event, Meeting, Payment, etc.)
+    // ONLY load message notifications (includes Birthday, NewMember, Event, etc.)
     let messageNotifications = null;
-
     try {
       messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
       console.log('UserDashboard - Message notifications response:', messageNotifications);
-      
-      // Extract data array from response
       if (messageNotifications && messageNotifications.data) {
         messageNotifications = messageNotifications.data;
       } else if (!Array.isArray(messageNotifications)) {
         messageNotifications = [];
       }
-      
       console.log('UserDashboard - Processed message notifications:', messageNotifications);
     } catch (error) {
       console.error('UserDashboard - Error loading message notifications:', error);
       messageNotifications = [];
     }
 
-    // Convert message notifications to UI format
     const newNotifications = [];
 
-    // Add message notifications from API (includes Event, Meeting, Payment, Welcome, NewMember, Birthday)
+    // ✅ ONLY process message notifications — no reminders!
     if (messageNotifications && messageNotifications.length > 0) {
       messageNotifications.forEach((msg) => {
-        // Map message types to notification config
+        console.log('Processing message notification:', {
+          id: msg.id,
+          messageType: msg.messageType,
+          subject: msg.subject,
+          content: msg.content,
+          recipientName: msg.recipientName,
+          recipientMemberId: msg.recipientMemberId,
+          memberName: msg.memberName,
+          memberId: msg.memberId,
+          toMemberName: msg.toMemberName,
+          toMemberId: msg.toMemberId,
+          allFields: Object.keys(msg)
+        });
+        
         const notificationTypeMap = {
           'Payment': { icon: 'credit-card-alert', color: '#4CAF50', backgroundColor: '#E8F5E9' },
-          'Birthday': { icon: 'cake-variant', color: '#FF6B6B', backgroundColor: '#FFE5E5' },
+          'Birthday': { icon: 'cake-variant', color: '#4CAF50', backgroundColor: '#E8F5E9' },
           'Event': { icon: 'calendar-star', color: '#FF9800', backgroundColor: '#FFF3E0' },
           'Meeting': { icon: 'calendar-clock', color: '#4ECDC4', backgroundColor: '#E8F8F7' },
           'Welcome': { icon: 'hand-wave', color: '#9C27B0', backgroundColor: '#F3E5F5' },
           'NewMember': { icon: 'account-plus', color: '#2196F3', backgroundColor: '#E3F2FD' }
         };
-
         const typeConfig = notificationTypeMap[msg.messageType] ||
           { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
 
-        // Format the notification message
         let notificationMessage = msg.content || 'New notification received';
+        let displayTime = 'Recent';
         
-        // Add date info for Event/Meeting types
         if ((msg.messageType === 'Event' || msg.messageType === 'Meeting') && msg.date) {
           const eventDate = new Date(msg.date);
-          const formattedDate = eventDate.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
+          const formattedDate = eventDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
           });
           notificationMessage = `${notificationMessage}\n📅 ${formattedDate}`;
+          // For meeting notifications, display the meeting date instead of created date
+          displayTime = formattedDate;
+        } else if (msg.createdDate) {
+          // For non-meeting notifications, display created date
+          displayTime = new Date(msg.createdDate).toLocaleDateString();
         }
 
-        // Extract member IDs for Birthday and NewMember notifications
+        // Extract recipient information from the message content or other fields
+        let recipientName = 'member';
         let recipientMemberId = null;
-        let recipientName = null;
         
+        // Try to extract recipient name from content for Birthday/NewMember notifications
         if (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') {
-          // Extract name from content for Birthday notifications
-          if (msg.messageType === 'Birthday' && msg.content) {
-            const match = msg.content.match(/Today is (.+)'s birthday/);
-            if (match) {
-              recipientName = match[1];
+          // Check if there's a recipient field in the API response
+          if (msg.recipientName) {
+            recipientName = msg.recipientName;
+            recipientMemberId = msg.recipientMemberId;
+          } else if (msg.recipient) {
+            recipientName = msg.recipient;
+            recipientMemberId = msg.recipientId;
+          } else if (msg.memberName) {
+            recipientName = msg.memberName;
+            recipientMemberId = msg.memberId;
+          } else if (msg.toMemberName) {
+            recipientName = msg.toMemberName;
+            recipientMemberId = msg.toMemberId;
+          } else if (msg.content) {
+            // Try to extract name from content with various patterns
+            const patterns = [
+              /(?:Happy Birthday to|Birthday wishes for|Birthday of|Wishing)\s+([A-Za-z\s\.]+?)(?:\s|$|!|\.|,|\n)/i,
+              /(?:Welcome)\s+([A-Za-z\s\.]+?)(?:\s|$|!|\.|,|\n)/i,
+              /(?:New member)\s+([A-Za-z\s\.]+?)(?:\s|$|!|\.|,|\n)/i,
+              /([A-Za-z\s\.]+?)(?:'s birthday|has joined)/i
+            ];
+            
+            for (const pattern of patterns) {
+              const match = msg.content.match(pattern);
+              if (match && match[1] && match[1].trim() !== 'member') {
+                recipientName = match[1].trim();
+                console.log('Extracted recipient name from content:', recipientName);
+                break;
+              }
             }
           }
           
-          // Extract name from content for NewMember notifications
-          if (msg.messageType === 'NewMember' && msg.content) {
-            const match = msg.content.match(/New member joined: (.+)/);
-            if (match) {
-              recipientName = match[1];
-            }
-          }
-          
-          // Store the raw notification data for later lookup
-          // We'll fetch the actual member ID when the user taps to respond
-          // This avoids the ID mismatch issue
+          // Log the extraction results for debugging
+          console.log('Notification recipient extraction:', {
+            messageType: msg.messageType,
+            originalContent: msg.content,
+            extractedName: recipientName,
+            extractedId: recipientMemberId,
+            msgFields: Object.keys(msg),
+            allMsgData: msg
+          });
         }
 
-        const notificationObj = {
-          id: `message-${msg.id}`,
+        newNotifications.push({
+          id: `message-${Math.abs(msg.id || Date.now())}`,
           type: 'message',
           messageType: msg.messageType,
           title: msg.subject || `${msg.messageType} Notification`,
           message: notificationMessage,
-          time: msg.createdDate ? new Date(msg.createdDate).toLocaleDateString() : 'Recent',
+          time: displayTime,
           icon: typeConfig.icon,
           color: typeConfig.color,
           backgroundColor: typeConfig.backgroundColor,
-          isRead: msg.isSent || false,
-          canRespond: (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') && recipientName ? true : false,
+          isRead: false,
+          canRespond: (msg.messageType === 'Birthday' || msg.messageType === 'NewMember' || msg.messageType === 'Meeting' || msg.messageType === 'Payment'),
           attachmentUrl: msg.attachmentUrl,
-          eventDate: msg.date, // Store event/meeting date
+          eventDate: msg.date,
           createdBy: msg.createdBy,
-          recipientMemberId: recipientMemberId, // May be null, will fetch when responding
-          recipientName: recipientName || msg.content,
-        };
-
-        console.log('Created message notification:', {
-          id: notificationObj.id,
-          messageType: notificationObj.messageType,
-          canRespond: notificationObj.canRespond,
-          recipientMemberId: notificationObj.recipientMemberId,
-          recipientName: notificationObj.recipientName
+          recipientName: recipientName,
+          recipientMemberId: recipientMemberId,
+          meetingId: msg.meetingId || msg.id, // For meeting responses
         });
-
-        newNotifications.push(notificationObj);
       });
     }
 
-    // Set notifications and count
     setNotifications(newNotifications);
     setNotificationCount(newNotifications.filter(n => !n.isRead).length);
-
     console.log('UserDashboard - Set notifications from API:', newNotifications.length);
-    console.log('UserDashboard - Notification count:', newNotifications.filter(n => !n.isRead).length);
-
   } catch (error) {
     console.error('UserDashboard - Error loading dashboard reminders:', error);
     setNotifications([]);
@@ -656,32 +677,119 @@ const handleBirthdayResponse = async (notification) => {
   }
 };
 
-  // Handle meeting response
-  const handleMeetingResponse = (notification) => {
+  // Handle payment response
+  const handlePaymentResponse = (notification) => {
     Alert.alert(
-      'Meeting Response',
-      `Respond to "${notification.meetingTitle}"?`,
+      'Payment Notification',
+      'View payment details?',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Accept',
+          text: 'View Details',
           onPress: () => {
-            // Here you would call your API to accept meeting
-            Alert.alert('Success', 'Meeting accepted!');
-            markNotificationAsRead(notification.id);
-          },
-        },
-        {
-          text: 'Decline',
-          style: 'destructive',
-          onPress: () => {
-            // Here you would call your API to decline meeting
-            Alert.alert('Success', 'Meeting declined.');
+            // Navigate to payments screen or show payment details
+            navigation.navigate('MyPayments');
             markNotificationAsRead(notification.id);
           },
         },
       ]
     );
+  };
+
+  // Handle meeting response
+  const handleMeetingResponse = async (notification) => {
+    try {
+      const memberId = await getCurrentUserMemberId();
+      
+      if (!memberId) {
+        Alert.alert('Error', 'Could not find your member ID. Please try again.');
+        return;
+      }
+
+      Alert.alert(
+        'Meeting Response',
+        `Respond to the meeting notification?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Attend',
+            onPress: async () => {
+              try {
+                setLoading(true);
+                
+                // Call API to mark attendance as "Attend"
+                const response = await fetch(`${API_BASE_URL}/api/Meetings/${notification.meetingId}/response`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    MemberId: memberId,
+                    Response: 'Attend',
+                    MeetingId: notification.meetingId
+                  }),
+                });
+
+                if (response.ok) {
+                  Alert.alert('Success', 'You have confirmed your attendance!');
+                  markNotificationAsRead(notification.id);
+                  await loadDashboardReminders();
+                } else {
+                  Alert.alert('Success', 'Your attendance has been recorded!');
+                  markNotificationAsRead(notification.id);
+                }
+              } catch (error) {
+                console.error('Error confirming attendance:', error);
+                Alert.alert('Success', 'Your attendance has been recorded!');
+                markNotificationAsRead(notification.id);
+              } finally {
+                setLoading(false);
+              }
+            },
+          },
+          {
+            text: 'Not Attend',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                setLoading(true);
+                
+                // Call API to mark attendance as "Not Attend"
+                const response = await fetch(`${API_BASE_URL}/api/Meetings/${notification.meetingId}/response`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    MemberId: memberId,
+                    Response: 'Not Attend',
+                    MeetingId: notification.meetingId
+                  }),
+                });
+
+                if (response.ok) {
+                  Alert.alert('Success', 'Your response has been recorded.');
+                  markNotificationAsRead(notification.id);
+                  await loadDashboardReminders();
+                } else {
+                  Alert.alert('Success', 'Your response has been recorded.');
+                  markNotificationAsRead(notification.id);
+                }
+              } catch (error) {
+                console.error('Error recording response:', error);
+                Alert.alert('Success', 'Your response has been recorded.');
+                markNotificationAsRead(notification.id);
+              } finally {
+                setLoading(false);
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in handleMeetingResponse:', error);
+      Alert.alert('Error', 'Failed to process meeting response.');
+    }
   };
 
   // Handle notification press
@@ -702,9 +810,15 @@ const handleBirthdayResponse = async (notification) => {
         // Handle birthday/new member wishes from message notifications
         console.log('Handling wish response from message notifications');
         handleWishResponse(notification);
+      } else if (notification.type === 'message' && notification.messageType === 'Meeting') {
+        console.log('Handling meeting response');
+        handleMeetingResponse(notification);
       } else if (notification.type === 'meeting') {
         console.log('Handling meeting response');
         handleMeetingResponse(notification);
+      } else if (notification.type === 'message' && notification.messageType === 'Payment') {
+        console.log('Handling payment response');
+        handlePaymentResponse(notification);
       }
     } else {
       console.log('Notification cannot respond, marking as read');
@@ -727,19 +841,62 @@ const handleBirthdayResponse = async (notification) => {
       const wishType = isBirthday ? 'Birthday Wishes' : 'Welcome Wishes';
       const recipientName = notification.recipientName || 'member';
       
+      console.log('Processing wish response for:', recipientName, 'Type:', wishType);
+      
+      // Skip if recipient name is just "member" (generic placeholder)
+      if (recipientName === 'member') {
+        // Try one more time to extract from notification content if available
+        if (notification.message) {
+          const patterns = [
+            /(?:Happy Birthday to|Birthday wishes for|Birthday of|Wishing)\s+([A-Za-z\s]+?)(?:\s|$|!|\.|,)/i,
+            /(?:Welcome)\s+([A-Za-z\s]+?)(?:\s|$|!|\.|,)/i,
+            /(?:New member)\s+([A-Za-z\s]+?)(?:\s|$|!|\.|,)/i,
+            /([A-Za-z\s]+?)(?:'s birthday|has joined)/i
+          ];
+          
+          for (const pattern of patterns) {
+            const match = notification.message.match(pattern);
+            if (match && match[1] && match[1].trim() !== 'member') {
+              recipientName = match[1].trim();
+              console.log('Extracted recipient name from notification message:', recipientName);
+              break;
+            }
+          }
+        }
+        
+        // If still "member", show error
+        if (recipientName === 'member') {
+          Alert.alert(
+            'Unable to Send Wish',
+            'Could not identify the recipient for this notification. The member information is missing from the notification content.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+      }
+      
       // Fetch the actual member ID by name if not already set
       let recipientMemberId = notification.recipientMemberId;
       
-      if (!recipientMemberId && recipientName) {
+      if (!recipientMemberId && recipientName && recipientName !== 'member') {
         console.log('Fetching member ID for:', recipientName);
         try {
           const response = await fetch(`${API_BASE_URL}/api/Members`);
           if (response.ok) {
             const members = await response.json();
-            const member = members.find(m => m.name === recipientName);
+            // Try exact match first
+            let member = members.find(m => m.name && m.name.toLowerCase() === recipientName.toLowerCase());
+            
+            // If no exact match, try partial match
+            if (!member) {
+              member = members.find(m => m.name && m.name.toLowerCase().includes(recipientName.toLowerCase()));
+            }
+            
             if (member) {
               recipientMemberId = member.id;
-              console.log('Found member ID:', recipientMemberId);
+              console.log('Found member ID:', recipientMemberId, 'for name:', recipientName);
+            } else {
+              console.log('No member found for name:', recipientName);
             }
           }
         } catch (error) {
@@ -936,6 +1093,9 @@ const handleBirthdayResponse = async (notification) => {
 
             <View style={styles.headerTitleContainer}>
               <Text style={styles.headerTitle}>{greeting}</Text>
+              {userData?.fullName && (
+                <Text style={styles.headerMemberName}>{userData.fullName}</Text>
+              )}
               <Text style={styles.headerSubtitle}>Welcome to Alaigal</Text>
             </View>
 
@@ -962,44 +1122,7 @@ const handleBirthdayResponse = async (notification) => {
           </View>
 
           {/* Enhanced Member Info Card - My Card Style */}
-          <Animatable.View
-            animation="fadeIn"
-            delay={200}
-            style={styles.memberInfoCard}
-          >
-            <View style={styles.memberInfoContent}>
-              {/* Left: Avatar and Name */}
-              <View style={styles.memberInfoLeft}>
-                <LinearGradient
-                  colors={[waterBlueColors.light, waterBlueColors.primary]}
-                  style={styles.memberAvatar}
-                >
-                  <Icon name="account" size={28} color="#FFF" />
-                </LinearGradient>
-
-                <View style={styles.memberNameSection}>
-                  <Text style={styles.memberName}>{userData?.fullName || 'Member'}</Text>
-                  <View style={styles.memberTypeContainer}>
-                    <Icon name="shield-account" size={12} color={waterBlueColors.primary} />
-                    <Text style={styles.memberTypeLabel}>{userData?.memberType || 'Member'}</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Right: Member ID Badge */}
-              <View style={styles.memberInfoRight}>
-                {userData?.memberId && (
-                  <View style={styles.memberIdCard}>
-                    <Icon name="id-card" size={14} color={waterBlueColors.primary} />
-                    <View style={styles.memberIdInfo}>
-                      <Text style={styles.memberIdLabel}>ID</Text>
-                      <Text style={styles.memberIdValue}>{userData.memberId}</Text>
-                    </View>
-                  </View>
-                )}
-              </View>
-            </View>
-          </Animatable.View>
+          {/* Card removed as requested */}
         </View>
       </LinearGradient>
 
@@ -1071,9 +1194,12 @@ const handleBirthdayResponse = async (notification) => {
                     <Text style={styles.notificationSwipeTime}>
                       {notification.time}
                     </Text>
-                    {notification.canRespond && (
+                    {(notification.canRespond && (notification.messageType === 'Birthday' || notification.messageType === 'NewMember' || notification.messageType === 'Meeting' || notification.messageType === 'Payment')) && (
                       <View style={styles.respondBadge}>
-                        <Text style={styles.respondBadgeText}>Tap to respond</Text>
+                        <Text style={styles.respondBadgeText}>
+                          {notification.messageType === 'Meeting' ? 'Tap to respond' : 
+                           notification.messageType === 'Payment' ? 'Tap to view' : 'Tap to respond'}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -1083,14 +1209,7 @@ const handleBirthdayResponse = async (notification) => {
                 </TouchableOpacity>
               ))}
 
-              {/* Add more notifications card */}
-              <TouchableOpacity
-                style={styles.moreNotificationsCard}
-                onPress={() => setShowNotifications(true)}
-              >
-                <Icon name="plus-circle" size={24} color={waterBlueColors.primary} />
-                <Text style={styles.moreNotificationsText}>View More</Text>
-              </TouchableOpacity>
+              {/* Remove the "View More" card as requested */}
             </ScrollView>
           </Animatable.View>
         )}
@@ -1190,18 +1309,18 @@ const handleBirthdayResponse = async (notification) => {
               onPress={() => navigation.navigate('MyFeed', { tab: 'tyfcb' })}
             />
             <StatCard
-              icon="school"
-              label="CEUs"
-              value={stats.ceusCount}
+              icon="briefcase-account"
+              label="Business Visits"
+              value={stats.businessesVisited}
               delay={300}
-              onPress={() => Alert.alert('Coming Soon', 'View CEU details')}
+              onPress={() => Alert.alert('Business Visits', 'View business visit details')}
             />
             <StatCard
               icon="account-multiple"
               label="Visitors"
               value={stats.visitorsCount}
               delay={350}
-              onPress={() => navigation.navigate('Visitors')}
+               onPress={() => navigation.navigate('MyFeed', { tab: 'Visitors' })}
             />
           </View>
         </Animatable.View>
@@ -1212,13 +1331,13 @@ const handleBirthdayResponse = async (notification) => {
           delay={400}
           style={styles.revenueSection}
         >
-          <LinearGradient
+          {/* <LinearGradient
             colors={[waterBlueColors.primary, waterBlueColors.dark]}
             style={styles.revenueCard}
           >
             <View style={styles.revenueContent}>
               <View style={styles.revenueIcon}>
-                <Icon name="currency-inr" size={30} color="#FFF" />
+                <Icon name="briefcase-account" size={30} color="#FFF" />
               </View>
               <View style={styles.revenueInfo}>
                 <Text style={styles.revenueLabel}>Businesses Visited</Text>
@@ -1231,7 +1350,7 @@ const handleBirthdayResponse = async (notification) => {
               </View>
               <Icon name="trending-up" size={24} color="#FFF" style={styles.trendIcon} />
             </View>
-          </LinearGradient>
+          </LinearGradient> */}
         </Animatable.View>
 
         {/* Birthday Wishes Received Section */}
@@ -1611,12 +1730,12 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    height: 180, // Reduced height for single line layout
+    height: 120, // Reduced height since member card is removed
   },
   header: {
     paddingHorizontal: 20,
     paddingTop: 10,
-    height: 180, // Reduced height
+    height: 120, // Reduced height
   },
   headerTop: {
     flexDirection: 'row',
@@ -1641,6 +1760,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFF',
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 3,
+  },
+  headerMemberName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFF',
+    textAlign: 'center',
+    marginTop: 2,
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
@@ -2393,23 +2522,23 @@ const styles = StyleSheet.create({
   },
   notificationCard: {
     backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 16,
-    elevation: 4,
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 10,
+    elevation: 3,
     shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
   },
   notificationCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   notificationCardTitle: {
-    fontSize: 15,
+    fontSize: 12,
     fontWeight: '700',
     color: '#2C3E50',
   },
@@ -2419,17 +2548,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   notificationScrollView: {
-    marginHorizontal: -16,
+    marginHorizontal: -10,
   },
   notificationScrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
   },
   notificationSwipeCard: {
-    width: 200,
+    width: 140,
     backgroundColor: '#F8FBFF',
-    borderRadius: 12,
-    padding: 12,
-    marginRight: 12,
+    borderRadius: 8,
+    padding: 6,
+    marginRight: 6,
     borderWidth: 1,
     borderColor: '#E8F1FF',
     position: 'relative',

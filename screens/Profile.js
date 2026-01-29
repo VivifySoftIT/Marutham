@@ -5,18 +5,19 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
   Image,
   Modal,
   StatusBar,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import API_BASE_URL from "../apiConfig";
 import useHardwareBack from '../service/useHardwareBack';
 
@@ -42,6 +43,8 @@ const MyProfile = () => {
   const [showModal, setShowModal] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerField, setDatePickerField] = useState(null);
 
   const navigation = useNavigation();
   useHardwareBack(navigation);
@@ -57,7 +60,7 @@ const MyProfile = () => {
           return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/api/Members/GetMemberDetails/${memberId}`);
+        const response = await fetch(`${API_BASE_URL}/api/Members/${memberId}`);
         
         if (!response.ok) {
           console.error('Failed to fetch member details');
@@ -70,6 +73,35 @@ const MyProfile = () => {
 
         const savedImage = await AsyncStorage.getItem("profileImage");
 
+        // Helper to format date for display (YYYY/MM/DD format)
+        const formatDateForDisplay = (dateString) => {
+          if (!dateString) return "";
+          try {
+            // Handle both ISO format and YYYY-MM-DD format from API
+            let date;
+            if (dateString.includes('T')) {
+              // ISO format - extract just the date part to avoid timezone issues
+              const datePart = dateString.split('T')[0];
+              const [year, month, day] = datePart.split('-');
+              date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            } else if (dateString.includes('-')) {
+              // YYYY-MM-DD format
+              const [year, month, day] = dateString.split('-');
+              date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            } else {
+              date = new Date(dateString);
+            }
+            
+            if (isNaN(date.getTime())) return "";
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}/${month}/${day}`;
+          } catch (error) {
+            return dateString;
+          }
+        };
+
         setProfile({
           name: memberData.name || "",
           employeeNo: memberData.memberId || memberData.id?.toString() || "",
@@ -80,8 +112,8 @@ const MyProfile = () => {
           contactAddress: memberData.address || "",
           profileImage: savedImage,
           status: memberData.status || "",
-          joinDate: memberData.joinDate || "",
-          dob: memberData.dob || "",
+          joinDate: formatDateForDisplay(memberData.joinDate),
+          dob: formatDateForDisplay(memberData.dob),
           subCompanyId: memberData.subCompanyId || null,
         });
       } catch (error) {
@@ -161,8 +193,10 @@ const MyProfile = () => {
   };
 
   const handleUpdate = async () => {
+    console.log('Current profile state before update:', profile);
+    
     // Validate phone numbers before update
-    if (profile.contactNumber.length !== 10) {
+    if (profile.contactNumber && profile.contactNumber.length !== 10) {
       alert("Contact number must be exactly 10 digits.");
       return;
     }
@@ -176,13 +210,35 @@ const MyProfile = () => {
 
       // Helper function to format date to ISO string or null
       const formatDate = (dateString) => {
+        console.log('Formatting date for API:', dateString);
         if (!dateString || dateString.trim() === "") return null;
         
         try {
-          // Try to parse the date
+          // Handle YYYY/MM/DD format
+          if (dateString.includes('/')) {
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+              const [year, month, day] = parts;
+              // Create date in local timezone and format as YYYY-MM-DD for API
+              const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              if (!isNaN(date.getTime())) {
+                // Format as YYYY-MM-DD without timezone conversion
+                const formattedDate = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                console.log('Date formatted for API:', formattedDate);
+                return formattedDate;
+              }
+            }
+          }
+          
+          // Try to parse the date normally and format as YYYY-MM-DD
           const date = new Date(dateString);
           if (isNaN(date.getTime())) return null;
-          return date.toISOString();
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const formattedDate = `${year}-${month}-${day}`;
+          console.log('Date formatted for API (fallback):', formattedDate);
+          return formattedDate;
         } catch (error) {
           console.log("Error formatting date:", dateString, error);
           return null;
@@ -220,19 +276,36 @@ const MyProfile = () => {
         console.log('Profile updated successfully:', result);
         alert("Profile updated successfully!");
         
-        // Refresh profile data using GetMemberDetails
-        const updatedResponse = await fetch(`${API_BASE_URL}/api/Members/GetMemberDetails/${memberId}`);
+        // Refresh profile data using correct endpoint
+        const updatedResponse = await fetch(`${API_BASE_URL}/api/Members/${memberId}`);
         if (updatedResponse.ok) {
           const memberData = await updatedResponse.json();
           const savedImage = await AsyncStorage.getItem("profileImage");
           
-          // Helper to format date for display
+          // Helper to format date for display (keep YYYY/MM/DD format)
           const formatDateForDisplay = (dateString) => {
             if (!dateString) return "";
             try {
-              const date = new Date(dateString);
+              // Handle both ISO format and YYYY-MM-DD format from API
+              let date;
+              if (dateString.includes('T')) {
+                // ISO format - extract just the date part to avoid timezone issues
+                const datePart = dateString.split('T')[0];
+                const [year, month, day] = datePart.split('-');
+                date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              } else if (dateString.includes('-')) {
+                // YYYY-MM-DD format
+                const [year, month, day] = dateString.split('-');
+                date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              } else {
+                date = new Date(dateString);
+              }
+              
               if (isNaN(date.getTime())) return "";
-              return date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}/${month}/${day}`;
             } catch (error) {
               return dateString;
             }
@@ -288,6 +361,89 @@ const MyProfile = () => {
       setTempImage(result.assets[0].uri);
       setShowModal(true);
     }
+  };
+
+  const removeImage = async () => {
+    Alert.alert(
+      "Remove Photo",
+      "Are you sure you want to remove your profile photo?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("profileImage");
+              setProfile((prev) => ({ ...prev, profileImage: null }));
+              await handleUpdate();
+            } catch (error) {
+              console.error("Error removing image:", error);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const showImageOptions = () => {
+    Alert.alert(
+      "Profile Photo",
+      "Choose an option",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Change Photo", onPress: pickImage },
+        ...(profile.profileImage ? [{ text: "Remove Photo", style: "destructive", onPress: removeImage }] : [])
+      ]
+    );
+  };
+
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return "";
+    try {
+      // Handle both ISO format and YYYY-MM-DD format from API
+      let date;
+      if (dateString.includes('T')) {
+        // ISO format - extract just the date part to avoid timezone issues
+        const datePart = dateString.split('T')[0];
+        const [year, month, day] = datePart.split('-');
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else if (dateString.includes('-')) {
+        // YYYY-MM-DD format
+        const [year, month, day] = dateString.split('-');
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        date = new Date(dateString);
+      }
+      
+      if (isNaN(date.getTime())) return "";
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}/${month}/${day}`;
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate && datePickerField) {
+      // Format the selected date properly
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}/${month}/${day}`;
+      
+      console.log('Date selected:', selectedDate, 'Formatted:', formattedDate, 'Field:', datePickerField);
+      setProfile((prev) => ({ ...prev, [datePickerField]: formattedDate }));
+    }
+    setDatePickerField(null);
+  };
+
+  const showDatePickerModal = (fieldName) => {
+    setDatePickerField(fieldName);
+    setShowDatePicker(true);
   };
 
   const setImage = async () => {
@@ -356,44 +512,48 @@ const MyProfile = () => {
       );
     }
 
+    // Date field with calendar picker
+    if (isDateField) {
+      return (
+        <View style={styles.fieldContainer}>
+          <Text style={styles.editLabel}>{label}</Text>
+          <TouchableOpacity
+            style={styles.datePickerButton}
+            onPress={() => showDatePickerModal(fieldName)}
+          >
+            <Text style={[styles.datePickerText, !value && styles.datePickerPlaceholder]}>
+              {value || "Select date"}
+            </Text>
+            <Icon name="calendar" size={20} color="#4A90E2" />
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.fieldContainer}>
         <Text style={styles.editLabel}>{label}</Text>
         <View style={styles.inputWithIcon}>
-          {isDateField && isEditing ? (
-            <TextInput
-              value={value}
-              onChangeText={(text) => {
-                setProfile((prev) => ({ ...prev, [fieldName]: text }));
-              }}
-              placeholder="YYYY-MM-DD or DD/MM/YYYY"
-              placeholderTextColor="#999"
-              style={[styles.input, isMultiline && styles.inputMultiline]}
-            />
-          ) : (
-            <TextInput
-              value={value}
-              onChangeText={(text) => {
-                if (isNumberField) {
-                  const sanitizedText = text.replace(/\D/g, "");
-                  if (sanitizedText.length > 10) {
-                    alert("Input cannot exceed 10 digits.");
-                    return;
-                  }
-                  setProfile((prev) => ({ ...prev, [fieldName]: sanitizedText }));
-                } else {
-                  setProfile((prev) => ({ ...prev, [fieldName]: text }));
+          <TextInput
+            value={value}
+            onChangeText={(text) => {
+              if (isNumberField) {
+                const sanitizedText = text.replace(/\D/g, "");
+                if (sanitizedText.length > 10) {
+                  alert("Input cannot exceed 10 digits.");
+                  return;
                 }
-              }}
-              editable={true}
-              multiline={isMultiline}
-              keyboardType={isNumberField ? "numeric" : "default"}
-              maxLength={isNumberField ? 10 : undefined}
-              placeholder={isDateField ? "Enter date (YYYY-MM-DD)" : ""}
-              placeholderTextColor={isDateField ? "#999" : undefined}
-              style={[styles.input, isMultiline && styles.inputMultiline]}
-            />
-          )}
+                setProfile((prev) => ({ ...prev, [fieldName]: sanitizedText }));
+              } else {
+                setProfile((prev) => ({ ...prev, [fieldName]: text }));
+              }
+            }}
+            editable={true}
+            multiline={isMultiline}
+            keyboardType={isNumberField ? "numeric" : "default"}
+            maxLength={isNumberField ? 10 : undefined}
+            style={[styles.input, isMultiline && styles.inputMultiline]}
+          />
           <TouchableOpacity
             onPress={() => (isEditing ? handleSave(fieldName) : setEditingField(fieldName))}
             style={styles.iconContainer}
@@ -405,11 +565,6 @@ const MyProfile = () => {
             />
           </TouchableOpacity>
         </View>
-        {isDateField && !isEditing && value && (
-          <Text style={styles.dateHint}>
-            Format as YYYY-MM-DD when editing
-          </Text>
-        )}
       </View>
     );
   };
@@ -445,9 +600,9 @@ const MyProfile = () => {
           </View>
         </LinearGradient>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
           <View style={styles.profileSection}>
-            <TouchableOpacity onPress={pickImage} onLongPress={handleLongPress}>
+            <TouchableOpacity onPress={showImageOptions} onLongPress={handleLongPress}>
               {profile.profileImage || profile.photoPath ? (
                 <Image
                   source={{ uri: profile.profileImage || profile.photoPath }}
@@ -455,15 +610,15 @@ const MyProfile = () => {
                 />
               ) : (
                 <View style={styles.profileImagePlaceholder}>
-                  <Icon name="account-circle" size={80} color="#4A90E2" />
+                  <Icon name="account-circle" size={60} color="#4A90E2" />
                 </View>
               )}
               <View style={styles.cameraIconContainer}>
-                <Icon name="camera" size={18} color="#FFF" />
+                <Icon name="camera" size={16} color="#FFF" />
               </View>
             </TouchableOpacity>
             <Text style={styles.profileName}>{profile.name}</Text>
-            <Text style={styles.profileHint}>Tap photo to change</Text>
+            <Text style={styles.profileHint}>Tap to change • Long press to view</Text>
           </View>
 
           <Modal visible={!!fullScreenImage} transparent={true} animationType="fade">
@@ -525,7 +680,7 @@ const MyProfile = () => {
               </TouchableOpacity>
             </View>
           )}
-        </ScrollView>
+        </View>
       </View>
 
       <Modal visible={showModal} transparent={true} animationType="slide">
@@ -551,6 +706,34 @@ const MyProfile = () => {
           </View>
         </View>
       </Modal>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={
+            datePickerField && profile[datePickerField] 
+              ? (() => {
+                  try {
+                    // Parse YYYY/MM/DD format
+                    if (profile[datePickerField].includes('/')) {
+                      const [year, month, day] = profile[datePickerField].split('/');
+                      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                    }
+                    // Fallback to parsing as string
+                    const parsedDate = new Date(profile[datePickerField]);
+                    return isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+                  } catch (error) {
+                    console.log('Error parsing date for picker:', error);
+                    return new Date();
+                  }
+                })()
+              : new Date()
+          }
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+          maximumDate={new Date()}
+        />
+      )}
     </KeyboardAvoidingView>
   );
 };
@@ -577,26 +760,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     flex: 1,
   },
-  scrollContent: {
+  content: {
+    flex: 1,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    paddingBottom: 20,
   },
   profileSection: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     borderWidth: 3,
     borderColor: '#4A90E2',
   },
   profileImagePlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
     backgroundColor: '#E8F4F8',
     justifyContent: 'center',
     alignItems: 'center',
@@ -608,24 +791,24 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: '#4A90E2',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#FFF',
   },
   profileName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1E1E66',
-    marginTop: 10,
+    marginTop: 8,
   },
   profileHint: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#999',
-    marginTop: 3,
+    marginTop: 2,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -635,8 +818,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   tab: {
-    paddingVertical: 10,
-    paddingHorizontal: 25,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     borderRadius: 20,
     backgroundColor: '#E8F4F8',
     borderWidth: 1,
@@ -647,7 +830,7 @@ const styles = StyleSheet.create({
     borderColor: '#4A90E2',
   },
   tabText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#666',
   },
@@ -655,56 +838,66 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   formSection: {
-    paddingHorizontal: 15,
-    paddingBottom: 20,
+    flex: 1,
+    paddingHorizontal: 10,
   },
   fieldContainer: {
-    marginBottom: 18,
+    marginBottom: 12,
   },
   editLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#4A90E2',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   inputWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#B0E0E6',
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderRadius: 8,
+    paddingHorizontal: 10,
     backgroundColor: '#FFF',
-    height: 48,
+    height: 40,
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: '#333',
     paddingVertical: 0,
   },
   inputMultiline: {
-    height: 80,
+    height: 60,
     textAlignVertical: 'top',
-    paddingTop: 12,
+    paddingTop: 10,
   },
   iconContainer: {
-    padding: 8,
-    marginLeft: 8,
+    padding: 6,
+    marginLeft: 6,
   },
-  dateHint: {
-    fontSize: 11,
-    color: '#666',
-    fontStyle: 'italic',
-    marginTop: 4,
-    marginLeft: 4,
+  datePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#B0E0E6',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFF',
+    height: 40,
+  },
+  datePickerText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  datePickerPlaceholder: {
+    color: '#999',
   },
   updateButton: {
     backgroundColor: '#4A90E2',
-    paddingVertical: 14,
-    borderRadius: 10,
-    marginTop: 25,
-    marginBottom: 10,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 15,
     shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -713,7 +906,7 @@ const styles = StyleSheet.create({
   },
   updateButtonText: {
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -816,23 +1009,23 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 8,
+    paddingVertical: 6,
   },
   genderOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     backgroundColor: '#F5F9FC',
   },
   genderOptionSelected: {
     backgroundColor: '#E3F2FD',
   },
   genderOptionText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
-    marginLeft: 6,
+    marginLeft: 4,
   },
   genderOptionTextSelected: {
     color: '#4A90E2',

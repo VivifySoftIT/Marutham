@@ -11,6 +11,8 @@ import {
   Alert,
   ActivityIndicator,
   ImageBackground,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -50,7 +52,7 @@ const ReferralSlip = ({ route }) => {
   useEffect(() => {
     loadCurrentUser();
     loadMemberNames();
-    
+
     // Pre-fill member data if coming from MembersDirectory
     if (selectedMember) {
       setFormData(prev => ({
@@ -415,18 +417,31 @@ const ReferralSlip = ({ route }) => {
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <KeyboardAvoidingView 
+          style={styles.container}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
+        >
+          <ScrollView 
+            style={styles.content} 
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
           {/* Current User Info */}
-          <View style={styles.currentUserSection}>
-            <Text style={styles.currentUserText}>
-              Logged in as: <Text style={styles.currentUserName}>{currentUser.name || 'Not logged in'}</Text>
-            </Text>
-            {currentUser.memberId ? (
-              <Text style={styles.currentUserId}>Your Member ID: {currentUser.memberId}</Text>
-            ) : (
-              <Text style={styles.currentUserWarning}>Member ID not found. Please re-login.</Text>
-            )}
-          </View>
+          {/* Conditionally hide 'Logged in as' section for user 'mals' */}
+          {(!currentUser.name || currentUser.name.trim().toLowerCase() !== 'mals') && (
+            <View style={styles.currentUserSection}>
+              <Text style={styles.currentUserText}>
+                Logged in as: <Text style={styles.currentUserName}>{currentUser.name || 'Not logged in'}</Text>
+              </Text>
+              {currentUser.memberId ? (
+                <Text style={styles.currentUserId}>Your Member ID: {currentUser.memberId}</Text>
+              ) : (
+                <Text style={styles.currentUserWarning}>Member ID not found. Please re-login.</Text>
+              )}
+            </View>
+          )}
 
           {/* Pre-selected Member Info */}
           {selectedMember && (
@@ -479,7 +494,7 @@ const ReferralSlip = ({ route }) => {
                     </View>
                   ) : allMembers && allMembers.length > 0 ? (
                     allMembers
-                      .filter(member => 
+                      .filter(member =>
                         member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
                         member.phone?.includes(memberSearchQuery) ||
                         member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
@@ -525,90 +540,60 @@ const ReferralSlip = ({ route }) => {
             )}
           </View>
 
-          {/* Referral Type Toggle */}
+          {/* Referral Type Radio Buttons */}
           <View style={styles.section}>
             <Text style={styles.label}>Referral Type *</Text>
-            <View style={styles.toggleContainer}>
+            <View style={styles.radioGroup}>
               <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  formData.referralType === 'inside' && styles.toggleButtonActive,
-                ]}
+                style={styles.radioButton}
                 onPress={() => handleInputChange('referralType', 'inside')}
               >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    formData.referralType === 'inside' && styles.toggleButtonTextActive,
-                  ]}
-                >
-                  Inside
-                </Text>
+                <Icon
+                  name={formData.referralType === 'inside' ? 'radiobox-marked' : 'radiobox-blank'}
+                  size={20}
+                  color="#4A90E2"
+                />
+                <Text style={styles.radioLabel}>Inside</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  formData.referralType === 'outside' && styles.toggleButtonActive,
-                ]}
+                style={styles.radioButton}
                 onPress={() => handleInputChange('referralType', 'outside')}
               >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    formData.referralType === 'outside' && styles.toggleButtonTextActive,
-                  ]}
-                >
-                  Outside
-                </Text>
+                <Icon
+                  name={formData.referralType === 'outside' ? 'radiobox-marked' : 'radiobox-blank'}
+                  size={20}
+                  color="#4A90E2"
+                />
+                <Text style={styles.radioLabel}>Outside</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Referral Category Dropdown */}
+          {/* Referral Category Radio Buttons */}
           <View style={styles.section}>
             <Text style={styles.label}>Referral Category *</Text>
-            <View style={styles.toggleContainer}>
+            <View style={styles.radioGroup}>
               <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  formData.referralCategory === 'Business' && styles.toggleButtonActive,
-                ]}
+                style={styles.radioButton}
                 onPress={() => handleInputChange('referralCategory', 'Business')}
               >
-                <Icon 
-                  name="briefcase" 
-                  size={18} 
-                  color={formData.referralCategory === 'Business' ? '#FFF' : '#4A90E2'} 
+                <Icon
+                  name={formData.referralCategory === 'Business' ? 'radiobox-marked' : 'radiobox-blank'}
+                  size={20}
+                  color="#4A90E2"
                 />
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    formData.referralCategory === 'Business' && styles.toggleButtonTextActive,
-                  ]}
-                >
-                  Business
-                </Text>
+                <Text style={styles.radioLabel}>Business</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.toggleButton,
-                  formData.referralCategory === 'Personal' && styles.toggleButtonActive,
-                ]}
+                style={styles.radioButton}
                 onPress={() => handleInputChange('referralCategory', 'Personal')}
               >
-                <Icon 
-                  name="account" 
-                  size={18} 
-                  color={formData.referralCategory === 'Personal' ? '#FFF' : '#4A90E2'} 
+                <Icon
+                  name={formData.referralCategory === 'Personal' ? 'radiobox-marked' : 'radiobox-blank'}
+                  size={20}
+                  color="#4A90E2"
                 />
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    formData.referralCategory === 'Personal' && styles.toggleButtonTextActive,
-                  ]}
-                >
-                  Personal
-                </Text>
+                <Text style={styles.radioLabel}>Personal</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -711,8 +696,9 @@ const ReferralSlip = ({ route }) => {
             )}
           </TouchableOpacity>
 
-          <View style={{ height: 30 }} />
-        </ScrollView>
+          <View style={{ height: 20 }} />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </ImageBackground>
       {/* Success Screen */}
       {showSuccessScreen && (
@@ -794,6 +780,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 15,
+    paddingBottom: 50, // Extra padding for keyboard
   },
   backgroundImage: {
     flex: 1,
@@ -803,9 +790,9 @@ const styles = StyleSheet.create({
   },
   currentUserSection: {
     backgroundColor: '#E8F4FD',
-    padding: 12,
+    padding: 8,
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 10,
     borderLeftWidth: 4,
     borderLeftColor: '#4A90E2',
   },
@@ -848,7 +835,7 @@ const styles = StyleSheet.create({
     color: '#2C5F8D',
   },
   section: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   label: {
     fontSize: 14,
@@ -864,7 +851,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     paddingHorizontal: 12,
-    minHeight: 50,
+    minHeight: 45,
   },
   icon: {
     marginRight: 10,
@@ -899,7 +886,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     paddingHorizontal: 12,
-    minHeight: 50,
+    minHeight: 45,
   },
   memberDropdownList: {
     backgroundColor: '#FFF',
@@ -1025,9 +1012,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 15,
+    padding: 12,
     borderRadius: 10,
-    marginTop: 20,
+    marginTop: 10,
   },
   confirmButtonDisabled: {
     backgroundColor: '#87CEEB',
@@ -1037,6 +1024,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginLeft: 8,
+  },
+  radioGroup: {
+    flexDirection: 'row',
+    gap: 20,
+    paddingVertical: 5,
+  },
+  radioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  radioLabel: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '500',
   },
   // Success Screen Styles
   successOverlay: {
