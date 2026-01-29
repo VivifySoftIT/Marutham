@@ -199,6 +199,146 @@ const MemberDashboard = () => {
     setNotificationCount(0);
   };
 
+  // Handle notification press
+  const handleNotificationPress = (notification) => {
+    console.log('Notification pressed:', {
+      id: notification.id,
+      type: notification.type,
+      messageType: notification.messageType,
+      canRespond: notification.canRespond,
+      recipientMemberId: notification.recipientMemberId
+    });
+
+    if (notification.canRespond) {
+      if (notification.type === 'message' && (notification.messageType === 'Birthday' || notification.messageType === 'NewMember')) {
+        handleWishResponse(notification);
+      }
+    } else {
+      console.log('Notification cannot respond, marking as read');
+      markNotificationAsRead(notification.id);
+    }
+  };
+
+  // Handle wish response for Birthday and NewMember notifications
+  const handleWishResponse = async (notification) => {
+    try {
+      const senderMemberId = await MemberIdService.getCurrentUserMemberId();
+      
+      if (!senderMemberId) {
+        Alert.alert('Error', 'Could not find your member ID. Please try again.');
+        return;
+      }
+
+      const isBirthday = notification.messageType === 'Birthday';
+      const wishType = isBirthday ? 'Birthday Wishes' : 'Welcome Wishes';
+      const recipientName = notification.recipientName || 'member';
+      
+      let recipientMemberId = notification.recipientMemberId;
+      
+      if (!recipientMemberId && recipientName) {
+        console.log('Fetching member ID for:', recipientName);
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/Members`);
+          if (response.ok) {
+            const members = await response.json();
+            const member = members.find(m => m.name === recipientName);
+            if (member) {
+              recipientMemberId = member.id;
+              console.log('Found member ID:', recipientMemberId);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching member ID:', error);
+        }
+      }
+      
+      if (!recipientMemberId) {
+        Alert.alert('Error', 'Could not find the member. Please try again.');
+        return;
+      }
+      
+      Alert.alert(
+        `Send ${wishType}`,
+        `Send ${wishType.toLowerCase()} to ${recipientName}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Send',
+            onPress: async () => {
+              try {
+                setLoading(true);
+
+                const requestData = {
+                  MemberId: recipientMemberId,
+                  CreatedBy: senderMemberId,
+                  CustomMessage: null
+                };
+
+                console.log(`Sending ${wishType}:`, requestData);
+
+                const endpoint = isBirthday 
+                  ? '/api/MessageNotifications/birthday/wish'
+                  : '/api/MessageNotifications/birthday/wish';
+
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  },
+                  body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                  const errorText = await response.text();
+                  console.error(`${wishType} API error - Status:`, response.status);
+                  console.error(`${wishType} API error - Response:`, errorText);
+                  
+                  let errorMessage = `Failed to send ${wishType.toLowerCase()}. Please try again.`;
+                  
+                  try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.title || errorJson.message || errorJson.error || errorMessage;
+                  } catch (e) {
+                    if (errorText && errorText.length < 200) {
+                      errorMessage = errorText;
+                    }
+                  }
+                  
+                  Alert.alert('Error', errorMessage);
+                  setLoading(false);
+                  return;
+                }
+
+                const result = await response.json();
+                console.log(`${wishType} sent successfully:`, result);
+                
+                markNotificationAsRead(notification.id);
+                
+                Alert.alert(
+                  'Success',
+                  `${wishType} sent to ${recipientName}! 🎉`,
+                  [{ text: 'OK' }]
+                );
+                
+                await loadNotifications();
+                
+              } catch (error) {
+                console.error(`Error sending ${wishType}:`, error);
+                Alert.alert('Error', `An error occurred: ${error.message || 'Unknown error'}`);
+              } finally {
+                setLoading(false);
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error in handleWishResponse:', error);
+      Alert.alert('Error', 'Failed to process wish request.');
+    }
+  };
+
   // Set greeting based on time
   useEffect(() => {
     const currentHour = new Date().getHours();
@@ -290,106 +430,112 @@ const MemberDashboard = () => {
     }
   };
 
-  // Load notifications from API (same as UserDashboard)
-  const loadNotifications = async () => {
+const loadNotifications = async () => {
+  try {
+    const memberId = await MemberIdService.getCurrentUserMemberId();
+    if (!memberId) {
+      console.log('MemberDashboard - No memberId for notifications');
+      setNotifications([]);
+      setNotificationCount(0);
+      return;
+    }
+
+    console.log('MemberDashboard - Loading notifications for memberId:', memberId);
+
+    let messageNotifications = null;
     try {
-      const memberId = await MemberIdService.getCurrentUserMemberId();
-
-      if (!memberId) {
-        console.log('MemberDashboard - No memberId for notifications');
-        setNotifications([]);
-        setNotificationCount(0);
-        return;
-      }
-
-      console.log('MemberDashboard - Loading notifications for memberId:', memberId);
-
-      // Load message notifications (includes Birthday, NewMember, Event, Meeting, Payment, etc.)
-      let messageNotifications = null;
-
-      try {
-        messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
-        console.log('MemberDashboard - Message notifications response:', messageNotifications);
-        
-        // Extract data array from response
-        if (messageNotifications && messageNotifications.data) {
-          messageNotifications = messageNotifications.data;
-        } else if (!Array.isArray(messageNotifications)) {
-          messageNotifications = [];
-        }
-        
-        console.log('MemberDashboard - Processed message notifications:', messageNotifications);
-      } catch (error) {
-        console.error('MemberDashboard - Error loading message notifications:', error);
+      messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
+      console.log('MemberDashboard - Message notifications response:', messageNotifications);
+      if (messageNotifications && messageNotifications.data) {
+        messageNotifications = messageNotifications.data;
+      } else if (!Array.isArray(messageNotifications)) {
         messageNotifications = [];
       }
-
-      // Convert message notifications to UI format
-      const newNotifications = [];
-
-      // Add message notifications from API
-      if (messageNotifications && messageNotifications.length > 0) {
-        messageNotifications.forEach((msg) => {
-          // Map message types to notification config
-          const notificationTypeMap = {
-            'Payment': { icon: 'credit-card-alert', color: '#FFA726', backgroundColor: '#FFF3E0' },
-            'Birthday': { icon: 'cake-variant', color: '#FF6B6B', backgroundColor: '#FFE5E5' },
-            'Event': { icon: 'calendar-star', color: '#FF9800', backgroundColor: '#FFF3E0' },
-            'Meeting': { icon: 'calendar-clock', color: '#4ECDC4', backgroundColor: '#E8F8F7' },
-            'Welcome': { icon: 'hand-wave', color: '#9C27B0', backgroundColor: '#F3E5F5' },
-            'NewMember': { icon: 'account-plus', color: '#2196F3', backgroundColor: '#E3F2FD' }
-          };
-
-          const typeConfig = notificationTypeMap[msg.messageType] ||
-            { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
-
-          // Format the notification message
-          let notificationMessage = msg.content || 'New notification received';
-          
-          // Add date info for Event/Meeting types
-          if ((msg.messageType === 'Event' || msg.messageType === 'Meeting') && msg.date) {
-            const eventDate = new Date(msg.date);
-            const formattedDate = eventDate.toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric', 
-              year: 'numeric' 
-            });
-            notificationMessage = `${notificationMessage}\n📅 ${formattedDate}`;
-          }
-
-          newNotifications.push({
-            id: `message-${msg.id}`,
-            type: 'message',
-            messageType: msg.messageType,
-            title: msg.subject || `${msg.messageType} Notification`,
-            message: notificationMessage,
-            time: msg.createdDate ? new Date(msg.createdDate).toLocaleDateString() : 'Recent',
-            icon: typeConfig.icon,
-            color: typeConfig.color,
-            backgroundColor: typeConfig.backgroundColor,
-            isRead: false,
-            eventDate: msg.date, // Store event/meeting date
-            createdBy: msg.createdBy,
-            attachmentUrl: msg.attachmentUrl,
-          });
-        });
-      }
-
-      // Update notifications state
-      if (newNotifications.length > 0) {
-        setNotifications(newNotifications);
-        setNotificationCount(newNotifications.filter(n => !n.isRead).length);
-        console.log('MemberDashboard - Loaded notifications:', newNotifications.length);
-      } else {
-        // Keep empty state if no notifications
-        setNotifications([]);
-        setNotificationCount(0);
-        console.log('MemberDashboard - No notifications available');
-      }
+      console.log('MemberDashboard - Processed message notifications:', messageNotifications);
     } catch (error) {
-      console.error('MemberDashboard - Error loading notifications:', error);
+      console.error('MemberDashboard - Error loading message notifications:', error);
+      messageNotifications = [];
     }
-  };
+
+    const newNotifications = [];
+
+    // ✅ Only process message notifications (no reminders!)
+    if (messageNotifications && messageNotifications.length > 0) {
+      messageNotifications.forEach((msg) => {
+        const notificationTypeMap = {
+          'Payment': { icon: 'credit-card-alert', color: '#FFA726', backgroundColor: '#FFF3E0' },
+          'Birthday': { icon: 'cake-variant', color: '#FF6B6B', backgroundColor: '#FFE5E5' },
+          'Event': { icon: 'calendar-star', color: '#FF9800', backgroundColor: '#FFF3E0' },
+          'Meeting': { icon: 'calendar-clock', color: '#4ECDC4', backgroundColor: '#E8F8F7' },
+          'Welcome': { icon: 'hand-wave', color: '#9C27B0', backgroundColor: '#F3E5F5' },
+          'NewMember': { icon: 'account-plus', color: '#2196F3', backgroundColor: '#E3F2FD' }
+        };
+        const typeConfig = notificationTypeMap[msg.messageType] ||
+          { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
+
+        let notificationMessage = msg.content || 'New notification received';
+        if ((msg.messageType === 'Event' || msg.messageType === 'Meeting') && msg.date) {
+          const eventDate = new Date(msg.date);
+          const formattedDate = eventDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+          notificationMessage = `${notificationMessage}\n📅 ${formattedDate}`;
+        }
+
+        // Extract member IDs for Birthday and NewMember notifications
+        let recipientMemberId = null;
+        let recipientName = null;
+        
+        if (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') {
+          // Extract name from content for Birthday notifications
+          if (msg.messageType === 'Birthday' && msg.content) {
+            const match = msg.content.match(/Today is (.+)'s birthday/);
+            if (match) {
+              recipientName = match[1];
+            }
+          }
+          
+          // Extract name from content for NewMember notifications
+          if (msg.messageType === 'NewMember' && msg.content) {
+            const match = msg.content.match(/New member joined: (.+)/);
+            if (match) {
+              recipientName = match[1];
+            }
+          }
+        }
+
+        newNotifications.push({
+          id: `message-${msg.id}`,
+          type: 'message',
+          messageType: msg.messageType,
+          title: msg.subject || `${msg.messageType} Notification`,
+          message: notificationMessage,
+          time: msg.createdDate ? new Date(msg.createdDate).toLocaleDateString() : 'Recent',
+          icon: typeConfig.icon,
+          color: typeConfig.color,
+          backgroundColor: typeConfig.backgroundColor,
+          isRead: false,
+          canRespond: (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') && recipientName ? true : false,
+          eventDate: msg.date,
+          createdBy: msg.createdBy,
+          attachmentUrl: msg.attachmentUrl,
+          recipientMemberId: recipientMemberId,
+          recipientName: recipientName || msg.content,
+        });
+      });
+    }
+
+    setNotifications(newNotifications);
+    setNotificationCount(newNotifications.filter(n => !n.isRead).length);
+    console.log('MemberDashboard - Loaded notifications:', newNotifications.length);
+  } catch (error) {
+    console.error('MemberDashboard - Error loading notifications:', error);
+    setNotifications([]);
+    setNotificationCount(0);
+  }
+};
 
   const setDemoData = () => {
     setTotalMembers(125);
@@ -485,7 +631,7 @@ const MemberDashboard = () => {
       id: 'send-notice',
       icon: 'bullhorn',
       title: 'Broadcast',
-      action: () => navigation.navigate('SendNotice'),
+      action: () => navigation.navigate('Messages'),
     },
     {
       id: 'generate-report',
@@ -739,7 +885,7 @@ const MemberDashboard = () => {
                     styles.notificationSwipeCard,
                     !notification.isRead && styles.unreadNotificationCard
                   ]}
-                  onPress={() => markNotificationAsRead(notification.id)}
+                  onPress={() => handleNotificationPress(notification)}
                   activeOpacity={0.8}
                 >
                   <View style={[
@@ -956,7 +1102,7 @@ const MemberDashboard = () => {
                       styles.notificationItem,
                       !notification.isRead && styles.unreadNotificationItem
                     ]}
-                    onPress={() => markNotificationAsRead(notification.id)}
+                    onPress={() => handleNotificationPress(notification)}
                     activeOpacity={0.7}
                   >
                     <View style={[
