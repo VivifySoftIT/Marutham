@@ -28,6 +28,8 @@ import MyCEUs from '../screens/MyCEUs';
 import Visitors from '../screens/Visitors';
 import SettingsScreen from '../screens/SettingsScreen';
 import CreateMeeting from '../screens/CreateMeeting';
+import TakePayment from '../screens/TakePayment';
+
 const Stack = createNativeStackNavigator();
 
 const StackNavigator = () => {
@@ -88,82 +90,87 @@ const StackNavigator = () => {
       initialRouteName={initialRouteName} // 👈 THIS IS THE FIX — WAS MISSING!
       screenOptions={{ headerShown: false }}
     >
-      <Stack.Screen 
+      <Stack.Screen
         name="Login"
         component={LoginScreen}
         initialParams={{ notificationScreen }}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="DrawerNavigator"
         component={DrawerNavigator}
         initialParams={{ screen: notificationScreen || "MemberDashboard" }}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="UserDashboard"
         component={UserDashboard}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="ChangePassword"
         component={ChangePassword}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="Profile"
         component={Profile}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="TYFCBSlip"
         component={TYFCBSlip}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="ReferralSlip"
         component={ReferralSlip}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="OneToOneSlip"
         component={OneToOneSlip}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="MyFeed"
         component={MyFeed}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="MyPayments"
         component={MyPayments}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="MembersDirectory"
         component={MembersDirectory}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="AdminMeeting"
         component={AdminMeeting}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="NotificationsScreen"
         component={NotificationsScreen}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="MyCEUs"
         component={MyCEUs}
       />
       {/* <Stack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
-      <Stack.Screen 
+      <Stack.Screen
         name="BulkMemberImport"
         component={BulkMemberImport}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="MemberDetails"
         component={MemberDetails}
       />
-      <Stack.Screen 
+      <Stack.Screen
         name="Visitors"
         component={Visitors}
       />
-      <Stack.Screen 
+      <Stack.Screen
+        name="TakePayment"
+        component={TakePayment}
+      />
+      <Stack.Screen
         name="SettingsScreen"
         component={SettingsScreen}
       />
-    
+
+
     </Stack.Navigator>
   );
 };
