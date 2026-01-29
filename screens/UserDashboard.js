@@ -388,11 +388,11 @@ const loadDashboardReminders = async () => {
         let recipientName = null;
         
         if (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') {
-          // Try to extract member ID from MemberIds field (comma-separated)
-          if (msg.memberIds && msg.memberIds !== '*') {
-            const memberIds = msg.memberIds.split(',').map(id => id.trim());
-            if (memberIds.length > 0 && memberIds[0]) {
-              recipientMemberId = parseInt(memberIds[0], 10);
+          // Extract name from content for Birthday notifications
+          if (msg.messageType === 'Birthday' && msg.content) {
+            const match = msg.content.match(/Today is (.+)'s birthday/);
+            if (match) {
+              recipientName = match[1];
             }
           }
           
@@ -403,6 +403,10 @@ const loadDashboardReminders = async () => {
               recipientName = match[1];
             }
           }
+          
+          // Store the raw notification data for later lookup
+          // We'll fetch the actual member ID when the user taps to respond
+          // This avoids the ID mismatch issue
         }
 
         const notificationObj = {
@@ -416,11 +420,11 @@ const loadDashboardReminders = async () => {
           color: typeConfig.color,
           backgroundColor: typeConfig.backgroundColor,
           isRead: msg.isSent || false,
-          canRespond: (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') && recipientMemberId ? true : false,
+          canRespond: (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') && recipientName ? true : false,
           attachmentUrl: msg.attachmentUrl,
           eventDate: msg.date, // Store event/meeting date
           createdBy: msg.createdBy,
-          recipientMemberId: recipientMemberId,
+          recipientMemberId: recipientMemberId, // May be null, will fetch when responding
           recipientName: recipientName || msg.content,
         };
 
@@ -723,6 +727,31 @@ const handleBirthdayResponse = async (notification) => {
       const wishType = isBirthday ? 'Birthday Wishes' : 'Welcome Wishes';
       const recipientName = notification.recipientName || 'member';
       
+      // Fetch the actual member ID by name if not already set
+      let recipientMemberId = notification.recipientMemberId;
+      
+      if (!recipientMemberId && recipientName) {
+        console.log('Fetching member ID for:', recipientName);
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/Members`);
+          if (response.ok) {
+            const members = await response.json();
+            const member = members.find(m => m.name === recipientName);
+            if (member) {
+              recipientMemberId = member.id;
+              console.log('Found member ID:', recipientMemberId);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching member ID:', error);
+        }
+      }
+      
+      if (!recipientMemberId) {
+        Alert.alert('Error', 'Could not find the member. Please try again.');
+        return;
+      }
+      
       Alert.alert(
         `Send ${wishType}`,
         `Send ${wishType.toLowerCase()} to ${recipientName}?`,
@@ -733,19 +762,10 @@ const handleBirthdayResponse = async (notification) => {
             onPress: async () => {
               try {
                 setLoading(true);
-                
-                // Validate that we have a recipient member ID
-                if (!notification.recipientMemberId) {
-                  console.error('Wish error: No recipient member ID found');
-                  console.error('Notification object:', notification);
-                  Alert.alert('Error', 'Cannot send wish: Member ID not found.');
-                  setLoading(false);
-                  return;
-                }
 
                 // Prepare the request data according to SendBirthdayWishDto
                 const requestData = {
-                  MemberId: notification.recipientMemberId,
+                  MemberId: recipientMemberId,
                   CreatedBy: senderMemberId,
                   CustomMessage: null // Optional: You can add custom message input if needed
                 };
