@@ -15,6 +15,7 @@ const MyFeed = ({ route }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState(route?.params?.tab || 'all');
   const [referralTab, setReferralTab] = useState(route?.params?.referralTab || 'my');
+  const [thanksNoteTab, setThanksNoteTab] = useState(route?.params?.subTab || 'given');
   const [feedData, setFeedData] = useState([]);
   const [updatingItemId, setUpdatingItemId] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -117,7 +118,7 @@ const MyFeed = ({ route }) => {
         // Load payment data and convert to feed format
         await loadPaymentDataAsFeed(memberId);
         return;
-      } else if (activeTab === 'visitor') {
+      } else if (activeTab === 'visitor' || activeTab === 'visitors') {
         // Load visitor data and convert to feed format
         await loadVisitorDataAsFeed(memberId);
         return;
@@ -127,11 +128,11 @@ const MyFeed = ({ route }) => {
 
       if (activeTab === 'referral') {
         endpoint = `/api/Feed/member/${memberId}/referrals`;
-      } else if (activeTab === 'tyfcb') {
+      } else if (activeTab === 'tyfcb' || activeTab === 'thanksnote') {
         endpoint = `/api/Feed/member/${memberId}/tyfcb`;
       } else if (activeTab === 'one_to_one') {
         endpoint = `/api/Feed/member/${memberId}/meetings`;
-      } else if (activeTab === 'visitor') {
+      } else if (activeTab === 'visitor' || activeTab === 'visitors') {
         endpoint = `/api/Feed/member/${memberId}/visitors`;
       }
 
@@ -823,6 +824,15 @@ This is an electronically generated receipt.
         return feedData.filter(item => item.type === 'referral_received');
       }
     }
+    
+    if (activeTab === 'thanksnote' || activeTab === 'tyfcb') {
+      if (thanksNoteTab === 'given') {
+        return feedData.filter(item => item.type === 'tyfcb_given');
+      } else {
+        return feedData.filter(item => item.type === 'tyfcb_received');
+      }
+    }
+    
     return feedData;
   };
 
@@ -979,10 +989,10 @@ This is an electronically generated receipt.
             <Text style={[styles.tabButtonText, activeTab === 'referral' && styles.tabButtonTextActive]}>Referrals</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'tyfcb' && styles.tabButtonActive]}
-            onPress={() => setActiveTab('tyfcb')}
+            style={[styles.tabButton, (activeTab === 'tyfcb' || activeTab === 'thanksnote') && styles.tabButtonActive]}
+            onPress={() => setActiveTab('thanksnote')}
           >
-            <Text style={[styles.tabButtonText, activeTab === 'tyfcb' && styles.tabButtonTextActive]}>ThanksNote</Text>
+            <Text style={[styles.tabButtonText, (activeTab === 'tyfcb' || activeTab === 'thanksnote') && styles.tabButtonTextActive]}>ThanksNote</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabButton, activeTab === 'one_to_one' && styles.tabButtonActive]}
@@ -997,8 +1007,8 @@ This is an electronically generated receipt.
             <Text style={[styles.tabButtonText, activeTab === 'payment' && styles.tabButtonTextActive]}>Payments</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.tabButton, activeTab === 'visitor' && styles.tabButtonActive]}
-            onPress={() => setActiveTab('visitor')}
+            style={[styles.tabButton, (activeTab === 'visitor' || activeTab === 'visitors') && styles.tabButtonActive]}
+            onPress={() => setActiveTab('visitors')}
           >
             <Text style={[styles.tabButtonText, activeTab === 'visitor' && styles.tabButtonTextActive]}>Visitors</Text>
           </TouchableOpacity>
@@ -1016,7 +1026,7 @@ This is an electronically generated receipt.
             <Text style={styles.shortcutButtonText}>Add Referral</Text>
           </TouchableOpacity>
         )}
-        {activeTab === 'tyfcb' && (
+        {(activeTab === 'tyfcb' || activeTab === 'thanksnote') && (
           <TouchableOpacity
             style={[styles.shortcutButton, { backgroundColor: '#FF9800' }]}
             onPress={() => navigation.navigate('TYFCBSlip')}
@@ -1034,7 +1044,7 @@ This is an electronically generated receipt.
             <Text style={styles.shortcutButtonText}>Add Payment</Text>
           </TouchableOpacity>
         )}
-        {activeTab === 'visitor' && (
+        {(activeTab === 'visitor' || activeTab === 'visitors') && (
           <TouchableOpacity
             style={[styles.shortcutButton, { backgroundColor: '#9C27B0' }]}
             onPress={() => navigation.navigate('Visitors')}
@@ -1060,6 +1070,25 @@ This is an electronically generated receipt.
           >
             <Icon name="account-arrow-left" size={18} color={referralTab === 'my' ? '#FFF' : '#4A90E2'} />
             <Text style={[styles.toggleText, referralTab === 'my' && styles.toggleTextActive]}>Received</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {(activeTab === 'thanksnote' || activeTab === 'tyfcb') && (
+        <View style={styles.referralToggle}>
+          <TouchableOpacity
+            style={[styles.toggleButton, thanksNoteTab === 'given' && styles.toggleButtonActive]}
+            onPress={() => setThanksNoteTab('given')}
+          >
+            <Icon name="handshake" size={18} color={thanksNoteTab === 'given' ? '#FFF' : '#FF9800'} />
+            <Text style={[styles.toggleText, thanksNoteTab === 'given' && styles.toggleTextActive]}>Given</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleButton, thanksNoteTab === 'received' && styles.toggleButtonActive]}
+            onPress={() => setThanksNoteTab('received')}
+          >
+            <Icon name="hand-heart" size={18} color={thanksNoteTab === 'received' ? '#FFF' : '#FF9800'} />
+            <Text style={[styles.toggleText, thanksNoteTab === 'received' && styles.toggleTextActive]}>Received</Text>
           </TouchableOpacity>
         </View>
       )}

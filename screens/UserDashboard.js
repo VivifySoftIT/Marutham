@@ -1339,14 +1339,14 @@ const handleMeetingResponse = async (notification) => {
               label="ThanksNote Given"
               value={stats.tyfcbGiven}
               delay={200}
-              onPress={() => navigation.navigate('MyFeed', { tab: 'tyfcb' })}
+              onPress={() => navigation.navigate('MyFeed', { tab: 'thanksnote', subTab: 'given' })}
             />
             <StatCard
               icon="hand-heart"
               label="ThanksNote Received"
               value={stats.tyfcbReceived}
               delay={250}
-              onPress={() => navigation.navigate('MyFeed', { tab: 'tyfcb' })}
+              onPress={() => navigation.navigate('MyFeed', { tab: 'thanksnote', subTab: 'received' })}
             />
             <StatCard
               icon="briefcase-account"
@@ -1360,7 +1360,7 @@ const handleMeetingResponse = async (notification) => {
               label="Visitors"
               value={stats.visitorsCount}
               delay={350}
-               onPress={() => navigation.navigate('MyFeed', { tab: 'Visitors' })}
+              onPress={() => navigation.navigate('MyFeed', { tab: 'visitors' })}
             />
           </View>
         </Animatable.View>
@@ -2526,7 +2526,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   notificationSwipeCard: {
-    width: 140,
+    width: 170,
     backgroundColor: '#F8FBFF',
     borderRadius: 8,
     padding: 6,
