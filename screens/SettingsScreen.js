@@ -70,11 +70,54 @@ const SettingsScreen = () => {
     }
   };
 
+  const translateRole = (role) => {
+    if (!role) return t('role');
+    
+    const roleTranslations = {
+      'Admin': t('administrator'),
+      'admin': t('administrator'),
+      'Administrator': t('administrator'),
+      'User': t('user'),
+      'user': t('user'),
+      'Member': t('member'),
+      'member': t('member'),
+    };
+    
+    return roleTranslations[role] || role;
+  };
+
+  // Add translation functions for profile data
+  const translateGender = (gender) => {
+    if (!gender) return '';
+    
+    const genderTranslations = {
+      'Male': t('male'),
+      'Female': t('female'),
+      'Other': t('other'),
+    };
+    
+    return genderTranslations[gender] || gender;
+  };
+
+  const translateStatus = (status) => {
+    if (!status) return '';
+    
+    const statusTranslations = {
+      'Active': t('active'),
+      'Inactive': t('inactive'),
+      'Pending': t('pending'),
+      'Approved': t('approved'),
+      'Rejected': t('rejected'),
+    };
+    
+    return statusTranslations[status] || status;
+  };
+
   const handleLanguageChange = async (lang) => {
     setSelectedLanguage(lang);
     await changeLanguage(lang);
     setShowLanguageModal(false);
-    Alert.alert('Success', `Language changed to ${lang === 'en' ? 'English' : 'Tamil'}`);
+    Alert.alert(t('success'), `${t('languageChanged')} ${lang === 'en' ? t('english') : t('tamil')}`);
   };
 
   const handleModeSwitch = async (mode) => {
@@ -83,11 +126,11 @@ const SettingsScreen = () => {
       setCurrentMode(mode);
       
       Alert.alert(
-        'Mode Changed',
-        `Switched to ${mode === 'user' ? 'User Mode' : 'Admin Mode'}. Please restart the app to see the changes.`,
+        t('confirmTitle'),
+        `${t('switchInterfaceMode')} ${mode === 'user' ? t('userMode') : t('adminMode')}. ${t('restartAppToSeeChanges')}.`,
         [
           {
-            text: 'Restart Now',
+            text: t('restartNow'),
             onPress: () => {
               // Navigate to appropriate dashboard based on mode
               if (mode === 'user') {
@@ -103,12 +146,12 @@ const SettingsScreen = () => {
               }
             }
           },
-          { text: 'Later', style: 'cancel' }
+          { text: t('later'), style: 'cancel' }
         ]
       );
     } catch (error) {
       console.error('Error switching mode:', error);
-      Alert.alert('Error', 'Failed to switch mode. Please try again.');
+      Alert.alert(t('error'), t('operationFailed'));
     }
   };
 
@@ -120,22 +163,22 @@ const SettingsScreen = () => {
   const settingsItems = [
     {
       id: 'my-details',
-      title: 'My Details',
-      subtitle: 'View and manage your account information',
+      title: t('myDetails'),
+      subtitle: t('viewManageAccount'),
       icon: 'account-circle',
       color: '#4A90E2',
       onPress: () => {
         Alert.alert(
-          'My Details',
-          `Name: ${userData?.fullName || 'Admin User'}\nEmail: ${userData?.email || 'admin@alaigal.com'}\nPhone: ${userData?.phone || '+91 9876543210'}\nRole: ${userData?.role || 'Admin'}`,
-          [{ text: 'OK' }]
+          t('myDetails'),
+          `${t('name')}: ${userData?.fullName || 'Admin User'}\n${t('email')}: ${userData?.email || 'admin@alaigal.com'}\n${t('phone')}: ${userData?.phone || '+91 9876543210'}\n${t('role')}: ${translateRole(userData?.role)}`,
+          [{ text: t('ok') }]
         );
       },
     },
     {
       id: 'language',
-      title: 'Language',
-      subtitle: `Current: ${selectedLanguage === 'en' ? 'English' : 'Tamil'}`,
+      title: t('language'),
+      subtitle: `${t('currentLanguage')}: ${selectedLanguage === 'en' ? t('english') : t('tamil')}`,
       icon: 'translate',
       color: '#FF9800',
       onPress: () => setShowLanguageModal(true),
@@ -143,57 +186,57 @@ const SettingsScreen = () => {
     // Only show mode switcher for admin users
     ...(isAdmin ? [{
       id: 'mode-switcher',
-      title: 'Interface Mode',
-      subtitle: `Current: ${currentMode === 'user' ? 'User Mode' : 'Admin Mode'}`,
+      title: t('interfaceMode'),
+      subtitle: `${t('currentLanguage')}: ${currentMode === 'user' ? t('userMode') : t('adminMode')}`,
       icon: currentMode === 'user' ? 'account' : 'shield-crown',
       color: currentMode === 'user' ? '#2196F3' : '#E91E63',
       onPress: () => {
         Alert.alert(
-          'Switch Interface Mode',
-          'Choose your interface mode:',
+          t('switchInterfaceMode'),
+          t('chooseInterfaceMode'),
           [
             {
-              text: 'User Mode',
+              text: t('userMode'),
               onPress: () => handleModeSwitch('user'),
               style: currentMode === 'user' ? 'cancel' : 'default'
             },
             {
-              text: 'Admin Mode', 
+              text: t('adminMode'), 
               onPress: () => handleModeSwitch('admin'),
               style: currentMode === 'admin' ? 'cancel' : 'default'
             },
-            { text: 'Cancel', style: 'cancel' }
+            { text: t('cancel'), style: 'cancel' }
           ]
         );
       },
     }] : []),
     {
       id: 'change-password',
-      title: 'Change Password',
-      subtitle: 'Update your account password',
+      title: t('changePassword'),
+      subtitle: t('updatePassword'),
       icon: 'lock-reset',
       color: '#4CAF50',
       onPress: () => navigation.navigate('ChangePassword'),
     },
     {
       id: 'edit-profile',
-      title: 'Edit Profile',
-      subtitle: 'Update your profile information',
+      title: t('editProfile'),
+      subtitle: t('updateProfileInfo'),
       icon: 'account-edit',
       color: '#9C27B0',
       onPress: () => navigation.navigate('Profile'),
     },
     {
       id: 'privacy-policy',
-      title: 'Privacy and Policy',
-      subtitle: 'Read our privacy policy and terms',
+      title: t('privacySecurity'),
+      subtitle: t('readPrivacyPolicy'),
       icon: 'shield-account',
       color: '#607D8B',
       onPress: () => {
         Alert.alert(
-          'Privacy and Policy',
-          'Privacy Policy and Terms of Service\n\n• Your data is secure with us\n• We respect your privacy\n• Terms and conditions apply\n• Contact support for more info',
-          [{ text: 'OK' }]
+          t('privacySecurity'),
+          t('privacyPolicyContent'),
+          [{ text: t('ok') }]
         );
       },
     },
@@ -224,7 +267,7 @@ const SettingsScreen = () => {
           <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
             <Icon name="arrow-left" size={28} color="white" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
+          <Text style={styles.headerTitle}>{t('settings')}</Text>
           <View style={{ width: 28 }} />
         </View>
       </LinearGradient>
@@ -248,7 +291,7 @@ const SettingsScreen = () => {
                 <Text style={styles.profileEmail}>{userData?.email || 'admin@alaigal.com'}</Text>
                 <View style={styles.profileBadge}>
                   <Icon name="shield-crown" size={14} color={waterBlueColors.primary} />
-                  <Text style={styles.profileBadgeText}>Administrator</Text>
+                  <Text style={styles.profileBadgeText}>{t('administrator')}</Text>
                 </View>
               </View>
             </View>
@@ -257,7 +300,7 @@ const SettingsScreen = () => {
 
         {/* Settings Items */}
         <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>Account Settings</Text>
+          <Text style={styles.sectionTitle}>{t('accountSettings')}</Text>
           {settingsItems.map((item, index) => (
             <SettingsItem key={item.id} item={item} delay={200 + (index * 100)} />
           ))}
@@ -268,8 +311,8 @@ const SettingsScreen = () => {
           <View style={styles.appInfo}>
             <Icon name="information" size={20} color={waterBlueColors.primary} />
             <View style={styles.appInfoContent}>
-              <Text style={styles.appInfoTitle}>Alaigal Network</Text>
-              <Text style={styles.appInfoText}>Version 1.0.0 • Professional Networking Platform</Text>
+              <Text style={styles.appInfoTitle}>{t('professionalNetworking')}</Text>
+              <Text style={styles.appInfoText}>{t('version')} 1.0.0 • {t('professionalNetworking')}</Text>
             </View>
           </View>
         </Animatable.View>
@@ -290,7 +333,7 @@ const SettingsScreen = () => {
               colors={[waterBlueColors.primary, waterBlueColors.light]}
               style={styles.modalHeader}
             >
-              <Text style={styles.modalTitle}>Select Language</Text>
+              <Text style={styles.modalTitle}>{t('language')}</Text>
               <TouchableOpacity 
                 style={styles.closeModalButton}
                 onPress={() => setShowLanguageModal(false)}
@@ -309,8 +352,8 @@ const SettingsScreen = () => {
                 onPress={() => handleLanguageChange('en')}
               >
                 <View style={styles.languageContent}>
-                  <Text style={styles.languageName}>English</Text>
-                  <Text style={styles.languageDesc}>English Language</Text>
+                  <Text style={styles.languageName}>{t('english')}</Text>
+                  <Text style={styles.languageDesc}>{t('englishLanguage')}</Text>
                 </View>
                 {selectedLanguage === 'en' && (
                   <Icon name="check-circle" size={24} color={waterBlueColors.primary} />
@@ -326,8 +369,8 @@ const SettingsScreen = () => {
                 onPress={() => handleLanguageChange('ta')}
               >
                 <View style={styles.languageContent}>
-                  <Text style={styles.languageName}>Tamil</Text>
-                  <Text style={styles.languageDesc}>தமிழ் மொழி</Text>
+                  <Text style={styles.languageName}>{t('tamil')}</Text>
+                  <Text style={styles.languageDesc}>{t('tamilLanguage')}</Text>
                 </View>
                 {selectedLanguage === 'ta' && (
                   <Icon name="check-circle" size={24} color={waterBlueColors.primary} />

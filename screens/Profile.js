@@ -20,8 +20,35 @@ import { useNavigation } from "@react-navigation/native";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import API_BASE_URL from "../apiConfig";
 import useHardwareBack from '../service/useHardwareBack';
+import { useLanguage } from '../service/LanguageContext';
 
 const MyProfile = () => {
+  const { t } = useLanguage();
+  
+  // Translation functions for stored data
+  const translateGender = (gender) => {
+    if (!gender) return '';
+    const genderTranslations = {
+      'Male': t('male'),
+      'Female': t('female'),
+      'Other': t('other'),
+    };
+    return genderTranslations[gender] || gender;
+  };
+
+  const translateStatus = (status) => {
+    if (!status) return '';
+    const statusTranslations = {
+      'Active': t('active'),
+      'Inactive': t('inactive'),
+      'Pending': t('pending'),
+      'Approved': t('approved'),
+      'Rejected': t('rejected'),
+      'Completed': t('completed'),
+    };
+    return statusTranslations[status] || status;
+  };
+
   const [profile, setProfile] = useState({
     name: "",
     employeeNo: "",
@@ -186,7 +213,7 @@ const MyProfile = () => {
 
   const handleSave = (field) => {
     if (field === "contactNumber" && profile[field].length < 10) {
-      alert("Phone number must be exactly 10 digits.");
+      alert(t('phoneNumberMustBe10Digits'));
       return;
     }
     setEditingField(null);
@@ -197,14 +224,14 @@ const MyProfile = () => {
     
     // Validate phone numbers before update
     if (profile.contactNumber && profile.contactNumber.length !== 10) {
-      alert("Contact number must be exactly 10 digits.");
+      alert(t('contactNumberMustBe10Digits'));
       return;
     }
 
     try {
       const memberId = await getCurrentUserMemberId();
       if (!memberId) {
-        alert("Member ID not found. Please try logging in again.");
+        alert(t('memberIdNotFound'));
         return;
       }
 
@@ -274,7 +301,7 @@ const MyProfile = () => {
       if (response.ok) {
         const result = await response.json();
         console.log('Profile updated successfully:', result);
-        alert("Profile updated successfully!");
+        alert(t('profileUpdatedSuccessfully'));
         
         // Refresh profile data using correct endpoint
         const updatedResponse = await fetch(`${API_BASE_URL}/api/Members/${memberId}`);
@@ -332,21 +359,21 @@ const MyProfile = () => {
         
         try {
           const errorJson = JSON.parse(errorText);
-          alert(`Failed to update profile: ${errorJson.title || 'Unknown error'}`);
+          alert(`${t('failedToUpdateProfile')}: ${errorJson.title || t('unknownError')}`);
         } catch (e) {
-          alert("Failed to update profile. Please try again.");
+          alert(t('failedToUpdateProfileTryAgain'));
         }
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("An error occurred while updating the profile.");
+      alert(t('errorOccurredUpdatingProfile'));
     }
   };
 
   const pickImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      alert("Permission to access media library is required!");
+      alert(t('permissionMediaLibraryRequired'));
       return;
     }
 
@@ -365,12 +392,12 @@ const MyProfile = () => {
 
   const removeImage = async () => {
     Alert.alert(
-      "Remove Photo",
-      "Are you sure you want to remove your profile photo?",
+      t('removePhoto'),
+      t('areYouSureRemovePhoto'),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t('cancel'), style: "cancel" },
         {
-          text: "Remove",
+          text: t('remove'),
           style: "destructive",
           onPress: async () => {
             try {
@@ -388,12 +415,12 @@ const MyProfile = () => {
 
   const showImageOptions = () => {
     Alert.alert(
-      "Profile Photo",
-      "Choose an option",
+      t('profilePhoto'),
+      t('chooseAnOption'),
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Change Photo", onPress: pickImage },
-        ...(profile.profileImage ? [{ text: "Remove Photo", style: "destructive", onPress: removeImage }] : [])
+        { text: t('cancel'), style: "cancel" },
+        { text: t('changePhoto'), onPress: pickImage },
+        ...(profile.profileImage ? [{ text: t('removePhoto'), style: "destructive", onPress: removeImage }] : [])
       ]
     );
   };
@@ -476,6 +503,18 @@ const MyProfile = () => {
     const isNumberField = fieldName === "contactNumber";
     const isDateField = fieldName === "joinDate" || fieldName === "dob";
     const isGenderField = fieldName === "gender";
+    const isStatusField = fieldName === "status";
+
+    // Get display value (translated for certain fields)
+    const getDisplayValue = () => {
+      if (isGenderField) {
+        return translateGender(value);
+      }
+      if (isStatusField) {
+        return translateStatus(value);
+      }
+      return value;
+    };
 
     // Gender dropdown options
     if (isGenderField) {
@@ -484,25 +523,29 @@ const MyProfile = () => {
           <Text style={styles.editLabel}>{label}</Text>
           <View style={styles.inputWithIcon}>
             <View style={styles.genderPickerContainer}>
-              {['Male', 'Female', 'Other'].map((option) => (
+              {[
+                { key: 'Male', label: t('male') },
+                { key: 'Female', label: t('female') },
+                { key: 'Other', label: t('other') }
+              ].map((option) => (
                 <TouchableOpacity
-                  key={option}
+                  key={option.key}
                   style={[
                     styles.genderOption,
-                    profile.gender === option && styles.genderOptionSelected
+                    profile.gender === option.key && styles.genderOptionSelected
                   ]}
-                  onPress={() => setProfile((prev) => ({ ...prev, gender: option }))}
+                  onPress={() => setProfile((prev) => ({ ...prev, gender: option.key }))}
                 >
                   <Icon 
-                    name={profile.gender === option ? "radiobox-marked" : "radiobox-blank"} 
+                    name={profile.gender === option.key ? "radiobox-marked" : "radiobox-blank"} 
                     size={20} 
-                    color={profile.gender === option ? "#4A90E2" : "#999"} 
+                    color={profile.gender === option.key ? "#4A90E2" : "#999"} 
                   />
                   <Text style={[
                     styles.genderOptionText,
-                    profile.gender === option && styles.genderOptionTextSelected
+                    profile.gender === option.key && styles.genderOptionTextSelected
                   ]}>
-                    {option}
+                    {option.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -522,7 +565,7 @@ const MyProfile = () => {
             onPress={() => showDatePickerModal(fieldName)}
           >
             <Text style={[styles.datePickerText, !value && styles.datePickerPlaceholder]}>
-              {value || "Select date"}
+              {value || t('selectDate')}
             </Text>
             <Icon name="calendar" size={20} color="#4A90E2" />
           </TouchableOpacity>
@@ -530,17 +573,18 @@ const MyProfile = () => {
       );
     }
 
+    // For all other fields, show translated display value
     return (
       <View style={styles.fieldContainer}>
         <Text style={styles.editLabel}>{label}</Text>
         <View style={styles.inputWithIcon}>
           <TextInput
-            value={value}
+            value={getDisplayValue()}
             onChangeText={(text) => {
               if (isNumberField) {
                 const sanitizedText = text.replace(/\D/g, "");
                 if (sanitizedText.length > 10) {
-                  alert("Input cannot exceed 10 digits.");
+                  alert(t('inputCannotExceed10Digits'));
                   return;
                 }
                 setProfile((prev) => ({ ...prev, [fieldName]: sanitizedText }));
@@ -548,20 +592,25 @@ const MyProfile = () => {
                 setProfile((prev) => ({ ...prev, [fieldName]: text }));
               }
             }}
-            editable={true}
+            editable={!isStatusField} // Status field is read-only
             multiline={isMultiline}
             keyboardType={isNumberField ? "numeric" : "default"}
             maxLength={isNumberField ? 10 : undefined}
-            style={[styles.input, isMultiline && styles.inputMultiline]}
+            style={[
+              styles.input, 
+              isMultiline && styles.inputMultiline,
+              isStatusField && { color: '#666' }
+            ]}
           />
           <TouchableOpacity
             onPress={() => (isEditing ? handleSave(fieldName) : setEditingField(fieldName))}
             style={styles.iconContainer}
+            disabled={isStatusField}
           >
             <Icon
-              name={isEditing ? "check" : "pencil"}
+              name={isStatusField ? "lock" : (isEditing ? "check" : "pencil")}
               size={20}
-              color={isEditing ? "#28A745" : "#4A90E2"}
+              color={isStatusField ? "#999" : (isEditing ? "#28A745" : "#4A90E2")}
             />
           </TouchableOpacity>
         </View>
@@ -572,7 +621,7 @@ const MyProfile = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <Text>Loading profile...</Text>
+        <Text>{t('loadingProfile')}</Text>
       </View>
     );
   }
@@ -595,7 +644,7 @@ const MyProfile = () => {
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Icon name="arrow-left" size={24} color="#FFF" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>My Profile</Text>
+            <Text style={styles.headerTitle}>{t('myProfile')}</Text>
             <TouchableOpacity onPress={() => navigation.navigate("ChangePassword")}>
               <Icon name="lock-outline" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -620,7 +669,7 @@ const MyProfile = () => {
               </View>
             </TouchableOpacity>
             <Text style={styles.profileName}>{profile.name}</Text>
-            <Text style={styles.profileHint}>Tap to change • Long press to view</Text>
+            <Text style={styles.profileHint}>{t('tapToChangeLongPressToView')}</Text>
           </View>
 
           <Modal visible={!!fullScreenImage} transparent={true} animationType="fade">
@@ -638,7 +687,7 @@ const MyProfile = () => {
               onPress={() => setActiveTab("personal")}
             >
               <Text style={[styles.tabText, activeTab === "personal" && styles.activeTabText]}>
-                Personal
+                {t('personal')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -646,39 +695,39 @@ const MyProfile = () => {
               onPress={() => setActiveTab("professional")}
             >
               <Text style={[styles.tabText, activeTab === "professional" && styles.activeTabText]}>
-                Professional
+                {t('professional')}
               </Text>
             </TouchableOpacity>
           </View>
        
           {activeTab === "personal" && (
             <View style={styles.formSection}>
-              {renderEditableField("Name", "name", profile.name)}
-              {renderEditableField("Gender", "gender", profile.gender)}
-              {renderEditableField("Email", "email", profile.email)}
-              {renderEditableField("Contact Number", "contactNumber", profile.contactNumber)}
-              {renderEditableField("Date of Birth", "dob", profile.dob)}
-              {renderEditableField("Address", "contactAddress", profile.contactAddress, true)}
+              {renderEditableField(t('name'), "name", profile.name)}
+              {renderEditableField(t('gender'), "gender", profile.gender)}
+              {renderEditableField(t('email'), "email", profile.email)}
+              {renderEditableField(t('contactNumber'), "contactNumber", profile.contactNumber)}
+              {renderEditableField(t('dateOfBirth'), "dob", profile.dob)}
+              {renderEditableField(t('address'), "contactAddress", profile.contactAddress, true)}
               <TouchableOpacity 
                 style={styles.updateButton} 
                 onPress={handleUpdate}
               >
-                <Text style={styles.updateButtonText}>Save Changes</Text>
+                <Text style={styles.updateButtonText}>{t('saveChanges')}</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {activeTab === "professional" && (
             <View style={styles.formSection}>
-              {renderEditableField("Member ID", "employeeNo", profile.employeeNo)}
-              {renderEditableField("Business", "designation", profile.designation)}
-              {renderEditableField("Status", "status", profile.status)}
-              {renderEditableField("Join Date", "joinDate", profile.joinDate)}
+              {renderEditableField(t('memberID'), "employeeNo", profile.employeeNo)}
+              {renderEditableField(t('business'), "designation", profile.designation)}
+              {renderEditableField(t('status'), "status", profile.status)}
+              {renderEditableField(t('joinDate'), "joinDate", profile.joinDate)}
               <TouchableOpacity 
                 style={styles.updateButton} 
                 onPress={handleUpdate}
               >
-                <Text style={styles.updateButtonText}>Save Changes</Text>
+                <Text style={styles.updateButtonText}>{t('saveChanges')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -689,7 +738,7 @@ const MyProfile = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Set Profile Picture</Text>
+              <Text style={styles.modalTitle}>{t('setProfilePicture')}</Text>
               <TouchableOpacity onPress={cancelImage}>
                 <Icon name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -698,11 +747,11 @@ const MyProfile = () => {
             <View style={styles.modalButtons}>
               <TouchableOpacity onPress={setImage} style={styles.modalButtonPrimary}>
                 <Icon name="check" size={20} color="#FFF" />
-                <Text style={styles.modalButtonText}>Confirm</Text>
+                <Text style={styles.modalButtonText}>{t('confirm')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={cancelImage} style={styles.modalButtonSecondary}>
                 <Icon name="close" size={20} color="#4A90E2" />
-                <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
+                <Text style={styles.modalButtonTextSecondary}>{t('cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>
