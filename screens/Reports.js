@@ -2036,18 +2036,10 @@ const Reports = ({ navigation }) => {
         </TouchableOpacity>
       </LinearGradient>
 
-      <ScrollView 
-        style={styles.content} 
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={onRefresh}
-            tintColor="#4A90E2"
-            colors={['#4A90E2']}
-          />
-        }
-      >
+      <FlatList
+        data={[{ key: 'main-content' }]}
+        renderItem={() => (
+          <View>
         {/* Period Selection */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Select Period</Text>
@@ -2092,13 +2084,15 @@ const Reports = ({ navigation }) => {
             horizontal 
             showsHorizontalScrollIndicator={false}
             style={styles.tabScroll}
+            contentContainerStyle={{ paddingRight: 20 }} // Ensure content has proper padding
           >
-            {reportTabs.map(tab => (
+            {reportTabs.map((tab, index) => (
               <TouchableOpacity
                 key={tab.id}
                 style={[
                   styles.tab,
-                  selectedReportTab === tab.id && styles.activeTab
+                  selectedReportTab === tab.id && styles.activeTab,
+                  index === reportTabs.length - 1 && { marginRight: 20 } // Add extra margin to last tab
                 ]}
                 onPress={() => setSelectedReportTab(tab.id)}
               >
@@ -2469,7 +2463,12 @@ const Reports = ({ navigation }) => {
               
               {membersList.length > 0 ? (
                 viewMode === 'list' ? (
-                  <View style={styles.membersListContainer}>
+                  <ScrollView 
+                    style={styles.recordsList}
+                    contentContainerStyle={styles.recordsListContent}
+                    showsVerticalScrollIndicator={true}
+                    nestedScrollEnabled={true}
+                  >
                     {membersList.map((item, index) => {
                       let renderedItem;
                       if (selectedReportTab === 'tyfcb') {
@@ -2494,7 +2493,7 @@ const Reports = ({ navigation }) => {
                         </View>
                       );
                     })}
-                  </View>
+                  </ScrollView>
                 ) : (
                   <GraphView 
                     reportType={selectedReportTab}
@@ -2521,7 +2520,20 @@ const Reports = ({ navigation }) => {
         )}
 
         <View style={{ height: 20 }} />
-      </ScrollView>
+          </View>
+        )}
+        keyExtractor={(item) => item.key}
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={onRefresh}
+            tintColor="#4A90E2"
+            colors={['#4A90E2']}
+          />
+        }
+      />
 
       {/* Custom Date Range Modal */}
       <Modal
@@ -2636,10 +2648,10 @@ const Reports = ({ navigation }) => {
             </View>
 
             {/* Members List */}
-            <FlatList
-              data={filteredMembers}
-              renderItem={({ item }) => (
+            <ScrollView style={styles.memberSelectList}>
+              {filteredMembers.map((item) => (
                 <TouchableOpacity
+                  key={item.id.toString()}
                   style={[
                     styles.memberSelectItem,
                     selectedMemberForReport?.id === item.id && styles.memberSelectItemActive
@@ -2656,10 +2668,8 @@ const Reports = ({ navigation }) => {
                     <Icon name="check-circle" size={20} color="#4A90E2" />
                   )}
                 </TouchableOpacity>
-              )}
-              keyExtractor={(item) => item.id.toString()}
-              style={styles.memberSelectList}
-            />
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -2730,6 +2740,7 @@ const styles = StyleSheet.create({
   tabScroll: {
     marginHorizontal: -15,
     paddingHorizontal: 15,
+    paddingRight: 30, // Add extra padding to the right to prevent cutoff
   },
   tab: {
     flexDirection: 'row',
@@ -2928,6 +2939,15 @@ const styles = StyleSheet.create({
     maxHeight: 600,
   },
   membersListContainer: {
+    paddingBottom: 10,
+  },
+  recordsList: {
+    maxHeight: 400, // Fixed height for records scrolling container
+    backgroundColor: '#F5F9FC',
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  recordsListContent: {
     paddingBottom: 10,
   },
   membersListContent: {
