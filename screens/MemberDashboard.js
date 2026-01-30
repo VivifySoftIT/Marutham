@@ -595,15 +595,18 @@ const MemberDashboard = () => {
       let newGreeting = '';
       let newQuote = '';
 
-      if (currentHour < 12) {
+      if (currentHour >= 1 && currentHour < 12) {
         newGreeting = '🌅 Good Morning';
         newQuote = 'Start your day with positive energy!';
-      } else if (currentHour < 18) {
+      } else if (currentHour >= 12 && currentHour < 16) {
         newGreeting = '☀️ Good Afternoon';
         newQuote = 'Keep the momentum going!';
-      } else {
-        newGreeting = '🌙 Good Evening';
+      } else if (currentHour >= 16 && currentHour < 20) {
+        newGreeting = ' 🌙 Good Evening';
         newQuote = 'Reflect on today\'s achievements!';
+      } else if (currentHour >= 20 || currentHour < 1) {
+        newGreeting = '🌙 Good Night';
+        newQuote = 'Rest well and recharge!';
       }
 
       console.log('Setting greeting to:', newGreeting); // Debug log
@@ -942,9 +945,8 @@ const MemberDashboard = () => {
   const modules = [
     {
       id: 'new-member',
-      title: 'Add New Member',
+      title: 'Add Member',
       icon: 'account-plus',
-      description: 'Add new member to system',
       action: () => navigation.navigate('NewMember'),
       badge: null,
     },
@@ -952,7 +954,6 @@ const MemberDashboard = () => {
       id: 'members',
       title: 'Members List',
       icon: 'account-group',
-      description: 'View all members',
       action: () => navigation.navigate('MembersList'),
       badge: null,
     },
@@ -960,7 +961,6 @@ const MemberDashboard = () => {
       id: 'payment',
       title: 'Payment Details',
       icon: 'credit-card-multiple',
-      description: 'Payment records & history',
       action: () => navigation.navigate('PaymentDetails'),
       badge: null,
     },
@@ -968,7 +968,6 @@ const MemberDashboard = () => {
       id: 'attendance',
       title: 'Attendance',
       icon: 'calendar-check',
-      description: 'Attendance records',
       action: () => navigation.navigate('Attendance'),
       badge: null,
     },
@@ -976,7 +975,6 @@ const MemberDashboard = () => {
       id: 'reports',
       title: 'Reports',
       icon: 'file-document',
-      description: 'Generate reports',
       action: () => navigation.navigate('Reports'),
       badge: null,
     },
@@ -984,7 +982,6 @@ const MemberDashboard = () => {
       id: 'messages',
       title: 'Messages',
       icon: 'message-text',
-      description: 'Send wishes & messages',
       action: () => navigation.navigate('Messages'),
       badge: null,
     },
@@ -1068,29 +1065,27 @@ const MemberDashboard = () => {
 
             <View style={styles.headerTitleContainer}>
               <View style={styles.greetingWithIcon}>
+                {/* Animated Icon based on time - Show ONLY for Morning and Afternoon */}
+                {greeting && (greeting.toLowerCase().includes('morning') || greeting.toLowerCase().includes('afternoon')) && (
+                  <Animatable.View
+                    animation={{
+                      0: { scale: 1 },
+                      0.5: { scale: 1.2 },
+                      1: { scale: 1 }
+                    }}
+                    iterationCount="infinite"
+                    duration={2000}
+                    easing="ease-in-out"
+                    style={styles.headerTimeIconInline}
+                  >
+                    {greeting.toLowerCase().includes('morning') ? (
+                      <Icon name="weather-sunny" size={24} color="#FFD700" />
+                    ) : (
+                      <Icon name="white-balance-sunny" size={24} color="#FFA500" />
+                    )}
+                  </Animatable.View>
+                )}
                 <Text style={styles.headerTitle}>{greeting || 'Good Afternoon'}</Text>
-                {/* Animated Icon based on time */}
-                <Animatable.View
-                  animation={{
-                    0: { scale: 1 },
-                    0.5: { scale: 1.2 },
-                    1: { scale: 1 }
-                  }}
-                  iterationCount="infinite"
-                  duration={2000}
-                  easing="ease-in-out"
-                  style={styles.headerTimeIconInline}
-                >
-                  {greeting.includes('Morning') && (
-                    <Icon name="weather-sunny" size={28} color="#FFD700" />
-                  )}
-                  {greeting.includes('Afternoon') && (
-                    <Icon name="white-balance-sunny" size={28} color="#FFA500" />
-                  )}
-                  {greeting.includes('Evening') && (
-                    <Icon name="moon-waning-crescent" size={28} color="#87CEEB" />
-                  )}
-                </Animatable.View>
               </View>
               <View style={styles.headerSubtitleRow}>
                 <Text style={styles.headerMemberName}>{memberName || 'Admin User'}</Text>
@@ -1309,7 +1304,6 @@ const MemberDashboard = () => {
                       <Icon name={module.icon} size={22} color={waterBlueColors.primary} />
                     </View>
                     <Text style={styles.moduleTitle}>{module.title}</Text>
-                    <Text style={styles.moduleDescription}>{module.description}</Text>
                   </View>
                   <View style={styles.moduleArrow}>
                     <Icon name="chevron-right" size={16} color={waterBlueColors.primary} />
@@ -1564,7 +1558,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '800',
     color: '#FFF',
     textAlign: 'center',
@@ -1572,11 +1566,11 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 3,
     marginBottom: 2,
-    marginRight: 8,
   },
   headerTimeIconInline: {
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 6,
   },
   headerSubtitleRow: {
     flexDirection: 'row',
@@ -1586,7 +1580,7 @@ const styles = StyleSheet.create({
     flexWrap: 'nowrap',
   },
   headerMemberName: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '700',
     color: '#FFF',
     textAlign: 'center',
@@ -1595,7 +1589,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   headerWelcome: {
-    fontSize: 14,
+    fontSize: 11,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.95)',
     textAlign: 'center',
@@ -1605,7 +1599,7 @@ const styles = StyleSheet.create({
     marginLeft: 0,
   },
   headerQuote: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
@@ -1798,7 +1792,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   notificationCardTitle: {
-    fontSize: 16, // Increased from 12
+    fontSize: 14,
     fontWeight: '700',
     color: '#2C3E50',
   },
@@ -1846,14 +1840,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   notificationSwipeTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#2C3E50',
     marginBottom: 4,
     lineHeight: 16,
   },
   notificationSwipeMessage: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#5D6D7E',
     lineHeight: 14,
     marginBottom: 6,
@@ -1925,7 +1919,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
     color: '#2C3E50',
     marginLeft: 8,
@@ -1954,8 +1948,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   quickActionCard: {
-    width: 110,
-    height: 90, // Reduced from 110 to 90
+    width: 90,
+    height: 75,
     marginRight: 10,
     borderRadius: 16,
     backgroundColor: '#FFF',
@@ -1977,22 +1971,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
   },
   quickActionContent: {
-    padding: 16,
+    padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
   },
   quickActionIconContainer: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     borderRadius: 12,
     backgroundColor: `${waterBlueColors.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   quickActionText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#2C3E50',
     textAlign: 'center',
@@ -2010,7 +2004,7 @@ const styles = StyleSheet.create({
   moduleCard: {
     backgroundColor: '#FFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -2020,7 +2014,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
-    minHeight: 105,
+    minHeight: 85,
   },
   moduleCardContent: {
     flex: 1,
@@ -2059,7 +2053,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   moduleTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#2C3E50',
     marginBottom: 2,
@@ -2345,7 +2339,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6B6B',
   },
   notificationItemTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#2C3E50',
     marginBottom: 4,
@@ -2355,7 +2349,7 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
   },
   notificationItemMessage: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#5D6D7E',
     lineHeight: 18,
     marginBottom: 4,
