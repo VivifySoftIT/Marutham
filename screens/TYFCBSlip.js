@@ -32,7 +32,9 @@ const TYFCBSlip = () => {
   const [savedData, setSavedData] = useState(null);
   const [isListening, setIsListening] = useState(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
-  
+
+  const [currentVoiceField, setCurrentVoiceField] = useState(null); // Track strictly which field is active
+
   const [formData, setFormData] = useState({
     memberName: '',
     memberId: '',
@@ -146,108 +148,56 @@ const TYFCBSlip = () => {
   };
 
   // Voice input functionality
-  const startVoiceInput = async (fieldName) => {
+  const startRecording = async (fieldName) => {
     // For Web Platform
-    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
-      const recognition = new window.webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-IN';
+    if (Platform.OS === 'web') {
+      Alert.alert('Voice Input', 'Please use mobile app for voice features.');
+      return;
+    }
 
-      recognition.onstart = () => {
-        setIsListening(fieldName);
+    try {
+      // RESET EVERYTHING
+      await Voice.destroy();
+      Voice.removeAllListeners();
+
+      setCurrentVoiceField(fieldName);
+      setIsListening(fieldName); // UI feedback
+
+      Voice.onSpeechStart = () => console.log('Voice started');
+      Voice.onSpeechEnd = () => {
+        console.log('Voice ended');
+        setIsListening(null);
       };
-
-      recognition.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript.trim();
-        console.log('Voice input:', spokenText);
-        
-        if (event.results[0].isFinal) {
-          handleInputChange(fieldName, spokenText);
-          setIsListening(null);
+      Voice.onSpeechError = (e) => {
+        console.log('Voice Error:', e);
+        setIsListening(null);
+      };
+      Voice.onSpeechResults = (e) => {
+        console.log('Voice Results:', e.value);
+        if (e.value && e.value[0]) {
+          // Ensure we write to the Field we intended
+          handleInputChange(fieldName, e.value[0]);
         }
       };
 
-      recognition.onerror = (event) => {
-        console.error('Voice error:', event.error);
-        setIsListening(null);
-        
-        if (event.error === 'not-allowed') {
-          Alert.alert('Permission Denied', 'Please allow microphone access in browser settings.');
-        } else if (event.error === 'no-speech') {
-          Alert.alert('No Speech', 'No speech detected. Please try again.');
-        }
-      };
+      await Voice.start('en-IN');
+    } catch (e) {
+      console.error("Start Voice Error", e);
+      Alert.alert("Error", "Could not start voice recording.");
+      setIsListening(null);
+    }
+  };
 
-      recognition.onend = () => {
+  const stopRecording = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        await Voice.stop();
+        // Do NOT destroy here immediately, or we lose results processing.
+        // destroy will be called on next start or unmount.
         setIsListening(null);
-      };
-
-      try {
-        recognition.start();
-      } catch (error) {
-        console.error('Error starting recognition:', error);
-        setIsListening(null);
-        Alert.alert('Error', 'Could not start voice recognition.');
       }
-    } 
-    // For Mobile Platform
-    else if (Platform.OS !== 'web' && Voice !== null && Voice !== undefined && typeof Voice.start === 'function') {
-      try {
-        // CLEANUP FIRST: Destroy any previous instance and remove listeners
-        try {
-            await Voice.destroy();
-            Voice.removeAllListeners();
-        } catch (e) {
-            console.log("Cleanup error (harmless):", e);
-        }
-
-        setIsListening(fieldName);
-
-        Voice.onSpeechStart = () => {
-          console.log('Voice started');
-        };
-
-        Voice.onSpeechResults = (event) => {
-          console.log('Voice results:', event.value);
-          if (event.value && event.value.length > 0) {
-            const spokenText = event.value[0];
-            handleInputChange(fieldName, spokenText);
-            setIsListening(null);
-            // Optional: stop listening after getting result
-            Voice.destroy().then(Voice.removeAllListeners); 
-          }
-        };
-
-        Voice.onSpeechError = (event) => {
-          console.error('Voice error:', event.error);
-          setIsListening(null);
-          // Don't show alert for "No match" which happens frequently and is annoying
-          if (event.error.activeError || (event.error.code !== '7' && event.error.code !== 7)) {
-             Alert.alert('Voice Error', 'Could not recognize speech. Please try again.');
-          }
-          Voice.destroy().then(Voice.removeAllListeners);
-        };
-
-        Voice.onSpeechEnd = () => {
-          setIsListening(null);
-          Voice.destroy().then(Voice.removeAllListeners);
-        };
-
-        await Voice.start('en-IN');
-      } catch (error) {
-        console.error('Error starting mobile voice:', error);
-        setIsListening(null);
-        Alert.alert('Error', 'Voice recognition error. Please try again.');
-      }
-    } 
-    // Fallback
-    else {
-      Alert.alert(
-        'Voice Input - Web Only',
-        'Voice input is currently available on web browser only.',
-        [{ text: 'OK' }]
-      );
+    } catch (e) {
+      console.error("Stop Voice Error", e);
     }
   };
 
@@ -318,91 +268,91 @@ const TYFCBSlip = () => {
   const renderFormContent = () => (
     <>
       {/* Member Selection with Search */}
-     <View style={styles.section}>
-               <Text style={styles.label}>To Member *</Text>
-               <TouchableOpacity
-                 style={styles.memberDropdownButton}
-                 onPress={() => setShowMemberDropdown(!showMemberDropdown)}
-               >
-                 <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-                 <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
-                   {formData.memberName || 'Select member'}
-                 </Text>
-                 <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
-               </TouchableOpacity>
-   
-               {showMemberDropdown && (
-                 <View style={styles.memberDropdownList}>
-                   {/* Search Input */}
-                   <View style={styles.searchContainer}>
-                     <Icon name="magnify" size={20} color="#4A90E2" />
-                     <TextInput
-                       style={styles.searchInput}
-                       placeholder="Search members..."
-                       value={memberSearchQuery}
-                       onChangeText={setMemberSearchQuery}
-                       placeholderTextColor="#999"
-                     />
-                     {memberSearchQuery.length > 0 && (
-                       <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
-                         <Icon name="close-circle" size={20} color="#999" />
-                       </TouchableOpacity>
-                     )}
-                   </View>
-   
-                   <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
-                     {loadingMembers ? (
-                       <View style={styles.noMembersContainer}>
-                         <ActivityIndicator size="small" color="#4A90E2" />
-                         <Text style={styles.noMembersText}>Loading members...</Text>
-                       </View>
-                     ) : allMembers && allMembers.length > 0 ? (
-                       allMembers
-                         .filter(member =>
-                           member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-                           member.phone?.includes(memberSearchQuery) ||
-                           member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
-                         )
-                         .map(member => (
-                           <TouchableOpacity
-                             key={member.id}
-                             style={styles.memberDropdownItem}
-                             onPress={() => {
-                               handleSelectMember(member);
-                               setMemberSearchQuery('');
-                             }}
-                           >
-                             <View style={styles.memberItemContent}>
-                               <Text style={styles.memberName}>{member.name}</Text>
-                               <View style={styles.memberDetailsRow}>
-                                 <Text style={styles.memberDetail}>
-                                   <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
-                                 </Text>
-                                 <Text style={styles.memberDetail}>
-                                   <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
-                                 </Text>
-                               </View>
-                               {member.email && (
-                                 <Text style={styles.memberEmail}>
-                                   <Icon name="email" size={12} color="#999" /> {member.email}
-                                 </Text>
-                               )}
-                             </View>
-                             {formData.memberId === member.id && (
-                               <Icon name="check" size={20} color="#4A90E2" />
-                             )}
-                           </TouchableOpacity>
-                         ))
-                     ) : (
-                       <View style={styles.noMembersContainer}>
-                         <Icon name="account-alert" size={24} color="#999" />
-                         <Text style={styles.noMembersText}>No members available</Text>
-                       </View>
-                     )}
-                   </ScrollView>
-                 </View>
-               )}
-             </View>
+      <View style={styles.section}>
+        <Text style={styles.label}>To Member *</Text>
+        <TouchableOpacity
+          style={styles.memberDropdownButton}
+          onPress={() => setShowMemberDropdown(!showMemberDropdown)}
+        >
+          <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
+          <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
+            {formData.memberName || 'Select member'}
+          </Text>
+          <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
+        </TouchableOpacity>
+
+        {showMemberDropdown && (
+          <View style={styles.memberDropdownList}>
+            {/* Search Input */}
+            <View style={styles.searchContainer}>
+              <Icon name="magnify" size={20} color="#4A90E2" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search members..."
+                value={memberSearchQuery}
+                onChangeText={setMemberSearchQuery}
+                placeholderTextColor="#999"
+              />
+              {memberSearchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
+                  <Icon name="close-circle" size={20} color="#999" />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
+              {loadingMembers ? (
+                <View style={styles.noMembersContainer}>
+                  <ActivityIndicator size="small" color="#4A90E2" />
+                  <Text style={styles.noMembersText}>Loading members...</Text>
+                </View>
+              ) : allMembers && allMembers.length > 0 ? (
+                allMembers
+                  .filter(member =>
+                    member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+                    member.phone?.includes(memberSearchQuery) ||
+                    member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
+                  )
+                  .map(member => (
+                    <TouchableOpacity
+                      key={member.id}
+                      style={styles.memberDropdownItem}
+                      onPress={() => {
+                        handleSelectMember(member);
+                        setMemberSearchQuery('');
+                      }}
+                    >
+                      <View style={styles.memberItemContent}>
+                        <Text style={styles.memberName}>{member.name}</Text>
+                        <View style={styles.memberDetailsRow}>
+                          <Text style={styles.memberDetail}>
+                            <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
+                          </Text>
+                          <Text style={styles.memberDetail}>
+                            <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
+                          </Text>
+                        </View>
+                        {member.email && (
+                          <Text style={styles.memberEmail}>
+                            <Icon name="email" size={12} color="#999" /> {member.email}
+                          </Text>
+                        )}
+                      </View>
+                      {formData.memberId === member.id && (
+                        <Icon name="check" size={20} color="#4A90E2" />
+                      )}
+                    </TouchableOpacity>
+                  ))
+              ) : (
+                <View style={styles.noMembersContainer}>
+                  <Icon name="account-alert" size={24} color="#999" />
+                  <Text style={styles.noMembersText}>No members available</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        )}
+      </View>
 
       {/* Business Visited */}
       <View style={styles.section}>
@@ -416,15 +366,20 @@ const TYFCBSlip = () => {
             onChangeText={(text) => handleInputChange('businessVisited', text)}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity 
-            onPress={() => startVoiceInput('businessVisited')}
+          <TouchableOpacity
+            onPressIn={() => startRecording('businessVisited')}
+            onPressOut={stopRecording}
             style={styles.micButton}
+            delayPressIn={100} // slight delay to prevent accidental touches
           >
-            <Icon 
-              name={isListening === 'businessVisited' ? "microphone" : "microphone-outline"} 
-              size={22} 
-              color={isListening === 'businessVisited' ? "#FF4444" : "#4A90E2"} 
+            <Icon
+              name={isListening === 'businessVisited' ? "microphone" : "microphone-outline"}
+              size={22}
+              color={isListening === 'businessVisited' ? "#FF4444" : "#4A90E2"}
             />
+            {isListening === 'businessVisited' && (
+              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -442,15 +397,20 @@ const TYFCBSlip = () => {
             keyboardType="decimal-pad"
             placeholderTextColor="#999"
           />
-          <TouchableOpacity 
-            onPress={() => startVoiceInput('amount')}
+          <TouchableOpacity
+            onPressIn={() => startRecording('amount')}
+            onPressOut={stopRecording}
             style={styles.micButton}
+            delayPressIn={100}
           >
-            <Icon 
-              name={isListening === 'amount' ? "microphone" : "microphone-outline"} 
-              size={22} 
-              color={isListening === 'amount' ? "#FF4444" : "#4A90E2"} 
+            <Icon
+              name={isListening === 'amount' ? "microphone" : "microphone-outline"}
+              size={22}
+              color={isListening === 'amount' ? "#FF4444" : "#4A90E2"}
             />
+            {isListening === 'amount' && (
+              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -469,15 +429,20 @@ const TYFCBSlip = () => {
             maxLength={1}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity 
-            onPress={() => startVoiceInput('rating')}
+          <TouchableOpacity
+            onPressIn={() => startRecording('rating')}
+            onPressOut={stopRecording}
             style={styles.micButton}
+            delayPressIn={100}
           >
-            <Icon 
-              name={isListening === 'rating' ? "microphone" : "microphone-outline"} 
-              size={22} 
-              color={isListening === 'rating' ? "#FF4444" : "#4A90E2"} 
+            <Icon
+              name={isListening === 'rating' ? "microphone" : "microphone-outline"}
+              size={22}
+              color={isListening === 'rating' ? "#FF4444" : "#4A90E2"}
             />
+            {isListening === 'rating' && (
+              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -495,15 +460,20 @@ const TYFCBSlip = () => {
             numberOfLines={4}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity 
-            onPress={() => startVoiceInput('notes')}
+          <TouchableOpacity
+            onPressIn={() => startRecording('notes')}
+            onPressOut={stopRecording}
             style={[styles.micButton, styles.micButtonTextArea]}
+            delayPressIn={100}
           >
-            <Icon 
-              name={isListening === 'notes' ? "microphone" : "microphone-outline"} 
-              size={22} 
-              color={isListening === 'notes' ? "#FF4444" : "#4A90E2"} 
+            <Icon
+              name={isListening === 'notes' ? "microphone" : "microphone-outline"}
+              size={22}
+              color={isListening === 'notes' ? "#FF4444" : "#4A90E2"}
             />
+            {isListening === 'notes' && (
+              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -546,13 +516,13 @@ const TYFCBSlip = () => {
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
         >
-          <ScrollView 
-            style={styles.content} 
+          <ScrollView
+            style={styles.content}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
@@ -721,7 +691,7 @@ const styles = StyleSheet.create({
     right: 8,
     top: 8,
   },
-memberDropdownButton: {
+  memberDropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFF',
