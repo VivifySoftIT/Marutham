@@ -47,9 +47,17 @@ const StackNavigator = () => {
         console.log('Token:', token);
         console.log('Username:', username);
         console.log('Password:', password);
-        console.log('IsLoggedIn:', !!token && !!username && !!password);
+        
+        // Check if we have BOTH token AND credentials for complete login
+        const hasValidToken = !!token;
+        const hasCredentials = !!username && !!password;
+        const isCompleteLogin = hasValidToken && hasCredentials;
+        
+        console.log('Has Valid Token:', hasValidToken);
+        console.log('Has Credentials:', hasCredentials);
+        console.log('IsLoggedIn:', isCompleteLogin);
 
-        setIsLoggedIn(!!token && !!username && !!password);
+        setIsLoggedIn(isCompleteLogin);
       } catch (error) {
         console.error('Error reading AsyncStorage:', error);
         setIsLoggedIn(false);
