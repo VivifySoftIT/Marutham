@@ -945,7 +945,7 @@ const MemberDashboard = () => {
   const modules = [
     {
       id: 'new-member',
-      title: 'Add New Member',
+      title: 'Add Member',
       icon: 'account-plus',
       action: () => navigation.navigate('NewMember'),
       badge: null,
