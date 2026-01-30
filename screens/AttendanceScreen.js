@@ -18,12 +18,11 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
-import SpeechToTextInput from '../components/SpeechToTextInput';
 import MemberIdService from '../service/MemberIdService';
-import * as Speech from 'expo-speech';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as XLSX from 'xlsx';
+import Voice from '@react-native-voice/voice';
 
 const MemberAttendanceScreen = () => {
   const navigation = useNavigation();
@@ -40,7 +39,6 @@ const MemberAttendanceScreen = () => {
 
   // Voice search states
   const [isListening, setIsListening] = useState(false);
-  const [voiceSupported, setVoiceSupported] = useState(true);
   const [lastSpokenName, setLastSpokenName] = useState('');
   const [uploading, setUploading] = useState(false);
 
@@ -207,9 +205,59 @@ const MemberAttendanceScreen = () => {
         Alert.alert('Error', 'Could not start voice recognition. Please check microphone permissions.');
       }
     }
-    // Mobile - Voice not available without native rebuild
+    // For Mobile Platform
+    else if (Platform.OS !== 'web' && Voice !== null && Voice !== undefined && typeof Voice.start === 'function') {
+      try {
+        // CLEANUP FIRST: Destroy any previous instance and remove listeners
+        try {
+            await Voice.destroy();
+            Voice.removeAllListeners();
+        } catch (e) {
+            console.log("Cleanup error (harmless):", e);
+        }
+
+        setIsListening(true);
+
+        Voice.onSpeechStart = () => {
+          console.log('Voice started');
+        };
+
+        Voice.onSpeechResults = (event) => {
+          console.log('Voice results:', event.value);
+          if (event.value && event.value.length > 0) {
+            const spokenText = event.value[0];
+            setSearchQuery(spokenText);
+            setIsListening(false);
+            findAndMarkMember(spokenText);
+            // Optional: stop listening after getting result
+            Voice.destroy().then(Voice.removeAllListeners); 
+          }
+        };
+
+        Voice.onSpeechError = (event) => {
+          console.error('Voice error:', event.error);
+          setIsListening(false);
+          // Don't show alert for "No match" which happens frequently and is annoying
+          if (event.error.activeError || (event.error.code !== '7' && event.error.code !== 7)) {
+             Alert.alert('Voice Error', 'Could not recognize speech. Please try again.');
+          }
+          Voice.destroy().then(Voice.removeAllListeners);
+        };
+
+        Voice.onSpeechEnd = () => {
+          setIsListening(false);
+          Voice.destroy().then(Voice.removeAllListeners);
+        };
+
+        await Voice.start('en-IN');
+      } catch (error) {
+        console.error('Error starting mobile voice:', error);
+        setIsListening(false);
+        Alert.alert('Error', 'Voice recognition error. Please try again.');
+      }
+    } 
+    // Fallback
     else {
-      setIsListening(false);
       Alert.alert(
         'Voice Search - Web Only',
         'Voice search is currently available on web browser only.\n\nOn mobile, please type the member name in the search box.',
@@ -293,6 +341,12 @@ const MemberAttendanceScreen = () => {
 
   useEffect(() => {
     loadMembers();
+    return () => {
+      // Cleanup voice listeners on unmount
+      if (Platform.OS !== 'web') {
+        Voice.destroy().then(Voice.removeAllListeners);
+      }
+    };
   }, []);
 
   const handleExcelUpload = async () => {

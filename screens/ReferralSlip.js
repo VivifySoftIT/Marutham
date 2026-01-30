@@ -19,7 +19,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../apiConfig';
-import SpeechToTextInput from '../components/SpeechToTextInput';
+import Voice from '@react-native-voice/voice';
 
 const ReferralSlip = ({ route }) => {
   const navigation = useNavigation();
@@ -48,6 +48,7 @@ const ReferralSlip = ({ route }) => {
     // Status is always 'Pending' and removed from UI
   });
   const [memberSearchQuery, setMemberSearchQuery] = useState(''); // For searching members
+  const [isListening, setIsListening] = useState(null); // For voice input tracking
 
   useEffect(() => {
     loadCurrentUser();
@@ -63,6 +64,13 @@ const ReferralSlip = ({ route }) => {
         telephone: selectedMember.phone || '',
       }));
     }
+
+    return () => {
+      // Cleanup voice listeners on unmount
+      if (Platform.OS !== 'web') {
+        Voice.destroy().then(Voice.removeAllListeners);
+      }
+    };
   }, [selectedMember]);
 
   const loadCurrentUser = async () => {
@@ -400,6 +408,124 @@ const ReferralSlip = ({ route }) => {
     setMemberSearchQuery('');
   };
 
+  // Voice input functionality
+  const startVoiceInput = async (fieldName) => {
+    // For Web Platform
+    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
+      const recognition = new window.webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN';
+
+      recognition.onstart = () => {
+        setIsListening(fieldName);
+      };
+
+      recognition.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript.trim();
+        console.log('Voice input:', spokenText);
+        
+        if (event.results[0].isFinal) {
+          if (fieldName === 'telephone') {
+            // Extract only digits for phone number
+            const phoneDigits = spokenText.replace(/\D/g, '');
+            handlePhoneChange(phoneDigits);
+          } else {
+            handleInputChange(fieldName, spokenText);
+          }
+          setIsListening(null);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Voice error:', event.error);
+        setIsListening(null);
+        
+        if (event.error === 'not-allowed') {
+          Alert.alert('Permission Denied', 'Please allow microphone access in browser settings.');
+        } else if (event.error === 'no-speech') {
+          Alert.alert('No Speech', 'No speech detected. Please try again.');
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(null);
+      };
+
+      try {
+        recognition.start();
+      } catch (error) {
+        console.error('Error starting recognition:', error);
+        setIsListening(null);
+        Alert.alert('Error', 'Could not start voice recognition.');
+      }
+    } 
+    // For Mobile Platform
+    else if (Platform.OS !== 'web' && Voice !== null && Voice !== undefined && typeof Voice.start === 'function') {
+      try {
+        // CLEANUP FIRST: Destroy any previous instance and remove listeners
+        try {
+            await Voice.destroy();
+            Voice.removeAllListeners();
+        } catch (e) {
+            console.log("Cleanup error (harmless):", e);
+        }
+
+        setIsListening(fieldName);
+
+        Voice.onSpeechStart = () => {
+          console.log('Voice started');
+        };
+
+        Voice.onSpeechResults = (event) => {
+          console.log('Voice results:', event.value);
+          if (event.value && event.value.length > 0) {
+            const spokenText = event.value[0];
+            if (fieldName === 'telephone') {
+              // Extract only digits for phone number
+              const phoneDigits = spokenText.replace(/\D/g, '');
+              handlePhoneChange(phoneDigits);
+            } else {
+              handleInputChange(fieldName, spokenText);
+            }
+            setIsListening(null);
+            // Optional: stop listening after getting result
+            Voice.destroy().then(Voice.removeAllListeners); 
+          }
+        };
+
+        Voice.onSpeechError = (event) => {
+          console.error('Voice error:', event.error);
+          setIsListening(null);
+          // Don't show alert for "No match" which happens frequently and is annoying
+          if (event.error.activeError || (event.error.code !== '7' && event.error.code !== 7)) {
+             Alert.alert('Voice Error', 'Could not recognize speech. Please try again.');
+          }
+          Voice.destroy().then(Voice.removeAllListeners);
+        };
+
+        Voice.onSpeechEnd = () => {
+          setIsListening(null);
+          Voice.destroy().then(Voice.removeAllListeners);
+        };
+
+        await Voice.start('en-IN');
+      } catch (error) {
+        console.error('Error starting mobile voice:', error);
+        setIsListening(null);
+        Alert.alert('Error', 'Voice recognition error. Please try again.');
+      }
+    } 
+    // Fallback
+    else {
+      Alert.alert(
+        'Voice Input - Web Only',
+        'Voice input is currently available on web browser only.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
@@ -428,20 +554,7 @@ const ReferralSlip = ({ route }) => {
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-          {/* Current User Info */}
-          {/* Conditionally hide 'Logged in as' section for user 'mals' */}
-          {(!currentUser.name || currentUser.name.trim().toLowerCase() !== 'mals') && (
-            <View style={styles.currentUserSection}>
-              <Text style={styles.currentUserText}>
-                Logged in as: <Text style={styles.currentUserName}>{currentUser.name || 'Not logged in'}</Text>
-              </Text>
-              {currentUser.memberId ? (
-                <Text style={styles.currentUserId}>Your Member ID: {currentUser.memberId}</Text>
-              ) : (
-                <Text style={styles.currentUserWarning}>Member ID not found. Please re-login.</Text>
-              )}
-            </View>
-          )}
+
 
           {/* Pre-selected Member Info */}
           {selectedMember && (
@@ -609,6 +722,16 @@ const ReferralSlip = ({ route }) => {
                 onChangeText={(text) => handleInputChange('referralNumber', text)}
                 placeholderTextColor="#999"
               />
+              <TouchableOpacity 
+                onPress={() => startVoiceInput('referralNumber')}
+                style={styles.micButton}
+              >
+                <Icon 
+                  name={isListening === 'referralNumber' ? "microphone" : "microphone-outline"} 
+                  size={22} 
+                  color={isListening === 'referralNumber' ? "#FF4444" : "#4A90E2"} 
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -626,6 +749,16 @@ const ReferralSlip = ({ route }) => {
                 placeholderTextColor="#999"
                 maxLength={12}
               />
+              <TouchableOpacity 
+                onPress={() => startVoiceInput('telephone')}
+                style={styles.micButton}
+              >
+                <Icon 
+                  name={isListening === 'telephone' ? "microphone" : "microphone-outline"} 
+                  size={22} 
+                  color={isListening === 'telephone' ? "#FF4444" : "#4A90E2"} 
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -643,6 +776,16 @@ const ReferralSlip = ({ route }) => {
                 autoCapitalize="none"
                 placeholderTextColor="#999"
               />
+              <TouchableOpacity 
+                onPress={() => startVoiceInput('email')}
+                style={styles.micButton}
+              >
+                <Icon 
+                  name={isListening === 'email' ? "microphone" : "microphone-outline"} 
+                  size={22} 
+                  color={isListening === 'email' ? "#FF4444" : "#4A90E2"} 
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -659,6 +802,16 @@ const ReferralSlip = ({ route }) => {
                 numberOfLines={3}
                 placeholderTextColor="#999"
               />
+              <TouchableOpacity 
+                onPress={() => startVoiceInput('address')}
+                style={[styles.micButton, styles.micButtonTextArea]}
+              >
+                <Icon 
+                  name={isListening === 'address' ? "microphone" : "microphone-outline"} 
+                  size={22} 
+                  color={isListening === 'address' ? "#FF4444" : "#4A90E2"} 
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -675,6 +828,16 @@ const ReferralSlip = ({ route }) => {
                 numberOfLines={4}
                 placeholderTextColor="#999"
               />
+              <TouchableOpacity 
+                onPress={() => startVoiceInput('comments')}
+                style={[styles.micButton, styles.micButtonTextArea]}
+              >
+                <Icon 
+                  name={isListening === 'comments' ? "microphone" : "microphone-outline"} 
+                  size={22} 
+                  color={isListening === 'comments' ? "#FF4444" : "#4A90E2"} 
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -861,6 +1024,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#333',
     paddingVertical: 12,
+  },
+  micButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  micButtonTextArea: {
+    position: 'absolute',
+    right: 8,
+    top: 8,
   },
   speechInput: {
     flex: 1,
