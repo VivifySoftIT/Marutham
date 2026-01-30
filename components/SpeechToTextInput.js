@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -8,11 +8,9 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
 
 /**
- * SpeechToTextInput - A TextInput component with speech-to-text functionality
+ * SpeechToTextInput - A TextInput component with enhanced Google Web Speech API
  * 
  * Props:
  * - value: Current text value
@@ -22,6 +20,7 @@ import { Audio } from 'expo-av';
  * - multiline: Whether the input is multiline
  * - numberOfLines: Number of lines for multiline input
  * - editable: Whether the input is editable (default: true)
+ * - fieldType: Type of field for smart processing ('amount', 'rating', 'text')
  * - All other TextInput props
  */
 const SpeechToTextInput = ({
@@ -33,99 +32,163 @@ const SpeechToTextInput = ({
   numberOfLines = 1,
   editable = true,
   inputStyle,
+  fieldType = 'text',
   ...textInputProps
 }) => {
   const [isListening, setIsListening] = useState(false);
-  const [recording, setRecording] = useState(null);
-  const [hasPermission, setHasPermission] = useState(false);
 
   useEffect(() => {
-    requestPermissions();
+    // Cleanup on unmount
     return () => {
-      if (recording) {
-        recording.stopAndUnloadAsync();
-      }
+      setIsListening(false);
     };
   }, []);
 
-  const requestPermissions = async () => {
-    try {
-      const { status } = await Audio.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
+  // Helper function to convert spoken numbers to digits
+  const convertSpokenNumbersToDigits = (text) => {
+    const numberWords = {
+      'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+      'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9',
+      'ten': '10', 'eleven': '11', 'twelve': '12', 'thirteen': '13',
+      'fourteen': '14', 'fifteen': '15', 'sixteen': '16', 'seventeen': '17',
+      'eighteen': '18', 'nineteen': '19', 'twenty': '20', 'thirty': '30',
+      'forty': '40', 'fifty': '50', 'sixty': '60', 'seventy': '70',
+      'eighty': '80', 'ninety': '90', 'hundred': '100', 'thousand': '1000'
+    };
 
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'Please grant microphone permission to use speech-to-text feature.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('Error requesting permissions:', error);
-    }
+    let result = text.toLowerCase();
+    
+    // Replace number words with digits
+    Object.keys(numberWords).forEach(word => {
+      const regex = new RegExp(`\\b${word}\\b`, 'gi');
+      result = result.replace(regex, numberWords[word]);
+    });
+
+    // Extract numbers from the result
+    const numberMatch = result.match(/\d+/);
+    return numberMatch ? numberMatch[0] : text;
   };
 
+  // Enhanced Google Web Speech API for voice input
   const startListening = async () => {
-    // Web Speech API
-    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
+    // For Web Platform - Enhanced Google Web Speech API
+    if (Platform.OS === 'web') {
+      // Check for Web Speech API support
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        Alert.alert(
+          'Voice Input Not Supported',
+          'Your browser does not support voice recognition. Please use Chrome, Edge, or Safari.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      // Enhanced configuration for better accuracy
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN'; // Indian English for better recognition
+      recognition.maxAlternatives = 1;
+      
+      // Set listening state
+      setIsListening(true);
+
+      recognition.onstart = () => {
+        console.log('Voice recognition started');
+      };
+
+      recognition.onresult = (event) => {
+        const results = event.results;
+        if (results.length > 0) {
+          const spokenText = results[0][0].transcript.trim();
+          console.log('Voice input received:', spokenText);
+          
+          // Process the text based on field type
+          let processedText = spokenText;
+          
+          // Special processing for amount field
+          if (fieldType === 'amount') {
+            processedText = convertSpokenNumbersToDigits(spokenText);
+          }
+          
+          // Special processing for rating field
+          if (fieldType === 'rating') {
+            const ratingMatch = spokenText.match(/(\d+)/);
+            if (ratingMatch) {
+              const rating = parseInt(ratingMatch[1]);
+              if (rating >= 1 && rating <= 5) {
+                processedText = rating.toString();
+              }
+            }
+          }
+          
+          // Append or replace text based on multiline
+          if (multiline && value) {
+            onChangeText(`${value} ${processedText}`);
+          } else {
+            onChangeText(processedText);
+          }
+          
+          setIsListening(false);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Voice recognition error:', event.error);
+        setIsListening(false);
+        
+        let errorMessage = 'Voice recognition error. Please try again.';
+        
+        switch (event.error) {
+          case 'not-allowed':
+            errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
+            break;
+          case 'no-speech':
+            errorMessage = 'No speech detected. Please speak clearly and try again.';
+            break;
+          case 'audio-capture':
+            errorMessage = 'No microphone found. Please check your microphone connection.';
+            break;
+          case 'network':
+            errorMessage = 'Network error. Please check your internet connection.';
+            break;
+          case 'service-not-allowed':
+            errorMessage = 'Speech recognition service not allowed. Please try again.';
+            break;
+          default:
+            errorMessage = `Voice recognition error: ${event.error}. Please try again.`;
+        }
+        
+        Alert.alert('Voice Input Error', errorMessage);
+      };
+
+      recognition.onend = () => {
+        console.log('Voice recognition ended');
+        setIsListening(false);
+      };
+
       try {
-        const recognition = new window.webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US'; // Default to English, could be parameterized
-
-        recognition.onstart = () => {
-          setIsListening(true);
-        };
-
-        recognition.onresult = (event) => {
-          const spokenText = event.results[0][0].transcript;
-          onChangeText(value ? `${value} ${spokenText}` : spokenText);
-          setIsListening(false);
-        };
-
-        recognition.onerror = (event) => {
-          console.error('Speech recognition error', event.error);
-          setIsListening(false);
-          Alert.alert('Error', 'Voice recognition failed. Please try again.');
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-
         recognition.start();
       } catch (error) {
-        console.error('Web speech error:', error);
+        console.error('Error starting voice recognition:', error);
         setIsListening(false);
+        Alert.alert('Error', 'Could not start voice recognition. Please try again.');
       }
-    } else {
-      // Mobile/Fallback: Show input dialog since Expo Speech is TTS only
-      Alert.prompt(
-        'Voice Input',
-        'Please speak your text (Simulated for this demo)',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-          {
-            text: 'Done',
-            onPress: (text) => {
-              if (text) {
-                onChangeText(value ? `${value} ${text}` : text);
-              }
-            },
-          },
-        ],
-        'plain-text'
+    } 
+    // For Mobile Platform - Fallback with helpful message
+    else {
+      Alert.alert(
+        'Voice Input - Web Browser Recommended',
+        'For the best voice recognition experience, please use this app in a web browser (Chrome, Edge, or Safari). Voice input is optimized for web platforms.',
+        [{ text: 'OK' }]
       );
     }
   };
 
   const stopListening = () => {
     setIsListening(false);
-    // For web speech, the onend handler will clean up
   };
 
   return (
@@ -146,19 +209,19 @@ const SpeechToTextInput = ({
         {...textInputProps}
       />
 
-      {/* Microphone Button - Positioned in right corner */}
+      {/* Enhanced Microphone Button */}
       <TouchableOpacity
         style={[
           styles.micButton,
           isListening && styles.listeningButton,
-          !hasPermission && styles.disabledButton,
+          !editable && styles.disabledButton,
         ]}
         onPress={isListening ? stopListening : startListening}
         disabled={!editable}
       >
         <Icon
           name={isListening ? 'microphone' : 'microphone-outline'}
-          size={16}
+          size={18}
           color={isListening ? '#FF4444' : '#4A90E2'}
         />
       </TouchableOpacity>
@@ -174,9 +237,9 @@ const styles = StyleSheet.create({
   textInput: {
     fontSize: 14,
     color: '#333',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    paddingRight: 45, // Make space for mic button
+    paddingRight: 50, // Make space for mic button
     backgroundColor: '#FFF',
     borderRadius: 8,
     borderWidth: 1,
@@ -196,10 +259,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 8,
     top: '50%',
-    transform: [{ translateY: -16 }], // Center vertically
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    transform: [{ translateY: -18 }], // Center vertically
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#F0F8FF',
     justifyContent: 'center',
     alignItems: 'center',

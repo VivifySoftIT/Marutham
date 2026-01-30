@@ -63,7 +63,8 @@
           "microphonePermission": "We need access to your microphone for voice search.",
           "speechRecognitionPermission": "We need access to speech recognition for voice search."
         }
-      ]
+      ],
+      "expo-speech-recognition"
     ],
     "extra": {
       "eas": {

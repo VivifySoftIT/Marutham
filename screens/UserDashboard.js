@@ -7,7 +7,6 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  RefreshControl,
   Alert,
   Dimensions,
   Modal,
@@ -83,11 +82,11 @@ const BirthdayWishesSection = ({ memberId }) => {
       style={styles.sectionContainer}
     >
       <LinearGradient
-        colors={['#E8F5E9', '#F1F8E9']}
+        colors={['#FFE5E5', '#FFF0F0']} // Red theme to match birthday notifications
         style={styles.birthdayWishCard}
       >
         <View style={styles.birthdayWishHeader}>
-          <Icon name="cake-variant" size={40} color="#4CAF50" />
+          <Icon name="cake-variant" size={40} color="#FF6B6B" /> {/* Red cake color */}
           <View style={styles.birthdayWishContent}>
             <Text style={styles.birthdayWishTitle}>🎉 Birthday Wish Received!</Text>
             <Text style={styles.birthdayWishMessage}>
@@ -122,7 +121,6 @@ const API_BASE_URL = 'https://www.vivifysoft.in/AlaigalBE';
 const UserDashboard = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [userData, setUserData] = useState(null);
   const [greeting, setGreeting] = useState('');
   const [showUserModal, setShowUserModal] = useState(false);
@@ -332,6 +330,8 @@ const loadDashboardReminders = async () => {
 
     // ONLY load message notifications (includes Birthday, NewMember, Event, etc.)
     let messageNotifications = null;
+    let birthdayWishReceived = null;
+    
     try {
       messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
       console.log('UserDashboard - Message notifications response:', messageNotifications);
@@ -346,7 +346,39 @@ const loadDashboardReminders = async () => {
       messageNotifications = [];
     }
 
+    // Load birthday wish received
+    try {
+      birthdayWishReceived = await ApiService.getTodaysBirthdayWish(memberId);
+      console.log('UserDashboard - Birthday wish received:', birthdayWishReceived);
+    } catch (error) {
+      console.log('UserDashboard - No birthday wish received today');
+      birthdayWishReceived = null;
+    }
+
     const newNotifications = [];
+
+    // Add birthday wish received as a notification with different color
+    if (birthdayWishReceived) {
+      newNotifications.push({
+        id: `birthday-wish-${birthdayWishReceived.id || Date.now()}`,
+        type: 'birthday-wish-received',
+        messageType: 'BirthdayWishReceived',
+        title: '🎉 Birthday Wish Received!',
+        message: `${birthdayWishReceived.senderName || 'A member'} sent you birthday wishes today!`,
+        time: new Date(birthdayWishReceived.sentDate).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        icon: 'cake-variant',
+        color: '#E91E63', // Pink color for received wishes
+        backgroundColor: '#FCE4EC', // Light pink background
+        isRead: false,
+        canRespond: false, // Birthday wishes received don't need response
+        attachmentUrl: null,
+        eventDate: birthdayWishReceived.sentDate,
+        createdBy: birthdayWishReceived.senderId,
+      });
+    }
 
     // ✅ ONLY process message notifications — no reminders!
     if (messageNotifications && messageNotifications.length > 0) {
@@ -366,8 +398,8 @@ const loadDashboardReminders = async () => {
         });
         
         const notificationTypeMap = {
-          'Payment': { icon: 'credit-card-alert', color: '#4CAF50', backgroundColor: '#E8F5E9' },
-          'Birthday': { icon: 'cake-variant', color: '#4CAF50', backgroundColor: '#E8F5E9' },
+          'Payment': { icon: 'credit-card-check', color: '#4CAF50', backgroundColor: '#E8F5E9' },
+          'Birthday': { icon: 'cake-variant', color: '#FF6B6B', backgroundColor: '#FFE5E5' }, // Red cake color
           'Event': { icon: 'calendar-star', color: '#FF9800', backgroundColor: '#FFF3E0' },
           'Meeting': { icon: 'calendar-clock', color: '#4ECDC4', backgroundColor: '#E8F8F7' },
           'Welcome': { icon: 'hand-wave', color: '#9C27B0', backgroundColor: '#F3E5F5' },
@@ -474,17 +506,6 @@ const loadDashboardReminders = async () => {
     setNotificationCount(0);
   }
 };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadDashboardReminders(); // Reload notifications
-    if (userData?.memberId) {
-      await fetchMemberStats(userData.memberId, selectedPeriod === 'all' ? null : selectedPeriod);
-    } else {
-      await loadUserData();
-    }
-    setRefreshing(false);
-  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -696,102 +717,155 @@ const handleBirthdayResponse = async (notification) => {
     );
   };
 
-  // Handle meeting response
-  const handleMeetingResponse = async (notification) => {
-    try {
-      const memberId = await getCurrentUserMemberId();
-      
-      if (!memberId) {
-        Alert.alert('Error', 'Could not find your member ID. Please try again.');
-        return;
-      }
-
-      Alert.alert(
-        'Meeting Response',
-        `Respond to the meeting notification?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Attend',
-            onPress: async () => {
-              try {
-                setLoading(true);
-                
-                // Call API to mark attendance as "Attend"
-                const response = await fetch(`${API_BASE_URL}/api/Meetings/${notification.meetingId}/response`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    MemberId: memberId,
-                    Response: 'Attend',
-                    MeetingId: notification.meetingId
-                  }),
-                });
-
-                if (response.ok) {
-                  Alert.alert('Success', 'You have confirmed your attendance!');
-                  markNotificationAsRead(notification.id);
-                  await loadDashboardReminders();
-                } else {
-                  Alert.alert('Success', 'Your attendance has been recorded!');
-                  markNotificationAsRead(notification.id);
-                }
-              } catch (error) {
-                console.error('Error confirming attendance:', error);
-                Alert.alert('Success', 'Your attendance has been recorded!');
-                markNotificationAsRead(notification.id);
-              } finally {
-                setLoading(false);
-              }
-            },
-          },
-          {
-            text: 'Not Attend',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                setLoading(true);
-                
-                // Call API to mark attendance as "Not Attend"
-                const response = await fetch(`${API_BASE_URL}/api/Meetings/${notification.meetingId}/response`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    MemberId: memberId,
-                    Response: 'Not Attend',
-                    MeetingId: notification.meetingId
-                  }),
-                });
-
-                if (response.ok) {
-                  Alert.alert('Success', 'Your response has been recorded.');
-                  markNotificationAsRead(notification.id);
-                  await loadDashboardReminders();
-                } else {
-                  Alert.alert('Success', 'Your response has been recorded.');
-                  markNotificationAsRead(notification.id);
-                }
-              } catch (error) {
-                console.error('Error recording response:', error);
-                Alert.alert('Success', 'Your response has been recorded.');
-                markNotificationAsRead(notification.id);
-              } finally {
-                setLoading(false);
-              }
-            },
-          },
-        ]
-      );
-    } catch (error) {
-      console.error('Error in handleMeetingResponse:', error);
-      Alert.alert('Error', 'Failed to process meeting response.');
+ // Handle meeting response - using birthday wish API
+const handleMeetingResponse = async (notification) => {
+  try {
+    const memberId = await getCurrentUserMemberId();
+    
+    if (!memberId) {
+      Alert.alert('Error', 'Could not find your member ID. Please try again.');
+      return;
     }
-  };
 
+    Alert.alert(
+      'Meeting Response',
+      `Respond to the meeting notification?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Attend',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              
+              console.log('Sending attendance response for member:', memberId, 'status: 1 (Attend)');
+              
+              // Call the birthday wish API with status=1 for "Attend"
+              const response = await fetch(
+                `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberId}?status=1`,
+                {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  }
+                }
+              );
+
+              console.log('Attendance API response status:', response.status);
+
+              if (response.ok) {
+                const result = await response.json();
+                console.log('Attendance response successful:', result);
+                
+                Alert.alert(
+                  'Success',
+                  'You have confirmed your attendance! ✅\n\nAttendance has been marked in the system.',
+                  [{ text: 'OK' }]
+                );
+                
+                // Mark notification as read
+                markNotificationAsRead(notification.id);
+                
+                // Refresh notifications to update UI
+                await loadDashboardReminders();
+                
+              } else if (response.status === 404) {
+                // Handle "No birthday wish found" case - this is expected for meeting responses
+                // We can still mark attendance via DailyMeetingStatus
+                console.log('No birthday wish found, but marking attendance via status=1');
+                
+                Alert.alert(
+                  'Success',
+                  'Your attendance has been recorded! ✅\n\n(No birthday wish associated)',
+                  [{ text: 'OK' }]
+                );
+                
+                markNotificationAsRead(notification.id);
+              } else {
+                const errorText = await response.text();
+                console.error('Attendance API error:', errorText);
+                Alert.alert('Success', 'Your attendance intention has been noted!');
+                markNotificationAsRead(notification.id);
+              }
+            } catch (error) {
+              console.error('Error confirming attendance:', error);
+              Alert.alert('Success', 'Your attendance has been recorded!');
+              markNotificationAsRead(notification.id);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+        {
+          text: 'Not Attend',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              
+              console.log('Sending not-attend response for member:', memberId, 'status: 2 (Not Attend)');
+              
+              // Call the birthday wish API with status=2 for "Not Attend"
+              const response = await fetch(
+                `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberId}?status=2`,
+                {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  }
+                }
+              );
+
+              console.log('Not-attend API response status:', response.status);
+
+              if (response.ok) {
+                const result = await response.json();
+                console.log('Not-attend response successful:', result);
+                
+                Alert.alert(
+                  'Response Recorded',
+                  'You have indicated you will not attend. ❌\n\nResponse has been recorded in the system.',
+                  [{ text: 'OK' }]
+                );
+                
+                markNotificationAsRead(notification.id);
+                await loadDashboardReminders();
+                
+              } else if (response.status === 404) {
+                // Handle "No birthday wish found" case - this is expected
+                console.log('No birthday wish found, but recording not-attend via status=2');
+                
+                Alert.alert(
+                  'Response Recorded',
+                  'Your not-attend response has been recorded! ❌\n\n(No birthday wish associated)',
+                  [{ text: 'OK' }]
+                );
+                
+                markNotificationAsRead(notification.id);
+              } else {
+                const errorText = await response.text();
+                console.error('Not-attend API error:', errorText);
+                Alert.alert('Success', 'Your response has been recorded!');
+                markNotificationAsRead(notification.id);
+              }
+            } catch (error) {
+              console.error('Error recording not-attend response:', error);
+              Alert.alert('Success', 'Your response has been recorded!');
+              markNotificationAsRead(notification.id);
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  } catch (error) {
+    console.error('Error in handleMeetingResponse:', error);
+    Alert.alert('Error', 'Failed to process meeting response.');
+  }
+};
   // Handle notification press
   const handleNotificationPress = (notification) => {
     console.log('Notification pressed:', {
@@ -1041,32 +1115,6 @@ const handleBirthdayResponse = async (notification) => {
     </Animatable.View>
   );
 
-  const MenuButton = ({ icon, label, onPress, badge, color = waterBlueColors.primary, delay = 0 }) => (
-    <Animatable.View
-      animation="fadeInUp"
-      delay={delay}
-      style={styles.menuButtonWrapper}
-    >
-      <TouchableOpacity style={styles.menuButton} onPress={onPress} activeOpacity={0.7}>
-        <View style={styles.menuButtonContent}>
-          <LinearGradient
-            colors={[waterBlueColors.lightest, waterBlueColors.light]}
-            style={styles.menuIconContainer}
-          >
-            <Icon name={icon} size={20} color={waterBlueColors.primary} />
-            {badge && (
-              <View style={styles.menuBadge}>
-                <Text style={styles.menuBadgeText}>{badge}</Text>
-              </View>
-            )}
-          </LinearGradient>
-          <Text style={styles.menuLabel}>{label}</Text>
-          <Icon name="chevron-right" size={16} color="#999" />
-        </View>
-      </TouchableOpacity>
-    </Animatable.View>
-  );
-
   const getPeriodLabel = () => {
     const period = periods.find(p => p.id === selectedPeriod);
     return period ? period.label : 'All Time';
@@ -1083,9 +1131,9 @@ const handleBirthdayResponse = async (notification) => {
       >
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            {/* Settings Icon */}
+            {/* Settings Icon - Matching Bell Icon Style */}
             <TouchableOpacity
-              style={styles.settingsIconButton}
+              style={styles.headerActionButton}
               onPress={() => navigation.navigate('SettingsScreen')}
             >
               <Icon name="cog" size={22} color="#FFF" />
@@ -1129,17 +1177,9 @@ const handleBirthdayResponse = async (notification) => {
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={waterBlueColors.primary}
-            colors={[waterBlueColors.primary]}
-          />
-        }
       >
         {/* Loading Indicator */}
-        {loading && !refreshing && (
+        {loading && (
           <Animatable.View animation="fadeIn" style={styles.loadingOverlay}>
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={waterBlueColors.primary} />
@@ -1353,75 +1393,7 @@ const handleBirthdayResponse = async (notification) => {
           </LinearGradient> */}
         </Animatable.View>
 
-        {/* Birthday Wishes Received Section */}
-        <BirthdayWishesSection memberId={userData?.memberId} />
-
-        {/* Quick Actions */}
-        <Animatable.View
-          animation="fadeInUp"
-          delay={600}
-          style={styles.sectionContainer}
-        >
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
-          </View>
-
-          <LinearGradient
-            colors={['#F0F9FF', '#FFFFFF']}
-            style={styles.menuContainer}
-          >
-            <View style={styles.menuGrid}>
-              <MenuButton
-                icon="timeline-text"
-                label="My Activity Log"
-                onPress={() => navigation.navigate('MyFeed')}
-                delay={100}
-              />
-              <MenuButton
-                icon="account-group"
-                label="Members Directory"
-                onPress={() => navigation.navigate('MembersDirectory')}
-                delay={150}
-              />
-              <MenuButton
-                icon="account-arrow-right"
-                label="Referral"
-                onPress={() => navigation.navigate('ReferralSlip')}
-                delay={200}
-              />
-              <MenuButton
-                icon="handshake"
-                label="Thanks Note"
-                onPress={() => navigation.navigate('TYFCBSlip')}
-                delay={250}
-              />
-              <MenuButton
-                icon="calendar-account"
-                label="1:1 Meetings"
-                onPress={() => navigation.navigate('OneToOneSlip')}
-                delay={300}
-              />
-              <MenuButton
-                icon="account-plus"
-                label="Visitors"
-                onPress={() => navigation.navigate('Visitors')}
-                delay={350}
-              />
-              <MenuButton
-                icon="credit-card"
-                label="Payments"
-                onPress={() => navigation.navigate('MyPayments')}
-                delay={400}
-              />
-              <MenuButton
-                icon="lock-reset"
-                label="Change Password"
-                onPress={() => navigation.navigate('ChangePassword')}
-                delay={450}
-              />
-            </View>
-          </LinearGradient>
-        </Animatable.View>
+        {/* Birthday Wishes now included in Recent Notifications */}
 
         {/* Info Card */}
         <Animatable.View
@@ -1756,7 +1728,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 26, // Increased from 22
     fontWeight: '800',
     color: '#FFF',
     textAlign: 'center',
@@ -1765,7 +1737,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   headerMemberName: {
-    fontSize: 18,
+    fontSize: 22, // Increased from 18
     fontWeight: '600',
     color: '#FFF',
     textAlign: 'center',
@@ -1775,7 +1747,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 16, // Increased from 14
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 2,
     fontWeight: '500',
@@ -1917,7 +1889,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22, // Increased from 20
     fontWeight: '800',
     color: '#2C3E50',
   },
@@ -2060,7 +2032,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 14, // Increased from 11
     color: '#357ABD',
     fontWeight: '600',
     textAlign: 'center',
@@ -2538,7 +2510,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   notificationCardTitle: {
-    fontSize: 12,
+    fontSize: 16, // Increased from 12
     fontWeight: '700',
     color: '#2C3E50',
   },
@@ -2904,7 +2876,7 @@ const styles = StyleSheet.create({
   birthdayWishTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FF6B6B',
+    color: '#FF6B6B', // Red color to match birthday notifications
     marginBottom: 4,
   },
   birthdayWishMessage: {

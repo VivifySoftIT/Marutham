@@ -23,6 +23,8 @@ const SettingsScreen = () => {
   const [selectedLanguage, setSelectedLanguage] = useState(language);
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [currentMode, setCurrentMode] = useState('admin'); // 'admin' or 'user'
 
   // Water blue color theme
   const waterBlueColors = {
@@ -45,6 +47,15 @@ const SettingsScreen = () => {
       const email = await AsyncStorage.getItem('email');
       const phone = await AsyncStorage.getItem('phone');
       const userId = await AsyncStorage.getItem('userId');
+      const role = await AsyncStorage.getItem('role');
+      
+      // Check if user is admin
+      const adminStatus = role === 'Admin' || role === 'admin';
+      setIsAdmin(adminStatus);
+      
+      // Load current mode from storage
+      const savedMode = await AsyncStorage.getItem('userMode');
+      setCurrentMode(savedMode || 'admin');
       
       setUserData({
         username,
@@ -52,6 +63,7 @@ const SettingsScreen = () => {
         email: email || 'admin@alaigal.com',
         phone: phone || '+91 9876543210',
         userId,
+        role: role || 'Admin',
       });
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -63,6 +75,41 @@ const SettingsScreen = () => {
     await changeLanguage(lang);
     setShowLanguageModal(false);
     Alert.alert('Success', `Language changed to ${lang === 'en' ? 'English' : 'Tamil'}`);
+  };
+
+  const handleModeSwitch = async (mode) => {
+    try {
+      await AsyncStorage.setItem('userMode', mode);
+      setCurrentMode(mode);
+      
+      Alert.alert(
+        'Mode Changed',
+        `Switched to ${mode === 'user' ? 'User Mode' : 'Admin Mode'}. Please restart the app to see the changes.`,
+        [
+          {
+            text: 'Restart Now',
+            onPress: () => {
+              // Navigate to appropriate dashboard based on mode
+              if (mode === 'user') {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'UserDashboard' }],
+                });
+              } else {
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: 'DrawerNavigator' }],
+                });
+              }
+            }
+          },
+          { text: 'Later', style: 'cancel' }
+        ]
+      );
+    } catch (error) {
+      console.error('Error switching mode:', error);
+      Alert.alert('Error', 'Failed to switch mode. Please try again.');
+    }
   };
 
   const handleBackPress = () => {
@@ -80,7 +127,7 @@ const SettingsScreen = () => {
       onPress: () => {
         Alert.alert(
           'My Details',
-          `Name: ${userData?.fullName || 'Admin User'}\nEmail: ${userData?.email || 'admin@alaigal.com'}\nPhone: ${userData?.phone || '+91 9876543210'}`,
+          `Name: ${userData?.fullName || 'Admin User'}\nEmail: ${userData?.email || 'admin@alaigal.com'}\nPhone: ${userData?.phone || '+91 9876543210'}\nRole: ${userData?.role || 'Admin'}`,
           [{ text: 'OK' }]
         );
       },
@@ -93,6 +140,33 @@ const SettingsScreen = () => {
       color: '#FF9800',
       onPress: () => setShowLanguageModal(true),
     },
+    // Only show mode switcher for admin users
+    ...(isAdmin ? [{
+      id: 'mode-switcher',
+      title: 'Interface Mode',
+      subtitle: `Current: ${currentMode === 'user' ? 'User Mode' : 'Admin Mode'}`,
+      icon: currentMode === 'user' ? 'account' : 'shield-crown',
+      color: currentMode === 'user' ? '#2196F3' : '#E91E63',
+      onPress: () => {
+        Alert.alert(
+          'Switch Interface Mode',
+          'Choose your interface mode:',
+          [
+            {
+              text: 'User Mode',
+              onPress: () => handleModeSwitch('user'),
+              style: currentMode === 'user' ? 'cancel' : 'default'
+            },
+            {
+              text: 'Admin Mode', 
+              onPress: () => handleModeSwitch('admin'),
+              style: currentMode === 'admin' ? 'cancel' : 'default'
+            },
+            { text: 'Cancel', style: 'cancel' }
+          ]
+        );
+      },
+    }] : []),
     {
       id: 'change-password',
       title: 'Change Password',

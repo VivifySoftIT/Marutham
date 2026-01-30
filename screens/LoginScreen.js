@@ -14,11 +14,9 @@ import {
   Alert
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as LocalAuthentication from 'expo-local-authentication';
 import ApiService from '../service/api';
 import MemberIdService from '../service/MemberIdService';
 import { FontAwesome } from '@expo/vector-icons';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Constants from "expo-constants";
 import { useLanguage } from '../service/LanguageContext';
@@ -30,13 +28,12 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
   const [employeeNumber, setEmployeeNumber] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isBiometricAvailable, setIsBiometricAvailable] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
   useEffect(() => {
-    checkBiometricAvailability();
+    checkExistingSession();
     loadSavedCredentials();
 
     const backAction = () => {
@@ -49,6 +46,52 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
     return () => backHandler.remove();
   }, []);
 
+  // Check if user is already logged in
+  const checkExistingSession = async () => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const userData = await AsyncStorage.getItem('userData');
+      
+      if (token && userData) {
+        const user = JSON.parse(userData);
+        console.log('Existing session found, auto-navigating...');
+        
+        // Check saved mode preference for admin users
+        const savedMode = await AsyncStorage.getItem('userMode');
+        
+        // Auto-navigate based on role and mode preference
+        setTimeout(() => {
+          if (user.role === 'User') {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'UserDashboard' }],
+            });
+          } else if (user.role === 'Admin' || user.role === 'admin') {
+            // Admin user - check saved mode preference
+            if (savedMode === 'user') {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'UserDashboard' }],
+              });
+            } else {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'DrawerNavigator' }],
+              });
+            }
+          } else {
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'DrawerNavigator' }],
+            });
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error checking existing session:', error);
+    }
+  };
+
   const loadSavedCredentials = async () => {
     try {
       const savedUsername = await AsyncStorage.getItem('username');
@@ -58,40 +101,6 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
       }
     } catch (error) {
       console.error('Error loading saved credentials:', error);
-    }
-  };
-
-  const checkBiometricAvailability = async () => {
-    try {
-      const compatible = await LocalAuthentication.hasHardwareAsync();
-      const enrolled = await LocalAuthentication.isEnrolledAsync();
-      setIsBiometricAvailable(compatible && enrolled);
-    } catch (error) {
-      console.error('Error checking biometric availability:', error);
-    }
-  };
-
-  const handleBiometricLogin = async () => {
-    try {
-      const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Authenticate to access Alaigal',
-        fallbackLabel: 'Use passcode',
-        disableDeviceFallback: false,
-      });
-
-      if (result.success) {
-        const savedUsername = await AsyncStorage.getItem('username');
-        const savedPassword = await AsyncStorage.getItem('password');
-
-        if (savedUsername && savedPassword) {
-          await handleLogin(savedUsername, savedPassword);
-        } else {
-          setErrorMessage('No saved credentials found. Please log in manually.');
-        }
-      }
-    } catch (error) {
-      console.error('Biometric login error:', error);
-      setErrorMessage('Authentication failed. Please try again.');
     }
   };
 
@@ -156,16 +165,34 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
         // Clear any error message
         setErrorMessage('');
 
-        // Navigate based on role
-        setTimeout(() => {
+        // Navigate based on role and saved mode
+        setTimeout(async () => {
+          // Check if admin has a saved mode preference
+          const savedMode = await AsyncStorage.getItem('userMode');
+          
           if (response.user.role === 'User') {
             console.log('Navigating to UserDashboard');
             navigation.reset({
               index: 0,
               routes: [{ name: 'UserDashboard' }],
             });
+          } else if (response.user.role === 'Admin' || response.user.role === 'admin') {
+            // Admin user - check saved mode preference
+            if (savedMode === 'user') {
+              console.log('Admin navigating to UserDashboard (User Mode)');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'UserDashboard' }],
+              });
+            } else {
+              console.log('Admin navigating to DrawerNavigator (Admin Mode)');
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'DrawerNavigator' }],
+              });
+            }
           } else {
-            console.log('Navigating to DrawerNavigator (Admin)');
+            console.log('Navigating to DrawerNavigator (Default)');
             navigation.reset({
               index: 0,
               routes: [{ name: 'DrawerNavigator' }],
@@ -291,36 +318,6 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
                 )}
               </LinearGradient>
             </TouchableOpacity>
-
-            {isBiometricAvailable && (
-              <>
-                <View style={styles.divider}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>OR</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <TouchableOpacity
-                  style={styles.biometricButton}
-                  onPress={handleBiometricLogin}
-                  disabled={isLoading}
-                >
-                  <LinearGradient
-                    colors={['#f5f5f5', '#e0e0e0']}
-                    style={styles.biometricGradient}
-                  >
-                    <View style={styles.fingerprintContainer}>
-                      <MaterialCommunityIcons
-                        name="fingerprint"
-                        size={30}
-                        color="#4A90E2"
-                      />
-                    </View>
-                    <Text style={styles.biometricButtonText}>Use Fingerprint</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              </>
-            )}
           </View>
 
           {/* Bottom Section */}
@@ -504,52 +501,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 15,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e0e0e0',
-  },
-  dividerText: {
-    marginHorizontal: 15,
-    color: '#666',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  biometricButton: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  biometricGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  fingerprintContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-    borderWidth: 1.5,
-    borderColor: '#4A90E2',
-  },
-  biometricButtonText: {
-    color: '#4A90E2',
-    fontSize: 14,
-    fontWeight: '600',
   },
   bottomSection: {
     alignItems: 'center',
