@@ -49,6 +49,7 @@ const ReferralSlip = ({ route }) => {
   });
   const [memberSearchQuery, setMemberSearchQuery] = useState(''); // For searching members
   const [isListening, setIsListening] = useState(null); // For voice input tracking
+  const [currentVoiceField, setCurrentVoiceField] = useState(null); // Track strictly which field is active
 
   useEffect(() => {
     loadCurrentUser();
@@ -409,120 +410,59 @@ const ReferralSlip = ({ route }) => {
   };
 
   // Voice input functionality
-  const startVoiceInput = async (fieldName) => {
+  const startRecording = async (fieldName) => {
     // For Web Platform
-    if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
-      const recognition = new window.webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-IN';
+    if (Platform.OS === 'web') {
+      Alert.alert('Voice Input', 'Please use mobile app for voice features.');
+      return;
+    }
 
-      recognition.onstart = () => {
-        setIsListening(fieldName);
+    try {
+      // RESET EVERYTHING
+      await Voice.destroy();
+      Voice.removeAllListeners();
+
+      setCurrentVoiceField(fieldName);
+      setIsListening(fieldName); // UI feedback
+
+      Voice.onSpeechStart = () => console.log('Voice started');
+      Voice.onSpeechEnd = () => {
+        console.log('Voice ended');
+        setIsListening(null);
       };
-
-      recognition.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript.trim();
-        console.log('Voice input:', spokenText);
-        
-        if (event.results[0].isFinal) {
+      Voice.onSpeechError = (e) => {
+        console.log('Voice Error:', e);
+        setIsListening(null);
+      };
+      Voice.onSpeechResults = (e) => {
+        console.log('Voice Results:', e.value);
+        if (e.value && e.value[0]) {
+          const spokenText = e.value[0];
           if (fieldName === 'telephone') {
-            // Extract only digits for phone number
             const phoneDigits = spokenText.replace(/\D/g, '');
             handlePhoneChange(phoneDigits);
           } else {
             handleInputChange(fieldName, spokenText);
           }
-          setIsListening(null);
         }
       };
 
-      recognition.onerror = (event) => {
-        console.error('Voice error:', event.error);
-        setIsListening(null);
-        
-        if (event.error === 'not-allowed') {
-          Alert.alert('Permission Denied', 'Please allow microphone access in browser settings.');
-        } else if (event.error === 'no-speech') {
-          Alert.alert('No Speech', 'No speech detected. Please try again.');
-        }
-      };
+      await Voice.start('en-IN');
+    } catch (e) {
+      console.error("Start Voice Error", e);
+      Alert.alert("Error", "Could not start voice recording.");
+      setIsListening(null);
+    }
+  };
 
-      recognition.onend = () => {
+  const stopRecording = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        await Voice.stop();
         setIsListening(null);
-      };
-
-      try {
-        recognition.start();
-      } catch (error) {
-        console.error('Error starting recognition:', error);
-        setIsListening(null);
-        Alert.alert('Error', 'Could not start voice recognition.');
       }
-    } 
-    // For Mobile Platform
-    else if (Platform.OS !== 'web' && Voice !== null && Voice !== undefined && typeof Voice.start === 'function') {
-      try {
-        // CLEANUP FIRST: Destroy any previous instance and remove listeners
-        try {
-            await Voice.destroy();
-            Voice.removeAllListeners();
-        } catch (e) {
-            console.log("Cleanup error (harmless):", e);
-        }
-
-        setIsListening(fieldName);
-
-        Voice.onSpeechStart = () => {
-          console.log('Voice started');
-        };
-
-        Voice.onSpeechResults = (event) => {
-          console.log('Voice results:', event.value);
-          if (event.value && event.value.length > 0) {
-            const spokenText = event.value[0];
-            if (fieldName === 'telephone') {
-              // Extract only digits for phone number
-              const phoneDigits = spokenText.replace(/\D/g, '');
-              handlePhoneChange(phoneDigits);
-            } else {
-              handleInputChange(fieldName, spokenText);
-            }
-            setIsListening(null);
-            // Optional: stop listening after getting result
-            Voice.destroy().then(Voice.removeAllListeners); 
-          }
-        };
-
-        Voice.onSpeechError = (event) => {
-          console.error('Voice error:', event.error);
-          setIsListening(null);
-          // Don't show alert for "No match" which happens frequently and is annoying
-          if (event.error.activeError || (event.error.code !== '7' && event.error.code !== 7)) {
-             Alert.alert('Voice Error', 'Could not recognize speech. Please try again.');
-          }
-          Voice.destroy().then(Voice.removeAllListeners);
-        };
-
-        Voice.onSpeechEnd = () => {
-          setIsListening(null);
-          Voice.destroy().then(Voice.removeAllListeners);
-        };
-
-        await Voice.start('en-IN');
-      } catch (error) {
-        console.error('Error starting mobile voice:', error);
-        setIsListening(null);
-        Alert.alert('Error', 'Voice recognition error. Please try again.');
-      }
-    } 
-    // Fallback
-    else {
-      Alert.alert(
-        'Voice Input - Web Only',
-        'Voice input is currently available on web browser only.',
-        [{ text: 'OK' }]
-      );
+    } catch (e) {
+      console.error("Stop Voice Error", e);
     }
   };
 
@@ -543,323 +483,338 @@ const ReferralSlip = ({ route }) => {
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
         >
-          <ScrollView 
-            style={styles.content} 
+          <ScrollView
+            style={styles.content}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
 
 
-          {/* Pre-selected Member Info */}
-          {selectedMember && (
-            <View style={styles.preSelectedMemberBanner}>
-              <Icon name="information" size={20} color="#4A90E2" />
-              <Text style={styles.preSelectedMemberText}>
-                Referral for: <Text style={styles.preSelectedMemberName}>{selectedMember.name}</Text>
-              </Text>
-            </View>
-          )}
-
-          {/* Member Name Dropdown with Search */}
-          <View style={styles.section}>
-            <Text style={styles.label}>To Member *</Text>
-            <TouchableOpacity
-              style={styles.memberDropdownButton}
-              onPress={() => setShowMemberDropdown(!showMemberDropdown)}
-            >
-              <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
-              <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
-                {formData.memberName || 'Select member'}
-              </Text>
-              <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
-            </TouchableOpacity>
-
-            {showMemberDropdown && (
-              <View style={styles.memberDropdownList}>
-                {/* Search Input */}
-                <View style={styles.searchContainer}>
-                  <Icon name="magnify" size={20} color="#4A90E2" />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search members..."
-                    value={memberSearchQuery}
-                    onChangeText={setMemberSearchQuery}
-                    placeholderTextColor="#999"
-                  />
-                  {memberSearchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
-                      <Icon name="close-circle" size={20} color="#999" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
-                  {loadingMembers ? (
-                    <View style={styles.noMembersContainer}>
-                      <ActivityIndicator size="small" color="#4A90E2" />
-                      <Text style={styles.noMembersText}>Loading members...</Text>
-                    </View>
-                  ) : allMembers && allMembers.length > 0 ? (
-                    allMembers
-                      .filter(member =>
-                        member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-                        member.phone?.includes(memberSearchQuery) ||
-                        member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
-                      )
-                      .map(member => (
-                        <TouchableOpacity
-                          key={member.id}
-                          style={styles.memberDropdownItem}
-                          onPress={() => {
-                            handleSelectMember(member);
-                            setMemberSearchQuery('');
-                          }}
-                        >
-                          <View style={styles.memberItemContent}>
-                            <Text style={styles.memberName}>{member.name}</Text>
-                            <View style={styles.memberDetailsRow}>
-                              <Text style={styles.memberDetail}>
-                                <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
-                              </Text>
-                              <Text style={styles.memberDetail}>
-                                <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
-                              </Text>
-                            </View>
-                            {member.email && (
-                              <Text style={styles.memberEmail}>
-                                <Icon name="email" size={12} color="#999" /> {member.email}
-                              </Text>
-                            )}
-                          </View>
-                          {formData.memberId === member.id && (
-                            <Icon name="check" size={20} color="#4A90E2" />
-                          )}
-                        </TouchableOpacity>
-                      ))
-                  ) : (
-                    <View style={styles.noMembersContainer}>
-                      <Icon name="account-alert" size={24} color="#999" />
-                      <Text style={styles.noMembersText}>No members available</Text>
-                    </View>
-                  )}
-                </ScrollView>
+            {/* Pre-selected Member Info */}
+            {selectedMember && (
+              <View style={styles.preSelectedMemberBanner}>
+                <Icon name="information" size={20} color="#4A90E2" />
+                <Text style={styles.preSelectedMemberText}>
+                  Referral for: <Text style={styles.preSelectedMemberName}>{selectedMember.name}</Text>
+                </Text>
               </View>
             )}
-          </View>
 
-          {/* Referral Type Radio Buttons */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Referral Type *</Text>
-            <View style={styles.radioGroup}>
+            {/* Member Name Dropdown with Search */}
+            <View style={styles.section}>
+              <Text style={styles.label}>To Member *</Text>
               <TouchableOpacity
-                style={styles.radioButton}
-                onPress={() => handleInputChange('referralType', 'inside')}
+                style={styles.memberDropdownButton}
+                onPress={() => setShowMemberDropdown(!showMemberDropdown)}
               >
-                <Icon
-                  name={formData.referralType === 'inside' ? 'radiobox-marked' : 'radiobox-blank'}
-                  size={20}
-                  color="#4A90E2"
-                />
-                <Text style={styles.radioLabel}>Inside</Text>
+                <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
+                <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
+                  {formData.memberName || 'Select member'}
+                </Text>
+                <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.radioButton}
-                onPress={() => handleInputChange('referralType', 'outside')}
-              >
-                <Icon
-                  name={formData.referralType === 'outside' ? 'radiobox-marked' : 'radiobox-blank'}
-                  size={20}
-                  color="#4A90E2"
-                />
-                <Text style={styles.radioLabel}>Outside</Text>
-              </TouchableOpacity>
+
+              {showMemberDropdown && (
+                <View style={styles.memberDropdownList}>
+                  {/* Search Input */}
+                  <View style={styles.searchContainer}>
+                    <Icon name="magnify" size={20} color="#4A90E2" />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Search members..."
+                      value={memberSearchQuery}
+                      onChangeText={setMemberSearchQuery}
+                      placeholderTextColor="#999"
+                    />
+                    {memberSearchQuery.length > 0 && (
+                      <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
+                        <Icon name="close-circle" size={20} color="#999" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
+                    {loadingMembers ? (
+                      <View style={styles.noMembersContainer}>
+                        <ActivityIndicator size="small" color="#4A90E2" />
+                        <Text style={styles.noMembersText}>Loading members...</Text>
+                      </View>
+                    ) : allMembers && allMembers.length > 0 ? (
+                      allMembers
+                        .filter(member =>
+                          member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+                          member.phone?.includes(memberSearchQuery) ||
+                          member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
+                        )
+                        .map(member => (
+                          <TouchableOpacity
+                            key={member.id}
+                            style={styles.memberDropdownItem}
+                            onPress={() => {
+                              handleSelectMember(member);
+                              setMemberSearchQuery('');
+                            }}
+                          >
+                            <View style={styles.memberItemContent}>
+                              <Text style={styles.memberName}>{member.name}</Text>
+                              <View style={styles.memberDetailsRow}>
+                                <Text style={styles.memberDetail}>
+                                  <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
+                                </Text>
+                                <Text style={styles.memberDetail}>
+                                  <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
+                                </Text>
+                              </View>
+                              {member.email && (
+                                <Text style={styles.memberEmail}>
+                                  <Icon name="email" size={12} color="#999" /> {member.email}
+                                </Text>
+                              )}
+                            </View>
+                            {formData.memberId === member.id && (
+                              <Icon name="check" size={20} color="#4A90E2" />
+                            )}
+                          </TouchableOpacity>
+                        ))
+                    ) : (
+                      <View style={styles.noMembersContainer}>
+                        <Icon name="account-alert" size={24} color="#999" />
+                        <Text style={styles.noMembersText}>No members available</Text>
+                      </View>
+                    )}
+                  </ScrollView>
+                </View>
+              )}
             </View>
-          </View>
 
-          {/* Referral Category Radio Buttons */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Referral Category *</Text>
-            <View style={styles.radioGroup}>
-              <TouchableOpacity
-                style={styles.radioButton}
-                onPress={() => handleInputChange('referralCategory', 'Business')}
-              >
-                <Icon
-                  name={formData.referralCategory === 'Business' ? 'radiobox-marked' : 'radiobox-blank'}
-                  size={20}
-                  color="#4A90E2"
-                />
-                <Text style={styles.radioLabel}>Business</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.radioButton}
-                onPress={() => handleInputChange('referralCategory', 'Personal')}
-              >
-                <Icon
-                  name={formData.referralCategory === 'Personal' ? 'radiobox-marked' : 'radiobox-blank'}
-                  size={20}
-                  color="#4A90E2"
-                />
-                <Text style={styles.radioLabel}>Personal</Text>
-              </TouchableOpacity>
+            {/* Referral Type Radio Buttons */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Referral Type *</Text>
+              <View style={styles.radioGroup}>
+                <TouchableOpacity
+                  style={styles.radioButton}
+                  onPress={() => handleInputChange('referralType', 'inside')}
+                >
+                  <Icon
+                    name={formData.referralType === 'inside' ? 'radiobox-marked' : 'radiobox-blank'}
+                    size={20}
+                    color="#4A90E2"
+                  />
+                  <Text style={styles.radioLabel}>Inside</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.radioButton}
+                  onPress={() => handleInputChange('referralType', 'outside')}
+                >
+                  <Icon
+                    name={formData.referralType === 'outside' ? 'radiobox-marked' : 'radiobox-blank'}
+                    size={20}
+                    color="#4A90E2"
+                  />
+                  <Text style={styles.radioLabel}>Outside</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          <View style={styles.section}>
-            <Text style={styles.label}> Company Name*</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter client name or company name"
-                value={formData.referralNumber}
-                onChangeText={(text) => handleInputChange('referralNumber', text)}
-                placeholderTextColor="#999"
-              />
-              <TouchableOpacity 
-                onPress={() => startVoiceInput('referralNumber')}
-                style={styles.micButton}
-              >
-                <Icon 
-                  name={isListening === 'referralNumber' ? "microphone" : "microphone-outline"} 
-                  size={22} 
-                  color={isListening === 'referralNumber' ? "#FF4444" : "#4A90E2"} 
-                />
-              </TouchableOpacity>
+            {/* Referral Category Radio Buttons */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Referral Category *</Text>
+              <View style={styles.radioGroup}>
+                <TouchableOpacity
+                  style={styles.radioButton}
+                  onPress={() => handleInputChange('referralCategory', 'Business')}
+                >
+                  <Icon
+                    name={formData.referralCategory === 'Business' ? 'radiobox-marked' : 'radiobox-blank'}
+                    size={20}
+                    color="#4A90E2"
+                  />
+                  <Text style={styles.radioLabel}>Business</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.radioButton}
+                  onPress={() => handleInputChange('referralCategory', 'Personal')}
+                >
+                  <Icon
+                    name={formData.referralCategory === 'Personal' ? 'radiobox-marked' : 'radiobox-blank'}
+                    size={20}
+                    color="#4A90E2"
+                  />
+                  <Text style={styles.radioLabel}>Personal</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* Telephone Number Field */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Mobile Number *</Text>
-            <View style={styles.inputContainer}>
-              <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter telephone number (e.g., 123-456-7890)"
-                value={formData.telephone}
-                onChangeText={handlePhoneChange}
-                keyboardType="phone-pad"
-                placeholderTextColor="#999"
-                maxLength={12}
-              />
-              <TouchableOpacity 
-                onPress={() => startVoiceInput('telephone')}
-                style={styles.micButton}
-              >
-                <Icon 
-                  name={isListening === 'telephone' ? "microphone" : "microphone-outline"} 
-                  size={22} 
-                  color={isListening === 'telephone' ? "#FF4444" : "#4A90E2"} 
+            <View style={styles.section}>
+              <Text style={styles.label}> Company Name*</Text>
+              <View style={styles.inputContainer}>
+                <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter client name or company name"
+                  value={formData.referralNumber}
+                  onChangeText={(text) => handleInputChange('referralNumber', text)}
+                  placeholderTextColor="#999"
                 />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPressIn={() => startRecording('referralNumber')}
+                  onPressOut={stopRecording}
+                  style={styles.micButton}
+                  delayPressIn={100}
+                >
+                  <Icon
+                    name={isListening === 'referralNumber' ? "microphone" : "microphone-outline"}
+                    size={22}
+                    color={isListening === 'referralNumber' ? "#FF4444" : "#4A90E2"}
+                  />
+                  {isListening === 'referralNumber' && (
+                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* Email Field */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Email </Text>
-            <View style={styles.inputContainer}>
-              <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
-              <TextInput
-                style={styles.input}
-                placeholder="Enter email address (optional)"
-                value={formData.email}
-                onChangeText={(text) => handleInputChange('email', text)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholderTextColor="#999"
-              />
-              <TouchableOpacity 
-                onPress={() => startVoiceInput('email')}
-                style={styles.micButton}
-              >
-                <Icon 
-                  name={isListening === 'email' ? "microphone" : "microphone-outline"} 
-                  size={22} 
-                  color={isListening === 'email' ? "#FF4444" : "#4A90E2"} 
+            {/* Telephone Number Field */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Mobile Number *</Text>
+              <View style={styles.inputContainer}>
+                <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter telephone number (e.g., 123-456-7890)"
+                  value={formData.telephone}
+                  onChangeText={handlePhoneChange}
+                  keyboardType="phone-pad"
+                  placeholderTextColor="#999"
+                  maxLength={12}
                 />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPressIn={() => startRecording('telephone')}
+                  onPressOut={stopRecording}
+                  style={styles.micButton}
+                  delayPressIn={100}
+                >
+                  <Icon
+                    name={isListening === 'telephone' ? "microphone" : "microphone-outline"}
+                    size={22}
+                    color={isListening === 'telephone' ? "#FF4444" : "#4A90E2"}
+                  />
+                  {isListening === 'telephone' && (
+                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* Address */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Address</Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Enter address"
-                value={formData.address}
-                onChangeText={(text) => handleInputChange('address', text)}
-                multiline
-                numberOfLines={3}
-                placeholderTextColor="#999"
-              />
-              <TouchableOpacity 
-                onPress={() => startVoiceInput('address')}
-                style={[styles.micButton, styles.micButtonTextArea]}
-              >
-                <Icon 
-                  name={isListening === 'address' ? "microphone" : "microphone-outline"} 
-                  size={22} 
-                  color={isListening === 'address' ? "#FF4444" : "#4A90E2"} 
+            {/* Email Field */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Email </Text>
+              <View style={styles.inputContainer}>
+                <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter email address (optional)"
+                  value={formData.email}
+                  onChangeText={(text) => handleInputChange('email', text)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholderTextColor="#999"
                 />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPressIn={() => startRecording('email')}
+                  onPressOut={stopRecording}
+                  style={styles.micButton}
+                  delayPressIn={100}
+                >
+                  <Icon
+                    name={isListening === 'email' ? "microphone" : "microphone-outline"}
+                    size={22}
+                    color={isListening === 'email' ? "#FF4444" : "#4A90E2"}
+                  />
+                  {isListening === 'email' && (
+                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* Comments */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Comments</Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Enter any comments"
-                value={formData.comments}
-                onChangeText={(text) => handleInputChange('comments', text)}
-                multiline
-                numberOfLines={4}
-                placeholderTextColor="#999"
-              />
-              <TouchableOpacity 
-                onPress={() => startVoiceInput('comments')}
-                style={[styles.micButton, styles.micButtonTextArea]}
-              >
-                <Icon 
-                  name={isListening === 'comments' ? "microphone" : "microphone-outline"} 
-                  size={22} 
-                  color={isListening === 'comments' ? "#FF4444" : "#4A90E2"} 
+            {/* Address */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Address</Text>
+              <View style={[styles.inputContainer, styles.textAreaContainer]}>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Enter address"
+                  value={formData.address}
+                  onChangeText={(text) => handleInputChange('address', text)}
+                  multiline
+                  numberOfLines={3}
+                  placeholderTextColor="#999"
                 />
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => startVoiceInput('address')}
+                  style={[styles.micButton, styles.micButtonTextArea]}
+                >
+                  <Icon
+                    name={isListening === 'address' ? "microphone" : "microphone-outline"}
+                    size={22}
+                    color={isListening === 'address' ? "#FF4444" : "#4A90E2"}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
 
-          {/* STATUS SECTION REMOVED - Always Pending */}
+            {/* Comments */}
+            <View style={styles.section}>
+              <Text style={styles.label}>Comments</Text>
+              <View style={[styles.inputContainer, styles.textAreaContainer]}>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Enter any comments"
+                  value={formData.comments}
+                  onChangeText={(text) => handleInputChange('comments', text)}
+                  multiline
+                  numberOfLines={4}
+                  placeholderTextColor="#999"
+                />
+                <TouchableOpacity
+                  onPress={() => startVoiceInput('comments')}
+                  style={[styles.micButton, styles.micButtonTextArea]}
+                >
+                  <Icon
+                    name={isListening === 'comments' ? "microphone" : "microphone-outline"}
+                    size={22}
+                    color={isListening === 'comments' ? "#FF4444" : "#4A90E2"}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-          {/* Confirm Button */}
-          <TouchableOpacity
-            style={[styles.confirmButton, loading && styles.confirmButtonDisabled]}
-            onPress={handleConfirm}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <>
-                <Icon name="check-circle" size={20} color="#FFF" />
-                <Text style={styles.confirmButtonText}>Confirm Referral</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            {/* STATUS SECTION REMOVED - Always Pending */}
 
-          <View style={{ height: 20 }} />
+            {/* Confirm Button */}
+            <TouchableOpacity
+              style={[styles.confirmButton, loading && styles.confirmButtonDisabled]}
+              onPress={handleConfirm}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <>
+                  <Icon name="check-circle" size={20} color="#FFF" />
+                  <Text style={styles.confirmButtonText}>Confirm Referral</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <View style={{ height: 20 }} />
           </ScrollView>
         </KeyboardAvoidingView>
       </ImageBackground>

@@ -136,117 +136,40 @@ const MemberAttendanceScreen = () => {
   };
 
   // Voice search functionality
-  const startVoiceSearch = async () => {
+  const startVoiceRecording = async () => {
     // For Web Platform
     if (Platform.OS === 'web' && 'webkitSpeechRecognition' in window) {
-      const recognition = new window.webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-IN';
-      recognition.maxAlternatives = 5;
-
-      recognition.onstart = () => {
-        console.log('Voice recognition started');
-        setIsListening(true);
-
-        Alert.alert(
-          'Listening...',
-          'Please speak the member name clearly',
-          [],
-          { cancelable: false }
-        );
-      };
-
-      recognition.onresult = (event) => {
-        const results = event.results[event.results.length - 1];
-        const spokenText = results[0].transcript.trim();
-
-        console.log('Voice recognition raw result:', spokenText);
-        console.log('Is final:', results.isFinal);
-        console.log('Confidence:', results[0].confidence);
-
-        if (results.isFinal) {
-          console.log('Final result accepted:', spokenText);
-
-          setSearchQuery(spokenText);
-          setIsListening(false);
-          findAndMarkMember(spokenText);
-        }
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Voice recognition error:', event.error);
-        setIsListening(false);
-
-        let errorMessage = 'Could not recognize speech';
-        if (event.error === 'no-speech') {
-          errorMessage = 'No speech detected. Please speak clearly.';
-        } else if (event.error === 'audio-capture') {
-          errorMessage = 'Microphone not found.';
-        } else if (event.error === 'not-allowed') {
-          errorMessage = 'Microphone permission denied.';
-        }
-
-        Alert.alert('Voice Error', errorMessage, [
-          { text: 'OK' },
-          { text: 'Try Again', onPress: () => setTimeout(startVoiceSearch, 500) }
-        ]);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      try {
-        recognition.start();
-      } catch (error) {
-        console.error('Error starting recognition:', error);
-        setIsListening(false);
-        Alert.alert('Error', 'Could not start voice recognition. Please check microphone permissions.');
-      }
+      Alert.alert('Web Voice', 'Please use mobile app for better voice experience.');
     }
     // For Mobile Platform
-    else if (Platform.OS !== 'web' && Voice !== null && Voice !== undefined && typeof Voice.start === 'function') {
+    else if (Platform.OS !== 'web' && Voice !== null) {
       try {
-        // CLEANUP FIRST: Destroy any previous instance and remove listeners
+        // CLEANUP FIRST
         try {
-            await Voice.destroy();
-            Voice.removeAllListeners();
+          await Voice.destroy();
+          Voice.removeAllListeners();
         } catch (e) {
-            console.log("Cleanup error (harmless):", e);
+          console.log("Cleanup error:", e);
         }
 
-        setIsListening(true);
+        setIsListening(true); // UI Feedback
 
-        Voice.onSpeechStart = () => {
-          console.log('Voice started');
-        };
-
+        Voice.onSpeechStart = () => console.log('Voice started');
+        Voice.onSpeechEnd = () => {
+          console.log("Voice ended");
+          setIsListening(false);
+        }
         Voice.onSpeechResults = (event) => {
           console.log('Voice results:', event.value);
           if (event.value && event.value.length > 0) {
             const spokenText = event.value[0];
             setSearchQuery(spokenText);
-            setIsListening(false);
             findAndMarkMember(spokenText);
-            // Optional: stop listening after getting result
-            Voice.destroy().then(Voice.removeAllListeners); 
           }
         };
-
         Voice.onSpeechError = (event) => {
           console.error('Voice error:', event.error);
           setIsListening(false);
-          // Don't show alert for "No match" which happens frequently and is annoying
-          if (event.error.activeError || (event.error.code !== '7' && event.error.code !== 7)) {
-             Alert.alert('Voice Error', 'Could not recognize speech. Please try again.');
-          }
-          Voice.destroy().then(Voice.removeAllListeners);
-        };
-
-        Voice.onSpeechEnd = () => {
-          setIsListening(false);
-          Voice.destroy().then(Voice.removeAllListeners);
         };
 
         await Voice.start('en-IN');
@@ -255,14 +178,19 @@ const MemberAttendanceScreen = () => {
         setIsListening(false);
         Alert.alert('Error', 'Voice recognition error. Please try again.');
       }
-    } 
-    // Fallback
-    else {
-      Alert.alert(
-        'Voice Search - Web Only',
-        'Voice search is currently available on web browser only.\n\nOn mobile, please type the member name in the search box.',
-        [{ text: 'OK' }]
-      );
+    }
+  };
+
+  const stopVoiceRecording = async () => {
+    try {
+      if (Platform.OS !== 'web') {
+        await Voice.stop();
+        // Don't disable isListening immediately here, let onSpeechEnd handle it 
+        // or let results come in first. But for UI feedback we often want it off.
+        // We'll let the listeners handle state.
+      }
+    } catch (e) {
+      console.error("Stop error", e);
     }
   };
 
@@ -577,7 +505,10 @@ const MemberAttendanceScreen = () => {
       title: 'Mark by Voice',
       icon: 'microphone',
       color: '#FF9800',
-      onPress: startVoiceSearch
+      title: 'Mark by Voice',
+      icon: 'microphone',
+      color: '#FF9800',
+      onPress: () => Alert.alert('Voice Mode', 'Please use the microphone icon in the search bar (Hold to Speak).')
     }
   ];
 
@@ -724,7 +655,9 @@ const MemberAttendanceScreen = () => {
                 styles.voiceButtonInline,
                 isListening && styles.voiceButtonActive
               ]}
-              onPress={startVoiceSearch}
+              onPressIn={startVoiceRecording}
+              onPressOut={stopVoiceRecording}
+              delayPressIn={100}
             >
               <Icon
                 name={isListening ? "microphone" : "microphone-outline"}
@@ -738,14 +671,14 @@ const MemberAttendanceScreen = () => {
             <View style={styles.listeningIndicator}>
               <Icon name="microphone" size={16} color="#FF6B6B" />
               <Text style={styles.listeningText}>
-                Listening... Speak the member name clearly
+                Recording... Release to search
               </Text>
             </View>
           ) : (
             <View style={styles.voiceHintContainer}>
               <Icon name="information" size={14} color="#4A90E2" />
               <Text style={styles.voiceHint}>
-                Tap microphone icon to search by voice and auto-mark present
+                Hold microphone icon to search by voice and auto-mark present
               </Text>
             </View>
           )}
