@@ -17,9 +17,11 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
+import { useLanguage } from '../service/LanguageContext';
 
 const ChangePassword = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -37,27 +39,27 @@ const ChangePassword = () => {
 
   const validateForm = () => {
     if (!formData.currentPassword.trim()) {
-      Alert.alert('Validation Error', 'Current password is required');
+      Alert.alert(t('validationError'), t('currentPasswordRequired'));
       return false;
     }
 
     if (!formData.newPassword.trim()) {
-      Alert.alert('Validation Error', 'New password is required');
+      Alert.alert(t('validationError'), t('newPasswordRequired'));
       return false;
     }
 
     if (formData.newPassword.length < 6) {
-      Alert.alert('Validation Error', 'New password must be at least 6 characters');
+      Alert.alert(t('validationError'), t('passwordTooShort'));
       return false;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      Alert.alert('Validation Error', 'New password and confirm password do not match');
+      Alert.alert(t('validationError'), t('passwordsDoNotMatch'));
       return false;
     }
 
     if (formData.currentPassword === formData.newPassword) {
-      Alert.alert('Validation Error', 'New password must be different from current password');
+      Alert.alert(t('validationError'), t('newPasswordMustBeDifferent'));
       return false;
     }
 
@@ -75,7 +77,7 @@ const ChangePassword = () => {
       const username = await AsyncStorage.getItem('username');
       
       if (!username) {
-        Alert.alert('Error', 'User session not found. Please login again.');
+        Alert.alert(t('error'), t('userSessionNotFound'));
         navigation.navigate('Login');
         return;
       }
@@ -88,11 +90,11 @@ const ChangePassword = () => {
       );
 
       Alert.alert(
-        'Success',
-        'Password changed successfully! Please login with your new password.',
+        t('success'),
+        t('passwordChangedSuccessfully'),
         [
           {
-            text: 'OK',
+            text: t('ok'),
             onPress: async () => {
               // Logout and redirect to login
               await ApiService.logout();
@@ -106,7 +108,7 @@ const ChangePassword = () => {
         ]
       );
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to change password');
+      Alert.alert(t('error'), error.message || t('failedToChangePassword'));
     } finally {
       setLoading(false);
     }
@@ -121,7 +123,7 @@ const ChangePassword = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Change Password</Text>
+        <Text style={styles.headerTitle}>{t('changePassword')}</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 
@@ -135,18 +137,18 @@ const ChangePassword = () => {
         <View style={styles.infoCard}>
           <Icon name="information" size={20} color="#2196F3" />
           <Text style={styles.infoText}>
-            Your default password is your mobile number. Please change it to a secure password.
+            {t('defaultPasswordInfo')}
           </Text>
         </View>
 
         {/* Current Password */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Current Password *</Text>
+          <Text style={styles.label}>{t('currentPassword')} *</Text>
           <View style={styles.inputContainer}>
             <Icon name="lock" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Enter current password"
+              placeholder={t('enterCurrentPassword')}
               value={formData.currentPassword}
               onChangeText={(text) => handleInputChange('currentPassword', text)}
               secureTextEntry={!showCurrentPassword}
@@ -167,12 +169,12 @@ const ChangePassword = () => {
 
         {/* New Password */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>New Password *</Text>
+          <Text style={styles.label}>{t('newPassword')} *</Text>
           <View style={styles.inputContainer}>
             <Icon name="lock-plus" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Enter new password (min 6 characters)"
+              placeholder={t('enterNewPasswordMin6')}
               value={formData.newPassword}
               onChangeText={(text) => handleInputChange('newPassword', text)}
               secureTextEntry={!showNewPassword}
@@ -193,12 +195,12 @@ const ChangePassword = () => {
 
         {/* Confirm Password */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Confirm New Password *</Text>
+          <Text style={styles.label}>{t('confirmPassword')} *</Text>
           <View style={styles.inputContainer}>
             <Icon name="lock-check" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Re-enter new password"
+              placeholder={t('reEnterNewPassword')}
               value={formData.confirmPassword}
               onChangeText={(text) => handleInputChange('confirmPassword', text)}
               secureTextEntry={!showConfirmPassword}
@@ -219,14 +221,14 @@ const ChangePassword = () => {
 
         {/* Password Requirements */}
         <View style={styles.requirementsCard}>
-          <Text style={styles.requirementsTitle}>Password Requirements:</Text>
+          <Text style={styles.requirementsTitle}>{t('passwordRequirements')}:</Text>
           <View style={styles.requirementRow}>
             <Icon
               name={formData.newPassword.length >= 6 ? 'check-circle' : 'circle-outline'}
               size={16}
               color={formData.newPassword.length >= 6 ? '#4CAF50' : '#999'}
             />
-            <Text style={styles.requirementText}>At least 6 characters</Text>
+            <Text style={styles.requirementText}>{t('atLeast6Characters')}</Text>
           </View>
           <View style={styles.requirementRow}>
             <Icon
@@ -242,7 +244,7 @@ const ChangePassword = () => {
                   : '#999'
               }
             />
-            <Text style={styles.requirementText}>Passwords match</Text>
+            <Text style={styles.requirementText}>{t('passwordsMatch')}</Text>
           </View>
           <View style={styles.requirementRow}>
             <Icon
@@ -262,7 +264,7 @@ const ChangePassword = () => {
                   : '#999'
               }
             />
-            <Text style={styles.requirementText}>Different from current password</Text>
+            <Text style={styles.requirementText}>{t('differentFromCurrentPassword')}</Text>
           </View>
         </View>
 
@@ -277,7 +279,7 @@ const ChangePassword = () => {
           ) : (
             <>
               <Icon name="lock-reset" size={20} color="#FFF" />
-              <Text style={styles.changeButtonText}>Change Password</Text>
+              <Text style={styles.changeButtonText}>{t('changePassword')}</Text>
             </>
           )}
         </TouchableOpacity>

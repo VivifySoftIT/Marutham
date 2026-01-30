@@ -135,6 +135,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
 
         // Store all user data
         await AsyncStorage.setItem('token', response.token);
+        await AsyncStorage.setItem('jwt_token', response.token); // Also store as jwt_token for compatibility
         await AsyncStorage.setItem('userData', JSON.stringify(response.user));
         await AsyncStorage.setItem('fullName', response.user.fullName || '');
         await AsyncStorage.setItem('email', response.user.email || '');
