@@ -32,11 +32,11 @@ const Messages = ({ navigation }) => {
   const [showMemberSelectionModal, setShowMemberSelectionModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [loadingMessages, setLoadingMessages] = useState(false);
   const [attachment, setAttachment] = useState(null);
   const [allMembers, setAllMembers] = useState([]);
   const [selectedMembers, setSelectedMembers] = useState([]);
-  const [recentMessages, setRecentMessages] = useState([]);
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [totalMessagesCount, setTotalMessagesCount] = useState(0);
   const [adminMemberId, setAdminMemberId] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDate, setTempDate] = useState(new Date());
@@ -58,7 +58,7 @@ const Messages = ({ navigation }) => {
   useEffect(() => {
     getCurrentUserMemberId();
     loadMembers();
-    loadMessages();
+    loadMessagesCount();
   }, []);
 
   // Robust function to get current user's member ID (3-tier lookup)
@@ -137,6 +137,7 @@ const Messages = ({ navigation }) => {
       console.log('Messages - Active members count:', activeMembers.length);
       console.log('Messages - Active members sample:', activeMembers.slice(0, 3));
       setAllMembers(activeMembers);
+      console.log('Messages - Members loaded successfully');
     } catch (error) {
       console.error('Messages - Error loading members:', error);
       Alert.alert('Error', 'Failed to load members list');
@@ -145,16 +146,13 @@ const Messages = ({ navigation }) => {
     }
   };
 
-  const loadMessages = async () => {
+  const loadMessagesCount = async () => {
     try {
-      setLoadingMessages(true);
       const messages = await ApiService.getMessageNotifications();
-      setRecentMessages(messages || []);
-      console.log('Messages loaded:', messages?.length);
+      setTotalMessagesCount(messages?.length || 0);
+      console.log('Messages count loaded:', messages?.length || 0);
     } catch (error) {
-      console.error('Error loading messages:', error);
-    } finally {
-      setLoadingMessages(false);
+      console.error('Error loading messages count:', error);
     }
   };
 
@@ -223,11 +221,41 @@ const Messages = ({ navigation }) => {
   };
 
   const selectAllMembers = () => {
-    if (selectedMembers.length === allMembers.length) {
-      setSelectedMembers([]);
+    const filteredMembers = getFilteredMembers();
+    const allFilteredSelected = filteredMembers.every(member => 
+      selectedMembers.some(selected => selected.id === member.id)
+    );
+    
+    if (allFilteredSelected && filteredMembers.length > 0) {
+      // Deselect all filtered members
+      setSelectedMembers(prev => 
+        prev.filter(selected => 
+          !filteredMembers.some(filtered => filtered.id === selected.id)
+        )
+      );
     } else {
-      setSelectedMembers([...allMembers]);
+      // Select all filtered members (add only new ones)
+      setSelectedMembers(prev => {
+        const newMembers = filteredMembers.filter(filtered => 
+          !prev.some(selected => selected.id === filtered.id)
+        );
+        return [...prev, ...newMembers];
+      });
     }
+  };
+
+  // Filter members based on search query
+  const getFilteredMembers = () => {
+    if (!memberSearchQuery.trim()) {
+      return allMembers;
+    }
+    
+    const query = memberSearchQuery.toLowerCase().trim();
+    return allMembers.filter(member => 
+      member.name?.toLowerCase().includes(query) ||
+      member.email?.toLowerCase().includes(query) ||
+      member.phone?.toLowerCase().includes(query)
+    );
   };
 
   const handleSelectTemplate = (template) => {
@@ -379,7 +407,7 @@ const Messages = ({ navigation }) => {
               });
               setSelectedMembers([]);
               setAttachment(null);
-              loadMessages(); // Reload messages
+              loadMessagesCount(); // Reload messages count
             },
           },
         ]
@@ -398,30 +426,6 @@ const Messages = ({ navigation }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleDeleteMessage = async (messageId) => {
-    Alert.alert(
-      'Delete Message',
-      'Are you sure you want to delete this message?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await ApiService.deleteMessageNotification(messageId);
-              Alert.alert('Success', 'Message deleted successfully');
-              loadMessages();
-            } catch (error) {
-              console.error('Error deleting message:', error);
-              Alert.alert('Error', 'Failed to delete message');
-            }
-          },
-        },
-      ]
-    );
   };
 
   const renderTemplateCard = ({ item }) => (
@@ -869,7 +873,7 @@ const Messages = ({ navigation }) => {
           <View style={styles.statCard}>
             <Icon name="email-send" size={24} color="#4A90E2" />
             <Text style={styles.statLabel}>Total Messages</Text>
-            <Text style={styles.statValue}>{recentMessages.length}</Text>
+            <Text style={styles.statValue}>{totalMessagesCount}</Text>
           </View>
           <View style={styles.statCard}>
             <Icon name="account-multiple" size={24} color="#4CAF50" />
@@ -877,54 +881,6 @@ const Messages = ({ navigation }) => {
             <Text style={styles.statValue}>{allMembers.length}</Text>
           </View>
         </View>
-
-        {/* Recent Messages */}
-        <Text style={styles.sectionTitle}>Recent Messages</Text>
-        {loadingMessages ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#4A90E2" />
-            <Text style={styles.loadingText}>Loading messages...</Text>
-          </View>
-        ) : recentMessages.length > 0 ? (
-          <View style={styles.recentMessagesContainer}>
-            {recentMessages.slice(0, 5).map((message) => (
-              <View key={message.id} style={styles.messageItem}>
-                <Icon 
-                  name={
-                    message.messageType === 'Birthday' ? 'cake-variant' :
-                    message.messageType === 'Payment' ? 'cash-clock' :
-                    message.messageType === 'Event' ? 'calendar-star' :
-                    message.messageType === 'Meeting' ? 'account-group' :
-                    'hand-wave'
-                  } 
-                  size={20} 
-                  color={
-                    message.messageType === 'Birthday' ? '#E91E63' :
-                    message.messageType === 'Payment' ? '#FF9800' :
-                    message.messageType === 'Event' ? '#2196F3' :
-                    message.messageType === 'Meeting' ? '#00BCD4' :
-                    '#4CAF50'
-                  } 
-                />
-                <View style={styles.messageItemText}>
-                  <Text style={styles.messageItemTitle}>{message.subject}</Text>
-                  <Text style={styles.messageItemDate}>
-                    {message.messageType} • {message.memberIds ? `${message.memberIds.split(',').length} member${message.memberIds.split(',').length > 1 ? 's' : ''}` : 'All members'} • {new Date(message.createdDate).toLocaleDateString()}
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => handleDeleteMessage(message.id)}>
-                  <Icon name="delete" size={20} color="#F44336" />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Icon name="email-off" size={48} color="#D1D5DB" />
-            <Text style={styles.emptyText}>No messages sent yet</Text>
-            <Text style={styles.emptySubtext}>Start by selecting a template above</Text>
-          </View>
-        )}
 
         <View style={{ height: 30 }} />
       </ScrollView>
@@ -974,24 +930,45 @@ const Messages = ({ navigation }) => {
         visible={showMemberSelectionModal}
         transparent
         animationType="slide"
-        onRequestClose={() => setShowMemberSelectionModal(false)}
+        onRequestClose={() => {
+          setShowMemberSelectionModal(false);
+          setMemberSearchQuery(''); // Clear search when modal closes
+        }}
       >
         <SafeAreaView style={styles.memberSelectionModalContainer}>
           <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
           {/* Modal Header */}
           <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowMemberSelectionModal(false)}>
+            <TouchableOpacity onPress={() => {
+              setShowMemberSelectionModal(false);
+              setMemberSearchQuery(''); // Clear search when modal closes
+            }}>
               <Icon name="close" size={24} color="#FFF" />
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Select Members</Text>
             <View style={styles.headerRightButtons}>
-              <TouchableOpacity onPress={loadMembers} style={styles.refreshButton}>
-                <Icon name="refresh" size={20} color="#FFF" />
+              <TouchableOpacity onPress={() => {
+                console.log('Messages - Refresh button pressed');
+                setMemberSearchQuery(''); // Clear search when refreshing
+                setSelectedMembers([]); // Clear selected members when refreshing
+                loadMembers();
+              }} style={styles.refreshButton} disabled={loadingMembers}>
+                {loadingMembers ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <Icon name="refresh" size={20} color="#FFF" />
+                )}
               </TouchableOpacity>
               <TouchableOpacity onPress={selectAllMembers}>
                 <Text style={styles.selectAllText}>
-                  {selectedMembers.length === allMembers.length && allMembers.length > 0 ? 'Deselect All' : 'Select All'}
+                  {(() => {
+                    const filteredMembers = getFilteredMembers();
+                    const allFilteredSelected = filteredMembers.every(member => 
+                      selectedMembers.some(selected => selected.id === member.id)
+                    );
+                    return allFilteredSelected && filteredMembers.length > 0 ? 'Deselect All' : 'Select All';
+                  })()}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1002,7 +979,35 @@ const Messages = ({ navigation }) => {
             <Icon name="account-check" size={20} color="#4A90E2" />
             <Text style={styles.selectedCountText}>
               {selectedMembers.length} member{selectedMembers.length !== 1 ? 's' : ''} selected
+              {memberSearchQuery.trim() && (
+                <Text style={styles.searchResultsText}>
+                  {' • '}
+                  {getFilteredMembers().length} result{getFilteredMembers().length !== 1 ? 's' : ''}
+                </Text>
+              )}
             </Text>
+          </View>
+
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <View style={styles.searchInputContainer}>
+              <Icon name="magnify" size={20} color="#4A90E2" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search members by name, email, or phone..."
+                value={memberSearchQuery}
+                onChangeText={setMemberSearchQuery}
+                placeholderTextColor="#999"
+              />
+              {memberSearchQuery.length > 0 && (
+                <TouchableOpacity 
+                  onPress={() => setMemberSearchQuery('')}
+                  style={styles.clearSearchButton}
+                >
+                  <Icon name="close-circle" size={20} color="#999" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {/* Members List */}
@@ -1013,7 +1018,7 @@ const Messages = ({ navigation }) => {
             </View>
           ) : (
             <FlatList
-              data={allMembers}
+              data={getFilteredMembers()}
               keyExtractor={(item) => item.id.toString()}
               renderItem={({ item }) => {
                 const isSelected = selectedMembers.some(m => m.id === item.id);
@@ -1040,9 +1045,16 @@ const Messages = ({ navigation }) => {
               ListEmptyComponent={() => (
                 <View style={styles.emptyContainer}>
                   <Icon name="account-off" size={48} color="#D1D5DB" />
-                  <Text style={styles.emptyText}>No members found</Text>
+                  <Text style={styles.emptyText}>
+                    {memberSearchQuery.trim() ? 'No members found' : 'No members found'}
+                  </Text>
                   <Text style={styles.emptySubtext}>
-                    {allMembers.length === 0 ? 'No active members available' : 'Try refreshing the screen'}
+                    {memberSearchQuery.trim() 
+                      ? 'Try adjusting your search terms' 
+                      : allMembers.length === 0 
+                        ? 'No active members available' 
+                        : 'Try refreshing the screen'
+                    }
                   </Text>
                 </View>
               )}
@@ -1052,10 +1064,13 @@ const Messages = ({ navigation }) => {
           {/* Done Button */}
           <TouchableOpacity
             style={styles.doneButton}
-            onPress={() => setShowMemberSelectionModal(false)}
+            onPress={() => {
+              setShowMemberSelectionModal(false);
+              setMemberSearchQuery(''); // Clear search when modal closes
+            }}
           >
             <Text style={styles.doneButtonText}>
-              Done ({selectedMembers.length} selected)
+              Done
             </Text>
           </TouchableOpacity>
         </SafeAreaView>
@@ -1166,33 +1181,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4A90E2',
     marginTop: 4,
-  },
-  recentMessagesContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 10,
-    elevation: 2,
-  },
-  messageItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  messageItemText: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  messageItemTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  messageItemDate: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
   },
   // Modal Styles
   modalContainer: {
@@ -1547,7 +1535,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   refreshButton: {
-    padding: 4,
+    padding: 8,
+    borderRadius: 4,
+    minWidth: 32,
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   selectedCountContainer: {
     flexDirection: 'row',
@@ -1561,6 +1554,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#1976D2',
+  },
+  searchResultsText: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#666',
+  },
+  searchContainer: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    backgroundColor: '#F5F9FC',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  searchInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 12,
+    minHeight: 45,
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    paddingVertical: 10,
+  },
+  clearSearchButton: {
+    padding: 4,
+    marginLeft: 8,
   },
   memberSelectionItem: {
     flexDirection: 'row',
