@@ -1,0 +1,608 @@
+﻿> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:checkKotlinGradlePluginConfigurationErrors
+> Task :expo-module-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-module-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-module-gradle-plugin:classes UP-TO-DATE
+> Task :expo-module-gradle-plugin:jar UP-TO-DATE
+
+> Configure project :expo
+
+Using expo modules
+  - [32mexpo-application[0m (6.1.5)
+  - [32mexpo-asset[0m (11.1.7)
+  - [32mexpo-av[0m (15.1.7)
+  - [32mexpo-constants[0m (17.1.8)
+  - [32mexpo-device[0m (7.1.4)
+  - [32mexpo-document-picker[0m (13.1.6)
+  - [32mexpo-file-system[0m (18.1.11)
+  - [32mexpo-font[0m (13.3.2)
+  - [32mexpo-image[0m (2.4.1)
+  - [32mexpo-image-loader[0m (5.1.0)
+  - [32mexpo-image-picker[0m (16.1.4)
+  - [32mexpo-keep-awake[0m (14.1.4)
+  - [32mexpo-linear-gradient[0m (14.1.5)
+  - [32mexpo-local-authentication[0m (16.0.5)
+  - [32mexpo-location[0m (18.1.6)
+  - [32mexpo-modules-core[0m (2.5.0)
+  - [32mexpo-notifications[0m (0.31.4)
+  - [32mexpo-print[0m (14.1.4)
+  - [32mexpo-screen-orientation[0m (8.1.7)
+  - [32mexpo-sharing[0m (13.1.5)
+  - [32mexpo-speech[0m (13.1.7)
+  - [32mexpo-speech-recognition[0m (3.1.0)
+  - [32mexpo-video[0m (2.2.2)
+  - [32mexpo-web-browser[0m (14.2.0)
+
+
+> Configure project :react-native-reanimated
+Android gradle plugin: 8.8.2
+Gradle: 8.10.2
+
+> Configure project :react-native-video
+Kotlin version is correct: 1.9.25
+AndroidX version is correct: 1.9.3
+useExoplayerIMA: false
+useExoplayerSmoothStreaming: true
+useExoplayerDash: true
+useExoplayerHls: true
+useExoplayerRtsp: false
+buildFromSource: false
+
+> Task :app:clean
+> Task :expo:clean
+> Task :expo-application:clean
+> Task :expo-asset:clean
+> Task :expo-av:externalNativeBuildCleanDebug
+> Task :expo-av:externalNativeBuildCleanRelease
+> Task :expo-av:clean
+> Task :expo-constants:clean
+> Task :expo-device:clean
+> Task :expo-document-picker:clean
+> Task :expo-file-system:clean
+> Task :expo-font:clean
+> Task :expo-image:clean
+> Task :expo-image-loader:clean
+> Task :expo-image-picker:clean
+> Task :expo-keep-awake:clean
+> Task :expo-linear-gradient:clean
+> Task :expo-local-authentication:clean
+> Task :expo-location:clean
+> Task :expo-modules-core:externalNativeBuildCleanDebug
+> Task :expo-modules-core:externalNativeBuildCleanRelease
+> Task :expo-modules-core:clean
+> Task :expo-notifications:clean
+> Task :expo-print:clean
+> Task :expo-screen-orientation:clean
+> Task :expo-sharing:clean
+> Task :expo-speech:clean
+> Task :expo-speech-recognition:clean
+> Task :expo-video:clean
+> Task :expo-web-browser:clean
+> Task :react-native-async-storage_async-storage:clean
+> Task :react-native-biometrics:clean
+> Task :react-native-community_datetimepicker:clean
+> Task :react-native-community_geolocation:clean
+> Task :react-native-gesture-handler:clean
+> Task :react-native-get-random-values:clean
+> Task :react-native-image-picker:clean
+> Task :react-native-linear-gradient:clean
+> Task :react-native-orientation-locker:clean
+> Task :react-native-pdf:clean
+> Task :react-native-picker_picker:clean
+> Task :react-native-reanimated:cleanCmakeCache
+> Task :react-native-reanimated:externalNativeBuildCleanDebug
+> Task :react-native-reanimated:externalNativeBuildCleanRelease
+> Task :react-native-reanimated:clean
+> Task :react-native-safe-area-context:clean
+> Task :react-native-screens:externalNativeBuildCleanDebug
+> Task :react-native-screens:externalNativeBuildCleanRelease
+> Task :react-native-screens:clean
+> Task :react-native-svg:clean
+> Task :react-native-vector-icons:clean
+> Task :react-native-video:clean
+> Task :react-native-voice_voice:clean
+> Task :react-native-webview:clean
+> Task :rn-fetch-blob:clean
+> Task :app:generateAutolinkingPackageList
+> Task :app:generateCodegenSchemaFromJavaScript SKIPPED
+> Task :app:generateCodegenArtifactsFromSchema SKIPPED
+> Task :app:preBuild
+> Task :app:preDebugBuild
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig
+> Task :expo:generateExpoModulesPackageListTask
+> Task :expo:preBuild
+> Task :expo:preDebugBuild
+> Task :expo-application:preBuild UP-TO-DATE
+> Task :expo-application:preDebugBuild UP-TO-DATE
+> Task :expo:writeDebugAarMetadata
+> Task :expo-asset:preBuild UP-TO-DATE
+> Task :expo-asset:preDebugBuild UP-TO-DATE
+> Task :expo-application:writeDebugAarMetadata
+> Task :expo-av:preBuild UP-TO-DATE
+> Task :expo-av:preDebugBuild UP-TO-DATE
+> Task :expo-asset:writeDebugAarMetadata
+> Task :expo-av:writeDebugAarMetadata
+
+> Task :expo-constants:createExpoConfig
+
+> Task :expo-constants:preBuild
+> Task :expo-constants:preDebugBuild
+> Task :expo-device:preBuild UP-TO-DATE
+> Task :expo-device:preDebugBuild UP-TO-DATE
+> Task :expo-constants:writeDebugAarMetadata
+> Task :expo-document-picker:preBuild UP-TO-DATE
+> Task :expo-document-picker:preDebugBuild UP-TO-DATE
+> Task :expo-device:writeDebugAarMetadata
+> Task :expo-file-system:preBuild UP-TO-DATE
+> Task :expo-file-system:preDebugBuild UP-TO-DATE
+> Task :expo-document-picker:writeDebugAarMetadata
+> Task :expo-font:preBuild UP-TO-DATE
+> Task :expo-font:preDebugBuild UP-TO-DATE
+> Task :expo-file-system:writeDebugAarMetadata
+> Task :expo-image:preBuild UP-TO-DATE
+> Task :expo-image:preDebugBuild UP-TO-DATE
+> Task :expo-font:writeDebugAarMetadata
+> Task :expo-image-loader:preBuild UP-TO-DATE
+> Task :expo-image-loader:preDebugBuild UP-TO-DATE
+> Task :expo-image:writeDebugAarMetadata
+> Task :expo-image-picker:preBuild UP-TO-DATE
+> Task :expo-image-picker:preDebugBuild UP-TO-DATE
+> Task :expo-image-loader:writeDebugAarMetadata
+> Task :expo-keep-awake:preBuild UP-TO-DATE
+> Task :expo-keep-awake:preDebugBuild UP-TO-DATE
+> Task :expo-image-picker:writeDebugAarMetadata
+> Task :expo-linear-gradient:preBuild UP-TO-DATE
+> Task :expo-linear-gradient:preDebugBuild UP-TO-DATE
+> Task :expo-keep-awake:writeDebugAarMetadata
+> Task :expo-local-authentication:preBuild UP-TO-DATE
+> Task :expo-local-authentication:preDebugBuild UP-TO-DATE
+> Task :expo-linear-gradient:writeDebugAarMetadata
+> Task :expo-location:preBuild UP-TO-DATE
+> Task :expo-location:preDebugBuild UP-TO-DATE
+> Task :expo-local-authentication:writeDebugAarMetadata
+> Task :expo-modules-core:preBuild UP-TO-DATE
+> Task :expo-modules-core:preDebugBuild UP-TO-DATE
+> Task :expo-location:writeDebugAarMetadata
+> Task :expo-notifications:preBuild UP-TO-DATE
+> Task :expo-notifications:preDebugBuild UP-TO-DATE
+> Task :expo-modules-core:writeDebugAarMetadata
+> Task :expo-print:preBuild UP-TO-DATE
+> Task :expo-print:preDebugBuild UP-TO-DATE
+> Task :expo-notifications:writeDebugAarMetadata
+> Task :expo-screen-orientation:preBuild UP-TO-DATE
+> Task :expo-screen-orientation:preDebugBuild UP-TO-DATE
+> Task :expo-print:writeDebugAarMetadata
+> Task :expo-sharing:preBuild UP-TO-DATE
+> Task :expo-sharing:preDebugBuild UP-TO-DATE
+> Task :expo-screen-orientation:writeDebugAarMetadata
+> Task :expo-speech:preBuild UP-TO-DATE
+> Task :expo-speech:preDebugBuild UP-TO-DATE
+> Task :expo-sharing:writeDebugAarMetadata
+> Task :expo-speech-recognition:preBuild UP-TO-DATE
+> Task :expo-speech-recognition:preDebugBuild UP-TO-DATE
+> Task :expo-speech:writeDebugAarMetadata
+> Task :expo-video:preBuild UP-TO-DATE
+> Task :expo-video:preDebugBuild UP-TO-DATE
+> Task :expo-speech-recognition:writeDebugAarMetadata
+> Task :expo-web-browser:preBuild UP-TO-DATE
+> Task :expo-web-browser:preDebugBuild UP-TO-DATE
+> Task :expo-video:writeDebugAarMetadata
+> Task :react-native-async-storage_async-storage:preBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:preDebugBuild UP-TO-DATE
+> Task :expo-web-browser:writeDebugAarMetadata
+> Task :react-native-biometrics:preBuild UP-TO-DATE
+> Task :react-native-biometrics:preDebugBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:writeDebugAarMetadata
+> Task :react-native-community_datetimepicker:preBuild UP-TO-DATE
+> Task :react-native-community_datetimepicker:preDebugBuild UP-TO-DATE
+> Task :react-native-biometrics:writeDebugAarMetadata
+> Task :react-native-community_geolocation:preBuild UP-TO-DATE
+> Task :react-native-community_geolocation:preDebugBuild UP-TO-DATE
+> Task :react-native-community_datetimepicker:writeDebugAarMetadata
+> Task :react-native-gesture-handler:preBuild UP-TO-DATE
+> Task :react-native-gesture-handler:preDebugBuild UP-TO-DATE
+> Task :react-native-community_geolocation:writeDebugAarMetadata
+> Task :react-native-get-random-values:preBuild UP-TO-DATE
+> Task :react-native-get-random-values:preDebugBuild UP-TO-DATE
+> Task :react-native-gesture-handler:writeDebugAarMetadata
+> Task :react-native-image-picker:preBuild UP-TO-DATE
+> Task :react-native-image-picker:preDebugBuild UP-TO-DATE
+> Task :react-native-get-random-values:writeDebugAarMetadata
+> Task :react-native-linear-gradient:preBuild UP-TO-DATE
+> Task :react-native-linear-gradient:preDebugBuild UP-TO-DATE
+> Task :react-native-image-picker:writeDebugAarMetadata
+> Task :react-native-orientation-locker:preBuild UP-TO-DATE
+> Task :react-native-orientation-locker:preDebugBuild UP-TO-DATE
+> Task :react-native-linear-gradient:writeDebugAarMetadata
+> Task :react-native-pdf:preBuild UP-TO-DATE
+> Task :react-native-pdf:preDebugBuild UP-TO-DATE
+> Task :react-native-orientation-locker:writeDebugAarMetadata
+> Task :react-native-picker_picker:preBuild UP-TO-DATE
+> Task :react-native-picker_picker:preDebugBuild UP-TO-DATE
+> Task :react-native-pdf:writeDebugAarMetadata
+> Task :react-native-reanimated:assertMinimalReactNativeVersionTask SKIPPED
+> Task :react-native-picker_picker:writeDebugAarMetadata
+> Task :react-native-reanimated:prepareReanimatedHeadersForPrefabs
+> Task :react-native-reanimated:prepareWorkletsHeadersForPrefabs
+> Task :react-native-reanimated:preBuild
+> Task :react-native-reanimated:preDebugBuild
+> Task :react-native-safe-area-context:preBuild UP-TO-DATE
+> Task :react-native-safe-area-context:preDebugBuild UP-TO-DATE
+> Task :react-native-reanimated:writeDebugAarMetadata
+> Task :react-native-screens:preBuild UP-TO-DATE
+> Task :react-native-screens:preDebugBuild UP-TO-DATE
+> Task :react-native-safe-area-context:writeDebugAarMetadata
+> Task :react-native-svg:preBuild UP-TO-DATE
+> Task :react-native-svg:preDebugBuild UP-TO-DATE
+> Task :react-native-screens:writeDebugAarMetadata
+> Task :react-native-vector-icons:preBuild UP-TO-DATE
+> Task :react-native-vector-icons:preDebugBuild UP-TO-DATE
+> Task :react-native-svg:writeDebugAarMetadata
+> Task :react-native-video:preBuild UP-TO-DATE
+> Task :react-native-video:preDebugBuild UP-TO-DATE
+> Task :react-native-vector-icons:writeDebugAarMetadata
+> Task :react-native-voice_voice:preBuild UP-TO-DATE
+> Task :react-native-voice_voice:preDebugBuild UP-TO-DATE
+> Task :react-native-video:writeDebugAarMetadata
+> Task :react-native-webview:preBuild UP-TO-DATE
+> Task :react-native-webview:preDebugBuild UP-TO-DATE
+> Task :react-native-voice_voice:writeDebugAarMetadata
+> Task :rn-fetch-blob:preBuild UP-TO-DATE
+> Task :rn-fetch-blob:preDebugBuild UP-TO-DATE
+> Task :react-native-webview:writeDebugAarMetadata
+> Task :rn-fetch-blob:writeDebugAarMetadata
+> Task :app:generateDebugResValues
+
+> Task :app:checkDebugAarMetadata
+WARNING: [Processor] Library 'C:\Users\dines\.gradle\caches\modules-2\files-2.1\androidx.media3\media3-ui\1.4.1\95308f5a6ed8f6c11afbfc321a724f0e2b81560e\media3-ui-1.4.1.aar' contains references to both AndroidX and old support library. This seems like the library is partially migrated. Jetifier will try to rewrite the library anyway.
+ Example of androidX reference: 'androidx/media3/ui/PlayerNotificationManager'
+ Example of support library reference: 'android/support/v4/media/session/MediaSessionCompat$Token'
+WARNING: [Processor] Library 'C:\Users\dines\.gradle\caches\modules-2\files-2.1\androidx.media3\media3-session\1.4.1\349ecc8b32e78399348799464d598d10024bb296\media3-session-1.4.1.aar' contains references to both AndroidX and old support library. This seems like the library is partially migrated. Jetifier will try to rewrite the library anyway.
+ Example of androidX reference: 'androidx/media3/session/MediaSession'
+ Example of support library reference: 'android/support/v4/media/session/MediaSessionCompat$Token'
+WARNING: [Processor] Library 'C:\Users\dines\.gradle\caches\modules-2\files-2.1\com.google.android.exoplayer\exoplayer-ui\2.18.1\eed81d49b8b0e9a365cbec260dafb222d6e5bc67\exoplayer-ui-2.18.1.aar' contains references to both AndroidX and old support library. This seems like the library is partially migrated. Jetifier will try to rewrite the library anyway.
+ Example of androidX reference: 'androidx/core/app/NotificationCompat$Builder'
+ Example of support library reference: 'android/support/v4/media/session/MediaSessionCompat$Token'
+
+> Task :app:processDebugGoogleServices
+> Task :expo:generateDebugResValues
+> Task :expo:generateDebugResources
+> Task :expo:packageDebugResources
+> Task :expo-application:generateDebugResValues
+> Task :expo-application:generateDebugResources
+> Task :expo-application:packageDebugResources
+> Task :expo-asset:generateDebugResValues
+> Task :expo-asset:generateDebugResources
+> Task :expo-asset:packageDebugResources
+> Task :expo-av:generateDebugResValues
+> Task :expo-av:generateDebugResources
+> Task :expo-av:packageDebugResources
+> Task :expo-constants:generateDebugResValues
+> Task :expo-constants:generateDebugResources
+> Task :expo-constants:packageDebugResources
+> Task :expo-device:generateDebugResValues
+> Task :expo-device:generateDebugResources
+> Task :expo-device:packageDebugResources
+> Task :expo-document-picker:generateDebugResValues
+> Task :expo-document-picker:generateDebugResources
+> Task :expo-document-picker:packageDebugResources
+> Task :expo-file-system:generateDebugResValues
+> Task :expo-file-system:generateDebugResources
+> Task :expo-file-system:packageDebugResources
+> Task :expo-font:generateDebugResValues
+> Task :expo-font:generateDebugResources
+> Task :expo-font:packageDebugResources
+> Task :expo-image:generateDebugResValues
+> Task :expo-image:generateDebugResources
+> Task :expo-image:packageDebugResources
+> Task :expo-image-loader:generateDebugResValues
+> Task :expo-image-loader:generateDebugResources
+> Task :expo-image-loader:packageDebugResources
+> Task :expo-image-picker:generateDebugResValues
+> Task :expo-image-picker:generateDebugResources
+> Task :expo-image-picker:packageDebugResources
+> Task :expo-keep-awake:generateDebugResValues
+> Task :expo-keep-awake:generateDebugResources
+> Task :expo-keep-awake:packageDebugResources
+> Task :expo-linear-gradient:generateDebugResValues
+> Task :expo-linear-gradient:generateDebugResources
+> Task :expo-linear-gradient:packageDebugResources
+> Task :expo-local-authentication:generateDebugResValues
+> Task :expo-local-authentication:generateDebugResources
+> Task :expo-local-authentication:packageDebugResources
+> Task :expo-location:generateDebugResValues
+> Task :expo-location:generateDebugResources
+> Task :expo-location:packageDebugResources
+> Task :expo-modules-core:generateDebugResValues
+> Task :expo-modules-core:generateDebugResources
+> Task :expo-modules-core:packageDebugResources
+> Task :expo-notifications:generateDebugResValues
+> Task :expo-notifications:generateDebugResources
+> Task :expo-notifications:packageDebugResources
+> Task :expo-print:generateDebugResValues
+> Task :expo-print:generateDebugResources
+> Task :expo-print:packageDebugResources
+> Task :expo-screen-orientation:generateDebugResValues
+> Task :expo-screen-orientation:generateDebugResources
+> Task :expo-screen-orientation:packageDebugResources
+> Task :expo-sharing:generateDebugResValues
+> Task :expo-sharing:generateDebugResources
+> Task :expo-sharing:packageDebugResources
+> Task :expo-speech:generateDebugResValues
+> Task :expo-speech:generateDebugResources
+> Task :expo-speech:packageDebugResources
+> Task :expo-speech-recognition:generateDebugResValues
+> Task :expo-speech-recognition:generateDebugResources
+> Task :expo-speech-recognition:packageDebugResources
+> Task :expo-video:generateDebugResValues
+> Task :expo-video:generateDebugResources
+> Task :expo-video:packageDebugResources
+> Task :expo-web-browser:generateDebugResValues
+> Task :expo-web-browser:generateDebugResources
+> Task :expo-web-browser:packageDebugResources
+> Task :react-native-async-storage_async-storage:generateDebugResValues
+> Task :react-native-async-storage_async-storage:generateDebugResources
+> Task :react-native-async-storage_async-storage:packageDebugResources
+> Task :react-native-biometrics:generateDebugResValues
+> Task :react-native-biometrics:generateDebugResources
+> Task :react-native-biometrics:packageDebugResources
+> Task :react-native-community_datetimepicker:generateDebugResValues
+> Task :react-native-community_datetimepicker:generateDebugResources
+> Task :react-native-community_datetimepicker:packageDebugResources
+> Task :react-native-community_geolocation:generateDebugResValues
+> Task :react-native-community_geolocation:generateDebugResources
+> Task :react-native-community_geolocation:packageDebugResources
+> Task :react-native-gesture-handler:generateDebugResValues
+> Task :react-native-gesture-handler:generateDebugResources
+> Task :react-native-gesture-handler:packageDebugResources
+> Task :react-native-get-random-values:generateDebugResValues
+> Task :react-native-get-random-values:generateDebugResources
+> Task :react-native-get-random-values:packageDebugResources
+> Task :react-native-image-picker:generateDebugResValues
+> Task :react-native-image-picker:generateDebugResources
+> Task :react-native-image-picker:packageDebugResources
+> Task :react-native-linear-gradient:generateDebugResValues
+> Task :react-native-linear-gradient:generateDebugResources
+> Task :react-native-linear-gradient:packageDebugResources
+> Task :react-native-orientation-locker:generateDebugResValues
+> Task :react-native-orientation-locker:generateDebugResources
+> Task :react-native-orientation-locker:packageDebugResources
+> Task :react-native-pdf:generateDebugResValues
+> Task :react-native-pdf:generateDebugResources
+> Task :react-native-pdf:packageDebugResources
+> Task :react-native-picker_picker:generateDebugResValues
+> Task :react-native-picker_picker:generateDebugResources
+> Task :react-native-picker_picker:packageDebugResources
+> Task :react-native-reanimated:generateDebugResValues
+> Task :react-native-reanimated:generateDebugResources
+> Task :react-native-reanimated:packageDebugResources
+> Task :react-native-safe-area-context:generateDebugResValues
+> Task :react-native-safe-area-context:generateDebugResources
+> Task :react-native-safe-area-context:packageDebugResources
+> Task :react-native-screens:generateDebugResValues
+> Task :react-native-screens:generateDebugResources
+> Task :react-native-screens:packageDebugResources
+> Task :react-native-svg:generateDebugResValues
+> Task :react-native-svg:generateDebugResources
+> Task :react-native-svg:packageDebugResources
+> Task :react-native-vector-icons:generateDebugResValues
+> Task :react-native-vector-icons:generateDebugResources
+> Task :react-native-vector-icons:packageDebugResources
+> Task :react-native-video:generateDebugResValues
+> Task :react-native-video:generateDebugResources
+> Task :react-native-video:packageDebugResources
+> Task :react-native-voice_voice:generateDebugResValues
+> Task :react-native-voice_voice:generateDebugResources
+> Task :react-native-voice_voice:packageDebugResources
+> Task :react-native-webview:generateDebugResValues
+> Task :react-native-webview:generateDebugResources
+> Task :react-native-webview:packageDebugResources
+> Task :rn-fetch-blob:generateDebugResValues
+> Task :rn-fetch-blob:generateDebugResources
+> Task :rn-fetch-blob:packageDebugResources
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :expo:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :expo-application:extractDeepLinksDebug
+> Task :expo:processDebugManifest
+> Task :expo-asset:extractDeepLinksDebug
+> Task :expo-application:processDebugManifest
+> Task :expo-av:extractDeepLinksDebug
+> Task :expo-asset:processDebugManifest
+> Task :expo-constants:extractDeepLinksDebug
+> Task :expo-av:processDebugManifest
+> Task :expo-device:extractDeepLinksDebug
+> Task :expo-constants:processDebugManifest
+> Task :expo-document-picker:extractDeepLinksDebug
+> Task :expo-device:processDebugManifest
+> Task :expo-file-system:extractDeepLinksDebug
+> Task :expo-document-picker:processDebugManifest
+> Task :expo-font:extractDeepLinksDebug
+
+> Task :expo-file-system:processDebugManifest
+C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\expo-file-system\android\src\main\AndroidManifest.xml:6:9-8:20 Warning:
+	provider#expo.modules.filesystem.FileSystemFileProvider@android:authorities was tagged at AndroidManifest.xml:6 to replace other declarations but no other declaration present
+
+> Task :expo-image:extractDeepLinksDebug
+> Task :expo-font:processDebugManifest
+> Task :expo-image-loader:extractDeepLinksDebug
+> Task :expo-image:processDebugManifest
+> Task :expo-image-picker:extractDeepLinksDebug
+> Task :expo-image-loader:processDebugManifest
+> Task :app:mergeDebugResources
+> Task :expo-keep-awake:extractDeepLinksDebug
+> Task :expo-image-picker:processDebugManifest
+> Task :expo-linear-gradient:extractDeepLinksDebug
+> Task :expo-keep-awake:processDebugManifest
+> Task :expo-local-authentication:extractDeepLinksDebug
+> Task :expo-linear-gradient:processDebugManifest
+> Task :expo-location:extractDeepLinksDebug
+> Task :expo-local-authentication:processDebugManifest
+> Task :expo-modules-core:extractDeepLinksDebug
+> Task :expo-location:processDebugManifest
+> Task :expo-notifications:extractDeepLinksDebug
+
+> Task :expo-modules-core:processDebugManifest
+C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\expo-modules-core\android\src\main\AndroidManifest.xml:8:9-11:45 Warning:
+	meta-data#com.facebook.soloader.enabled@android:value was tagged at AndroidManifest.xml:8 to replace other declarations but no other declaration present
+
+> Task :expo-print:extractDeepLinksDebug
+> Task :expo-notifications:processDebugManifest
+> Task :expo-screen-orientation:extractDeepLinksDebug
+> Task :expo-print:processDebugManifest
+> Task :expo-sharing:extractDeepLinksDebug
+> Task :expo-screen-orientation:processDebugManifest
+> Task :expo-speech:extractDeepLinksDebug
+> Task :expo-sharing:processDebugManifest
+> Task :expo-speech-recognition:extractDeepLinksDebug
+> Task :expo-speech:processDebugManifest
+> Task :expo-video:extractDeepLinksDebug
+> Task :expo-speech-recognition:processDebugManifest
+> Task :expo-web-browser:extractDeepLinksDebug
+> Task :expo-video:processDebugManifest
+> Task :react-native-async-storage_async-storage:extractDeepLinksDebug
+> Task :expo-web-browser:processDebugManifest
+> Task :react-native-biometrics:extractDeepLinksDebug
+
+> Task :react-native-async-storage_async-storage:processDebugManifest
+package="com.reactnativecommunity.asyncstorage" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\@react-native-async-storage\async-storage\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.asyncstorage" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\@react-native-async-storage\async-storage\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-community_datetimepicker:extractDeepLinksDebug
+
+> Task :react-native-biometrics:processDebugManifest
+package="com.rnbiometrics" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-biometrics\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.rnbiometrics" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-biometrics\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-community_geolocation:extractDeepLinksDebug
+> Task :react-native-community_datetimepicker:processDebugManifest
+> Task :react-native-gesture-handler:extractDeepLinksDebug
+
+> Task :react-native-community_geolocation:processDebugManifest
+package="com.reactnativecommunity.geolocation" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.geolocation" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\@react-native-community\geolocation\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-get-random-values:extractDeepLinksDebug
+> Task :react-native-gesture-handler:processDebugManifest
+> Task :react-native-image-picker:extractDeepLinksDebug
+
+> Task :react-native-get-random-values:processDebugManifest
+package="org.linusu" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-get-random-values\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="org.linusu" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-get-random-values\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-linear-gradient:extractDeepLinksDebug
+
+> Task :react-native-image-picker:processDebugManifest
+package="com.imagepicker" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-image-picker\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.imagepicker" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-image-picker\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-orientation-locker:extractDeepLinksDebug
+
+> Task :react-native-linear-gradient:processDebugManifest
+package="com.BV.LinearGradient" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-linear-gradient\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.BV.LinearGradient" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-linear-gradient\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-pdf:extractDeepLinksDebug
+
+> Task :react-native-orientation-locker:processDebugManifest
+package="org.wonday.orientation" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-orientation-locker\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="org.wonday.orientation" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-orientation-locker\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-picker_picker:extractDeepLinksDebug
+
+> Task :react-native-pdf:processDebugManifest
+package="org.wonday.pdf" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-pdf\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="org.wonday.pdf" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-pdf\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-reanimated:extractDeepLinksDebug
+
+> Task :react-native-picker_picker:processDebugManifest
+package="com.reactnativecommunity.picker" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\@react-native-picker\picker\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.reactnativecommunity.picker" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\@react-native-picker\picker\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-safe-area-context:extractDeepLinksDebug
+> Task :react-native-reanimated:processDebugManifest
+> Task :react-native-screens:extractDeepLinksDebug
+
+> Task :react-native-safe-area-context:processDebugManifest
+package="com.th3rdwave.safeareacontext" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-safe-area-context\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.th3rdwave.safeareacontext" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-safe-area-context\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-svg:extractDeepLinksDebug
+> Task :react-native-screens:processDebugManifest
+> Task :react-native-vector-icons:extractDeepLinksDebug
+> Task :react-native-svg:processDebugManifest
+> Task :react-native-video:extractDeepLinksDebug
+
+> Task :react-native-vector-icons:processDebugManifest
+package="com.oblador.vectoricons" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-vector-icons\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.oblador.vectoricons" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\react-native-vector-icons\android\src\main\AndroidManifest.xml.
+
+> Task :react-native-voice_voice:extractDeepLinksDebug
+> Task :react-native-video:processDebugManifest
+> Task :react-native-webview:extractDeepLinksDebug
+
+> Task :react-native-voice_voice:processDebugManifest
+package="com.wenkesj.voice" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\@react-native-voice\voice\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.wenkesj.voice" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\@react-native-voice\voice\android\src\main\AndroidManifest.xml.
+
+> Task :rn-fetch-blob:extractDeepLinksDebug
+> Task :react-native-webview:processDebugManifest
+
+> Task :rn-fetch-blob:processDebugManifest
+package="com.RNFetchBlob" found in source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\rn-fetch-blob\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.RNFetchBlob" from the source AndroidManifest.xml: C:\Users\dines\Desktop\IT-ALAIGAL\Alaigal26\node_modules\rn-fetch-blob\android\src\main\AndroidManifest.xml.
+
+> Task :expo:compileDebugLibraryResources
+
+> Task :app:processDebugMainManifest FAILED
+
+See https://developer.android.com/r/studio-ui/build/manifest-merger for more information about the manifest merger.
+
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.10.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+358 actionable tasks: 344 executed, 14 up-to-date

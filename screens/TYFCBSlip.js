@@ -44,6 +44,12 @@ const TYFCBSlip = () => {
 
   useEffect(() => {
     loadMembers();
+    return () => {
+      // Cleanup voice listeners on unmount
+      if (Platform.OS !== 'web') {
+        Voice.destroy().then(Voice.removeAllListeners);
+      }
+    };
   }, []);
 
   const apiGet = async (endpoint) => {
@@ -188,6 +194,14 @@ const TYFCBSlip = () => {
     // For Mobile Platform
     else if (Platform.OS !== 'web' && Voice !== null && Voice !== undefined && typeof Voice.start === 'function') {
       try {
+        // CLEANUP FIRST: Destroy any previous instance and remove listeners
+        try {
+            await Voice.destroy();
+            Voice.removeAllListeners();
+        } catch (e) {
+            console.log("Cleanup error (harmless):", e);
+        }
+
         setIsListening(fieldName);
 
         Voice.onSpeechStart = () => {
@@ -200,17 +214,24 @@ const TYFCBSlip = () => {
             const spokenText = event.value[0];
             handleInputChange(fieldName, spokenText);
             setIsListening(null);
+            // Optional: stop listening after getting result
+            Voice.destroy().then(Voice.removeAllListeners); 
           }
         };
 
         Voice.onSpeechError = (event) => {
           console.error('Voice error:', event.error);
           setIsListening(null);
-          Alert.alert('Voice Error', 'Could not recognize speech. Please try again.');
+          // Don't show alert for "No match" which happens frequently and is annoying
+          if (event.error.activeError || (event.error.code !== '7' && event.error.code !== 7)) {
+             Alert.alert('Voice Error', 'Could not recognize speech. Please try again.');
+          }
+          Voice.destroy().then(Voice.removeAllListeners);
         };
 
         Voice.onSpeechEnd = () => {
           setIsListening(null);
+          Voice.destroy().then(Voice.removeAllListeners);
         };
 
         await Voice.start('en-IN');
