@@ -583,6 +583,8 @@ const MyProfile = () => {
       style={{ flex: 1 }}
     >
       <View style={styles.container}>
+        <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+        
         <LinearGradient
           colors={['#4A90E2', '#87CEEB']}
           start={{ x: 0, y: 0 }}
@@ -745,13 +747,13 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingHorizontal: 15,
-    paddingVertical: 8,
-    paddingTop: StatusBar.currentHeight || 8,
+    paddingVertical: 12, // Reduced from paddingTop with StatusBar.currentHeight
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    height: 40, // Fixed height for consistent header
   },
   headerTitle: {
     fontSize: 18,
