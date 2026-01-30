@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#FFF',
   },
@@ -1001,7 +1001,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#4A90E2',
     marginBottom: 8,
@@ -1021,7 +1021,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 13,
     color: '#333',
     paddingVertical: 12,
   },
@@ -1080,7 +1080,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 12,
     color: '#333',
     marginLeft: 8,
     paddingVertical: 4,
@@ -1101,12 +1101,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   memberName: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#333',
   },
   memberEmail: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#999',
     marginTop: 2,
   },
@@ -1124,7 +1124,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noMembersText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#999',
   },
   toggleContainer: {
@@ -1148,7 +1148,7 @@ const styles = StyleSheet.create({
     borderColor: '#4A90E2',
   },
   toggleButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#4A90E2',
   },
@@ -1175,7 +1175,7 @@ const styles = StyleSheet.create({
     borderColor: '#4A90E2',
   },
   checkboxLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#333',
     fontWeight: '500',
   },
@@ -1187,13 +1187,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginTop: 10,
+    marginBottom: 15,
   },
   confirmButtonDisabled: {
     backgroundColor: '#87CEEB',
   },
   confirmButtonText: {
     color: '#FFF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 8,
   },
@@ -1208,7 +1209,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   radioLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#333',
     fontWeight: '500',
   },
@@ -1243,7 +1244,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   successTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#FFF',
     marginTop: 12,
@@ -1262,13 +1263,13 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   successLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#4A90E2',
     flex: 1,
   },
   successValue: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#333',
     fontWeight: '500',
     flex: 1,
@@ -1297,7 +1298,7 @@ const styles = StyleSheet.create({
   },
   successButtonText: {
     color: '#FFF',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
   },
 });
