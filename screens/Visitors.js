@@ -23,11 +23,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import API_BASE_URL from '../apiConfig';
 import SpeechToTextInput from '../components/SpeechToTextInput';
+import { useLanguage } from '../service/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
 const Visitors = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('chapter');
   const [loading, setLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -138,9 +140,9 @@ const Visitors = () => {
 
       console.log('Could not find member ID');
       Alert.alert(
-        'Member ID Not Found',
-        'Unable to find your member information. Please contact support.',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        t('memberIdRequired'),
+        t('unableToIdentifyMemberAccount'),
+        [{ text: t('ok'), onPress: () => navigation.goBack() }]
       );
       return null;
     } catch (error) {
@@ -203,24 +205,24 @@ const Visitors = () => {
 
     if (missingFields.length > 0) {
       Alert.alert(
-        'Missing Information',
-        `Please fill in the following required fields: ${missingFields.join(', ')}`,
-        [{ text: 'OK' }]
+        t('missingInformation'),
+        t('pleaseFillRequiredFields').replace('{{fields}}', missingFields.join(', ')),
+        [{ text: t('ok') }]
       );
       return false;
     }
 
     if (formData.VisitorEmail && !/\S+@\S+\.\S+/.test(formData.VisitorEmail)) {
-      Alert.alert('Invalid Email', 'Please enter a valid email address');
+      Alert.alert(t('invalidEmail'), t('pleaseEnterValidEmail'));
       return false;
     }
 
     // Check if member ID is available
     if (!memberId && !formData.BroughtByMemberId) {
       Alert.alert(
-        'Member ID Required',
-        'Unable to identify your member account. Please contact support.',
-        [{ text: 'OK' }]
+        t('memberIdRequired'),
+        t('unableToIdentifyMemberAccount'),
+        [{ text: t('ok') }]
       );
       return false;
     }
@@ -236,9 +238,9 @@ const handleSubmit = async () => {
   // Ensure member ID is set
   if (!memberId && !formData.BroughtByMemberId) {
     Alert.alert(
-      'Member ID Required',
-      'Unable to identify your member account. Please refresh or contact support.',
-      [{ text: 'OK' }]
+      t('memberIdRequired'),
+      t('memberIdNotFoundRefresh'),
+      [{ text: t('ok') }]
     );
     return;
   }
@@ -307,15 +309,15 @@ const handleSubmit = async () => {
         resetForm();
         setShowSuccessModal(false);
         Alert.alert(
-          'Success',
-          `Visitor ${visitorData.VisitorName} has been registered successfully!`,
-          [{ text: 'OK' }]
+          t('success'),
+          t('visitorRegisteredSuccessfullyWithName').replace('{{name}}', visitorData.VisitorName),
+          [{ text: t('ok') }]
         );
       }, 2000);
     } else {
       Alert.alert(
-        'Submission Error',
-        response.statusDesc || 'Failed to submit visitor information. Please try again.'
+        t('submissionError'),
+        response.statusDesc || t('failedToSubmitVisitorInfo')
       );
     }
   } catch (error) {
@@ -326,23 +328,23 @@ const handleSubmit = async () => {
     // More specific error handling
     if (error.message.includes('Invalid column name')) {
       Alert.alert(
-        'Database Schema Error',
-        'There is a mismatch between the data being sent and the database structure. Please contact support.',
+        t('databaseSchemaError'),
+        t('mismatchBetweenDataAndDatabase'),
         [
-          { text: 'OK', style: 'cancel' },
+          { text: t('ok'), style: 'cancel' },
           { 
-            text: 'Test Minimal', 
+            text: t('testMinimal'), 
             onPress: () => testMinimalSubmission()
           }
         ]
       );
     } else if (error.message.includes('401') || error.message.includes('403')) {
       Alert.alert(
-        'Session Expired',
-        'Your session has expired. Please login again.',
+        t('sessionExpired'),
+        t('sessionExpiredLoginAgain'),
         [
           { 
-            text: 'Login', 
+            text: t('login'), 
             onPress: () => {
               navigation.reset({
                 index: 0,
@@ -354,20 +356,20 @@ const handleSubmit = async () => {
       );
     } else if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
       Alert.alert(
-        'Network Error',
-        'Cannot connect to the server. Please check your internet connection.',
-        [{ text: 'OK' }]
+        t('networkError'),
+        t('cannotConnectToServer'),
+        [{ text: t('ok') }]
       );
     } else if (error.message.includes('Invalid visitor data')) {
       Alert.alert(
-        'Validation Error',
-        'Please ensure all required fields are filled correctly, especially Member ID.',
-        [{ text: 'OK' }]
+        t('validationError'),
+        t('ensureRequiredFieldsFilled'),
+        [{ text: t('ok') }]
       );
     } else {
       Alert.alert(
-        'Submission Failed',
-        error.message || 'An unexpected error occurred. Please try again.'
+        t('submissionFailed'),
+        error.message || t('unexpectedErrorOccurred')
       );
     }
   } finally {
@@ -572,14 +574,14 @@ const testMinimalSubmission = async () => {
               <View style={styles.memberInfo}>
                 <Icon name="check-circle" size={16} color="#4CAF50" />
                 <Text style={styles.memberInfoText}>
-                  Visitor will be registered under your account (Member ID: {memberId})
+                  {t('visitorRegisteredUnderAccount').replace('{{memberId}}', memberId)}
                 </Text>
               </View>
             )}
             <View style={styles.section}>
-              <Text style={styles.label}>Country *</Text>
+              <Text style={styles.label}>{t('country')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter country"
+                placeholder={t('enterCountry')}
                 value={formData.Country}
                 onChangeText={(text) => handleInputChange('Country', text)}
                 placeholderTextColor="#999"
@@ -587,9 +589,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Region *</Text>
+              <Text style={styles.label}>{t('region')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter region"
+                placeholder={t('enterRegion')}
                 value={formData.Region}
                 onChangeText={(text) => handleInputChange('Region', text)}
                 placeholderTextColor="#999"
@@ -597,9 +599,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Chapter *</Text>
+              <Text style={styles.label}>{t('chapter')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter chapter"
+                placeholder={t('enterChapter')}
                 value={formData.Chapter}
                 onChangeText={(text) => handleInputChange('Chapter', text)}
                 placeholderTextColor="#999"
@@ -607,14 +609,14 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Visit Date</Text>
+              <Text style={styles.label}>{t('visitDate')}</Text>
               <TouchableOpacity
                 style={styles.inputContainer}
                 onPress={() => setShowDatePicker(true)}
               >
                 <Icon name="calendar" size={20} color="#4A90E2" style={styles.icon} />
                 <Text style={[styles.input, { color: formData.VisitDate ? '#333' : '#999' }]}>
-                  {formData.VisitDate ? formData.VisitDate.toDateString() : 'Select visit date'}
+                  {formData.VisitDate ? formData.VisitDate.toDateString() : t('selectVisitDate')}
                 </Text>
               </TouchableOpacity>
               {showDatePicker && (
@@ -633,7 +635,7 @@ const testMinimalSubmission = async () => {
         return (
           <View style={styles.tabContent}>
             <View style={styles.section}>
-              <Text style={styles.label}>Title *</Text>
+              <Text style={styles.label}>{t('title')} *</Text>
               <SpeechToTextInput
                 placeholder="Mr, Mrs, Ms, Dr"
                 value={formData.Title}
@@ -643,9 +645,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>First Name *</Text>
+              <Text style={styles.label}>{t('firstName')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter first name"
+                placeholder={t('enterFirstName')}
                 value={formData.FirstName}
                 onChangeText={(text) => handleInputChange('FirstName', text)}
                 placeholderTextColor="#999"
@@ -653,9 +655,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Last Name *</Text>
+              <Text style={styles.label}>{t('lastName')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter last name"
+                placeholder={t('enterLastName')}
                 value={formData.LastName}
                 onChangeText={(text) => handleInputChange('LastName', text)}
                 placeholderTextColor="#999"
@@ -663,9 +665,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Company *</Text>
+              <Text style={styles.label}>{t('company')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter company name"
+                placeholder={t('enterCompanyName')}
                 value={formData.Company}
                 onChangeText={(text) => handleInputChange('Company', text)}
                 placeholderTextColor="#999"
@@ -678,9 +680,9 @@ const testMinimalSubmission = async () => {
         return (
           <View style={styles.tabContent}>
             <View style={styles.section}>
-              <Text style={styles.label}>Language</Text>
+              <Text style={styles.label}>{t('language')}</Text>
               <SpeechToTextInput
-                placeholder="Enter language"
+                placeholder={t('enterLanguage')}
                 value={formData.Language}
                 onChangeText={(text) => handleInputChange('Language', text)}
                 placeholderTextColor="#999"
@@ -688,9 +690,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Additional Notes</Text>
+              <Text style={styles.label}>{t('additionalNotes')}</Text>
               <SpeechToTextInput
-                placeholder="Enter any additional notes about the visitor"
+                placeholder={t('enterAdditionalNotes')}
                 value={formData.Notes}
                 onChangeText={(text) => handleInputChange('Notes', text)}
                 multiline
@@ -705,9 +707,9 @@ const testMinimalSubmission = async () => {
         return (
           <View style={styles.tabContent}>
             <View style={styles.section}>
-              <Text style={styles.label}>Telephone</Text>
+              <Text style={styles.label}>{t('telephone')}</Text>
               <SpeechToTextInput
-                placeholder="Enter telephone"
+                placeholder={t('enterTelephone')}
                 value={formData.TelephoneNumber}
                 onChangeText={(text) => handleInputChange('TelephoneNumber', text)}
                 keyboardType="phone-pad"
@@ -716,9 +718,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Visitor Email</Text>
+              <Text style={styles.label}>{t('visitorEmail')}</Text>
               <SpeechToTextInput
-                placeholder="Enter visitor email"
+                placeholder={t('enterVisitorEmail')}
                 value={formData.VisitorEmail}
                 onChangeText={(text) => handleInputChange('VisitorEmail', text)}
                 keyboardType="email-address"
@@ -728,9 +730,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Mobile Number *</Text>
+              <Text style={styles.label}>{t('mobileNumber')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter mobile number"
+                placeholder={t('enterMobileNumber')}
                 value={formData.MobileNumber}
                 onChangeText={(text) => handleInputChange('MobileNumber', text)}
                 keyboardType="phone-pad"
@@ -744,9 +746,9 @@ const testMinimalSubmission = async () => {
         return (
           <View style={styles.tabContent}>
             <View style={styles.section}>
-              <Text style={styles.label}>Country</Text>
+              <Text style={styles.label}>{t('country')}</Text>
               <SpeechToTextInput
-                placeholder="Enter visitor's country"
+                placeholder={t('enterVisitorCountry')}
                 value={formData.VisitorCountry}
                 onChangeText={(text) => handleInputChange('VisitorCountry', text)}
                 placeholderTextColor="#999"
@@ -754,9 +756,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Address</Text>
+              <Text style={styles.label}>{t('address')}</Text>
               <SpeechToTextInput
-                placeholder="Enter address"
+                placeholder={t('enterAddress')}
                 value={formData.VisitorAddress}
                 onChangeText={(text) => handleInputChange('VisitorAddress', text)}
                 multiline
@@ -766,9 +768,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>City</Text>
+              <Text style={styles.label}>{t('city')}</Text>
               <SpeechToTextInput
-                placeholder="Enter city"
+                placeholder={t('enterCity')}
                 value={formData.VisitorCity}
                 onChangeText={(text) => handleInputChange('VisitorCity', text)}
                 placeholderTextColor="#999"
@@ -776,9 +778,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>State</Text>
+              <Text style={styles.label}>{t('state')}</Text>
               <SpeechToTextInput
-                placeholder="Enter state"
+                placeholder={t('enterState')}
                 value={formData.VisitorState}
                 onChangeText={(text) => handleInputChange('VisitorState', text)}
                 placeholderTextColor="#999"
@@ -786,9 +788,9 @@ const testMinimalSubmission = async () => {
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}>Post Code</Text>
+              <Text style={styles.label}>{t('postCode')}</Text>
               <SpeechToTextInput
-                placeholder="Enter post code"
+                placeholder={t('enterPostCode')}
                 value={formData.VisitorPostcode}
                 onChangeText={(text) => handleInputChange('VisitorPostcode', text)}
                 placeholderTextColor="#999"
@@ -802,7 +804,7 @@ const testMinimalSubmission = async () => {
               <View style={[styles.checkbox, formData.BecameMember && styles.checkboxActive]}>
                 {formData.BecameMember && <Icon name="check" size={16} color="#FFF" />}
               </View>
-              <Text style={styles.confirmText}>Visitor became a member</Text>
+              <Text style={styles.confirmText}>{t('visitorBecameMember')}</Text>
             </TouchableOpacity>
           </View>
         );
@@ -837,7 +839,7 @@ const testMinimalSubmission = async () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Register Visitor</Text>
+        <Text style={styles.headerTitle}>{t('registerVisitor')}</Text>
         
         {/* Refresh button */}
         <TouchableOpacity onPress={async () => {
@@ -857,11 +859,11 @@ const testMinimalSubmission = async () => {
           contentContainerStyle={styles.tabBarContent}
         >
           {[
-            { id: 'chapter', label: 'Chapter', icon: 'book' },
-            { id: 'personal', label: 'Personal', icon: 'account' },
-            { id: 'language', label: 'Language', icon: 'translate' },
-            { id: 'contact', label: 'Contact', icon: 'phone' },
-            { id: 'address', label: 'Address', icon: 'map-marker' },
+            { id: 'chapter', label: t('chapter'), icon: 'book' },
+            { id: 'personal', label: t('personal'), icon: 'account' },
+            { id: 'language', label: t('language'), icon: 'translate' },
+            { id: 'contact', label: t('contact'), icon: 'phone' },
+            { id: 'address', label: t('address'), icon: 'map-marker' },
           ].map(tab => (
             <TouchableOpacity
               key={tab.id}
@@ -885,7 +887,7 @@ const testMinimalSubmission = async () => {
       {/* Progress Indicator */}
       <View style={styles.progressContainer}>
         <Text style={styles.progressText}>
-          Step {['chapter', 'personal', 'language', 'contact', 'address'].indexOf(activeTab) + 1} of 5
+          {t('stepOf').replace('{{current}}', ['chapter', 'personal', 'language', 'contact', 'address'].indexOf(activeTab) + 1).replace('{{total}}', '5')}
         </Text>
         <View style={styles.progressBar}>
           <View style={[styles.progressFill, { 
@@ -919,7 +921,7 @@ const testMinimalSubmission = async () => {
                 disabled={activeTab === 'chapter'}
               >
                 <Icon name="chevron-left" size={20} color="#4A90E2" />
-                <Text style={styles.prevButtonText}>Previous</Text>
+                <Text style={styles.prevButtonText}>{t('previous')}</Text>
               </TouchableOpacity>
 
               {activeTab === 'address' ? (
@@ -934,7 +936,7 @@ const testMinimalSubmission = async () => {
                     <>
                       <Icon name="check" size={20} color="#FFF" />
                       <Text style={styles.submitButtonText}>
-                        {!memberId ? 'No Member ID' : !authToken ? 'No Token' : 'Submit Visitor'}
+                        {!memberId ? t('noMemberId') : !authToken ? t('noToken') : t('submitVisitor')}
                       </Text>
                     </>
                   )}
@@ -944,7 +946,7 @@ const testMinimalSubmission = async () => {
                   style={[styles.navButton, styles.nextButton]}
                   onPress={handleNextTab}
                 >
-                  <Text style={styles.nextButtonText}>Next</Text>
+                  <Text style={styles.nextButtonText}>{t('next')}</Text>
                   <Icon name="chevron-right" size={20} color="#FFF" />
                 </TouchableOpacity>
               )}
@@ -965,9 +967,9 @@ const testMinimalSubmission = async () => {
             <View style={styles.successIconContainer}>
               <Icon name="check-circle" size={60} color="#4CAF50" />
             </View>
-            <Text style={styles.successTitle}>Visitor Registered Successfully!</Text>
+            <Text style={styles.successTitle}>{t('visitorRegisteredSuccessfully')}</Text>
             <Text style={styles.successMessage}>
-              Visitor information has been saved to the system under your account.
+              {t('visitorInfoSavedToSystem')}
             </Text>
             <TouchableOpacity
               style={styles.modalButton}
@@ -976,7 +978,7 @@ const testMinimalSubmission = async () => {
                 resetForm();
               }}
             >
-              <Text style={styles.modalButtonText}>Continue</Text>
+              <Text style={styles.modalButtonText}>{t('continue')}</Text>
             </TouchableOpacity>
           </View>
         </View>

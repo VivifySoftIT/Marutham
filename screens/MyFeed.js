@@ -8,9 +8,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import API_BASE_URL from '../apiConfig';
+import { useLanguage } from '../service/LanguageContext';
 
 const MyFeed = ({ route }) => {
   const navigation = useNavigation();
+  const { t, language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState(route?.params?.tab || 'all');
@@ -37,12 +39,12 @@ const MyFeed = ({ route }) => {
   const [showPaymentMethodDropdown, setShowPaymentMethodDropdown] = useState(false);
 
   const paymentMethods = [
-    { label: 'UPI', value: 'UPI', icon: 'qrcode' },
-    { label: 'Credit Card', value: 'Credit Card', icon: 'credit-card' },
-    { label: 'Debit Card', value: 'Debit Card', icon: 'credit-card-outline' },
-    { label: 'Net Banking', value: 'Net Banking', icon: 'bank' },
-    { label: 'Cash', value: 'Cash', icon: 'cash' },
-    { label: 'Others', value: 'Others', icon: 'dots-horizontal' }
+    { label: t('upi'), value: 'UPI', icon: 'qrcode' },
+    { label: t('creditCard') || t('card'), value: 'Credit Card', icon: 'credit-card' },
+    { label: t('debitCard') || t('card'), value: 'Debit Card', icon: 'credit-card-outline' },
+    { label: t('netBanking') || t('online'), value: 'Net Banking', icon: 'bank' },
+    { label: t('cash'), value: 'Cash', icon: 'cash' },
+    { label: t('other'), value: 'Others', icon: 'dots-horizontal' }
   ];
 
   useFocusEffect(
@@ -109,7 +111,7 @@ const MyFeed = ({ route }) => {
 
       const memberId = await getCurrentUserMemberId();
       if (!memberId) {
-        Alert.alert('Error', 'Could not find your member ID. Please try logging in again.');
+        Alert.alert(t('error'), t('couldNotFindMemberId'));
         setLoading(false);
         return;
       }
@@ -160,7 +162,7 @@ const MyFeed = ({ route }) => {
       }
     } catch (error) {
       console.error('Error loading feed:', error);
-      Alert.alert('Error', 'Failed to load feed data. Please try again.');
+      Alert.alert(t('error'), t('errorMessage'));
       setFeedData([]);
     } finally {
       setLoading(false);
@@ -199,12 +201,12 @@ const MyFeed = ({ route }) => {
       const paymentFeedItems = (data.payments || []).map((payment, index) => ({
         id: `payment_${payment.paymentId || index}`,
         type: payment.receiptNo ? 'payment_made' : 'payment_due',
-        title: payment.receiptNo ? 'Payment Made' : 'Payment Due',
-        description: `Payment for ${payment.paymentForMonth || 'Unknown'}`,
-        memberName: data.memberName || 'You',
+        title: payment.receiptNo ? t('paymentReceived') : t('pendingPayments'),
+        description: `${t('payment')} ${t('for')} ${payment.paymentForMonth || t('unknown')}`,
+        memberName: data.memberName || t('you'),
         amount: payment.amount || 0,
         date: payment.paymentDate || payment.paymentEndDate || new Date().toISOString(),
-        status: payment.receiptNo ? 'Paid' : 'Pending',
+        status: payment.receiptNo ? t('paid') : t('pending'),
         icon: payment.receiptNo ? 'check-circle' : 'alert-circle',
         color: payment.receiptNo ? '#4CAF50' : '#FF9800',
         // Additional payment details
@@ -221,7 +223,7 @@ const MyFeed = ({ route }) => {
 
     } catch (error) {
       console.error('Error loading payment data:', error);
-      Alert.alert('Error', 'Failed to load payment data');
+      Alert.alert(t('error'), t('errorMessage'));
       setFeedData([]);
     }
   };
@@ -297,11 +299,11 @@ const MyFeed = ({ route }) => {
       const visitorFeedItems = visitorsArray.map((visitor, index) => ({
         id: `visitor_${visitor.id || index}`,
         type: visitor.becameMember || visitor.BecameMember ? 'visitor_became_member' : 'visitor_brought',
-        title: visitor.becameMember || visitor.BecameMember ? 'Visitor Became Member' : 'Visitor Brought',
-        description: `${visitor.visitorName || visitor.VisitorName || 'Unknown Visitor'} from ${visitor.visitorBusiness || visitor.VisitorBusiness || visitor.company || visitor.Company || 'Unknown Company'}`,
-        memberName: visitor.visitorName || visitor.VisitorName || `${visitor.firstName || visitor.FirstName || ''} ${visitor.lastName || visitor.LastName || ''}`.trim() || 'Unknown Visitor',
+        title: visitor.becameMember || visitor.BecameMember ? t('visitorBecameMember') : t('visitor'),
+        description: `${visitor.visitorName || visitor.VisitorName || t('unknownVisitor')} ${t('from')} ${visitor.visitorBusiness || visitor.VisitorBusiness || visitor.company || visitor.Company || t('unknownCompany')}`,
+        memberName: visitor.visitorName || visitor.VisitorName || `${visitor.firstName || visitor.FirstName || ''} ${visitor.lastName || visitor.LastName || ''}`.trim() || t('unknownVisitor'),
         date: visitor.visitDate || visitor.VisitDate || new Date().toISOString(),
-        status: visitor.becameMember || visitor.BecameMember ? 'Member' : (visitor.status || visitor.Status || 'Pending'),
+        status: visitor.becameMember || visitor.BecameMember ? t('member') : (visitor.status || visitor.Status || t('pending')),
         icon: visitor.becameMember || visitor.BecameMember ? 'account-plus' : 'account-group',
         color: visitor.becameMember || visitor.BecameMember ? '#4CAF50' : '#FF9800',
         // Additional visitor details
@@ -318,7 +320,7 @@ const MyFeed = ({ route }) => {
     } catch (error) {
       console.error('Error loading visitor data:', error);
       if (!error.message.includes('404')) {
-        Alert.alert('Error', 'Failed to load visitor data');
+        Alert.alert(t('error'), t('errorMessage'));
       }
       setFeedData([]);
     }
@@ -326,21 +328,21 @@ const MyFeed = ({ route }) => {
   const handleAddPayment = async () => {
     // Validation
     if (!paymentForm.amount.trim() || isNaN(paymentForm.amount) || parseFloat(paymentForm.amount) <= 0) {
-      Alert.alert('Validation Error', 'Please enter a valid amount');
+      Alert.alert(t('validationError'), t('pleaseEnterValidAmount'));
       return;
     }
     if (!paymentForm.transactionId.trim()) {
-      Alert.alert('Validation Error', 'Please enter Transaction ID');
+      Alert.alert(t('validationError'), t('pleaseEnterTransactionId'));
       return;
     }
     if (!paymentForm.paymentForMonth.trim()) {
-      Alert.alert('Validation Error', 'Please enter month (e.g., Jan or January)');
+      Alert.alert(t('validationError'), t('pleaseEnterMonth'));
       return;
     }
 
     const memberId = await getCurrentUserMemberId();
     if (!memberId) {
-      Alert.alert('Error', 'Member ID not found. Please log in again.');
+      Alert.alert(t('error'), t('memberIdNotFound'));
       return;
     }
 
@@ -349,7 +351,7 @@ const MyFeed = ({ route }) => {
       await AsyncStorage.getItem('authToken');
 
     if (!authToken) {
-      Alert.alert('Authentication Error', 'Please login again. Token not found.');
+      Alert.alert(t('authenticationError'), t('pleaseLoginAgain'));
       return;
     }
 
@@ -371,20 +373,20 @@ const MyFeed = ({ route }) => {
     }
 
     if (!isValidMonth) {
-      Alert.alert('Validation Error', 'Please enter a valid month name (e.g., Jan or January)');
+      Alert.alert(t('validationError'), t('pleaseEnterValidMonth'));
       return;
     }
 
     const payload = {
       MemberId: parseInt(memberId),
       Amount: parseFloat(paymentForm.amount),
-      PaymentType: "Monthly",
+      PaymentType: t('monthlyPayment'),
       PaymentMethod: paymentForm.paymentMethod || "UPI",
       TransactionId: paymentForm.transactionId.trim(),
       PaymentForMonth: formattedMonth,
       PaymentDate: paymentForm.paymentDate.toISOString().split('T')[0],
-      Status: "Paid",
-      CreatedBy: "Member"
+      Status: t('paid'),
+      CreatedBy: t('member')
     };
 
     setLoading(true);
@@ -408,10 +410,10 @@ const MyFeed = ({ route }) => {
       const result = await response.json();
       const receiptNumber = result.receiptNumber || result.data?.receiptNumber;
       const successMessage = receiptNumber
-        ? `Payment submitted successfully!\nReceipt Number: ${receiptNumber}`
-        : 'Payment submitted successfully!';
+        ? `${t('paymentSubmittedSuccessfully')}\n${t('receiptNumber', { number: receiptNumber })}`
+        : t('paymentSubmittedSuccessfully');
 
-      Alert.alert('Success', successMessage);
+      Alert.alert(t('success'), successMessage);
 
       // Reset form
       setPaymentForm({
@@ -430,7 +432,7 @@ const MyFeed = ({ route }) => {
 
     } catch (error) {
       console.error('Submit Payment Error:', error);
-      Alert.alert('Payment Error', error.message || 'Failed to submit payment');
+      Alert.alert(t('paymentError'), error.message || t('errorMessage'));
     } finally {
       setLoading(false);
     }
@@ -453,37 +455,37 @@ const MyFeed = ({ route }) => {
 
     try {
       const receiptContent = `
-ALAIGAL MEMBERS NETWORK
+${t('alaigalMembersNetwork')}
 ================================
 
-PAYMENT RECEIPT
+${t('paymentReceipt').toUpperCase()}
 
-Receipt ID: ${selectedPayment.receiptId}
-Date: ${selectedPayment.paidDate}
-Payment Method: ${selectedPayment.paymentMethod}
+${t('receiptId')}: ${selectedPayment.receiptId}
+${t('date')}: ${selectedPayment.paidDate}
+${t('paymentMethod')}: ${selectedPayment.paymentMethod}
 
-MEMBER DETAILS
-Name: ${selectedPayment.memberName || 'N/A'}
-Member ID: ${await getCurrentUserMemberId() ? `MEM-${await getCurrentUserMemberId()}` : 'N/A'}
+${t('memberDetails').toUpperCase()}
+${t('name')}: ${selectedPayment.memberName || t('notAvailable')}
+${t('memberId')}: ${await getCurrentUserMemberId() ? `MEM-${await getCurrentUserMemberId()}` : t('notAvailable')}
 
-PAYMENT DETAILS
-Month: ${selectedPayment.month}
-Amount: ₹${selectedPayment.amount.toLocaleString()}
-Payment Type: ${selectedPayment.type}
-Status: ${selectedPayment.status}
-Due Date: ${selectedPayment.dueDate}
-Paid Date: ${selectedPayment.paidDate}
+${t('paymentDetails').toUpperCase()}
+${t('month')}: ${selectedPayment.month}
+${t('amount')}: ₹${selectedPayment.amount.toLocaleString()}
+${t('paymentType')}: ${selectedPayment.type}
+${t('status')}: ${selectedPayment.status}
+${t('dueDate')}: ${selectedPayment.dueDate}
+${t('paidDate')}: ${selectedPayment.paidDate}
 
-TRANSACTION DETAILS
-Transaction ID: ${selectedPayment.transactionId || 'N/A'}
+${t('transactionDetails').toUpperCase()}
+${t('transactionId')}: ${selectedPayment.transactionId || t('notAvailable')}
 
-Thank you for your payment!
+${t('thankYouPayment')}
 
-For queries, contact: support@alaigal.com
+${t('supportContact')}
 Phone: +91-XXXXXXXXXX
 
 ================================
-This is an electronically generated receipt.
+${t('electronicReceipt')}
       `;
 
       const fileName = `Receipt_${selectedPayment.receiptId || Date.now()}.txt`;
@@ -493,52 +495,52 @@ This is an electronically generated receipt.
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(filePath, {
           mimeType: 'text/plain',
-          dialogTitle: 'Download Receipt',
+          dialogTitle: t('downloadReceipt'),
         });
       }
     } catch (error) {
       console.error('Download Receipt Error:', error);
-      Alert.alert('Error', 'Failed to download receipt');
+      Alert.alert(t('error'), t('failedToDownloadReceipt'));
     }
   };
 
   const handleDownloadPaymentReceipt = async (paymentItem) => {
     try {
       const currentMemberId = await getCurrentUserMemberId();
-      const memberName = paymentItem.memberName || 'N/A';
+      const memberName = paymentItem.memberName || t('notAvailable');
       
       const receiptContent = `
-ALAIGAL MEMBERS NETWORK
+${t('alaigalMembersNetwork')}
 ================================
 
-PAYMENT RECEIPT
+${t('paymentReceipt').toUpperCase()}
 
-Receipt ID: ${paymentItem.receiptNo || 'N/A'}
-Date: ${formatDate(paymentItem.paidDate || paymentItem.date)}
-Payment Method: ${paymentItem.paymentMethod || 'N/A'}
+${t('receiptId')}: ${paymentItem.receiptNo || t('notAvailable')}
+${t('date')}: ${formatDate(paymentItem.paidDate || paymentItem.date)}
+${t('paymentMethod')}: ${paymentItem.paymentMethod || t('notAvailable')}
 
-MEMBER DETAILS
-Name: ${memberName}
-Member ID: ${currentMemberId ? `MEM-${currentMemberId}` : 'N/A'}
+${t('memberDetails').toUpperCase()}
+${t('name')}: ${memberName}
+${t('memberId')}: ${currentMemberId ? `MEM-${currentMemberId}` : t('notAvailable')}
 
-PAYMENT DETAILS
-Month: ${paymentItem.paymentForMonth || 'Unknown'}
-Amount: ₹${(paymentItem.amount || 0).toLocaleString()}
-Payment Type: Monthly
-Status: ${paymentItem.status}
-Due Date: ${paymentItem.dueDate || 'N/A'}
-Paid Date: ${formatDate(paymentItem.paidDate || paymentItem.date)}
+${t('paymentDetails').toUpperCase()}
+${t('month')}: ${paymentItem.paymentForMonth || t('unknown')}
+${t('amount')}: ₹${(paymentItem.amount || 0).toLocaleString()}
+${t('paymentType')}: ${t('monthlyPayment')}
+${t('status')}: ${paymentItem.status}
+${t('dueDate')}: ${paymentItem.dueDate || t('notAvailable')}
+${t('paidDate')}: ${formatDate(paymentItem.paidDate || paymentItem.date)}
 
-TRANSACTION DETAILS
-Transaction ID: ${paymentItem.transactionId || 'N/A'}
+${t('transactionDetails').toUpperCase()}
+${t('transactionId')}: ${paymentItem.transactionId || t('notAvailable')}
 
-Thank you for your payment!
+${t('thankYouPayment')}
 
-For queries, contact: support@alaigal.com
+${t('supportContact')}
 Phone: +91-XXXXXXXXXX
 
 ================================
-This is an electronically generated receipt.
+${t('electronicReceipt')}
       `;
 
       const fileName = `Receipt_${paymentItem.receiptNo || Date.now()}.txt`;
@@ -548,21 +550,21 @@ This is an electronically generated receipt.
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(filePath, {
           mimeType: 'text/plain',
-          dialogTitle: 'Download Receipt',
+          dialogTitle: t('downloadReceipt'),
         });
       }
     } catch (error) {
       console.error('Download Receipt Error:', error);
-      Alert.alert('Error', 'Failed to download receipt');
+      Alert.alert(t('error'), t('failedToDownloadReceipt'));
     }
   };
 
   const handlePayNow = (payment) => {
     const amount = payment.amount || 0;
-    Alert.alert('Make Payment', `Pay ₹${amount.toLocaleString()} for ${payment.month || 'Unknown'}?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('makePayment'), `${t('payAmount', { amount: amount.toLocaleString(), month: payment.month || t('unknown') })}`, [
+      { text: t('cancel'), style: 'cancel' },
       {
-        text: 'Pay Now', onPress: () => {
+        text: t('payNow'), onPress: () => {
           setPaymentForm({
             amount: amount.toString(),
             paymentMethod: 'UPI',
@@ -585,7 +587,7 @@ This is an electronically generated receipt.
         await AsyncStorage.getItem('authToken');
 
       if (!token) {
-        Alert.alert('Error', 'Authentication token not found. Please login again.');
+        Alert.alert(t('error'), t('authenticationError') + '. ' + t('pleaseLoginAgain'));
         navigation.navigate('Login');
         return;
       }
@@ -654,7 +656,7 @@ This is an electronically generated receipt.
           )
         );
 
-        Alert.alert('Success', `Referral ${status.toLowerCase()} successfully!`);
+        Alert.alert(t('success'), `${t('referral')} ${status.toLowerCase()}ed ${t('successfully')}!`);
         setShowDetailModal(false);
       } else {
         let errorMessage = `HTTP ${response.status}`;
@@ -670,7 +672,7 @@ This is an electronically generated receipt.
 
     } catch (error) {
       console.error('Error updating referral status:', error);
-      Alert.alert('Error', error.message || 'Failed to update referral status');
+      Alert.alert(t('error'), error.message || t('errorMessage'));
     } finally {
       setUpdatingItemId(null);
     }
@@ -685,7 +687,7 @@ This is an electronically generated receipt.
         await AsyncStorage.getItem('authToken');
 
       if (!token) {
-        Alert.alert('Error', 'Authentication token not found. Please login again.');
+        Alert.alert(t('error'), t('authenticationError') + '. ' + t('pleaseLoginAgain'));
         navigation.navigate('Login');
         return;
       }
@@ -751,7 +753,7 @@ This is an electronically generated receipt.
           )
         );
 
-        Alert.alert('Success', `ThanksNote ${status.toLowerCase()}ed successfully!`);
+        Alert.alert(t('success'), `${t('thanksNote')} ${status.toLowerCase()}ed ${t('successfully')}!`);
         setShowDetailModal(false);
       } else {
         let errorMessage = `HTTP ${response.status}`;
@@ -767,7 +769,7 @@ This is an electronically generated receipt.
 
     } catch (error) {
       console.error('Error updating ThanksNote status:', error);
-      Alert.alert('Error', error.message || 'Failed to update ThanksNote status');
+      Alert.alert(t('error'), error.message || t('errorMessage'));
     } finally {
       setUpdatingItemId(null);
     }
@@ -782,7 +784,8 @@ This is an electronically generated receipt.
       item.type === 'referral_received' ||
       item.type === 'tyfcb_received';
 
-    const isPending = !item.status || item.status === 'Pending' || item.status === 'pending';
+    const translatedStatus = translateStatus(item.status);
+    const isPending = !item.status || translatedStatus === t('pending');
 
     if (isReceivableItem && isPending) {
       setSelectedItem(item);
@@ -839,7 +842,9 @@ This is an electronically generated receipt.
   const formatDate = (dateString) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
+      // Use current language for date formatting
+      const locale = language === 'ta' ? 'ta-IN' : 'en-US';
+      return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -849,6 +854,160 @@ This is an electronically generated receipt.
     } catch (error) {
       return dateString;
     }
+  };
+
+  // Helper function to translate feed item titles
+  const translateFeedTitle = (item) => {
+    if (!item.title) return t('activity');
+    
+    const title = item.title.toLowerCase();
+    
+    // Map common English titles to Tamil translations with proper patterns
+    if (title.includes('referral given') || title.includes('referral sent') || title.includes('you gave') || title.includes('gave referral') || title.includes('sent referral')) {
+      return t('referralGiven');
+    }
+    if (title.includes('referral received') || title.includes('you received referral') || title.includes('received referral')) {
+      return t('referralReceived');
+    }
+    if ((title.includes('thanks') || title.includes('tyfcb')) && (title.includes('given') || title.includes('you gave') || title.includes('sent'))) {
+      return t('thanksNoteGiven');
+    }
+    if ((title.includes('thanks') || title.includes('tyfcb')) && (title.includes('received') || title.includes('you received'))) {
+      return t('thanksNoteReceived');
+    }
+    if (title.includes('one to one') || title.includes('meeting') || title.includes('you met') || title.includes('1:1') || title.includes('one-to-one')) {
+      return t('oneToOneMeeting');
+    }
+    if (title.includes('payment received') || title.includes('payment made')) {
+      return t('paymentReceived');
+    }
+    if (title.includes('pending payment') || title.includes('payment due')) {
+      return t('pendingPayments');
+    }
+    if (title.includes('visitor') || title.includes('you visited')) {
+      return t('visitor');
+    }
+    
+    // If no match found, return the original title or fallback
+    return item.title || t('activity');
+  };
+
+  // Helper function to translate feed item descriptions
+  const translateFeedDescription = (item) => {
+    if (!item.description) return t('noDataAvailable');
+    
+    // For English, return original description as-is (don't change published behavior)
+    if (language !== 'ta') {
+      return item.description;
+    }
+    
+    // Only provide Tamil translations when language is Tamil
+    const description = item.description.toLowerCase();
+    
+    // Handle "you visited" patterns in Tamil
+    if (description.includes('you visited') || description.includes('you brought visitor') || description.includes('visitor brought')) {
+      const businessName = item.visitorBusiness || item.company || item.businessName || item.memberName || 'D';
+      return `நீங்கள் ${businessName} ஐ பார்வையிட்டீர்கள்`;
+    }
+    
+    if (description.includes('you met') || description.includes('you had meeting') || description.includes('meeting with') || description.includes('1:1 with')) {
+      const memberName = item.memberName || 'D';
+      return `நீங்கள் ${memberName} ஐ சந்தித்தீர்கள்`;
+    }
+    
+    if (description.includes('you gave referral') || description.includes('you gave a referral') || description.includes('you referred') || description.includes('referral to') || description.includes('sent referral')) {
+      const memberName = item.memberName || 'D';
+      return `நீங்கள் ${memberName} க்கு பரிந்துரை வழங்கினீர்கள்`;
+    }
+    
+    if (description.includes('you received referral') || description.includes('referral from') || description.includes('got referral')) {
+      const memberName = item.memberName || 'D';
+      return `நீங்கள் ${memberName} இடமிருந்து பரிந்துரை பெற்றீர்கள்`;
+    }
+    
+    if (description.includes('you gave thanks') || description.includes('you sent thanks') || description.includes('thanks to') || description.includes('tyfcb to')) {
+      const memberName = item.memberName || 'D';
+      return `நீங்கள் ${memberName} க்கு நன்றி தெரிவித்தீர்கள்`;
+    }
+    
+    if (description.includes('you received thanks') || description.includes('thanks from') || description.includes('tyfcb from') || description.includes('got thanks')) {
+      const memberName = item.memberName || 'D';
+      return `${memberName} உங்களுக்கு நன்றி தெரிவித்தார்`;
+    }
+    
+    // Handle third person patterns in Tamil
+    if (description.includes('gave referral') || description.includes('sent referral')) {
+      const memberName = item.memberName || 'D';
+      return `${memberName} பரிந்துரை கொடுத்தார்`;
+    }
+    
+    if (description.includes('received referral') || description.includes('got referral')) {
+      const memberName = item.memberName || 'D';
+      return `${memberName} பரிந்துரை பெற்றார்`;
+    }
+    
+    if (description.includes('gave thanks') || description.includes('sent thanks')) {
+      const memberName = item.memberName || 'D';
+      return `${memberName} நன்றி தெரிவித்தார்`;
+    }
+    
+    if (description.includes('received thanks') || description.includes('got thanks')) {
+      const memberName = item.memberName || 'D';
+      return `${memberName} நன்றி பெற்றார்`;
+    }
+    
+    // Handle specific thanks note activity types in Tamil
+    if (item.type === 'tyfcb_given' || item.type === 'thanksnote_given') {
+      const memberName = item.memberName || 'D';
+      return `நீங்கள் ${memberName} க்கு நன்றி தெரிவித்தீர்கள்`;
+    }
+    
+    if (item.type === 'tyfcb_received' || item.type === 'thanksnote_received') {
+      const memberName = item.memberName || 'D';
+      return `${memberName} உங்களுக்கு நன்றி தெரிவித்தார்`;
+    }
+    
+    // For payment items in Tamil
+    if (item.type === 'payment_made' || item.type === 'payment_due') {
+      return `${item.paymentForMonth || 'தெரியாத'} மாதத்திற்கான பணம்`;
+    }
+    
+    // For visitor items in Tamil
+    if (item.type === 'visitor_brought' || item.type === 'visitor_became_member') {
+      const visitorName = item.memberName || item.visitorName || 'D';
+      const company = item.visitorBusiness || item.company || '';
+      if (company) {
+        return `${visitorName} ${company} இல் இருந்து`;
+      } else {
+        return `${visitorName} பார்வையாளர்`;
+      }
+    }
+    
+    // Return original description if no Tamil translation pattern matches
+    return item.description;
+  };
+
+  // Helper function to translate status values
+  const translateStatus = (status) => {
+    if (!status) return '';
+    
+    const statusLower = status.toLowerCase();
+    
+    // Map common English status values to Tamil translations
+    if (statusLower === 'pending' || statusLower === 'waiting') return t('pending');
+    if (statusLower === 'completed' || statusLower === 'complete' || statusLower === 'done') return t('completed');
+    if (statusLower === 'confirmed' || statusLower === 'confirm') return t('confirmed');
+    if (statusLower === 'approved' || statusLower === 'approve') return t('approved');
+    if (statusLower === 'rejected' || statusLower === 'reject' || statusLower === 'declined') return t('rejected');
+    if (statusLower === 'cancelled' || statusLower === 'cancel' || statusLower === 'canceled') return t('cancelled');
+    if (statusLower === 'paid' || statusLower === 'payment made') return t('paid');
+    if (statusLower === 'unpaid' || statusLower === 'not paid') return t('unpaid');
+    if (statusLower === 'active') return t('active');
+    if (statusLower === 'inactive') return t('inactive');
+    if (statusLower === 'member') return t('member');
+    
+    // Return original status if no translation found
+    return status;
   };
 
   const renderFeedItem = ({ item }) => {
@@ -898,9 +1057,10 @@ This is an electronically generated receipt.
     }
 
     let statusColor = '#FF9800';
-    if (item.status === 'Confirmed' || item.status === 'Completed' || item.status === 'Approved' || item.status === 'Paid' || item.status === 'Member') {
+    const translatedStatus = translateStatus(item.status);
+    if (translatedStatus === t('confirmed') || translatedStatus === t('completed') || translatedStatus === t('approved') || translatedStatus === t('paid') || translatedStatus === t('member')) {
       statusColor = '#4CAF50';
-    } else if (item.status === 'Rejected' || item.status === 'Cancelled') {
+    } else if (translatedStatus === t('rejected') || translatedStatus === t('cancelled')) {
       statusColor = '#F44336';
     }
 
@@ -915,31 +1075,31 @@ This is an electronically generated receipt.
         </View>
         <View style={styles.feedContent}>
           <View style={styles.feedHeader}>
-            <Text style={styles.feedTitle}>{item.title || 'Activity'}</Text>
+            <Text style={styles.feedTitle}>{translateFeedTitle(item)}</Text>
             {item.status && (
               <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-                <Text style={styles.statusText}>{item.status}</Text>
+                <Text style={styles.statusText}>{translatedStatus}</Text>
               </View>
             )}
           </View>
-          <Text style={styles.feedDescription}>{item.description || 'No description available'}</Text>
+          <Text style={styles.feedDescription}>{translateFeedDescription(item)}</Text>
           {item.memberName && (
-            <Text style={styles.memberName}>Member: {item.memberName}</Text>
+            <Text style={styles.memberName}>{t('member')}: {item.memberName}</Text>
           )}
           <Text style={styles.feedDate}>
             {formatDate(item.date || new Date().toISOString())}
-            {item.amount > 0 && ` • Amount: ₹${item.amount.toLocaleString()}`}
+            {item.amount > 0 && ` • ${t('amount')}: ₹${item.amount.toLocaleString()}`}
           </Text>
 
           {/* Show download button only for paid payment items */}
-          {item.type === 'payment_made' && item.status === 'Paid' && (
+          {item.type === 'payment_made' && translateStatus(item.status) === t('paid') && (
             <View style={styles.paymentActions}>
               <TouchableOpacity
                 style={styles.downloadButton}
                 onPress={() => handleDownloadPaymentReceipt(item)}
               >
                 <Icon name="download" size={16} color="#4A90E2" />
-                <Text style={styles.downloadButtonText}>Download Receipt</Text>
+                <Text style={styles.downloadButtonText}>{t('downloadReceipt')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -947,10 +1107,10 @@ This is an electronically generated receipt.
           {/* Show click hint for receivable items */}
           {((item.type === 'referral_received') ||
             (item.type === 'tyfcb_received')) &&
-            (!item.status || item.status === 'Pending' || item.status === 'pending') && (
+            (!item.status || translateStatus(item.status) === t('pending')) && (
               <View style={styles.clickHint}>
                 <Icon name="hand-pointing-right" size={14} color="#4A90E2" />
-                <Text style={styles.clickHintText}>Tap to view and take action</Text>
+                <Text style={styles.clickHintText}>{t('tapToView')}</Text>
               </View>
             )}
         </View>
@@ -966,7 +1126,7 @@ This is an electronically generated receipt.
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Activity Log</Text>
+        <Text style={styles.headerTitle}>{t('myActivityLog')}</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 
@@ -980,37 +1140,37 @@ This is an electronically generated receipt.
             style={[styles.tabButton, activeTab === 'all' && styles.tabButtonActive]}
             onPress={() => setActiveTab('all')}
           >
-            <Text style={[styles.tabButtonText, activeTab === 'all' && styles.tabButtonTextActive]}>All</Text>
+            <Text style={[styles.tabButtonText, activeTab === 'all' && styles.tabButtonTextActive]}>{t('allTime')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabButton, activeTab === 'referral' && styles.tabButtonActive]}
             onPress={() => setActiveTab('referral')}
           >
-            <Text style={[styles.tabButtonText, activeTab === 'referral' && styles.tabButtonTextActive]}>Referrals</Text>
+            <Text style={[styles.tabButtonText, activeTab === 'referral' && styles.tabButtonTextActive]}>{t('referral')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabButton, (activeTab === 'tyfcb' || activeTab === 'thanksnote') && styles.tabButtonActive]}
             onPress={() => setActiveTab('thanksnote')}
           >
-            <Text style={[styles.tabButtonText, (activeTab === 'tyfcb' || activeTab === 'thanksnote') && styles.tabButtonTextActive]}>ThanksNote</Text>
+            <Text style={[styles.tabButtonText, (activeTab === 'tyfcb' || activeTab === 'thanksnote') && styles.tabButtonTextActive]}>{t('thanksNote')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabButton, activeTab === 'one_to_one' && styles.tabButtonActive]}
             onPress={() => setActiveTab('one_to_one')}
           >
-            <Text style={[styles.tabButtonText, activeTab === 'one_to_one' && styles.tabButtonTextActive]}>Meetings</Text>
+            <Text style={[styles.tabButtonText, activeTab === 'one_to_one' && styles.tabButtonTextActive]}>{t('meetings')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabButton, activeTab === 'payment' && styles.tabButtonActive]}
             onPress={() => setActiveTab('payment')}
           >
-            <Text style={[styles.tabButtonText, activeTab === 'payment' && styles.tabButtonTextActive]}>Payments</Text>
+            <Text style={[styles.tabButtonText, activeTab === 'payment' && styles.tabButtonTextActive]}>{t('payments')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tabButton, (activeTab === 'visitor' || activeTab === 'visitors') && styles.tabButtonActive]}
             onPress={() => setActiveTab('visitors')}
           >
-            <Text style={[styles.tabButtonText, activeTab === 'visitor' && styles.tabButtonTextActive]}>Visitors</Text>
+            <Text style={[styles.tabButtonText, activeTab === 'visitor' && styles.tabButtonTextActive]}>{t('visitors')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -1023,7 +1183,7 @@ This is an electronically generated receipt.
             onPress={() => navigation.navigate('ReferralSlip')}
           >
             <Icon name="plus-circle" size={18} color="#FFF" />
-            <Text style={styles.shortcutButtonText}>Add Referral</Text>
+            <Text style={styles.shortcutButtonText}>{t('addReferral')}</Text>
           </TouchableOpacity>
         )}
         {(activeTab === 'tyfcb' || activeTab === 'thanksnote') && (
@@ -1032,7 +1192,7 @@ This is an electronically generated receipt.
             onPress={() => navigation.navigate('TYFCBSlip')}
           >
             <Icon name="plus-circle" size={18} color="#FFF" />
-            <Text style={styles.shortcutButtonText}>Add ThanksNote</Text>
+            <Text style={styles.shortcutButtonText}>{t('addThanksNote')}</Text>
           </TouchableOpacity>
         )}
         {activeTab === 'payment' && (
@@ -1041,7 +1201,7 @@ This is an electronically generated receipt.
             onPress={() => setShowAddPaymentModal(true)}
           >
             <Icon name="plus-circle" size={18} color="#FFF" />
-            <Text style={styles.shortcutButtonText}>Add Payment</Text>
+            <Text style={styles.shortcutButtonText}>{t('addPayment')}</Text>
           </TouchableOpacity>
         )}
         {(activeTab === 'visitor' || activeTab === 'visitors') && (
@@ -1050,7 +1210,7 @@ This is an electronically generated receipt.
             onPress={() => navigation.navigate('Visitors')}
           >
             <Icon name="plus-circle" size={18} color="#FFF" />
-            <Text style={styles.shortcutButtonText}>Add Visitor</Text>
+            <Text style={styles.shortcutButtonText}>{t('addVisitor')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -1062,14 +1222,14 @@ This is an electronically generated receipt.
             onPress={() => setReferralTab('give')}
           >
             <Icon name="account-arrow-right" size={18} color={referralTab === 'give' ? '#FFF' : '#4A90E2'} />
-            <Text style={[styles.toggleText, referralTab === 'give' && styles.toggleTextActive]}>Given</Text>
+            <Text style={[styles.toggleText, referralTab === 'give' && styles.toggleTextActive]}>{t('given')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.toggleButton, referralTab === 'my' && styles.toggleButtonActive]}
             onPress={() => setReferralTab('my')}
           >
             <Icon name="account-arrow-left" size={18} color={referralTab === 'my' ? '#FFF' : '#4A90E2'} />
-            <Text style={[styles.toggleText, referralTab === 'my' && styles.toggleTextActive]}>Received</Text>
+            <Text style={[styles.toggleText, referralTab === 'my' && styles.toggleTextActive]}>{t('received')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1081,14 +1241,14 @@ This is an electronically generated receipt.
             onPress={() => setThanksNoteTab('given')}
           >
             <Icon name="handshake" size={18} color={thanksNoteTab === 'given' ? '#FFF' : '#FF9800'} />
-            <Text style={[styles.toggleText, thanksNoteTab === 'given' && styles.toggleTextActive]}>Given</Text>
+            <Text style={[styles.toggleText, thanksNoteTab === 'given' && styles.toggleTextActive]}>{t('given')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.toggleButton, thanksNoteTab === 'received' && styles.toggleButtonActive]}
             onPress={() => setThanksNoteTab('received')}
           >
             <Icon name="hand-heart" size={18} color={thanksNoteTab === 'received' ? '#FFF' : '#FF9800'} />
-            <Text style={[styles.toggleText, thanksNoteTab === 'received' && styles.toggleTextActive]}>Received</Text>
+            <Text style={[styles.toggleText, thanksNoteTab === 'received' && styles.toggleTextActive]}>{t('received')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -1127,10 +1287,10 @@ This is an electronically generated receipt.
           <View style={styles.emptyContainer}>
             <Icon name="inbox" size={60} color="#CCC" />
             <Text style={styles.emptyText}>
-              No activities yet
+              {t('noDataAvailable')}
             </Text>
             <Text style={styles.emptySubtext}>
-              Your activities will appear here
+              {t('feedUpdates')}
             </Text>
             {!loading && (
               <TouchableOpacity
@@ -1138,7 +1298,7 @@ This is an electronically generated receipt.
                 onPress={loadFeedData}
               >
                 <Icon name="refresh" size={20} color="#4A90E2" />
-                <Text style={styles.refreshButtonText}>Refresh</Text>
+                <Text style={styles.refreshButtonText}>{t('refresh')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -1156,8 +1316,8 @@ This is an electronically generated receipt.
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
-                {detailModalType === 'referral' ? 'Referral Details' :
-                  detailModalType === 'tyfcb' ? 'Thanks Note' : 'Activity Details'}
+                {detailModalType === 'referral' ? t('referralDetails') :
+                  detailModalType === 'tyfcb' ? t('thanksNote') : t('activityDetails')}
               </Text>
               <TouchableOpacity
                 onPress={() => setShowDetailModal(false)}
@@ -1184,17 +1344,17 @@ This is an electronically generated receipt.
                           selectedItem.type === 'tyfcb_received' ? '#E91E63' : '#4A90E2'}
                       />
                     </View>
-                    <Text style={styles.detailTitle}>{selectedItem.title || 'Activity'}</Text>
+                    <Text style={styles.detailTitle}>{translateFeedTitle(selectedItem)}</Text>
                   </View>
 
                   {/* Status Badge */}
                   {selectedItem.status && (
                     <View style={[styles.detailStatusBadge, {
-                      backgroundColor: selectedItem.status === 'Confirmed' ? '#4CAF50' :
-                        selectedItem.status === 'Rejected' ? '#F44336' : '#FF9800'
+                      backgroundColor: translateStatus(selectedItem.status) === t('confirmed') ? '#4CAF50' :
+                        translateStatus(selectedItem.status) === t('rejected') ? '#F44336' : '#FF9800'
                     }]}>
                       <Text style={styles.detailStatusText}>
-                        Status: {selectedItem.status}
+                        {t('status')}: {translateStatus(selectedItem.status)}
                       </Text>
                     </View>
                   )}
@@ -1204,7 +1364,7 @@ This is an electronically generated receipt.
                     {/* Row 1: Date and Member */}
                     <View style={styles.detailItem}>
                       <Icon name="calendar" size={20} color="#666" />
-                      <Text style={styles.detailLabel}>Date</Text>
+                      <Text style={styles.detailLabel}>{t('date')}</Text>
                       <Text style={styles.detailValue}>
                         {formatDate(selectedItem.date || new Date().toISOString())}
                       </Text>
@@ -1212,49 +1372,49 @@ This is an electronically generated receipt.
 
                     <View style={styles.detailItem}>
                       <Icon name="account" size={20} color="#666" />
-                      <Text style={styles.detailLabel}>Member</Text>
+                      <Text style={styles.detailLabel}>{t('member')}</Text>
                       <Text style={styles.detailValue}>
-                        {selectedItem.memberName || 'N/A'}
+                        {selectedItem.memberName || t('notAvailable')}
                       </Text>
                     </View>
 
                     {/* Row 2: Amount and Type */}
                     <View style={styles.detailItem}>
                       <Icon name="currency-usd" size={20} color="#666" />
-                      <Text style={styles.detailLabel}>Amount</Text>
+                      <Text style={styles.detailLabel}>{t('amount')}</Text>
                       <Text style={[styles.detailValue, { color: selectedItem.amount > 0 ? '#4CAF50' : '#666', fontWeight: 'bold' }]}>
-                        {selectedItem.amount > 0 ? `₹${selectedItem.amount.toLocaleString()}` : 'N/A'}
+                        {selectedItem.amount > 0 ? `₹${selectedItem.amount.toLocaleString()}` : t('notAvailable')}
                       </Text>
                     </View>
 
                     <View style={styles.detailItem}>
                       <Icon name="shape" size={20} color="#666" />
-                      <Text style={styles.detailLabel}>Type</Text>
+                      <Text style={styles.detailLabel}>{t('paymentType')}</Text>
                       <Text style={styles.detailValue}>
-                        {selectedItem.type === 'referral_received' ? 'Referral Received' :
-                          selectedItem.type === 'referral_given' ? 'Referral Given' :
-                            selectedItem.type === 'tyfcb_received' ? 'ThanksNote Received' :
-                              selectedItem.type === 'tyfcb_given' ? 'ThanksNote Given' :
-                                selectedItem.type === 'payment_made' ? 'Payment Made' :
-                                  selectedItem.type === 'payment_due' ? 'Payment Due' :
-                                    selectedItem.type === 'visitor_brought' ? 'Visitor Brought' :
-                                      selectedItem.type === 'visitor_became_member' ? 'Visitor Became Member' : 'Activity'}
+                        {selectedItem.type === 'referral_received' ? t('referralReceived') :
+                          selectedItem.type === 'referral_given' ? t('referralGiven') :
+                            selectedItem.type === 'tyfcb_received' ? t('thanksNoteReceived') :
+                              selectedItem.type === 'tyfcb_given' ? t('thanksNoteGiven') :
+                                selectedItem.type === 'payment_made' ? t('paymentReceived') :
+                                  selectedItem.type === 'payment_due' ? t('pendingPayments') :
+                                    selectedItem.type === 'visitor_brought' ? t('visitor') :
+                                      selectedItem.type === 'visitor_became_member' ? t('visitorBecameMember') : t('activity')}
                       </Text>
                     </View>
                   </View>
 
                   {/* Description */}
                   <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionLabel}>Description</Text>
+                    <Text style={styles.descriptionLabel}>{t('description')}</Text>
                     <Text style={styles.descriptionText}>
-                      {selectedItem.description || 'No description available'}
+                      {translateFeedDescription(selectedItem)}
                     </Text>
                   </View>
 
                   {/* Additional Notes if available */}
                   {selectedItem.notes && (
                     <View style={styles.notesContainer}>
-                      <Text style={styles.notesLabel}>Notes</Text>
+                      <Text style={styles.notesLabel}>{t('additionalNotes')}</Text>
                       <Text style={styles.notesText}>{selectedItem.notes}</Text>
                     </View>
                   )}
@@ -1264,23 +1424,23 @@ This is an electronically generated receipt.
                     (selectedItem.type === 'tyfcb_received')) && (
                       <View style={styles.actionButtonsContainer}>
                         <Text style={styles.actionTitle}>
-                          {(!selectedItem.status || selectedItem.status === 'Pending' || selectedItem.status === 'pending')
-                            ? 'Take Action'
-                            : 'Actions'}
+                          {(!selectedItem.status || translateStatus(selectedItem.status) === t('pending'))
+                            ? t('takeAction')
+                            : t('actions')}
                         </Text>
                         <View style={styles.actionButtons}>
                           <TouchableOpacity
                             style={[styles.actionButton, styles.confirmActionButton]}
                             onPress={confirmStatusUpdate}
                             disabled={updatingItemId === selectedItem.id ||
-                              (selectedItem.status && selectedItem.status !== 'Pending' && selectedItem.status !== 'pending')}
+                              (selectedItem.status && translateStatus(selectedItem.status) !== t('pending'))}
                           >
                             {updatingItemId === selectedItem.id ? (
                               <ActivityIndicator size="small" color="#FFF" />
                             ) : (
                               <>
                                 <Icon name="check-circle" size={20} color="#FFF" />
-                                <Text style={styles.actionButtonText}>Confirm</Text>
+                                <Text style={styles.actionButtonText}>{t('confirm')}</Text>
                               </>
                             )}
                           </TouchableOpacity>
@@ -1289,21 +1449,21 @@ This is an electronically generated receipt.
                             style={[styles.actionButton, styles.rejectActionButton]}
                             onPress={rejectStatusUpdate}
                             disabled={updatingItemId === selectedItem.id ||
-                              (selectedItem.status && selectedItem.status !== 'Pending' && selectedItem.status !== 'pending')}
+                              (selectedItem.status && translateStatus(selectedItem.status) !== t('pending'))}
                           >
                             {updatingItemId === selectedItem.id ? (
                               <ActivityIndicator size="small" color="#FFF" />
                             ) : (
                               <>
                                 <Icon name="close-circle" size={20} color="#FFF" />
-                                <Text style={styles.actionButtonText}>Reject</Text>
+                                <Text style={styles.actionButtonText}>{t('reject')}</Text>
                               </>
                             )}
                           </TouchableOpacity>
                         </View>
-                        {selectedItem.status && selectedItem.status !== 'Pending' && selectedItem.status !== 'pending' && (
+                        {selectedItem.status && translateStatus(selectedItem.status) !== t('pending') && (
                           <Text style={styles.actionHint}>
-                            This item has already been {selectedItem.status.toLowerCase()}
+                            {t('alreadyProcessed')} {translateStatus(selectedItem.status).toLowerCase()}
                           </Text>
                         )}
                       </View>
@@ -1336,7 +1496,7 @@ This is an electronically generated receipt.
             onPress={() => {}}
           >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Payment Details</Text>
+              <Text style={styles.modalTitle}>{t('addPaymentDetails')}</Text>
               <TouchableOpacity onPress={() => {
                 setShowAddPaymentModal(false);
                 setShowPaymentMethodDropdown(false);
@@ -1348,12 +1508,12 @@ This is an electronically generated receipt.
             <ScrollView style={styles.modalContent}>
               {/* Amount */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Amount (₹) *</Text>
+                <Text style={styles.formLabel}>{t('amountRequired')}</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="currency-inr" size={18} color="#4A90E2" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="e.g., 5000"
+                    placeholder={t('enterAmount')}
                     value={paymentForm.amount}
                     onChangeText={(text) => setPaymentForm(prev => ({ ...prev, amount: text.replace(/[^0-9]/g, '') }))}
                     keyboardType="numeric"
@@ -1364,7 +1524,7 @@ This is an electronically generated receipt.
 
               {/* Payment Method */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Payment Method *</Text>
+                <Text style={styles.formLabel}>{t('paymentMethodRequired')}</Text>
                 <TouchableOpacity
                   style={styles.dropdownContainer}
                   onPress={() => setShowPaymentMethodDropdown(!showPaymentMethodDropdown)}
@@ -1376,7 +1536,7 @@ This is an electronically generated receipt.
                     style={styles.inputIcon} 
                   />
                   <Text style={styles.dropdownText}>
-                    {paymentForm.paymentMethod || 'Select Payment Method'}
+                    {paymentForm.paymentMethod || t('paymentMethod')}
                   </Text>
                   <Icon 
                     name={showPaymentMethodDropdown ? 'chevron-up' : 'chevron-down'} 
@@ -1417,7 +1577,7 @@ This is an electronically generated receipt.
 
               {/* Payment Date */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Payment Date *</Text>
+                <Text style={styles.formLabel}>{t('paymentDateRequired')}</Text>
                 <TouchableOpacity
                   style={styles.dateInputContainer}
                   onPress={() => setShowPaymentDatePicker(true)}
@@ -1439,12 +1599,12 @@ This is an electronically generated receipt.
 
               {/* Transaction ID */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Transaction ID *</Text>
+                <Text style={styles.formLabel}>{t('transactionIdRequired')}</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="barcode" size={18} color="#4A90E2" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="e.g., TXN123456789"
+                    placeholder={t('enterTransactionId')}
                     value={paymentForm.transactionId}
                     onChangeText={(text) => setPaymentForm(prev => ({ ...prev, transactionId: text }))}
                     placeholderTextColor="#999"
@@ -1454,15 +1614,15 @@ This is an electronically generated receipt.
 
               {/* Payment For Month */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Payment For Month *</Text>
+                <Text style={styles.formLabel}>{t('paymentForMonthRequired')}</Text>
                 <Text style={styles.formHint}>
-                  Enter month abbreviation (e.g., Jan, Feb, Mar)
+                  {t('enterMonthHint')}
                 </Text>
                 <View style={styles.inputContainer}>
                   <Icon name="calendar-month" size={18} color="#4A90E2" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="e.g., Jan"
+                    placeholder={t('enterMonth')}
                     value={paymentForm.paymentForMonth}
                     onChangeText={(text) => setPaymentForm(prev => ({ ...prev, paymentForMonth: text }))}
                     placeholderTextColor="#999"
@@ -1481,7 +1641,7 @@ This is an electronically generated receipt.
                 ) : (
                   <>
                     <Icon name="check-circle" size={20} color="#FFF" />
-                    <Text style={styles.submitButtonText}>Submit Payment</Text>
+                    <Text style={styles.submitButtonText}>{t('submitPayment')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -1494,7 +1654,7 @@ This is an electronically generated receipt.
                 }}
                 disabled={loading}
               >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
               </TouchableOpacity>
             </ScrollView>
           </TouchableOpacity>
@@ -1514,7 +1674,7 @@ This is an electronically generated receipt.
               <TouchableOpacity onPress={() => setShowReceiptModal(false)}>
                 <Icon name="arrow-left" size={24} color="#333" />
               </TouchableOpacity>
-              <Text style={styles.receiptHeaderTitle}>Payment Receipt</Text>
+              <Text style={styles.receiptHeaderTitle}>{t('paymentReceipt')}</Text>
               <TouchableOpacity onPress={handleDownloadReceipt}>
                 <Icon name="download" size={24} color="#4A90E2" />
               </TouchableOpacity>
@@ -1522,58 +1682,58 @@ This is an electronically generated receipt.
 
             <ScrollView style={styles.receiptContent}>
               <View style={styles.receiptLogoSection}>
-                <Text style={styles.receiptCompanyName}>ALAIGAL</Text>
-                <Text style={styles.receiptCompanySubtitle}>Members Network</Text>
+                <Text style={styles.receiptCompanyName}>{t('alaigalMembersNetwork').split(' ')[0]}</Text>
+                <Text style={styles.receiptCompanySubtitle}>{t('alaigalMembersNetwork').split(' ').slice(1).join(' ')}</Text>
               </View>
 
-              <Text style={styles.receiptTitle}>PAYMENT RECEIPT</Text>
+              <Text style={styles.receiptTitle}>{t('paymentReceipt').toUpperCase()}</Text>
 
               <View style={styles.receiptInfoRow}>
                 <View style={styles.receiptInfoItem}>
-                  <Text style={styles.receiptInfoLabel}>Receipt ID</Text>
-                  <Text style={styles.receiptInfoValue}>{selectedPayment?.receiptId || 'N/A'}</Text>
+                  <Text style={styles.receiptInfoLabel}>{t('receiptId')}</Text>
+                  <Text style={styles.receiptInfoValue}>{selectedPayment?.receiptId || t('notAvailable')}</Text>
                 </View>
                 <View style={styles.receiptInfoItem}>
-                  <Text style={styles.receiptInfoLabel}>Date</Text>
-                  <Text style={styles.receiptInfoValue}>{selectedPayment?.paidDate || 'N/A'}</Text>
+                  <Text style={styles.receiptInfoLabel}>{t('date')}</Text>
+                  <Text style={styles.receiptInfoValue}>{selectedPayment?.paidDate || t('notAvailable')}</Text>
                 </View>
               </View>
 
               <View style={styles.receiptDivider} />
 
               <View style={styles.receiptSection}>
-                <Text style={styles.receiptSectionTitle}>Member Details</Text>
+                <Text style={styles.receiptSectionTitle}>{t('memberDetails')}</Text>
                 <View style={styles.receiptDetailRow}>
-                  <Text style={styles.receiptDetailLabel}>Name:</Text>
-                  <Text style={styles.receiptDetailValue}>{selectedPayment?.memberName || 'N/A'}</Text>
+                  <Text style={styles.receiptDetailLabel}>{t('name')}:</Text>
+                  <Text style={styles.receiptDetailValue}>{selectedPayment?.memberName || t('notAvailable')}</Text>
                 </View>
               </View>
 
               <View style={styles.receiptSection}>
-                <Text style={styles.receiptSectionTitle}>Payment Details</Text>
+                <Text style={styles.receiptSectionTitle}>{t('paymentDetails')}</Text>
                 <View style={styles.receiptDetailRow}>
-                  <Text style={styles.receiptDetailLabel}>Month:</Text>
-                  <Text style={styles.receiptDetailValue}>{selectedPayment?.month || 'N/A'}</Text>
+                  <Text style={styles.receiptDetailLabel}>{t('month')}:</Text>
+                  <Text style={styles.receiptDetailValue}>{selectedPayment?.month || t('notAvailable')}</Text>
                 </View>
                 <View style={styles.receiptDetailRow}>
-                  <Text style={styles.receiptDetailLabel}>Amount:</Text>
+                  <Text style={styles.receiptDetailLabel}>{t('amount')}:</Text>
                   <Text style={styles.receiptDetailValue}>₹{(selectedPayment?.amount || 0).toLocaleString()}</Text>
                 </View>
                 <View style={styles.receiptDetailRow}>
-                  <Text style={styles.receiptDetailLabel}>Payment Method:</Text>
-                  <Text style={styles.receiptDetailValue}>{selectedPayment?.paymentMethod || 'N/A'}</Text>
+                  <Text style={styles.receiptDetailLabel}>{t('paymentMethod')}:</Text>
+                  <Text style={styles.receiptDetailValue}>{selectedPayment?.paymentMethod || t('notAvailable')}</Text>
                 </View>
               </View>
 
               <View style={styles.receiptAmountBox}>
-                <Text style={styles.receiptAmountLabel}>Total Amount Paid</Text>
+                <Text style={styles.receiptAmountLabel}>{t('totalAmountPaid')}</Text>
                 <Text style={styles.receiptAmountValue}>₹{(selectedPayment?.amount || 0).toLocaleString()}</Text>
               </View>
 
               <View style={styles.receiptFooter}>
-                <Text style={styles.receiptFooterText}>Thank you for your payment!</Text>
-                <Text style={styles.receiptFooterSubtext}>For queries, contact: support@alaigal.com</Text>
-                <Text style={styles.receiptFooterSubtext}>This is an electronically generated receipt.</Text>
+                <Text style={styles.receiptFooterText}>{t('thankYouPayment')}</Text>
+                <Text style={styles.receiptFooterSubtext}>{t('supportContact')}</Text>
+                <Text style={styles.receiptFooterSubtext}>{t('electronicReceipt')}</Text>
               </View>
             </ScrollView>
 
@@ -1582,7 +1742,7 @@ This is an electronically generated receipt.
               onPress={handleDownloadReceipt}
             >
               <Icon name="download" size={20} color="#FFF" />
-              <Text style={styles.receiptDownloadButtonText}>Download Receipt</Text>
+              <Text style={styles.receiptDownloadButtonText}>{t('downloadReceipt')}</Text>
             </TouchableOpacity>
           </View>
         </View>

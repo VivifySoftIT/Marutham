@@ -20,9 +20,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../apiConfig';
 import Voice from '@react-native-voice/voice';
+import { useLanguage } from '../service/LanguageContext';
 
 const ReferralSlip = ({ route }) => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const selectedMember = route?.params?.selectedMember; // Get member from navigation
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(true);
@@ -183,7 +185,7 @@ const ReferralSlip = ({ route }) => {
       if (members && Array.isArray(members)) {
         const formattedMembers = members.map(member => ({
           id: member.id,
-          name: member.name || 'Unknown',
+          name: member.name || t('unknown'),
           email: member.email || '',
           phone: member.phone || '',
           memberId: member.memberId || `MEM${member.id}`
@@ -196,7 +198,7 @@ const ReferralSlip = ({ route }) => {
 
     } catch (error) {
       console.error('Error loading members:', error);
-      Alert.alert('Error', 'Failed to load members. Please try again.');
+      Alert.alert(t('error'), t('failedToLoadMembers'));
     } finally {
       setLoadingMembers(false);
     }
@@ -252,12 +254,12 @@ const ReferralSlip = ({ route }) => {
   const validateForm = () => {
     if (!currentUser.memberId) {
       Alert.alert(
-        'Login Required',
-        'Please make sure you are properly logged in as a member.',
+        t('loginRequired'),
+        t('pleaseMakeSureLoggedIn'),
         [
-          { text: 'OK' },
+          { text: t('ok') },
           {
-            text: 'Re-login',
+            text: t('reLogin'),
             onPress: () => navigation.navigate('Login')
           }
         ]
@@ -266,36 +268,36 @@ const ReferralSlip = ({ route }) => {
     }
 
     if (!formData.memberName.trim()) {
-      Alert.alert('Validation Error', 'Please select a member');
+      Alert.alert(t('validationError'), t('pleaseSelectMember'));
       return false;
     }
     if (!formData.referralType.trim()) {
-      Alert.alert('Validation Error', 'Please select referral type');
+      Alert.alert(t('validationError'), t('pleaseSelectReferralType'));
       return false;
     }
     if (!formData.referralCategory.trim()) {
-      Alert.alert('Validation Error', 'Please select referral category');
+      Alert.alert(t('validationError'), t('pleaseSelectReferralCategory'));
       return false;
     }
     if (!formData.referralNumber.trim()) {
-      Alert.alert('Validation Error', 'Please enter referral number');
+      Alert.alert(t('validationError'), t('pleaseEnterReferralNumber'));
       return false;
     }
     if (!formData.telephone.trim()) {
-      Alert.alert('Validation Error', 'Please enter telephone number');
+      Alert.alert(t('validationError'), t('pleaseEnterTelephone'));
       return false;
     }
 
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(formData.telephone.replace(/\D/g, ''))) {
-      Alert.alert('Validation Error', 'Please enter a valid 10-digit telephone number');
+      Alert.alert(t('validationError'), t('pleaseEnterValidPhone'));
       return false;
     }
 
     if (formData.email && formData.email.trim()) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        Alert.alert('Validation Error', 'Please enter a valid email address');
+        Alert.alert(t('validationError'), t('pleaseEnterValidEmail'));
         return false;
       }
     }
@@ -312,7 +314,7 @@ const ReferralSlip = ({ route }) => {
       console.log('Selected memberId:', formData.memberId);
 
       if (!currentUser.memberId) {
-        throw new Error('Your member ID is not available. Please re-login.');
+        throw new Error(t('memberIdNotAvailable'));
       }
 
       // Status is always 'Pending' - removed from UI
@@ -346,21 +348,21 @@ const ReferralSlip = ({ route }) => {
     } catch (error) {
       console.error('Error submitting referral:', error);
 
-      let errorMessage = error.message || 'Failed to submit referral';
+      let errorMessage = error.message || t('failedToSubmitReferral');
 
       if (error.message.includes('400')) {
         if (error.message.includes('GivenByMember is required')) {
-          errorMessage = 'Your member information is missing. Please ensure you are registered as a member.';
+          errorMessage = t('yourMemberInfoMissing');
         } else if (error.message.includes('not found in database')) {
-          errorMessage = 'Your member profile was not found. Please contact administrator.';
+          errorMessage = t('memberProfileNotFound');
         } else {
-          errorMessage = 'Validation error. Please check all required fields.';
+          errorMessage = t('validationErrorCheckFields');
         }
       } else if (error.message.includes('500')) {
-        errorMessage = 'Server error. Please try again later.';
+        errorMessage = t('serverErrorTryAgain');
       }
 
-      Alert.alert('Submission Error', errorMessage);
+      Alert.alert(t('submissionError'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -413,7 +415,7 @@ const ReferralSlip = ({ route }) => {
   const startRecording = async (fieldName) => {
     // For Web Platform
     if (Platform.OS === 'web') {
-      Alert.alert('Voice Input', 'Please use mobile app for voice features.');
+      Alert.alert(t('voiceInput'), t('pleaseUseMobileApp'));
       return;
     }
 
@@ -450,7 +452,7 @@ const ReferralSlip = ({ route }) => {
       await Voice.start('en-IN');
     } catch (e) {
       console.error("Start Voice Error", e);
-      Alert.alert("Error", "Could not start voice recording.");
+      Alert.alert(t('error'), t('couldNotStartVoice'));
       setIsListening(null);
     }
   };
@@ -474,7 +476,7 @@ const ReferralSlip = ({ route }) => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Referral</Text>
+        <Text style={styles.headerTitle}>{t('referral')}</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 
@@ -501,21 +503,21 @@ const ReferralSlip = ({ route }) => {
               <View style={styles.preSelectedMemberBanner}>
                 <Icon name="information" size={20} color="#4A90E2" />
                 <Text style={styles.preSelectedMemberText}>
-                  Referral for: <Text style={styles.preSelectedMemberName}>{selectedMember.name}</Text>
+                  {t('referralFor')}: <Text style={styles.preSelectedMemberName}>{selectedMember.name}</Text>
                 </Text>
               </View>
             )}
 
             {/* Member Name Dropdown with Search */}
             <View style={styles.section}>
-              <Text style={styles.label}>To Member *</Text>
+              <Text style={styles.label}>{t('toMember')} *</Text>
               <TouchableOpacity
                 style={styles.memberDropdownButton}
                 onPress={() => setShowMemberDropdown(!showMemberDropdown)}
               >
                 <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
                 <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
-                  {formData.memberName || 'Select member'}
+                  {formData.memberName || t('selectMember')}
                 </Text>
                 <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
               </TouchableOpacity>
@@ -527,7 +529,7 @@ const ReferralSlip = ({ route }) => {
                     <Icon name="magnify" size={20} color="#4A90E2" />
                     <TextInput
                       style={styles.searchInput}
-                      placeholder="Search members..."
+                      placeholder={t('searchMembers')}
                       value={memberSearchQuery}
                       onChangeText={setMemberSearchQuery}
                       placeholderTextColor="#999"
@@ -543,7 +545,7 @@ const ReferralSlip = ({ route }) => {
                     {loadingMembers ? (
                       <View style={styles.noMembersContainer}>
                         <ActivityIndicator size="small" color="#4A90E2" />
-                        <Text style={styles.noMembersText}>Loading members...</Text>
+                        <Text style={styles.noMembersText}>{t('loadingMembers')}</Text>
                       </View>
                     ) : allMembers && allMembers.length > 0 ? (
                       allMembers
@@ -585,7 +587,7 @@ const ReferralSlip = ({ route }) => {
                     ) : (
                       <View style={styles.noMembersContainer}>
                         <Icon name="account-alert" size={24} color="#999" />
-                        <Text style={styles.noMembersText}>No members available</Text>
+                        <Text style={styles.noMembersText}>{t('noMembersAvailable')}</Text>
                       </View>
                     )}
                   </ScrollView>
@@ -595,7 +597,7 @@ const ReferralSlip = ({ route }) => {
 
             {/* Referral Type Radio Buttons */}
             <View style={styles.section}>
-              <Text style={styles.label}>Referral Type *</Text>
+              <Text style={styles.label}>{t('referralType')} *</Text>
               <View style={styles.radioGroup}>
                 <TouchableOpacity
                   style={styles.radioButton}
@@ -606,7 +608,7 @@ const ReferralSlip = ({ route }) => {
                     size={20}
                     color="#4A90E2"
                   />
-                  <Text style={styles.radioLabel}>Inside</Text>
+                  <Text style={styles.radioLabel}>{t('inside')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.radioButton}
@@ -617,14 +619,14 @@ const ReferralSlip = ({ route }) => {
                     size={20}
                     color="#4A90E2"
                   />
-                  <Text style={styles.radioLabel}>Outside</Text>
+                  <Text style={styles.radioLabel}>{t('outside')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Referral Category Radio Buttons */}
             <View style={styles.section}>
-              <Text style={styles.label}>Referral Category *</Text>
+              <Text style={styles.label}>{t('referralCategory')} *</Text>
               <View style={styles.radioGroup}>
                 <TouchableOpacity
                   style={styles.radioButton}
@@ -635,7 +637,7 @@ const ReferralSlip = ({ route }) => {
                     size={20}
                     color="#4A90E2"
                   />
-                  <Text style={styles.radioLabel}>Business</Text>
+                  <Text style={styles.radioLabel}>{t('business')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.radioButton}
@@ -646,18 +648,18 @@ const ReferralSlip = ({ route }) => {
                     size={20}
                     color="#4A90E2"
                   />
-                  <Text style={styles.radioLabel}>Personal</Text>
+                  <Text style={styles.radioLabel}>{t('personal')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.label}> Company Name*</Text>
+              <Text style={styles.label}>{t('companyName')}*</Text>
               <View style={styles.inputContainer}>
                 <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter client name or company name"
+                  placeholder={t('enterClientOrCompanyName')}
                   value={formData.referralNumber}
                   onChangeText={(text) => handleInputChange('referralNumber', text)}
                   placeholderTextColor="#999"
@@ -674,7 +676,7 @@ const ReferralSlip = ({ route }) => {
                     color={isListening === 'referralNumber' ? "#FF4444" : "#4A90E2"}
                   />
                   {isListening === 'referralNumber' && (
-                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -682,12 +684,12 @@ const ReferralSlip = ({ route }) => {
 
             {/* Telephone Number Field */}
             <View style={styles.section}>
-              <Text style={styles.label}>Mobile Number *</Text>
+              <Text style={styles.label}>{t('mobileNumber')} *</Text>
               <View style={styles.inputContainer}>
                 <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter telephone number (e.g., 123-456-7890)"
+                  placeholder={t('enterTelephoneNumber')}
                   value={formData.telephone}
                   onChangeText={handlePhoneChange}
                   keyboardType="phone-pad"
@@ -706,7 +708,7 @@ const ReferralSlip = ({ route }) => {
                     color={isListening === 'telephone' ? "#FF4444" : "#4A90E2"}
                   />
                   {isListening === 'telephone' && (
-                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -714,12 +716,12 @@ const ReferralSlip = ({ route }) => {
 
             {/* Email Field */}
             <View style={styles.section}>
-              <Text style={styles.label}>Email </Text>
+              <Text style={styles.label}>{t('email')} </Text>
               <View style={styles.inputContainer}>
                 <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter email address (optional)"
+                  placeholder={t('enterEmailOptional')}
                   value={formData.email}
                   onChangeText={(text) => handleInputChange('email', text)}
                   keyboardType="email-address"
@@ -738,7 +740,7 @@ const ReferralSlip = ({ route }) => {
                     color={isListening === 'email' ? "#FF4444" : "#4A90E2"}
                   />
                   {isListening === 'email' && (
-                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -746,11 +748,11 @@ const ReferralSlip = ({ route }) => {
 
             {/* Address */}
             <View style={styles.section}>
-              <Text style={styles.label}>Address</Text>
+              <Text style={styles.label}>{t('address')}</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Enter address"
+                  placeholder={t('enterAddress')}
                   value={formData.address}
                   onChangeText={(text) => handleInputChange('address', text)}
                   multiline
@@ -758,7 +760,7 @@ const ReferralSlip = ({ route }) => {
                   placeholderTextColor="#999"
                 />
                 <TouchableOpacity
-                  onPress={() => startVoiceInput('address')}
+                  onPress={() => startRecording('address')}
                   style={[styles.micButton, styles.micButtonTextArea]}
                 >
                   <Icon
@@ -772,11 +774,11 @@ const ReferralSlip = ({ route }) => {
 
             {/* Comments */}
             <View style={styles.section}>
-              <Text style={styles.label}>Comments</Text>
+              <Text style={styles.label}>{t('comments')}</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Enter any comments"
+                  placeholder={t('enterComments')}
                   value={formData.comments}
                   onChangeText={(text) => handleInputChange('comments', text)}
                   multiline
@@ -784,7 +786,7 @@ const ReferralSlip = ({ route }) => {
                   placeholderTextColor="#999"
                 />
                 <TouchableOpacity
-                  onPress={() => startVoiceInput('comments')}
+                  onPress={() => startRecording('comments')}
                   style={[styles.micButton, styles.micButtonTextArea]}
                 >
                   <Icon
@@ -809,7 +811,7 @@ const ReferralSlip = ({ route }) => {
               ) : (
                 <>
                   <Icon name="check-circle" size={20} color="#FFF" />
-                  <Text style={styles.confirmButtonText}>Confirm Referral</Text>
+                  <Text style={styles.confirmButtonText}>{t('confirmReferral')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -827,29 +829,29 @@ const ReferralSlip = ({ route }) => {
               style={styles.successHeader}
             >
               <Icon name="check-circle" size={60} color="#FFF" />
-              <Text style={styles.successTitle}>Referral Submitted!</Text>
+              <Text style={styles.successTitle}>{t('referralSubmitted')}</Text>
             </LinearGradient>
 
             <View style={styles.successContent}>
               <View style={styles.successDetailRow}>
-                <Text style={styles.successLabel}>To Member:</Text>
+                <Text style={styles.successLabel}>{t('toMember')}:</Text>
                 <Text style={styles.successValue}>{savedData?.memberName}</Text>
               </View>
 
               <View style={styles.successDetailRow}>
-                <Text style={styles.successLabel}>Referral For:</Text>
+                <Text style={styles.successLabel}>{t('referralFor')}:</Text>
                 <Text style={styles.successValue}>{savedData?.referralNumber}</Text>
               </View>
 
               <View style={styles.successDetailRow}>
-                <Text style={styles.successLabel}>Type:</Text>
+                <Text style={styles.successLabel}>{t('type')}:</Text>
                 <Text style={styles.successValue}>
-                  {savedData?.referralType === 'inside' ? 'Inside' : 'Outside'}
+                  {savedData?.referralType === 'inside' ? t('inside') : t('outside')}
                 </Text>
               </View>
 
               <View style={styles.successDetailRow}>
-                <Text style={styles.successLabel}>Phone:</Text>
+                <Text style={styles.successLabel}>{t('phone')}:</Text>
                 <Text style={styles.successValue}>{savedData?.telephone}</Text>
               </View>
             </View>
@@ -860,7 +862,7 @@ const ReferralSlip = ({ route }) => {
                 onPress={() => navigation.goBack()}
               >
                 <Icon name="arrow-left" size={20} color="#FFF" />
-                <Text style={styles.successButtonText}>Back</Text>
+                <Text style={styles.successButtonText}>{t('back')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -868,7 +870,7 @@ const ReferralSlip = ({ route }) => {
                 onPress={handleReset}
               >
                 <Icon name="plus-circle" size={20} color="#FFF" />
-                <Text style={styles.successButtonText}>Add Another</Text>
+                <Text style={styles.successButtonText}>{t('addAnother')}</Text>
               </TouchableOpacity>
             </View>
           </View>
