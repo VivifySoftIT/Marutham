@@ -21,9 +21,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import API_BASE_URL from '../apiConfig';
 import MemberIdService from '../service/MemberIdService';
 import Voice from '@react-native-voice/voice';
+import { useLanguage } from '../service/LanguageContext';
 
 const TYFCBSlip = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
@@ -97,7 +99,7 @@ const TYFCBSlip = () => {
       console.log('TYFCBSlip - Total members loaded:', members?.length || 0);
       const formattedMembers = (members || []).map(member => ({
         ...member,
-        name: member.name || 'Unknown Member',
+        name: member.name || t('unknownMember'),
         memberId: member.memberId || member.id,
         phone: member.phone || '',
         email: member.email || '',
@@ -106,7 +108,7 @@ const TYFCBSlip = () => {
       setAllMembers(formattedMembers);
     } catch (error) {
       console.error('Error loading members:', error);
-      Alert.alert('Error', 'Failed to load members list');
+      Alert.alert(t('error'), t('failedToLoadMembersList'));
       setAllMembers([]);
     } finally {
       setLoadingMembers(false);
@@ -129,19 +131,19 @@ const TYFCBSlip = () => {
 
   const validateForm = () => {
     if (!formData.memberName.trim()) {
-      Alert.alert('Validation Error', 'Please select a member');
+      Alert.alert(t('validationError'), t('pleaseSelectMember'));
       return false;
     }
     if (!formData.businessVisited.trim()) {
-      Alert.alert('Validation Error', 'Please enter business visited');
+      Alert.alert(t('validationError'), t('pleaseEnterBusinessVisited'));
       return false;
     }
     if (formData.amount && (isNaN(formData.amount) || parseFloat(formData.amount) < 0)) {
-      Alert.alert('Validation Error', 'Amount must be a valid positive number');
+      Alert.alert(t('validationError'), t('amountMustBeValidPositive'));
       return false;
     }
     if (formData.rating && (isNaN(formData.rating) || parseInt(formData.rating) < 1 || parseInt(formData.rating) > 5)) {
-      Alert.alert('Validation Error', 'Rating must be between 1 and 5');
+      Alert.alert(t('validationError'), t('ratingMustBeBetween1And5'));
       return false;
     }
     return true;
@@ -151,7 +153,7 @@ const TYFCBSlip = () => {
   const startRecording = async (fieldName) => {
     // For Web Platform
     if (Platform.OS === 'web') {
-      Alert.alert('Voice Input', 'Please use mobile app for voice features.');
+      Alert.alert(t('voiceInput'), t('pleaseUseMobileApp'));
       return;
     }
 
@@ -183,7 +185,7 @@ const TYFCBSlip = () => {
       await Voice.start('en-IN');
     } catch (e) {
       console.error("Start Voice Error", e);
-      Alert.alert("Error", "Could not start voice recording.");
+      Alert.alert(t('error'), t('couldNotStartVoice'));
       setIsListening(null);
     }
   };
@@ -228,7 +230,7 @@ const TYFCBSlip = () => {
       }
 
       if (!givenByMemberId) {
-        Alert.alert('Error', 'Could not find your member ID. Please try again.');
+        Alert.alert(t('error'), t('couldNotFindMemberId'));
         setLoading(false);
         return;
       }
@@ -256,7 +258,7 @@ const TYFCBSlip = () => {
       });
       setShowSuccessScreen(true);
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to submit TYFCB slip');
+      Alert.alert(t('error'), error.message || t('failedToSubmitTYFCBSlip'));
       console.error('Error:', error);
     } finally {
       setLoading(false);
@@ -269,14 +271,14 @@ const TYFCBSlip = () => {
     <>
       {/* Member Selection with Search */}
       <View style={styles.section}>
-        <Text style={styles.label}>To Member *</Text>
+        <Text style={styles.label}>{t('toMember')} *</Text>
         <TouchableOpacity
           style={styles.memberDropdownButton}
           onPress={() => setShowMemberDropdown(!showMemberDropdown)}
         >
           <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
           <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
-            {formData.memberName || 'Select member'}
+            {formData.memberName || t('selectMember')}
           </Text>
           <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
         </TouchableOpacity>
@@ -288,7 +290,7 @@ const TYFCBSlip = () => {
               <Icon name="magnify" size={20} color="#4A90E2" />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search members..."
+                placeholder={t('searchMembers')}
                 value={memberSearchQuery}
                 onChangeText={setMemberSearchQuery}
                 placeholderTextColor="#999"
@@ -304,7 +306,7 @@ const TYFCBSlip = () => {
               {loadingMembers ? (
                 <View style={styles.noMembersContainer}>
                   <ActivityIndicator size="small" color="#4A90E2" />
-                  <Text style={styles.noMembersText}>Loading members...</Text>
+                  <Text style={styles.noMembersText}>{t('loadingMembers')}</Text>
                 </View>
               ) : allMembers && allMembers.length > 0 ? (
                 allMembers
@@ -346,7 +348,7 @@ const TYFCBSlip = () => {
               ) : (
                 <View style={styles.noMembersContainer}>
                   <Icon name="account-alert" size={24} color="#999" />
-                  <Text style={styles.noMembersText}>No members available</Text>
+                  <Text style={styles.noMembersText}>{t('noMembersAvailable')}</Text>
                 </View>
               )}
             </ScrollView>
@@ -356,12 +358,12 @@ const TYFCBSlip = () => {
 
       {/* Business Visited */}
       <View style={styles.section}>
-        <Text style={styles.label}>Business Visited *</Text>
+        <Text style={styles.label}>{t('businessVisited')} *</Text>
         <View style={styles.inputContainer}>
           <Icon name="briefcase" size={20} color="#4A90E2" style={styles.icon} />
           <TextInput
             style={styles.input}
-            placeholder="Enter business name"
+            placeholder={t('enterBusinessName')}
             value={formData.businessVisited}
             onChangeText={(text) => handleInputChange('businessVisited', text)}
             placeholderTextColor="#999"
@@ -378,7 +380,7 @@ const TYFCBSlip = () => {
               color={isListening === 'businessVisited' ? "#FF4444" : "#4A90E2"}
             />
             {isListening === 'businessVisited' && (
-              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -386,12 +388,12 @@ const TYFCBSlip = () => {
 
       {/* Amount */}
       <View style={styles.section}>
-        <Text style={styles.label}>Amount</Text>
+        <Text style={styles.label}>{t('amount')}</Text>
         <View style={styles.inputContainer}>
           <Icon name="currency-inr" size={20} color="#4A90E2" style={styles.icon} />
           <TextInput
             style={styles.input}
-            placeholder="Enter amount (optional)"
+            placeholder={t('enterAmountOptional')}
             value={formData.amount}
             onChangeText={(text) => handleInputChange('amount', text)}
             keyboardType="decimal-pad"
@@ -409,7 +411,7 @@ const TYFCBSlip = () => {
               color={isListening === 'amount' ? "#FF4444" : "#4A90E2"}
             />
             {isListening === 'amount' && (
-              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -417,12 +419,12 @@ const TYFCBSlip = () => {
 
       {/* Rating */}
       <View style={styles.section}>
-        <Text style={styles.label}>Rating (1-5 stars)</Text>
+        <Text style={styles.label}>{t('rating')}</Text>
         <View style={styles.inputContainer}>
           <Icon name="star" size={20} color="#4A90E2" style={styles.icon} />
           <TextInput
             style={styles.input}
-            placeholder="Enter rating (1-5)"
+            placeholder={t('enterRating')}
             value={formData.rating}
             onChangeText={(text) => handleInputChange('rating', text)}
             keyboardType="numeric"
@@ -441,7 +443,7 @@ const TYFCBSlip = () => {
               color={isListening === 'rating' ? "#FF4444" : "#4A90E2"}
             />
             {isListening === 'rating' && (
-              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -449,11 +451,11 @@ const TYFCBSlip = () => {
 
       {/* Notes */}
       <View style={styles.section}>
-        <Text style={styles.label}>Notes</Text>
+        <Text style={styles.label}>{t('notes')}</Text>
         <View style={[styles.inputContainer, styles.textAreaContainer]}>
           <TextInput
             style={[styles.input, styles.textArea]}
-            placeholder="Enter any notes"
+            placeholder={t('enterAnyNotes')}
             value={formData.notes}
             onChangeText={(text) => handleInputChange('notes', text)}
             multiline
@@ -472,7 +474,7 @@ const TYFCBSlip = () => {
               color={isListening === 'notes' ? "#FF4444" : "#4A90E2"}
             />
             {isListening === 'notes' && (
-              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>Recording...</Text>
+              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -489,7 +491,7 @@ const TYFCBSlip = () => {
         ) : (
           <>
             <Icon name="check-circle" size={20} color="#FFF" />
-            <Text style={styles.confirmButtonText}>Confirm Thanks Note</Text>
+            <Text style={styles.confirmButtonText}>{t('confirmThanksNote')}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -507,7 +509,7 @@ const TYFCBSlip = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thanks Note</Text>
+        <Text style={styles.headerTitle}>{t('thanksNote')}</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 
@@ -542,37 +544,37 @@ const TYFCBSlip = () => {
               style={styles.successHeader}
             >
               <Icon name="check-circle" size={60} color="#FFF" />
-              <Text style={styles.successTitle}>Thanks Note Submitted!</Text>
+              <Text style={styles.successTitle}>{t('thanksNoteSubmitted')}</Text>
             </LinearGradient>
 
             <View style={styles.successContent}>
               <View style={styles.successDetailRow}>
-                <Text style={styles.successLabel}>To Member:</Text>
+                <Text style={styles.successLabel}>{t('toMember')}:</Text>
                 <Text style={styles.successValue}>{savedData?.memberName}</Text>
               </View>
 
               <View style={styles.successDetailRow}>
-                <Text style={styles.successLabel}>Business Visited:</Text>
+                <Text style={styles.successLabel}>{t('businessVisitedLabel')}</Text>
                 <Text style={styles.successValue}>{savedData?.businessVisited}</Text>
               </View>
 
               {savedData?.amount && (
                 <View style={styles.successDetailRow}>
-                  <Text style={styles.successLabel}>Amount:</Text>
+                  <Text style={styles.successLabel}>{t('amount')}:</Text>
                   <Text style={styles.successValue}>₹{savedData.amount}</Text>
                 </View>
               )}
 
               {savedData?.rating && (
                 <View style={styles.successDetailRow}>
-                  <Text style={styles.successLabel}>Rating:</Text>
+                  <Text style={styles.successLabel}>{t('ratingLabel')}</Text>
                   <Text style={styles.successValue}>{savedData.rating} ⭐</Text>
                 </View>
               )}
 
               {savedData?.notes && (
                 <View style={styles.successDetailRow}>
-                  <Text style={styles.successLabel}>Notes:</Text>
+                  <Text style={styles.successLabel}>{t('notesLabel')}</Text>
                   <Text style={styles.successValue}>{savedData.notes}</Text>
                 </View>
               )}
@@ -584,7 +586,7 @@ const TYFCBSlip = () => {
                 onPress={() => navigation.goBack()}
               >
                 <Icon name="arrow-left" size={20} color="#FFF" />
-                <Text style={styles.successButtonText}>Back</Text>
+                <Text style={styles.successButtonText}>{t('back')}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -603,7 +605,7 @@ const TYFCBSlip = () => {
                 }}
               >
                 <Icon name="plus-circle" size={20} color="#FFF" />
-                <Text style={styles.successButtonText}>Add Another</Text>
+                <Text style={styles.successButtonText}>{t('addAnother')}</Text>
               </TouchableOpacity>
             </View>
           </View>
