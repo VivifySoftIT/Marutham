@@ -11,6 +11,7 @@ import {
   Dimensions,
   Modal,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -20,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import ApiService from '../service/api';
 import MemberIdService from '../service/MemberIdService';
+import { useLanguage } from '../service/LanguageContext';
 
 const { width } = Dimensions.get('window');
 
@@ -120,6 +122,7 @@ const API_BASE_URL = 'https://www.vivifysoft.in/AlaigalBE';
 
 const UserDashboard = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [greeting, setGreeting] = useState('');
@@ -1130,45 +1133,62 @@ const handleMeetingResponse = async (notification) => {
         style={styles.headerGradient}
       >
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            {/* Settings Icon - Matching Bell Icon Style */}
-            <TouchableOpacity
-              style={styles.headerActionButton}
-              onPress={() => navigation.navigate('SettingsScreen')}
-            >
-              <Icon name="cog" size={22} color="#FFF" />
-            </TouchableOpacity>
+          <View style={styles.headerTopRow}>
+  {/* Left: Settings Icon */}
+  <TouchableOpacity
+    style={styles.headerIconButton}
+    onPress={() => navigation.navigate('SettingsScreen')}
+  >
+    <Icon name="cog" size={24} color="#FFF" />
+  </TouchableOpacity>
 
-            <View style={styles.headerTitleContainer}>
-              <Text style={styles.headerTitle}>{greeting}</Text>
-              {userData?.fullName && (
-                <Text style={styles.headerMemberName}>{userData.fullName}</Text>
-              )}
-              <Text style={styles.headerSubtitle}>Welcome to Alaigal</Text>
+  {/* Center: Alaigal Title with Logo - Takes up remaining space */}
+  <View style={styles.headerTitleContainer}>
+    <View style={styles.logoTitleContainer}>
+      <View style={styles.logoContainer}>
+        <Image 
+          source={require('../assets/logoicon2.png')} 
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
+      </View>
+      <Text style={[
+  styles.welcomeText,
+  t('alaigal') === 'அலைகள்' && styles.tamilText
+]}>
+  {t('alaigal')}
+</Text>
+    </View>
+  </View>
+
+  {/* Right: Notification and Logout Icons */}
+  <View style={styles.headerRightContainer}>
+    <TouchableOpacity
+      onPress={() => setShowNotifications(true)}
+      style={styles.headerActionButton}
+    >
+      <Icon name="bell" size={22} color="#FFF" />
+      {notificationCount > 0 && (
+        <View style={styles.notificationDot}>
+          <Text style={styles.notificationDotText}>{notificationCount}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      onPress={handleLogout}
+      style={styles.headerActionButton}
+    >
+      <Icon name="logout" size={22} color="#FFF" />
+    </TouchableOpacity>
+  </View>
+</View>
+<View style={styles.headerCenterContent}>
+              
+              <Text style={styles.thirukkuralQuote}>
+  “தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்” — திருக்குறள் 34
+</Text>
             </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity
-                onPress={() => setShowNotifications(true)}
-                style={styles.headerActionButton}
-              >
-                <Icon name="bell" size={22} color="#FFF" />
-                {notificationCount > 0 && (
-                  <View style={styles.notificationDot}>
-                    <Text style={styles.notificationDotText}>{notificationCount}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleLogout}
-                style={[styles.headerActionButton, { marginLeft: 8 }]}
-              >
-                <Icon name="logout" size={22} color="#FFF" />
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {/* Enhanced Member Info Card - My Card Style */}
           {/* Card removed as requested */}
         </View>
@@ -1702,7 +1722,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    height: 120, // Reduced height since member card is removed
+    height: 140, // Reduced height since member card is removed
+
   },
   header: {
     paddingHorizontal: 20,
@@ -1728,8 +1749,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 26, // Increased from 22
-    fontWeight: '800',
+    fontSize: 22, // Increased from 22
+    fontWeight: '900',
     color: '#FFF',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
@@ -1747,7 +1768,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 3,
   },
   headerSubtitle: {
-    fontSize: 16, // Increased from 14
+    fontSize: 20, // Increased from 14
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 2,
     fontWeight: '500',
@@ -2894,6 +2915,83 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 10,
   },
+  thirukkuralQuote: {
+  fontSize: 12,
+  color: 'rgba(255, 255, 255, 0.95)',
+  textAlign: 'center',
+  marginTop: 4,
+  fontStyle: 'italic',
+  fontWeight: '500',
+  lineHeight: 20,
+  paddingHorizontal: 20,
+},
+headerTopRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: 10,
+  paddingHorizontal: 4,
+},
+headerTitleContainer: {
+  flex: 1,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginHorizontal: 8,
+},
+headerIconButton: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+headerRightContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 4,
+},
+welcomeText: {
+  fontSize: 22, // Base size — will be adjusted per language
+  fontWeight: '900',
+  color: '#FFF',
+  textAlign: 'center',
+  textShadowColor: 'rgba(0, 0, 0, 0.3)',
+  textShadowOffset: { width: 2, height: 2 },
+  textShadowRadius: 6,
+  fontFamily: 'serif', // Keep serif for English; Tamil may fallback gracefully
+},
+tamilText: {
+  fontSize: 18, // Larger than English to accommodate wider glyphs
+  letterSpacing: 0, // Critical: Tamil doesn’t need letter spacing
+  lineHeight: 26, // Improve vertical spacing
+},
+logoTitleContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+logoContainer: {
+  width: 42,
+  height: 42,
+  borderRadius: 26,
+  backgroundColor: '#FFFFFF',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginRight: 12,
+  elevation: 4,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
+  borderWidth: 1,
+  borderColor: 'rgba(255, 255, 255, 0.8)',
+},
+headerLogo: {
+  width: 42,
+  height: 42,
+  // Removed tintColor to show original blue logo colors
+},
 });
 
 export default UserDashboard;
