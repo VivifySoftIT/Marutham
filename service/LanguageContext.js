@@ -521,6 +521,12 @@ const translations = {
     version: 'Version',
     professionalNetworking: 'Professional Networking Platform',
     
+    // Thirukkural
+    thirukkural: 'Thirukkural',
+    thirukkuralQuote: '"Virtue is the highest good; those without it have nothing else." — Thirukkural 34',
+    welcomeToAlaigal: 'Welcome to Alaigal',
+    alaigal: 'Alaigal',
+    
     // Time Periods
     daily: 'Daily',
     weekly: 'Weekly',
@@ -1456,17 +1462,17 @@ const translations = {
     thanksNote: 'நன்றி குறிப்பு',
     toMember: 'உறுப்பினருக்கு',
     selectMember: 'உறுப்பினரைத் தேர்ந்தெடுக்கவும்',
-    searchMembers: 'உறுப்பினர்களைத் தேடு...',
-    loadingMembers: 'உறுப்பினர்களை ஏற்றுகிறது...',
-    noMembersAvailable: 'உறுப்பினர்கள் கிடைக்கவில்லை',
+    searchMembers: 'தேடு...',
+    loadingMembers: 'ஏற்றுகிறது...',
+    noMembersAvailable: 'உறுப்பினர்கள் இல்லை',
     businessVisited: 'வருகை தந்த வணிகம்',
-    enterBusinessName: 'வணிக பெயரை உள்ளிடவும்',
+    enterBusinessName: 'வணிக பெயர்',
     amount: 'தொகை',
-    enterAmountOptional: 'தொகையை உள்ளிடவும் (விருப்பம்)',
-    rating: 'மதிப்பீடு (1-5 நட்சத்திரங்கள்)',
-    enterRating: 'மதிப்பீட்டை உள்ளிடவும் (1-5)',
+    enterAmountOptional: 'தொகை (விருப்பம்)',
+    rating: 'மதிப்பீடு (1-5)',
+    enterRating: 'மதிப்பீடு (1-5)',
     notes: 'குறிப்புகள்',
-    enterAnyNotes: 'ஏதேனும் குறிப்புகளை உள்ளிடவும்',
+    enterAnyNotes: 'குறிப்புகள்',
     confirmThanksNote: 'நன்றி குறிப்பை உறுதிப்படுத்து',
     thanksNoteSubmitted: 'நன்றி குறிப்பு சமர்ப்பிக்கப்பட்டது!',
     businessVisitedLabel: 'வருகை தந்த வணிகம்:',
@@ -1532,6 +1538,12 @@ const translations = {
     appInfo: 'பயன்பாட்டு தகவல்',
     version: 'பதிப்பு',
     professionalNetworking: 'தொழில்முறை நெட்வொர்க்கிங் தளம்',
+    
+    // Thirukkural
+    thirukkural: 'திருக்குறள்',
+    thirukkuralQuote: '"அறத்துப்பால் உயர்ந்தது அஃதொன்றே; மற்றெல்லாம் தாழ்ந்தது அஃதில்லார்க்கு." — திருக்குறள் 34',
+    welcomeToAlaigal: 'அலைகலுக்கு வரவேற்கிறோம்',
+    alaigal: 'அலைகள்',
     
     // Time Periods
     daily: 'தினசரி',
