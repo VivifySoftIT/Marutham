@@ -1851,7 +1851,7 @@ const translations = {
     enabled: 'இயக்கப்பட்டது',
     dataPrivacy: 'தரவு தனியுரிமை',
     viewSettings: 'அமைப்புகளைப் பார்க்க',
-    clearAll: 'அனைத்தையும் அழிக்க',
+    clearAll: 'அழிக்க',
     youreAllCaughtUp: 'நீங்கள் அனைத்தையும் பார்த்துவிட்டீர்கள்!',
     quickFilters: 'விரைவு வடிகட்டிகள்',
     birthdays: 'பிறந்தநாள்கள்',

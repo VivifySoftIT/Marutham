@@ -27,6 +27,7 @@ const { width } = Dimensions.get('window');
 
 // Birthday Wishes Section Component
 const BirthdayWishesSection = ({ memberId }) => {
+  const { t } = useLanguage(); // Add useLanguage hook
   const [birthdayWish, setBirthdayWish] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -67,7 +68,7 @@ const BirthdayWishesSection = ({ memberId }) => {
       >
         <View style={styles.birthdayWishCard}>
           <ActivityIndicator size="small" color="#4A90E2" />
-          <Text style={styles.birthdayWishLoading}>Checking for birthday wishes...</Text>
+          <Text style={styles.birthdayWishLoading}>{t('checkingBirthdayWishes')}</Text>
         </View>
       </Animatable.View>
     );
@@ -90,9 +91,9 @@ const BirthdayWishesSection = ({ memberId }) => {
         <View style={styles.birthdayWishHeader}>
           <Icon name="cake-variant" size={40} color="#FF6B6B" /> {/* Red cake color */}
           <View style={styles.birthdayWishContent}>
-            <Text style={styles.birthdayWishTitle}>🎉 Birthday Wish Received!</Text>
+            <Text style={styles.birthdayWishTitle}>🎉 {t('birthdayWishReceived')}</Text>
             <Text style={styles.birthdayWishMessage}>
-              {birthdayWish.senderName || 'A member'} sent you birthday wishes today!
+              {birthdayWish.senderName || t('member')} {t('sentYouBirthdayWishes')}
             </Text>
             <Text style={styles.birthdayWishTime}>
               {new Date(birthdayWish.sentDate).toLocaleTimeString('en-US', {
@@ -122,7 +123,180 @@ const API_BASE_URL = 'https://www.vivifysoft.in/AlaigalBE';
 
 const UserDashboard = () => {
   const navigation = useNavigation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  
+  // Debug logging
+  console.log('UserDashboard - Current language:', language);
+  console.log('UserDashboard - Language type:', typeof language);
+  
+  // Utility function to check if text contains Tamil characters
+  const isTamilText = (text) => {
+    return /[\u0B80-\u0BFF]/.test(text);
+  };
+
+  // Function to get translated notification title
+  const getNotificationTitle = (messageType, subject) => {
+    // Handle specific titles based on message type and language
+    if (language === 'ta') {
+      // Tamil translations for common notification titles
+      if (messageType === 'Birthday') {
+        if (subject && subject.includes('Reminder')) {
+          return 'பிறந்தநாள் நினைவூட்டல்!';
+        } else if (subject && subject.includes('Wish')) {
+          return '🎉 பிறந்தநாள் வாழ்த்து பெறப்பட்டது!';
+        } else {
+          return 'பிறந்தநாள் அறிவிப்பு';
+        }
+      } else if (messageType === 'BirthdayWishReceived') {
+        return '🎉 பிறந்தநாள் வாழ்த்து பெறப்பட்டது!';
+      } else if (messageType === 'Payment') {
+        return 'பணம் அறிவிப்பு';
+      } else if (messageType === 'Meeting') {
+        return 'கூட்டம் அறிவிப்பு';
+      } else if (messageType === 'Event') {
+        return 'நிகழ்வு அறிவிப்பு';
+      } else if (messageType === 'NewMember') {
+        return 'புதிய உறுப்பினர் அறிவிப்பு';
+      }
+      
+      // If subject exists, try to translate common patterns
+      if (subject && subject.trim()) {
+        let translatedSubject = subject;
+        translatedSubject = translatedSubject.replace(/Birthday Reminder/gi, 'பிறந்தநாள் நினைவூட்டல்');
+        translatedSubject = translatedSubject.replace(/Birthday Wish/gi, 'பிறந்தநாள் வாழ்த்து');
+        translatedSubject = translatedSubject.replace(/Payment Reminder/gi, 'பணம் நினைவூட்டல்');
+        translatedSubject = translatedSubject.replace(/Meeting Reminder/gi, 'கூட்டம் நினைவூட்டல்');
+        translatedSubject = translatedSubject.replace(/Event Reminder/gi, 'நிகழ்வு நினைவூட்டல்');
+        translatedSubject = translatedSubject.replace(/New Member Alert/gi, 'புதிய உறுப்பினர் எச்சரிக்கை');
+        translatedSubject = translatedSubject.replace(/Welcome Message/gi, 'வரவேற்பு செய்தி');
+        return translatedSubject;
+      }
+      
+      return `${messageType} அறிவிப்பு`;
+    } else {
+      // English titles
+      if (messageType === 'Birthday') {
+        if (subject && subject.includes('Reminder')) {
+          return 'Birthday Reminder!';
+        } else if (subject && subject.includes('Wish')) {
+          return '🎉 Birthday Wish Received!';
+        } else {
+          return 'Birthday Notification';
+        }
+      } else if (messageType === 'BirthdayWishReceived') {
+        return '🎉 Birthday Wish Received!';
+      } else if (messageType === 'Payment') {
+        return 'Payment Notification';
+      } else if (messageType === 'Meeting') {
+        return 'Meeting Notification';
+      } else if (messageType === 'Event') {
+        return 'Event Notification';
+      } else if (messageType === 'NewMember') {
+        return 'New Member Alert';
+      }
+      
+      // Use original subject if available
+      if (subject && subject.trim()) {
+        return subject;
+      }
+      
+      return `${messageType} Notification`;
+    }
+  };
+
+  // Function to get translated notification message
+  const getNotificationMessage = (msg, notificationMessage) => {
+    // If the message is already in the content, try to translate common patterns
+    if (msg.content && msg.content.trim()) {
+      let content = msg.content;
+      
+      // Only translate if language is Tamil
+      if (language === 'ta') {
+        // Birthday patterns - more comprehensive
+        content = content.replace(/Birthday Reminder!?/gi, 'பிறந்தநாள் நினைவூட்டல்!');
+        content = content.replace(/Today is (.+?)(?:'s| அவர்களின்) birthday!?/gi, 'இன்று $1 அவர்களின் பிறந்தநாள்!');
+        content = content.replace(/Happy Birthday to (.+?)!?/gi, '$1 அவர்களுக்கு பிறந்தநாள் வாழ்த்துகள்!');
+        content = content.replace(/(.+?)(?:'s| அவர்களின்) birthday is today!?/gi, 'இன்று $1 அவர்களின் பிறந்தநாள்!');
+        content = content.replace(/It's (.+?)(?:'s| அவர்களின்) birthday!?/gi, 'இன்று $1 அவர்களின் பிறந்தநாள்!');
+        content = content.replace(/Member sent you birthday wishes today!?/gi, 'உறுப்பினர் இன்று உங்களுக்கு பிறந்தநாள் வாழ்த்துகள் அனுப்பினார்!');
+        
+        // Payment patterns
+        content = content.replace(/Payment Reminder/gi, 'பணம் நினைவூட்டல்');
+        content = content.replace(/Payment Due/gi, 'பணம் நிலுவை');
+        content = content.replace(/Payment Received/gi, 'பணம் பெறப்பட்டது');
+        content = content.replace(/Payment Required/gi, 'பணம் தேவை');
+        
+        // Meeting patterns
+        content = content.replace(/Meeting Reminder/gi, 'கூட்டம் நினைவூட்டல்');
+        content = content.replace(/Meeting Today/gi, 'இன்று கூட்டம்');
+        content = content.replace(/Meeting Scheduled/gi, 'கூட்டம் திட்டமிடப்பட்டது');
+        content = content.replace(/Upcoming Meeting/gi, 'வரவிருக்கும் கூட்டம்');
+        
+        // Event patterns
+        content = content.replace(/Event Reminder/gi, 'நிகழ்வு நினைவூட்டல்');
+        content = content.replace(/Event Today/gi, 'இன்று நிகழ்வு');
+        content = content.replace(/Upcoming Event/gi, 'வரவிருக்கும் நிகழ்வு');
+        
+        // New Member patterns
+        content = content.replace(/New Member/gi, 'புதிய உறுப்பினர்');
+        content = content.replace(/Welcome (.+?)!?/gi, '$1 அவர்களை வரவேற்கிறோம்!');
+        content = content.replace(/(.+?) has joined/gi, '$1 சேர்ந்துள்ளார்');
+        content = content.replace(/(.+?) joined the group/gi, '$1 குழுவில் சேர்ந்துள்ளார்');
+        
+        // Common words and phrases
+        content = content.replace(/\bToday\b/gi, 'இன்று');
+        content = content.replace(/\bTomorrow\b/gi, 'நாளை');
+        content = content.replace(/\bYesterday\b/gi, 'நேற்று');
+        content = content.replace(/\bPlease\b/gi, 'தயவுசெய்து');
+        content = content.replace(/\bThank you\b/gi, 'நன்றி');
+        content = content.replace(/\bReminder\b/gi, 'நினைவூட்டல்');
+        content = content.replace(/\bAlert\b/gi, 'எச்சரிக்கை');
+        content = content.replace(/\bNotification\b/gi, 'அறிவிப்பு');
+        
+        // Time-related
+        content = content.replace(/\bthis morning\b/gi, 'இன்று காலை');
+        content = content.replace(/\bthis afternoon\b/gi, 'இன்று மதியம்');
+        content = content.replace(/\bthis evening\b/gi, 'இன்று மாலை');
+        content = content.replace(/\btonight\b/gi, 'இன்று இரவு');
+      }
+      
+      return content;
+    }
+    
+    // Generate default messages based on message type and language
+    if (language === 'ta') {
+      if (msg.messageType === 'Birthday') {
+        return 'உறுப்பினர் இன்று உங்களுக்கு பிறந்தநாள் வாழ்த்துகள் அனுப்பினார்!';
+      } else if (msg.messageType === 'BirthdayWishReceived') {
+        return 'உறுப்பினர் இன்று உங்களுக்கு பிறந்தநாள் வாழ்த்துகள் அனுப்பினார்!';
+      } else if (msg.messageType === 'Payment') {
+        return 'பணம் தொடர்பான அறிவிப்பு';
+      } else if (msg.messageType === 'Meeting') {
+        return 'கூட்டம் தொடர்பான அறிவிப்பு';
+      } else if (msg.messageType === 'Event') {
+        return 'நிகழ்வு தொடர்பான அறிவிப்பு';
+      } else if (msg.messageType === 'NewMember') {
+        return 'புதிய உறுப்பினர் சேர்ந்துள்ளார்';
+      }
+      return notificationMessage || 'புதிய அறிவிப்பு பெறப்பட்டது';
+    } else {
+      // English default messages
+      if (msg.messageType === 'Birthday') {
+        return 'Member sent you birthday wishes today!';
+      } else if (msg.messageType === 'BirthdayWishReceived') {
+        return 'Member sent you birthday wishes today!';
+      } else if (msg.messageType === 'Payment') {
+        return 'Payment related notification';
+      } else if (msg.messageType === 'Meeting') {
+        return 'Meeting related notification';
+      } else if (msg.messageType === 'Event') {
+        return 'Event related notification';
+      } else if (msg.messageType === 'NewMember') {
+        return 'New member has joined';
+      }
+      return notificationMessage || 'New notification received';
+    }
+  };
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [greeting, setGreeting] = useState('');
@@ -156,10 +330,10 @@ const UserDashboard = () => {
   });
 
   const periods = [
-    { id: 'all', label: 'All Time', icon: 'calendar' },
-    { id: 'weekly', label: 'Weekly', icon: 'calendar-week' },
-    { id: 'monthly', label: 'Monthly', icon: 'calendar-month' },
-    { id: 'annual', label: 'Annual', icon: 'calendar-range' },
+    { id: 'all', label: t('allTime'), icon: 'calendar' },
+    { id: 'weekly', label: t('weekly'), icon: 'calendar-week' },
+    { id: 'monthly', label: t('monthly'), icon: 'calendar-month' },
+    { id: 'annual', label: t('annual'), icon: 'calendar-range' },
   ];
 
   useEffect(() => {
@@ -177,9 +351,9 @@ const UserDashboard = () => {
 
   const setGreetingMessage = () => {
     const hour = new Date().getHours();
-    if (hour < 12) setGreeting('Good Morning');
-    else if (hour < 18) setGreeting('Good Afternoon');
-    else setGreeting('Good Evening');
+    if (hour < 12) setGreeting(t('goodMorning'));
+    else if (hour < 18) setGreeting(t('goodAfternoon'));
+    else setGreeting(t('goodEvening'));
   };
 
   // Get current user's member ID using MemberIdService
@@ -366,8 +540,8 @@ const loadDashboardReminders = async () => {
         id: `birthday-wish-${birthdayWishReceived.id || Date.now()}`,
         type: 'birthday-wish-received',
         messageType: 'BirthdayWishReceived',
-        title: '🎉 Birthday Wish Received!',
-        message: `${birthdayWishReceived.senderName || 'A member'} sent you birthday wishes today!`,
+        title: `🎉 ${t('birthdayWishReceived')}`,
+        message: `${birthdayWishReceived.senderName || t('member')} ${t('sentYouBirthdayWishes')}`,
         time: new Date(birthdayWishReceived.sentDate).toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit'
@@ -411,8 +585,8 @@ const loadDashboardReminders = async () => {
         const typeConfig = notificationTypeMap[msg.messageType] ||
           { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
 
-        let notificationMessage = msg.content || 'New notification received';
-        let displayTime = 'Recent';
+        let notificationMessage = msg.content || t('newNotificationReceived');
+        let displayTime = t('recent');
         
         if ((msg.messageType === 'Event' || msg.messageType === 'Meeting') && msg.date) {
           const eventDate = new Date(msg.date);
@@ -430,7 +604,7 @@ const loadDashboardReminders = async () => {
         }
 
         // Extract recipient information from the message content or other fields
-        let recipientName = 'member';
+        let recipientName = t('member');
         let recipientMemberId = null;
         
         // Try to extract recipient name from content for Birthday/NewMember notifications
@@ -482,8 +656,8 @@ const loadDashboardReminders = async () => {
           id: `message-${Math.abs(msg.id || Date.now())}`,
           type: 'message',
           messageType: msg.messageType,
-          title: msg.subject || `${msg.messageType} Notification`,
-          message: notificationMessage,
+          title: getNotificationTitle(msg.messageType, msg.subject),
+          message: getNotificationMessage(msg, notificationMessage),
           time: displayTime,
           icon: typeConfig.icon,
           color: typeConfig.color,
@@ -503,6 +677,8 @@ const loadDashboardReminders = async () => {
     setNotifications(newNotifications);
     setNotificationCount(newNotifications.filter(n => !n.isRead).length);
     console.log('UserDashboard - Set notifications from API:', newNotifications.length);
+    console.log('UserDashboard - Unread notifications:', newNotifications.filter(n => !n.isRead).length);
+    console.log('UserDashboard - Notification details:', newNotifications.map(n => ({ id: n.id, title: n.title, isRead: n.isRead })));
   } catch (error) {
     console.error('UserDashboard - Error loading dashboard reminders:', error);
     setNotifications([]);
@@ -512,10 +688,10 @@ const loadDashboardReminders = async () => {
 
   const handleLogout = () => {
     Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
+      t('logout'),
+      t('areYouSureLogout'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
           onPress: async () => {
             try {
@@ -572,7 +748,7 @@ const handleBirthdayResponse = async (notification) => {
     const senderMemberId = await getCurrentUserMemberId();
     
     if (!senderMemberId) {
-      Alert.alert('Error', 'Could not find your member ID. Please try again.');
+      Alert.alert(t('error'), t('couldNotFindMemberId'));
       return;
     }
 
@@ -605,19 +781,19 @@ const handleBirthdayResponse = async (notification) => {
     // Final validation
     if (!recipientMemberId) {
       Alert.alert(
-        'Member Not Found',
-        `Could not find member ID for ${notification.recipientName}. Please try again later.`
+        t('memberNotFound'),
+        `${t('couldNotFindMemberIdFor')} ${notification.recipientName}. ${t('pleaseTryAgainLater')}`
       );
       return;
     }
     
     Alert.alert(
-      'Send Birthday Wishes',
-      `Send birthday wishes to ${notification.recipientName}?`,
+      t('sendBirthdayWishes'),
+      `${t('sendBirthdayWishesTo')} ${notification.recipientName}?`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Send',
+          text: t('send'),
           onPress: async () => {
             try {
               setLoading(true);
@@ -647,7 +823,7 @@ const handleBirthdayResponse = async (notification) => {
                 console.error('Birthday wish API error - Status:', response.status);
                 console.error('Birthday wish API error - Response:', errorText);
                 
-                let errorMessage = 'Failed to send birthday wish. Please try again.';
+                let errorMessage = t('failedToSendBirthdayWish');
                 
                 try {
                   const errorJson = JSON.parse(errorText);
@@ -672,9 +848,9 @@ const handleBirthdayResponse = async (notification) => {
               markNotificationAsRead(notification.id);
               
               Alert.alert(
-                'Success',
-                `Birthday wishes sent to ${notification.recipientName}! 🎉`,
-                [{ text: 'OK' }]
+                t('success'),
+                `${t('birthdayWishesSentTo')} ${notification.recipientName}! 🎉`,
+                [{ text: t('ok') }]
               );
               
               // Refresh notifications to update UI
@@ -687,7 +863,7 @@ const handleBirthdayResponse = async (notification) => {
                 stack: error.stack,
                 notification: notification
               });
-              Alert.alert('Error', `An error occurred: ${error.message || 'Unknown error'}`);
+              Alert.alert(t('error'), `${t('anErrorOccurred')} ${error.message || t('unknownError')}`);
             } finally {
               setLoading(false);
             }
@@ -697,19 +873,19 @@ const handleBirthdayResponse = async (notification) => {
     );
   } catch (error) {
     console.error('Error in handleBirthdayResponse:', error);
-    Alert.alert('Error', 'Failed to process birthday wish request.');
+    Alert.alert(t('error'), t('failedToProcessBirthdayWish'));
   }
 };
 
   // Handle payment response
   const handlePaymentResponse = (notification) => {
     Alert.alert(
-      'Payment Notification',
-      'View payment details?',
+      t('paymentNotification'),
+      t('viewPaymentDetails'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'View Details',
+          text: t('viewDetails'),
           onPress: () => {
             // Navigate to payments screen or show payment details
             navigation.navigate('MyPayments');
@@ -726,17 +902,17 @@ const handleMeetingResponse = async (notification) => {
     const memberId = await getCurrentUserMemberId();
     
     if (!memberId) {
-      Alert.alert('Error', 'Could not find your member ID. Please try again.');
+      Alert.alert(t('error'), t('couldNotFindMemberId'));
       return;
     }
 
     Alert.alert(
-      'Meeting Response',
-      `Respond to the meeting notification?`,
+      t('meetingResponse'),
+      t('respondToMeetingNotification'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'Attend',
+          text: t('attend'),
           onPress: async () => {
             try {
               setLoading(true);
@@ -762,9 +938,9 @@ const handleMeetingResponse = async (notification) => {
                 console.log('Attendance response successful:', result);
                 
                 Alert.alert(
-                  'Success',
-                  'You have confirmed your attendance! ✅\n\nAttendance has been marked in the system.',
-                  [{ text: 'OK' }]
+                  t('success'),
+                  `${t('youHaveConfirmedAttendance')} ✅\n\n${t('attendanceMarkedInSystem')}`,
+                  [{ text: t('ok') }]
                 );
                 
                 // Mark notification as read
@@ -801,7 +977,7 @@ const handleMeetingResponse = async (notification) => {
           },
         },
         {
-          text: 'Not Attend',
+          text: t('notAttend'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -828,9 +1004,9 @@ const handleMeetingResponse = async (notification) => {
                 console.log('Not-attend response successful:', result);
                 
                 Alert.alert(
-                  'Response Recorded',
-                  'You have indicated you will not attend. ❌\n\nResponse has been recorded in the system.',
-                  [{ text: 'OK' }]
+                  t('responseRecorded'),
+                  `${t('youIndicatedNotAttend')} ❌\n\n${t('responseRecordedInSystem')}`,
+                  [{ text: t('ok') }]
                 );
                 
                 markNotificationAsRead(notification.id);
@@ -866,7 +1042,7 @@ const handleMeetingResponse = async (notification) => {
     );
   } catch (error) {
     console.error('Error in handleMeetingResponse:', error);
-    Alert.alert('Error', 'Failed to process meeting response.');
+    Alert.alert(t('error'), t('failedToProcessMeetingResponse'));
   }
 };
   // Handle notification press
@@ -910,18 +1086,18 @@ const handleMeetingResponse = async (notification) => {
       const senderMemberId = await getCurrentUserMemberId();
       
       if (!senderMemberId) {
-        Alert.alert('Error', 'Could not find your member ID. Please try again.');
+        Alert.alert(t('error'), t('couldNotFindMemberId'));
         return;
       }
 
       const isBirthday = notification.messageType === 'Birthday';
-      const wishType = isBirthday ? 'Birthday Wishes' : 'Welcome Wishes';
-      const recipientName = notification.recipientName || 'member';
+      const wishType = isBirthday ? t('sendBirthdayWishes') : t('sendWelcomeWishes');
+      const recipientName = notification.recipientName || t('member');
       
       console.log('Processing wish response for:', recipientName, 'Type:', wishType);
       
-      // Skip if recipient name is just "member" (generic placeholder)
-      if (recipientName === 'member') {
+      // Skip if recipient name is just the generic member placeholder
+      if (recipientName === t('member')) {
         // Try one more time to extract from notification content if available
         if (notification.message) {
           const patterns = [
@@ -933,7 +1109,7 @@ const handleMeetingResponse = async (notification) => {
           
           for (const pattern of patterns) {
             const match = notification.message.match(pattern);
-            if (match && match[1] && match[1].trim() !== 'member') {
+            if (match && match[1] && match[1].trim() !== t('member')) {
               recipientName = match[1].trim();
               console.log('Extracted recipient name from notification message:', recipientName);
               break;
@@ -941,12 +1117,12 @@ const handleMeetingResponse = async (notification) => {
           }
         }
         
-        // If still "member", show error
-        if (recipientName === 'member') {
+        // If still the generic member placeholder, show error
+        if (recipientName === t('member')) {
           Alert.alert(
-            'Unable to Send Wish',
-            'Could not identify the recipient for this notification. The member information is missing from the notification content.',
-            [{ text: 'OK' }]
+            t('unableToSendWish'),
+            t('couldNotIdentifyRecipient'),
+            [{ text: t('ok') }]
           );
           return;
         }
@@ -955,7 +1131,7 @@ const handleMeetingResponse = async (notification) => {
       // Fetch the actual member ID by name if not already set
       let recipientMemberId = notification.recipientMemberId;
       
-      if (!recipientMemberId && recipientName && recipientName !== 'member') {
+      if (!recipientMemberId && recipientName && recipientName !== t('member')) {
         console.log('Fetching member ID for:', recipientName);
         try {
           const response = await fetch(`${API_BASE_URL}/api/Members`);
@@ -982,17 +1158,17 @@ const handleMeetingResponse = async (notification) => {
       }
       
       if (!recipientMemberId) {
-        Alert.alert('Error', 'Could not find the member. Please try again.');
+        Alert.alert(t('error'), t('couldNotFindMember'));
         return;
       }
       
       Alert.alert(
-        `Send ${wishType}`,
-        `Send ${wishType.toLowerCase()} to ${recipientName}?`,
+        `${t('send')} ${wishType}`,
+        `${t('send')} ${wishType.toLowerCase()} ${t('to')} ${recipientName}?`,
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('cancel'), style: 'cancel' },
           {
-            text: 'Send',
+            text: t('send'),
             onPress: async () => {
               try {
                 setLoading(true);
@@ -1027,7 +1203,7 @@ const handleMeetingResponse = async (notification) => {
                   console.error(`${wishType} API error - Status:`, response.status);
                   console.error(`${wishType} API error - Response:`, errorText);
                   
-                  let errorMessage = `Failed to send ${wishType.toLowerCase()}. Please try again.`;
+                  let errorMessage = `${t('failedToSendBirthdayWish')} ${wishType.toLowerCase()}. ${t('tryAgain')}`;
                   
                   try {
                     const errorJson = JSON.parse(errorText);
@@ -1051,9 +1227,9 @@ const handleMeetingResponse = async (notification) => {
                 markNotificationAsRead(notification.id);
                 
                 Alert.alert(
-                  'Success',
-                  `${wishType} sent to ${recipientName}! 🎉`,
-                  [{ text: 'OK' }]
+                  t('success'),
+                  `${wishType} ${t('sentTo')} ${recipientName}! 🎉`,
+                  [{ text: t('ok') }]
                 );
                 
                 // Refresh notifications to update UI
@@ -1066,7 +1242,7 @@ const handleMeetingResponse = async (notification) => {
                   stack: error.stack,
                   notification: notification
                 });
-                Alert.alert('Error', `An error occurred: ${error.message || 'Unknown error'}`);
+                Alert.alert(t('error'), `${t('anErrorOccurred')} ${error.message || t('unknownError')}`);
               } finally {
                 setLoading(false);
               }
@@ -1076,7 +1252,7 @@ const handleMeetingResponse = async (notification) => {
       );
     } catch (error) {
       console.error('Error in handleWishResponse:', error);
-      Alert.alert('Error', 'Failed to process wish request.');
+      Alert.alert(t('error'), t('failedToProcessWishRequest'));
     }
   };
 
@@ -1111,7 +1287,10 @@ const handleMeetingResponse = async (notification) => {
               <Icon name={icon} size={18} color="#FFF" />
             </LinearGradient>
             <Text style={styles.statValue}>{value}</Text>
-            <Text style={styles.statLabel}>{label}</Text>
+            <Text style={[
+              styles.statLabel,
+              language === 'ta' && styles.tamilStatLabel
+            ]}>{label}</Text>
           </View>
         </LinearGradient>
       </TouchableOpacity>
@@ -1186,7 +1365,7 @@ const handleMeetingResponse = async (notification) => {
 <View style={styles.headerCenterContent}>
               
               <Text style={styles.thirukkuralQuote}>
-  “தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்” — திருக்குறள் 34
+  “தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்” — திருக்குறள் 619
 </Text>
             </View>
           {/* Enhanced Member Info Card - My Card Style */}
@@ -1203,7 +1382,7 @@ const handleMeetingResponse = async (notification) => {
           <Animatable.View animation="fadeIn" style={styles.loadingOverlay}>
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={waterBlueColors.primary} />
-              <Text style={styles.loadingText}>Loading your dashboard...</Text>
+              <Text style={styles.loadingText}>{t('loadingYourDashboard')}</Text>
             </View>
           </Animatable.View>
         )}
@@ -1216,9 +1395,12 @@ const handleMeetingResponse = async (notification) => {
             style={styles.notificationCard}
           >
             <View style={styles.notificationCardHeader}>
-              <Text style={styles.notificationCardTitle}>🔔 Recent Notifications</Text>
+              <Text style={[
+                styles.notificationCardTitle,
+                language === 'ta' && styles.tamilNotificationCardTitle
+              ]}>🔔 {t('recentNotifications')}</Text>
               <TouchableOpacity onPress={() => setShowNotifications(true)}>
-                <Text style={styles.viewAllNotifications}>View All</Text>
+                <Text style={styles.viewAllNotifications}>{t('viewAll')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1245,10 +1427,16 @@ const handleMeetingResponse = async (notification) => {
                     <Icon name={notification.icon} size={18} color={notification.color} />
                   </View>
                   <View style={styles.notificationSwipeContent}>
-                    <Text style={styles.notificationSwipeTitle} numberOfLines={2}>
+                    <Text style={[
+                      styles.notificationSwipeTitle,
+                      language === 'ta' && styles.tamilNotificationSwipeTitle
+                    ]} numberOfLines={2}>
                       {notification.title}
                     </Text>
-                    <Text style={styles.notificationSwipeMessage} numberOfLines={2}>
+                    <Text style={[
+                      styles.notificationSwipeMessage,
+                      language === 'ta' && styles.tamilNotificationSwipeMessage
+                    ]} numberOfLines={2}>
                       {notification.message}
                     </Text>
                     <Text style={styles.notificationSwipeTime}>
@@ -1257,14 +1445,14 @@ const handleMeetingResponse = async (notification) => {
                     {(notification.canRespond && (notification.messageType === 'Birthday' || notification.messageType === 'NewMember' || notification.messageType === 'Meeting' || notification.messageType === 'Payment')) && (
                       <View style={styles.respondBadge}>
                         <Text style={styles.respondBadgeText}>
-                          {notification.messageType === 'Meeting' ? 'Tap to respond' : 
-                           notification.messageType === 'Payment' ? 'Tap to view' : 'Tap to respond'}
+                          {notification.messageType === 'Meeting' ? t('tapToRespond') : 
+                           notification.messageType === 'Payment' ? t('tapToView') : t('tapToRespond')}
                         </Text>
                       </View>
                     )}
                   </View>
                   {!notification.isRead && (
-                    <View style={styles.swipeUnreadIndicator} />
+                    <View style={[styles.swipeUnreadIndicator, { backgroundColor: '#FF0000' }]} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -1281,7 +1469,10 @@ const handleMeetingResponse = async (notification) => {
           style={styles.sectionContainer}
         >
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📊 My Activity</Text>
+            <Text style={[
+              styles.sectionTitle,
+              t('myActivity') === 'என் செயல்பாடு' && styles.tamilSectionTitle
+            ]}>📊 {t('myActivity')}</Text>
 
             {/* Period Selector Dropdown */}
             <View style={styles.periodSelectorContainer}>
@@ -1291,7 +1482,10 @@ const handleMeetingResponse = async (notification) => {
                 activeOpacity={0.7}
               >
                 <Icon name="calendar" size={18} color={waterBlueColors.primary} />
-                <Text style={styles.periodSelectorText}>{getPeriodLabel()}</Text>
+                <Text style={[
+                  styles.periodSelectorText,
+                  language === 'ta' && styles.tamilPeriodSelectorText
+                ]}>{getPeriodLabel()}</Text>
                 <Icon
                   name={showPeriodDropdown ? "chevron-up" : "chevron-down"}
                   size={18}
@@ -1317,7 +1511,8 @@ const handleMeetingResponse = async (notification) => {
                       />
                       <Text style={[
                         styles.periodDropdownText,
-                        selectedPeriod === period.id && styles.periodDropdownTextSelected
+                        selectedPeriod === period.id && styles.periodDropdownTextSelected,
+                        language === 'ta' && styles.tamilPeriodDropdownText
                       ]}>
                         {period.label}
                       </Text>
@@ -1333,8 +1528,11 @@ const handleMeetingResponse = async (notification) => {
 
           {/* Period Indicator */}
           <View style={styles.periodIndicator}>
-            <Text style={styles.periodIndicatorText}>
-              Showing data for: <Text style={styles.periodIndicatorValue}>{getPeriodLabel()}</Text>
+            <Text style={[
+              styles.periodIndicatorText,
+              language === 'ta' && styles.tamilPeriodIndicatorText
+            ]}>
+              {t('showingDataFor')} <Text style={styles.periodIndicatorValue}>{getPeriodLabel()}</Text>
             </Text>
           </View>
 
@@ -1342,42 +1540,42 @@ const handleMeetingResponse = async (notification) => {
           <View style={styles.statsGrid}>
             <StatCard
               icon="account-arrow-right"
-              label="Referrals Given"
+              label={t('referralsGiven')}
               value={stats.referralGiven}
               delay={100}
               onPress={() => navigation.navigate('MyFeed', { tab: 'referral', referralTab: 'give' })}
             />
             <StatCard
               icon="account-arrow-left"
-              label="Referrals Received"
+              label={t('referralsReceived')}
               value={stats.referralReceived}
               delay={150}
               onPress={() => navigation.navigate('MyFeed', { tab: 'referral', referralTab: 'my' })}
             />
             <StatCard
               icon="handshake"
-              label="ThanksNote Given"
+              label={t('thanksNoteGiven')}
               value={stats.tyfcbGiven}
               delay={200}
               onPress={() => navigation.navigate('MyFeed', { tab: 'thanksnote', subTab: 'given' })}
             />
             <StatCard
               icon="hand-heart"
-              label="ThanksNote Received"
+              label={t('thanksNoteReceived')}
               value={stats.tyfcbReceived}
               delay={250}
               onPress={() => navigation.navigate('MyFeed', { tab: 'thanksnote', subTab: 'received' })}
             />
             <StatCard
               icon="briefcase-account"
-              label="Business Visits"
+              label={t('businessVisits')}
               value={stats.businessesVisited}
               delay={300}
-              onPress={() => Alert.alert('Business Visits', 'View business visit details')}
+              onPress={() => Alert.alert(t('businessVisits'), t('viewDetails'))}
             />
             <StatCard
               icon="account-multiple"
-              label="Visitors"
+              label={t('visitors')}
               value={stats.visitorsCount}
               delay={350}
               onPress={() => navigation.navigate('MyFeed', { tab: 'visitors' })}
@@ -1432,13 +1630,21 @@ const handleMeetingResponse = async (notification) => {
               <Icon name="information" size={20} color="#FFF" />
             </LinearGradient>
             <View style={styles.infoContent}>
-              <Text style={styles.infoTitle}>Welcome to Alaigal!</Text>
-              <Text style={styles.infoText}>
-                Connect with members, give referrals, and grow your business together in our professional network.
-                {userData?.memberId ? ` Member ID: ${userData.memberId}` : ' Member ID: Not assigned'}
+              <Text style={[
+                styles.infoTitle,
+                language === 'ta' && styles.tamilInfoTitle
+              ]}>{t('welcomeToAlaigal')}</Text>
+              <Text style={[
+                styles.infoText,
+                language === 'ta' && styles.tamilInfoText
+              ]}>
+                {t('connectWithMembers')}
               </Text>
-              <Text style={styles.infoPeriod}>
-                Currently viewing: {getPeriodLabel()} statistics
+              <Text style={[
+                styles.infoPeriod,
+                language === 'ta' && styles.tamilInfoPeriod
+              ]}>
+                {t('currentlyViewing')} {getPeriodLabel()} {t('statistics')}
               </Text>
             </View>
           </LinearGradient>
@@ -1465,7 +1671,7 @@ const handleMeetingResponse = async (notification) => {
               colors={[waterBlueColors.primary, waterBlueColors.light]}
               style={styles.modalHeader}
             >
-              <Text style={styles.modalTitle}>👤 Member Details</Text>
+              <Text style={styles.modalTitle}>👤 {t('memberDetails')}</Text>
               <TouchableOpacity
                 style={styles.closeModalButton}
                 onPress={() => setShowUserModal(false)}
@@ -1490,11 +1696,11 @@ const handleMeetingResponse = async (notification) => {
                   {userData?.memberId && (
                     <View style={styles.modalMemberIdContainer}>
                       <Icon name="id-card" size={16} color={waterBlueColors.primary} />
-                      <Text style={styles.modalMemberId}>Member ID: {userData.memberId}</Text>
+                      <Text style={styles.modalMemberId}>{t('memberId')}: {userData.memberId}</Text>
                     </View>
                   )}
 
-                  <Text style={styles.modalUserRole}>{userData?.memberType || 'Alaigal Network Member'}</Text>
+                  <Text style={styles.modalUserRole}>{userData?.memberType || t('alaigalNetworkMember')}</Text>
                 </View>
               </View>
 
@@ -1508,7 +1714,7 @@ const handleMeetingResponse = async (notification) => {
                   <View style={[styles.optionIcon, { backgroundColor: '#E3F2FD' }]}>
                     <Icon name="translate" size={22} color={waterBlueColors.primary} />
                   </View>
-                  <Text style={styles.settingsOptionText}>Language</Text>
+                  <Text style={styles.settingsOptionText}>{t('language')}</Text>
                   <Icon name={showLanguageSettings ? "chevron-up" : "chevron-down"} size={20} color="#999" />
                 </TouchableOpacity>
 
@@ -1520,7 +1726,7 @@ const handleMeetingResponse = async (notification) => {
                         style={styles.languageOption}
                         onPress={() => {
                           // Handle language selection
-                          Alert.alert('Language', `${lang.name} selected`);
+                          Alert.alert(t('language'), `${lang.name} ${t('selected')}`);
                           setShowLanguageSettings(false);
                         }}
                       >
@@ -1540,23 +1746,23 @@ const handleMeetingResponse = async (notification) => {
                   <View style={[styles.optionIcon, { backgroundColor: '#FFF3E0' }]}>
                     <Icon name="shield-lock" size={22} color="#FF9800" />
                   </View>
-                  <Text style={styles.settingsOptionText}>Privacy & Security</Text>
+                  <Text style={styles.settingsOptionText}>{t('privacySecurity')}</Text>
                   <Icon name={showPrivacySettings ? "chevron-up" : "chevron-down"} size={20} color="#999" />
                 </TouchableOpacity>
 
                 {showPrivacySettings && (
                   <View style={styles.inlineSettingsContainer}>
                     <TouchableOpacity style={styles.privacyOption}>
-                      <Text style={styles.privacyOptionText}>Two-Factor Authentication</Text>
-                      <Text style={styles.privacyOptionStatus}>Disabled</Text>
+                      <Text style={styles.privacyOptionText}>{t('twoFactorAuthentication')}</Text>
+                      <Text style={styles.privacyOptionStatus}>{t('disabled')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.privacyOption}>
-                      <Text style={styles.privacyOptionText}>Login Notifications</Text>
-                      <Text style={styles.privacyOptionStatus}>Enabled</Text>
+                      <Text style={styles.privacyOptionText}>{t('loginNotifications')}</Text>
+                      <Text style={styles.privacyOptionStatus}>{t('enabled')}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.privacyOption}>
-                      <Text style={styles.privacyOptionText}>Data Privacy</Text>
-                      <Text style={styles.privacyOptionStatus}>View Settings</Text>
+                      <Text style={styles.privacyOptionText}>{t('dataPrivacy')}</Text>
+                      <Text style={styles.privacyOptionStatus}>{t('viewSettings')}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -1572,7 +1778,7 @@ const handleMeetingResponse = async (notification) => {
                   <View style={[styles.optionIcon, { backgroundColor: '#E8F5E9' }]}>
                     <Icon name="lock-reset" size={22} color="#4CAF50" />
                   </View>
-                  <Text style={styles.settingsOptionText}>Change Password</Text>
+                  <Text style={styles.settingsOptionText}>{t('changePassword')}</Text>
                   <Icon name="chevron-right" size={20} color="#999" />
                 </TouchableOpacity>
 
@@ -1587,7 +1793,7 @@ const handleMeetingResponse = async (notification) => {
                   <View style={[styles.optionIcon, { backgroundColor: '#FCE4EC' }]}>
                     <Icon name="account-edit" size={22} color="#E91E63" />
                   </View>
-                  <Text style={styles.settingsOptionText}>Edit Profile</Text>
+                  <Text style={styles.settingsOptionText}>{t('editProfile')}</Text>
                   <Icon name="chevron-right" size={20} color="#999" />
                 </TouchableOpacity>
               </View>
@@ -1611,14 +1817,14 @@ const handleMeetingResponse = async (notification) => {
           />
           <View style={styles.notificationModalContainer}>
             <View style={styles.notificationModalHeader}>
-              <Text style={styles.notificationModalTitle}>🔔 Notifications</Text>
+              <Text style={styles.notificationModalTitle}>🔔 {t('notifications')}</Text>
               <View style={styles.notificationHeaderActions}>
                 {notificationCount > 0 && (
                   <TouchableOpacity
                     style={styles.clearAllButton}
                     onPress={clearAllNotifications}
                   >
-                    <Text style={styles.clearAllText}>Clear All</Text>
+                    <Text style={styles.clearAllText}>{t('clearAll')}</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
@@ -1634,8 +1840,8 @@ const handleMeetingResponse = async (notification) => {
               {notifications.length === 0 ? (
                 <View style={styles.emptyNotifications}>
                   <Icon name="bell-off" size={48} color="#BDC3C7" />
-                  <Text style={styles.emptyNotificationsText}>No notifications</Text>
-                  <Text style={styles.emptyNotificationsSubtext}>You're all caught up!</Text>
+                  <Text style={styles.emptyNotificationsText}>{t('noNotifications')}</Text>
+                  <Text style={styles.emptyNotificationsSubtext}>{t('youreAllCaughtUp')}</Text>
                 </View>
               ) : (
                 notifications.map((notification) => (
@@ -1656,14 +1862,16 @@ const handleMeetingResponse = async (notification) => {
                     </View>
                     <View style={styles.notificationContent}>
                       <View style={styles.notificationHeader}>
-                        <Text style={[
-                          styles.notificationItemTitle,
-                          !notification.isRead && styles.unreadNotificationTitle
-                        ]}>
-                          {notification.title}
-                        </Text>
+                        <View style={styles.notificationTitleContainer}>
+                          <Text style={[
+                            styles.notificationItemTitle,
+                            !notification.isRead && styles.unreadNotificationTitle
+                          ]}>
+                            {notification.title}
+                          </Text>
+                        </View>
                         {!notification.isRead && (
-                          <View style={styles.unreadIndicator} />
+                          <View style={[styles.unreadIndicator, { backgroundColor: '#FF0000' }]} />
                         )}
                       </View>
                       <Text style={styles.notificationItemMessage}>
@@ -1675,7 +1883,7 @@ const handleMeetingResponse = async (notification) => {
                       {notification.canRespond && (
                         <View style={styles.respondButton}>
                           <Icon name="reply" size={14} color={waterBlueColors.primary} />
-                          <Text style={styles.respondButtonText}>Tap to respond</Text>
+                          <Text style={styles.respondButtonText}>{t('tapToRespond')}</Text>
                         </View>
                       )}
                     </View>
@@ -1686,19 +1894,19 @@ const handleMeetingResponse = async (notification) => {
 
             {/* Notification Categories */}
             <View style={styles.notificationCategories}>
-              <Text style={styles.categoriesTitle}>Quick Filters</Text>
+              <Text style={styles.categoriesTitle}>{t('quickFilters')}</Text>
               <View style={styles.categoriesRow}>
                 <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#FFE5E5' }]}>
                   <Icon name="cake" size={16} color="#FF6B6B" />
-                  <Text style={[styles.categoryText, { color: '#FF6B6B' }]}>Birthdays</Text>
+                  <Text style={[styles.categoryText, { color: '#FF6B6B' }]}>{t('birthdays')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#E8F8F7' }]}>
                   <Icon name="calendar-clock" size={16} color="#4ECDC4" />
-                  <Text style={[styles.categoryText, { color: '#4ECDC4' }]}>Meetings</Text>
+                  <Text style={[styles.categoryText, { color: '#4ECDC4' }]}>{t('meetings')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[styles.categoryChip, { backgroundColor: '#E3F2FD' }]}>
                   <Icon name="information" size={16} color="#45B7D1" />
-                  <Text style={[styles.categoryText, { color: '#45B7D1' }]}>Admin</Text>
+                  <Text style={[styles.categoryText, { color: '#45B7D1' }]}>{t('admin')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1780,6 +1988,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative', // Add relative positioning for absolute child
   },
   // Enhanced User Display Card - Single Line Layout
   // Enhanced Member Info Card - My Card Style
@@ -1905,18 +2114,29 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start', // Changed from 'center' to 'flex-start'
     marginBottom: 15,
     position: 'relative',
+    flexWrap: 'wrap', // Allow wrapping if needed
   },
   sectionTitle: {
     fontSize: 22, // Increased from 20
     fontWeight: '800',
     color: '#2C3E50',
+    textAlign: 'left',
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  // Tamil text specific styling
+  tamilSectionTitle: {
+    fontSize: 20, // Slightly smaller for Tamil
+    lineHeight: 28, // Better line height for Tamil
+    letterSpacing: 0, // Remove letter spacing for Tamil
   },
   // Period Selector Styles
   periodSelectorContainer: {
     position: 'relative',
+    marginTop: 2, // Add small top margin for better alignment
   },
   periodSelectorButton: {
     flexDirection: 'row',
@@ -1932,12 +2152,21 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    minHeight: 36, // Ensure consistent height
   },
   periodSelectorText: {
     fontSize: 13,
     color: waterBlueColors.primary,
     fontWeight: '600',
     marginHorizontal: 8,
+    textAlign: 'center',
+    minWidth: 60, // Ensure consistent width
+  },
+  // Tamil period selector text
+  tamilPeriodSelectorText: {
+    fontSize: 12, // Slightly smaller for Tamil
+    lineHeight: 18, // Better line height
+    letterSpacing: 0, // Remove letter spacing
   },
   periodDropdown: {
     position: 'absolute',
@@ -1972,10 +2201,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginLeft: 12,
+    textAlign: 'left',
   },
   periodDropdownTextSelected: {
     color: waterBlueColors.primary,
     fontWeight: '600',
+  },
+  // Tamil dropdown text
+  tamilPeriodDropdownText: {
+    fontSize: 13, // Slightly smaller for Tamil
+    lineHeight: 20, // Better line height
+    letterSpacing: 0, // Remove letter spacing
   },
   periodIndicator: {
     backgroundColor: '#F0F9FF',
@@ -1988,10 +2224,17 @@ const styles = StyleSheet.create({
   periodIndicatorText: {
     fontSize: 13,
     color: '#666',
+    textAlign: 'left',
   },
   periodIndicatorValue: {
     color: waterBlueColors.primary,
     fontWeight: '600',
+  },
+  // Tamil period indicator text
+  tamilPeriodIndicatorText: {
+    fontSize: 12, // Slightly smaller for Tamil
+    lineHeight: 18, // Better line height
+    letterSpacing: 0, // Remove letter spacing
   },
   statsGrid: {
     flexDirection: 'row',
@@ -2057,6 +2300,14 @@ const styles = StyleSheet.create({
     color: '#357ABD',
     fontWeight: '600',
     textAlign: 'center',
+    lineHeight: 18, // Better line height
+  },
+  // Tamil stat label
+  tamilStatLabel: {
+    fontSize: 12, // Slightly smaller for Tamil
+    lineHeight: 16, // Better line height for Tamil
+    letterSpacing: 0, // Remove letter spacing
+    paddingHorizontal: 2, // Add small padding
   },
   revenueSection: {
     marginBottom: 20,
@@ -2215,17 +2466,36 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1E5A96',
     marginBottom: 8,
+    textAlign: 'left',
   },
   infoText: {
     fontSize: 13,
     color: '#357ABD',
     lineHeight: 20,
+    textAlign: 'left',
   },
   infoPeriod: {
     fontSize: 12,
     color: '#666',
     fontStyle: 'italic',
     marginTop: 6,
+    textAlign: 'left',
+  },
+  // Tamil info text
+  tamilInfoTitle: {
+    fontSize: 15, // Slightly smaller for Tamil
+    lineHeight: 22, // Better line height
+    letterSpacing: 0, // Remove letter spacing
+  },
+  tamilInfoText: {
+    fontSize: 12, // Slightly smaller for Tamil
+    lineHeight: 18, // Better line height
+    letterSpacing: 0, // Remove letter spacing
+  },
+  tamilInfoPeriod: {
+    fontSize: 11, // Slightly smaller for Tamil
+    lineHeight: 16, // Better line height
+    letterSpacing: 0, // Remove letter spacing
   },
   // Modal Styles
   modalOverlay: {
@@ -2497,21 +2767,30 @@ const styles = StyleSheet.create({
   // Notification styles
   notificationDot: {
     position: 'absolute',
-    top: -5,
-    right: -5,
+    top: -4, // Better alignment with bell icon
+    right: -4, // Better alignment with bell icon
     backgroundColor: '#FF6B6B',
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#FFF',
+    elevation: 4, // Increased elevation for better visibility
+    shadowColor: '#FF6B6B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    zIndex: 10, // Ensure it appears above other elements
   },
   notificationDotText: {
     color: '#FFF',
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '800',
+    textAlign: 'center',
+    lineHeight: 10, // Better line height for number alignment
+    includeFontPadding: false, // Remove extra padding on Android
   },
   notificationCard: {
     backgroundColor: '#FFF',
@@ -2534,6 +2813,13 @@ const styles = StyleSheet.create({
     fontSize: 16, // Increased from 12
     fontWeight: '700',
     color: '#2C3E50',
+    textAlign: 'left',
+  },
+  // Tamil notification title
+  tamilNotificationCardTitle: {
+    fontSize: 15, // Slightly smaller for Tamil
+    lineHeight: 22, // Better line height
+    letterSpacing: 0, // Remove letter spacing
   },
   viewAllNotifications: {
     fontSize: 11,
@@ -2550,16 +2836,18 @@ const styles = StyleSheet.create({
     width: 170,
     backgroundColor: '#F8FBFF',
     borderRadius: 8,
-    padding: 6,
+    padding: 8, // Increased padding for better spacing
     marginRight: 6,
     borderWidth: 1,
     borderColor: '#E8F1FF',
     position: 'relative',
+    minHeight: 100, // Ensure consistent height
   },
   unreadNotificationCard: {
     backgroundColor: '#F0F7FF',
     borderColor: '#4A90E2',
     borderWidth: 1.5,
+    paddingRight: 16, // Increased padding on right for red dot space
   },
   notificationSwipeIcon: {
     width: 32,
@@ -2571,6 +2859,7 @@ const styles = StyleSheet.create({
   },
   notificationSwipeContent: {
     flex: 1,
+    paddingRight: 8, // Increased padding to avoid overlap with red dot
   },
   notificationSwipeTitle: {
     fontSize: 13,
@@ -2578,26 +2867,42 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 4,
     lineHeight: 16,
+    textAlign: 'left',
   },
   notificationSwipeMessage: {
     fontSize: 11,
     color: '#5D6D7E',
     lineHeight: 14,
     marginBottom: 6,
+    textAlign: 'left',
   },
   notificationSwipeTime: {
     fontSize: 10,
     color: '#95A5A6',
     fontWeight: '500',
+    textAlign: 'left',
+  },
+  // Tamil notification text
+  tamilNotificationSwipeTitle: {
+    fontSize: 12, // Slightly smaller for Tamil
+    lineHeight: 15, // Better line height
+    letterSpacing: 0, // Remove letter spacing
+    paddingRight: 2, // Extra padding to avoid red dot overlap
+  },
+  tamilNotificationSwipeMessage: {
+    fontSize: 10, // Slightly smaller for Tamil
+    lineHeight: 13, // Better line height
+    letterSpacing: 0, // Remove letter spacing
+    paddingRight: 2, // Extra padding to avoid red dot overlap
   },
   swipeUnreadIndicator: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
+    top: 6, // Better positioning from top
+    right: 6, // Better positioning from right
+    width: 8, // Larger size for better visibility
     height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF6B6B',
+    borderRadius: 5,
+    backgroundColor: '#FF4444', // Brighter red color
   },
   respondBadge: {
     flexDirection: 'row',
@@ -2726,12 +3031,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
+    minHeight: 20, // Ensure minimum height for red dot
   },
   unreadIndicator: {
-    width: 8,
+    width: 8, // Even larger size for maximum visibility
     height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF6B6B',
+    borderRadius: 8,
+    backgroundColor: '#FF0000', // Bright red color
+  },
+  notificationTitleContainer: {
+    flex: 1,
+    marginRight: 8,
   },
   notificationItemTitle: {
     fontSize: 14,

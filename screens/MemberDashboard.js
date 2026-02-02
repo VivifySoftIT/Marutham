@@ -11,6 +11,7 @@ import {
   StatusBar,
   RefreshControl,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -1048,83 +1049,69 @@ const MemberDashboard = () => {
       <StatusBar backgroundColor={waterBlueColors.primary} barStyle="light-content" />
 
       {/* Header with Water Blue Gradient */}
-       <LinearGradient
+      <LinearGradient
         colors={[waterBlueColors.primary, waterBlueColors.light]}
         style={styles.headerGradient}
       >
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View style={styles.headerLeftIcons}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => navigation.navigate('SettingsScreen')}
-              >
-                <Icon name="cog" size={22} color="#FFF" />
-              </TouchableOpacity>
-            </View>
+          <View style={styles.headerTopRow}>
+  {/* Left: Settings Icon */}
+  <TouchableOpacity
+    style={styles.headerIconButton}
+    onPress={() => navigation.navigate('SettingsScreen')}
+  >
+    <Icon name="cog" size={24} color="#FFF" />
+  </TouchableOpacity>
 
-            <View style={styles.headerTitleContainer}>
-              <View style={styles.greetingWithIcon}>
-                {/* Animated Icon based on time - Show ONLY for Morning and Afternoon */}
-                {greeting && (greeting.toLowerCase().includes('morning') || greeting.toLowerCase().includes('afternoon')) && (
-                  <Animatable.View
-                    animation={{
-                      0: { scale: 1 },
-                      0.5: { scale: 1.2 },
-                      1: { scale: 1 }
-                    }}
-                    iterationCount="infinite"
-                    duration={2000}
-                    easing="ease-in-out"
-                    style={styles.headerTimeIconInline}
-                  >
-                    {greeting.toLowerCase().includes('morning') ? (
-                      <Icon name="weather-sunny" size={24} color="#FFD700" />
-                    ) : (
-                      <Icon name="white-balance-sunny" size={24} color="#FFA500" />
-                    )}
-                  </Animatable.View>
-                )}
-                <Text style={styles.headerTitle}>{greeting || 'Good Afternoon'}</Text>
-              </View>
-              <View style={styles.headerSubtitleRow}>
-                <Text style={styles.headerMemberName}>{memberName || 'Admin User'}</Text>
-                <Text style={styles.headerWelcome}>, Welcome to Alaigal</Text>
-              </View>
-              {quote && (
-                <Text style={styles.headerQuote}>{quote}</Text>
-              )}
-            </View>
+  {/* Center: Alaigal Title with Logo - Takes up remaining space */}
+  <View style={styles.headerTitleContainer}>
+    <View style={styles.logoTitleContainer}>
+      <View style={styles.logoContainer}>
+        <Image 
+          source={require('../assets/logoicon2.png')} 
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
+      </View>
+      <Text style={[
+  styles.welcomeText,
+  t('alaigal') === 'அலைகள்' && styles.tamilText
+]}>
+  {t('alaigal')}
+</Text>
+    </View>
+  </View>
 
-            <View style={styles.headerRightIcons}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setShowNotifications(true)}
-              >
-                <Icon name="bell" size={22} color="#FFF" />
-                {notificationCount > 0 && (
-                  <View style={styles.notificationDot}>
-                    <Text style={styles.notificationDotText}>{notificationCount}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+  {/* Right: Notification and Logout Icons */}
+  <View style={styles.headerRightContainer}>
+    <TouchableOpacity
+      onPress={() => setShowNotifications(true)}
+      style={styles.headerActionButton}
+    >
+      <Icon name="bell" size={22} color="#FFF" />
+      {notificationCount > 0 && (
+        <View style={styles.notificationDot}>
+          <Text style={styles.notificationDotText}>{notificationCount}</Text>
+        </View>
+      )}
+    </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.iconButton, { marginLeft: 8 }]}
-                onPress={handleLogout}
-              >
-                <Icon name="logout" size={22} color="#FFF" />
-              </TouchableOpacity>
+    <TouchableOpacity
+      onPress={handleLogout}
+      style={styles.headerActionButton}
+    >
+      <Icon name="logout" size={22} color="#FFF" />
+    </TouchableOpacity>
+  </View>
+</View>
+<View style={styles.headerCenterContent}>
+              
+              <Text style={styles.thirukkuralQuote}>
+  "தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்" — திருக்குறள் 619
+</Text>
             </View>
-          </View>
-
-          {/* Welcome Message in Header */}
-          {loading ? (
-            <View style={styles.loadingStats}>
-              <ActivityIndicator size="small" color="#FFF" />
-              <Text style={styles.loadingText}>Loading...</Text>
-            </View>
-          ) : null}
+          {/* Enhanced Member Info Card - My Card Style */}
+          {/* Card removed as requested */}
         </View>
       </LinearGradient>
 
@@ -1153,7 +1140,7 @@ const MemberDashboard = () => {
             <View style={styles.sectionHeader}>
               <View style={styles.notificationHeaderLeft}>
                 <Icon name="bell" size={20} color="#FFB300" />
-                <Text style={styles.sectionTitle}>Recent Notifications</Text>
+                <Text style={styles.sectionTitle}>{t('recentNotifications')}</Text>
               </View>
               <TouchableOpacity onPress={() => setShowNotifications(true)}>
                 <Text style={styles.viewAllNotifications}>View All</Text>
@@ -1548,8 +1535,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 10,
-    marginTop: 4,
+    marginHorizontal: 8,
   },
   greetingWithIcon: {
     flexDirection: 'row',
@@ -2373,6 +2359,83 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#BDC3C7',
     marginTop: 4,
+  },
+  // Header styles matching UserDashboard
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    paddingHorizontal: 4,
+  },
+  headerIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  welcomeText: {
+    fontSize: 22, // Base size — will be adjusted per language
+    fontWeight: '900',
+    color: '#FFF',
+    textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 6,
+    fontFamily: 'serif', // Keep serif for English; Tamil may fallback gracefully
+  },
+  tamilText: {
+    fontSize: 18, // Larger than English to accommodate wider glyphs
+    letterSpacing: 0, // Critical: Tamil doesn't need letter spacing
+    lineHeight: 26, // Improve vertical spacing
+  },
+  logoTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    width: 42,
+    height: 42,
+    borderRadius: 26,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+  },
+  headerLogo: {
+    width: 42,
+    height: 42,
+    // Removed tintColor to show original blue logo colors
+  },
+  headerCenterContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  thirukkuralQuote: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.95)',
+    textAlign: 'center',
+    marginTop: 4,
+    fontStyle: 'italic',
+    fontWeight: '500',
+    lineHeight: 20,
+    paddingHorizontal: 20,
   },
 });
 
