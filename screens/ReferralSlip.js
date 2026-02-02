@@ -25,7 +25,7 @@ import { useLanguage } from '../service/LanguageContext';
 const ReferralSlip = ({ route }) => {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  const selectedMember = route?.params?.selectedMember; // Get member from navigation
+  const selectedMember = route?.params?.selectedMember;
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
@@ -41,23 +41,24 @@ const ReferralSlip = ({ route }) => {
     memberName: '',
     memberId: '',
     referralType: '',
-    referralCategory: '', // Changed from referralStatus
+    referralCategory: '',
     referralNumber: '',
     telephone: '',
     email: '',
     address: '',
     comments: '',
-    // Status is always 'Pending' and removed from UI
   });
-  const [memberSearchQuery, setMemberSearchQuery] = useState(''); // For searching members
-  const [isListening, setIsListening] = useState(null); // For voice input tracking
-  const [currentVoiceField, setCurrentVoiceField] = useState(null); // Track strictly which field is active
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
+  const [isListening, setIsListening] = useState(null);
+  const [currentVoiceField, setCurrentVoiceField] = useState(null);
+
+  const isInsideReferral = formData.referralType === 'inside';
+  const isOutsideReferral = formData.referralType === 'outside';
 
   useEffect(() => {
     loadCurrentUser();
     loadMemberNames();
 
-    // Pre-fill member data if coming from MembersDirectory
     if (selectedMember) {
       setFormData(prev => ({
         ...prev,
@@ -69,7 +70,6 @@ const ReferralSlip = ({ route }) => {
     }
 
     return () => {
-      // Cleanup voice listeners on unmount
       if (Platform.OS !== 'web') {
         Voice.destroy().then(Voice.removeAllListeners);
       }
@@ -84,11 +84,8 @@ const ReferralSlip = ({ route }) => {
 
       if (userData && userId) {
         const user = JSON.parse(userData);
-
         try {
-          // Try to get member by user ID
           const memberData = await apiGet(`/api/Members/GetByUserId/${userId}`);
-
           if (memberData && memberData.id) {
             await AsyncStorage.setItem('memberId', memberData.id.toString());
             setCurrentUser({
@@ -96,14 +93,10 @@ const ReferralSlip = ({ route }) => {
               name: user.fullName || fullName || '',
               memberId: memberData.id
             });
-            console.log('Member found via GetByUserId:', memberData.id);
           } else {
-            // Fallback to name search
             await findMemberByName(user.fullName || fullName);
           }
         } catch (error) {
-          console.log('GetByUserId failed, trying name search:', error);
-          // Fallback to name search
           await findMemberByName(user.fullName || fullName);
         }
       } else if (fullName) {
@@ -117,13 +110,11 @@ const ReferralSlip = ({ route }) => {
   const findMemberByName = async (name) => {
     try {
       if (!name) return;
-
       const members = await apiGet('/api/Members/GetMemberNames');
       if (members && Array.isArray(members)) {
         const member = members.find(m =>
           m.name && m.name.trim().toLowerCase() === name.trim().toLowerCase()
         );
-
         if (member) {
           await AsyncStorage.setItem('memberId', member.id.toString());
           setCurrentUser({
@@ -131,7 +122,6 @@ const ReferralSlip = ({ route }) => {
             name: name,
             memberId: member.id
           });
-          console.log('Found member by name:', member.id);
         }
       }
     } catch (error) {
@@ -142,11 +132,8 @@ const ReferralSlip = ({ route }) => {
   const apiGet = async (endpoint) => {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      return data;
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
     } catch (error) {
       console.error('API GET Error:', error);
       throw error;
@@ -157,20 +144,14 @@ const ReferralSlip = ({ route }) => {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.log('Server error response:', errorText);
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
-
-      const responseData = await response.json();
-      return responseData;
+      return await response.json();
     } catch (error) {
       console.error('API POST Error:', error);
       throw error;
@@ -181,7 +162,6 @@ const ReferralSlip = ({ route }) => {
     try {
       setLoadingMembers(true);
       const members = await apiGet('/api/Members/GetMemberNames');
-
       if (members && Array.isArray(members)) {
         const formattedMembers = members.map(member => ({
           id: member.id,
@@ -190,12 +170,10 @@ const ReferralSlip = ({ route }) => {
           phone: member.phone || '',
           memberId: member.memberId || `MEM${member.id}`
         }));
-
         setAllMembers(formattedMembers);
       } else {
         setAllMembers([]);
       }
-
     } catch (error) {
       console.error('Error loading members:', error);
       Alert.alert(t('error'), t('failedToLoadMembers'));
@@ -204,51 +182,21 @@ const ReferralSlip = ({ route }) => {
     }
   };
 
-  const findMemberIdFromName = async () => {
-    try {
-      const userName = await AsyncStorage.getItem('fullName');
-      if (!userName) return null;
-
-      const members = await apiGet('/api/Members');
-      if (members && Array.isArray(members)) {
-        const currentMember = members.find(m => {
-          if (!m.name) return false;
-          return m.name.trim().toLowerCase() === userName.trim().toLowerCase();
-        });
-
-        if (currentMember) {
-          console.log('Found member ID from name:', currentMember.id);
-          await AsyncStorage.setItem('memberId', currentMember.id.toString());
-          return currentMember.id;
-        }
-      }
-    } catch (error) {
-      console.error('Error finding member ID from name:', error);
-    }
-    return null;
-  };
-
   const handleSelectMember = (member) => {
     setFormData(prev => ({
       ...prev,
       memberName: member.name,
       memberId: member.id,
-      email: member.email || '',
-      telephone: member.phone || '',
+      // Remove auto-filling of email and telephone
+      // email: member.email || '',
+      // telephone: member.phone || '',
     }));
     setShowMemberDropdown(false);
+    setMemberSearchQuery('');
   };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const toggleReferralStatus = (status) => {
-    // Changed to single selection instead of multiple
-    setFormData(prev => ({
-      ...prev,
-      referralCategory: prev.referralCategory === status ? '' : status
-    }));
   };
 
   const validateForm = () => {
@@ -256,13 +204,7 @@ const ReferralSlip = ({ route }) => {
       Alert.alert(
         t('loginRequired'),
         t('pleaseMakeSureLoggedIn'),
-        [
-          { text: t('ok') },
-          {
-            text: t('reLogin'),
-            onPress: () => navigation.navigate('Login')
-          }
-        ]
+        [{ text: t('ok') }, { text: t('reLogin'), onPress: () => navigation.navigate('Login') }]
       );
       return false;
     }
@@ -279,26 +221,29 @@ const ReferralSlip = ({ route }) => {
       Alert.alert(t('validationError'), t('pleaseSelectReferralCategory'));
       return false;
     }
-    if (!formData.referralNumber.trim()) {
-      Alert.alert(t('validationError'), t('pleaseEnterReferralNumber'));
-      return false;
-    }
-    if (!formData.telephone.trim()) {
-      Alert.alert(t('validationError'), t('pleaseEnterTelephone'));
-      return false;
-    }
-
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(formData.telephone.replace(/\D/g, ''))) {
-      Alert.alert(t('validationError'), t('pleaseEnterValidPhone'));
-      return false;
-    }
-
-    if (formData.email && formData.email.trim()) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        Alert.alert(t('validationError'), t('pleaseEnterValidEmail'));
+    
+    if (isOutsideReferral) {
+      if (!formData.referralNumber.trim()) {
+        Alert.alert(t('validationError'), t('pleaseEnterCompanyName'));
         return false;
+      }
+      if (!formData.telephone.trim()) {
+        Alert.alert(t('validationError'), t('pleaseEnterTelephone'));
+        return false;
+      }
+
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(formData.telephone.replace(/\D/g, ''))) {
+        Alert.alert(t('validationError'), t('pleaseEnterValidPhone'));
+        return false;
+      }
+
+      if (formData.email && formData.email.trim()) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          Alert.alert(t('validationError'), t('pleaseEnterValidEmail'));
+          return false;
+        }
       }
     }
 
@@ -310,29 +255,24 @@ const ReferralSlip = ({ route }) => {
 
     setLoading(true);
     try {
-      console.log('Current user memberId:', currentUser.memberId);
-      console.log('Selected memberId:', formData.memberId);
-
       if (!currentUser.memberId) {
         throw new Error(t('memberIdNotAvailable'));
       }
 
-      // Status is always 'Pending' - removed from UI
       const referralData = {
         givenByMemberId: currentUser.memberId,
         givenToMemberId: parseInt(formData.memberId),
         referralType: formData.referralType,
-        referralStatus: formData.referralCategory, // Changed from array to single value
-        referralNumber: formData.referralNumber,
-        telephone: formData.telephone,
-        email: formData.email || null,
-        address: formData.address || '',
+        referralStatus: formData.referralCategory,
+        referralNumber: isOutsideReferral ? formData.referralNumber : '',
+        telephone: isOutsideReferral ? formData.telephone : '',
+        email: isOutsideReferral ? (formData.email || null) : null,
+        address: isOutsideReferral ? (formData.address || '') : '',
         comments: formData.comments || '',
-        status: 'Pending' // Always set to Pending
+        status: 'Pending'
       };
 
       console.log('Sending referral data:', JSON.stringify(referralData, null, 2));
-
       const result = await apiPost('/api/Referrals', referralData);
 
       setSavedData({
@@ -341,13 +281,12 @@ const ReferralSlip = ({ route }) => {
         referralNumber: formData.referralNumber,
         telephone: formData.telephone,
         email: formData.email,
-        status: 'Pending', // Always shows Pending
+        status: 'Pending',
       });
       setShowSuccessScreen(true);
 
     } catch (error) {
       console.error('Error submitting referral:', error);
-
       let errorMessage = error.message || t('failedToSubmitReferral');
 
       if (error.message.includes('400')) {
@@ -370,22 +309,14 @@ const ReferralSlip = ({ route }) => {
 
   const formatPhoneNumber = (text) => {
     const cleaned = text.replace(/\D/g, '');
-
     const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
-
     if (match) {
-      const part1 = match[1];
-      const part2 = match[2];
-      const part3 = match[3];
-
       let formatted = '';
-      if (part1) formatted += part1;
-      if (part2) formatted += '-' + part2;
-      if (part3) formatted += '-' + part3;
-
+      if (match[1]) formatted += match[1];
+      if (match[2]) formatted += '-' + match[2];
+      if (match[3]) formatted += '-' + match[3];
       return formatted;
     }
-
     return text;
   };
 
@@ -411,42 +342,47 @@ const ReferralSlip = ({ route }) => {
     setMemberSearchQuery('');
   };
 
-  // Voice input functionality
-  const startRecording = async (fieldName) => {
-    // For Web Platform
+  // Voice input for member search
+  const startVoiceSearch = async () => {
     if (Platform.OS === 'web') {
       Alert.alert(t('voiceInput'), t('pleaseUseMobileApp'));
       return;
     }
 
     try {
-      // RESET EVERYTHING
       await Voice.destroy();
       Voice.removeAllListeners();
 
-      setCurrentVoiceField(fieldName);
-      setIsListening(fieldName); // UI feedback
+      setCurrentVoiceField('memberSearch');
+      setIsListening('memberSearch');
 
-      Voice.onSpeechStart = () => console.log('Voice started');
-      Voice.onSpeechEnd = () => {
-        console.log('Voice ended');
-        setIsListening(null);
-      };
+      Voice.onSpeechStart = () => console.log('Voice search started');
+      Voice.onSpeechEnd = () => setIsListening(null);
       Voice.onSpeechError = (e) => {
         console.log('Voice Error:', e);
         setIsListening(null);
       };
       Voice.onSpeechResults = (e) => {
-        console.log('Voice Results:', e.value);
         if (e.value && e.value[0]) {
           const spokenText = e.value[0];
-          if (fieldName === 'telephone') {
-            const phoneDigits = spokenText.replace(/\D/g, '');
-            handlePhoneChange(phoneDigits);
+          
+          // Try to find matching member and auto-select
+          const matchingMember = allMembers.find(member =>
+            member.name.toLowerCase().includes(spokenText.toLowerCase()) ||
+            spokenText.toLowerCase().includes(member.name.toLowerCase())
+          );
+          
+          if (matchingMember) {
+            // Auto-select the matching member
+            handleSelectMember(matchingMember);
+            Alert.alert(t('success'), `${t('memberSelected')}: ${matchingMember.name}`);
           } else {
-            handleInputChange(fieldName, spokenText);
+            // If no exact match, set search query to show filtered results
+            setMemberSearchQuery(spokenText);
+            setShowMemberDropdown(true);
           }
         }
+        setIsListening(null);
       };
 
       await Voice.start('en-IN');
@@ -465,6 +401,47 @@ const ReferralSlip = ({ route }) => {
       }
     } catch (e) {
       console.error("Stop Voice Error", e);
+    }
+  };
+
+  // Voice input for other fields
+  const startRecording = async (fieldName) => {
+    if (Platform.OS === 'web') {
+      Alert.alert(t('voiceInput'), t('pleaseUseMobileApp'));
+      return;
+    }
+
+    try {
+      await Voice.destroy();
+      Voice.removeAllListeners();
+
+      setCurrentVoiceField(fieldName);
+      setIsListening(fieldName);
+
+      Voice.onSpeechStart = () => console.log('Voice started');
+      Voice.onSpeechEnd = () => setIsListening(null);
+      Voice.onSpeechError = (e) => {
+        console.log('Voice Error:', e);
+        setIsListening(null);
+      };
+      Voice.onSpeechResults = (e) => {
+        if (e.value && e.value[0]) {
+          const spokenText = e.value[0];
+          if (fieldName === 'telephone') {
+            const phoneDigits = spokenText.replace(/\D/g, '');
+            handlePhoneChange(phoneDigits);
+          } else {
+            handleInputChange(fieldName, spokenText);
+          }
+        }
+        setIsListening(null);
+      };
+
+      await Voice.start('en-IN');
+    } catch (e) {
+      console.error("Start Voice Error", e);
+      Alert.alert(t('error'), t('couldNotStartVoice'));
+      setIsListening(null);
     }
   };
 
@@ -497,8 +474,6 @@ const ReferralSlip = ({ route }) => {
             keyboardDismissMode="on-drag"
           >
 
-
-            {/* Pre-selected Member Info */}
             {selectedMember && (
               <View style={styles.preSelectedMemberBanner}>
                 <Icon name="information" size={20} color="#4A90E2" />
@@ -508,9 +483,10 @@ const ReferralSlip = ({ route }) => {
               </View>
             )}
 
-            {/* Member Name Dropdown with Search */}
+            {/* ALWAYS SHOW Member Search - for both Inside and Outside */}
             <View style={styles.section}>
               <Text style={styles.label}>{t('toMember')} *</Text>
+              
               <TouchableOpacity
                 style={styles.memberDropdownButton}
                 onPress={() => setShowMemberDropdown(!showMemberDropdown)}
@@ -539,6 +515,19 @@ const ReferralSlip = ({ route }) => {
                         <Icon name="close-circle" size={20} color="#999" />
                       </TouchableOpacity>
                     )}
+                    {/* Voice Search Button */}
+                    <TouchableOpacity
+                      onPressIn={startVoiceSearch}
+                      onPressOut={stopRecording}
+                      style={styles.voiceSearchButton}
+                      delayPressIn={100}
+                    >
+                      <Icon
+                        name={isListening === 'memberSearch' ? "microphone" : "microphone-outline"}
+                        size={20}
+                        color={isListening === 'memberSearch' ? "#FF4444" : "#4A90E2"}
+                      />
+                    </TouchableOpacity>
                   </View>
 
                   <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
@@ -597,7 +586,7 @@ const ReferralSlip = ({ route }) => {
 
             {/* Referral Type Radio Buttons */}
             <View style={styles.section}>
-              <Text style={styles.label}>{t('referralType')} *</Text>
+              <Text style={styles.label}>{t('referralType')}</Text>
               <View style={styles.radioGroup}>
                 <TouchableOpacity
                   style={styles.radioButton}
@@ -626,7 +615,7 @@ const ReferralSlip = ({ route }) => {
 
             {/* Referral Category Radio Buttons */}
             <View style={styles.section}>
-              <Text style={styles.label}>{t('referralCategory')} *</Text>
+              <Text style={styles.label}>{t('referralCategory')}</Text>
               <View style={styles.radioGroup}>
                 <TouchableOpacity
                   style={styles.radioButton}
@@ -653,126 +642,135 @@ const ReferralSlip = ({ route }) => {
               </View>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.label}>{t('companyName')}*</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder={t('enterClientOrCompanyName')}
-                  value={formData.referralNumber}
-                  onChangeText={(text) => handleInputChange('referralNumber', text)}
-                  placeholderTextColor="#999"
-                />
-                <TouchableOpacity
-                  onPressIn={() => startRecording('referralNumber')}
-                  onPressOut={stopRecording}
-                  style={styles.micButton}
-                  delayPressIn={100}
-                >
-                  <Icon
-                    name={isListening === 'referralNumber' ? "microphone" : "microphone-outline"}
-                    size={22}
-                    color={isListening === 'referralNumber' ? "#FF4444" : "#4A90E2"}
+            {/* Only show Company Name field for Outside referrals */}
+            {isOutsideReferral && (
+              <View style={styles.section}>
+                <Text style={styles.label}>{t('Company or Client Name')}</Text>
+                <View style={styles.inputContainer}>
+                  <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder={t('enterClientOrCompanyName')}
+                    value={formData.referralNumber}
+                    onChangeText={(text) => handleInputChange('referralNumber', text)}
+                    placeholderTextColor="#999"
                   />
-                  {isListening === 'referralNumber' && (
-                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-                  )}
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPressIn={() => startRecording('referralNumber')}
+                    onPressOut={stopRecording}
+                    style={styles.micButton}
+                    delayPressIn={100}
+                  >
+                    <Icon
+                      name={isListening === 'referralNumber' ? "microphone" : "microphone-outline"}
+                      size={22}
+                      color={isListening === 'referralNumber' ? "#FF4444" : "#4A90E2"}
+                    />
+                    {isListening === 'referralNumber' && (
+                      <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
 
-            {/* Telephone Number Field */}
-            <View style={styles.section}>
-              <Text style={styles.label}>{t('mobileNumber')} *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder={t('enterTelephoneNumber')}
-                  value={formData.telephone}
-                  onChangeText={handlePhoneChange}
-                  keyboardType="phone-pad"
-                  placeholderTextColor="#999"
-                  maxLength={12}
-                />
-                <TouchableOpacity
-                  onPressIn={() => startRecording('telephone')}
-                  onPressOut={stopRecording}
-                  style={styles.micButton}
-                  delayPressIn={100}
-                >
-                  <Icon
-                    name={isListening === 'telephone' ? "microphone" : "microphone-outline"}
-                    size={22}
-                    color={isListening === 'telephone' ? "#FF4444" : "#4A90E2"}
+            {/* Only show Telephone Number field for Outside referrals */}
+            {isOutsideReferral && (
+              <View style={styles.section}>
+                <Text style={styles.label}>{t('mobileNumber')}</Text>
+                <View style={styles.inputContainer}>
+                  <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder={t('enterTelephoneNumber')}
+                    value={formData.telephone}
+                    onChangeText={handlePhoneChange}
+                    keyboardType="phone-pad"
+                    placeholderTextColor="#999"
+                    maxLength={12}
                   />
-                  {isListening === 'telephone' && (
-                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-                  )}
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPressIn={() => startRecording('telephone')}
+                    onPressOut={stopRecording}
+                    style={styles.micButton}
+                    delayPressIn={100}
+                  >
+                    <Icon
+                      name={isListening === 'telephone' ? "microphone" : "microphone-outline"}
+                      size={22}
+                      color={isListening === 'telephone' ? "#FF4444" : "#4A90E2"}
+                    />
+                    {isListening === 'telephone' && (
+                      <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
 
-            {/* Email Field */}
-            <View style={styles.section}>
-              <Text style={styles.label}>{t('email')} </Text>
-              <View style={styles.inputContainer}>
-                <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder={t('enterEmailOptional')}
-                  value={formData.email}
-                  onChangeText={(text) => handleInputChange('email', text)}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholderTextColor="#999"
-                />
-                <TouchableOpacity
-                  onPressIn={() => startRecording('email')}
-                  onPressOut={stopRecording}
-                  style={styles.micButton}
-                  delayPressIn={100}
-                >
-                  <Icon
-                    name={isListening === 'email' ? "microphone" : "microphone-outline"}
-                    size={22}
-                    color={isListening === 'email' ? "#FF4444" : "#4A90E2"}
+            {/* Only show Email field for Outside referrals */}
+            {isOutsideReferral && (
+              <View style={styles.section}>
+                <Text style={styles.label}>{t('email')}</Text>
+                <View style={styles.inputContainer}>
+                  <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder={t('Enter Email')}
+                    value={formData.email}
+                    onChangeText={(text) => handleInputChange('email', text)}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    placeholderTextColor="#999"
                   />
-                  {isListening === 'email' && (
-                    <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-                  )}
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPressIn={() => startRecording('email')}
+                    onPressOut={stopRecording}
+                    style={styles.micButton}
+                    delayPressIn={100}
+                  >
+                    <Icon
+                      name={isListening === 'email' ? "microphone" : "microphone-outline"}
+                      size={22}
+                      color={isListening === 'email' ? "#FF4444" : "#4A90E2"}
+                    />
+                    {isListening === 'email' && (
+                      <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
 
-            {/* Address */}
-            <View style={styles.section}>
-              <Text style={styles.label}>{t('address')}</Text>
-              <View style={[styles.inputContainer, styles.textAreaContainer]}>
-                <TextInput
-                  style={[styles.input, styles.textArea]}
-                  placeholder={t('enterAddress')}
-                  value={formData.address}
-                  onChangeText={(text) => handleInputChange('address', text)}
-                  multiline
-                  numberOfLines={3}
-                  placeholderTextColor="#999"
-                />
-                <TouchableOpacity
-                  onPress={() => startRecording('address')}
-                  style={[styles.micButton, styles.micButtonTextArea]}
-                >
-                  <Icon
-                    name={isListening === 'address' ? "microphone" : "microphone-outline"}
-                    size={22}
-                    color={isListening === 'address' ? "#FF4444" : "#4A90E2"}
+            {/* Only show Address field for Outside referrals */}
+            {isOutsideReferral && (
+              <View style={styles.section}>
+                <Text style={styles.label}>{t('address')}</Text>
+                <View style={[styles.inputContainer, styles.textAreaContainer]}>
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder={t('enterAddress')}
+                    value={formData.address}
+                    onChangeText={(text) => handleInputChange('address', text)}
+                    multiline
+                    numberOfLines={3}
+                    placeholderTextColor="#999"
                   />
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => startRecording('address')}
+                    style={[styles.micButton, styles.micButtonTextArea]}
+                  >
+                    <Icon
+                      name={isListening === 'address' ? "microphone" : "microphone-outline"}
+                      size={22}
+                      color={isListening === 'address' ? "#FF4444" : "#4A90E2"}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
 
-            {/* Comments */}
+            {/* Comments - Show for both Inside and Outside */}
             <View style={styles.section}>
               <Text style={styles.label}>{t('comments')}</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
@@ -798,8 +796,6 @@ const ReferralSlip = ({ route }) => {
               </View>
             </View>
 
-            {/* STATUS SECTION REMOVED - Always Pending */}
-
             {/* Confirm Button */}
             <TouchableOpacity
               style={[styles.confirmButton, loading && styles.confirmButtonDisabled]}
@@ -820,6 +816,7 @@ const ReferralSlip = ({ route }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </ImageBackground>
+      
       {/* Success Screen */}
       {showSuccessScreen && (
         <View style={styles.successOverlay}>
@@ -900,39 +897,13 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 15,
-    paddingBottom: 50, // Extra padding for keyboard
+    paddingBottom: 50,
   },
   backgroundImage: {
     flex: 1,
   },
   backgroundImageStyle: {
     opacity: 0.1,
-  },
-  currentUserSection: {
-    backgroundColor: '#E8F4FD',
-    padding: 8,
-    borderRadius: 8,
-    marginBottom: 10,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
-  },
-  currentUserText: {
-    fontSize: 14,
-    color: '#4A90E2',
-    marginBottom: 4,
-  },
-  currentUserName: {
-    fontWeight: '600',
-  },
-  currentUserId: {
-    fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  currentUserWarning: {
-    fontSize: 12,
-    color: '#FF6B6B',
-    fontStyle: 'italic',
   },
   preSelectedMemberBanner: {
     flexDirection: 'row',
@@ -991,14 +962,6 @@ const styles = StyleSheet.create({
     right: 8,
     top: 8,
   },
-  speechInput: {
-    flex: 1,
-    marginLeft: -12, // Compensate for icon margin
-  },
-  speechTextArea: {
-    flex: 1,
-    minHeight: 80,
-  },
   textAreaContainer: {
     alignItems: 'flex-start',
     paddingVertical: 8,
@@ -1006,25 +969,6 @@ const styles = StyleSheet.create({
   textArea: {
     textAlignVertical: 'top',
     paddingTop: 12,
-  },
-  memberDropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    paddingHorizontal: 12,
-    minHeight: 45,
-  },
-  memberDropdownList: {
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    marginTop: 8,
-    maxHeight: 300,
-    elevation: 3,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -1042,17 +986,161 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     paddingVertical: 4,
   },
+  memberDropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 12,
+    minHeight: 45,
+  },
+  memberDropdownList: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginTop: 8,
+    maxHeight: 300,
+    elevation: 3,
+    paddingVertical: 4,
+  },
+  voiceSearchButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  memberDropdown: {
+    marginTop: 8,
+    backgroundColor: '#F8FBFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E3F2FD',
+  },
+  dropdownItemAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  dropdownItemAvatarText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  dropdownItemContent: {
+    flex: 1,
+  },
+  dropdownItemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 2,
+  },
+  dropdownItemBusiness: {
+    fontSize: 12,
+    color: '#666',
+  },
+  dropdownItemDetails: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectedMemberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E3F2FD',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#4A90E2',
+  },
+  selectedMemberInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  selectedMemberAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  selectedMemberAvatarText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  selectedMemberDetails: {
+    flex: 1,
+  },
+  selectedMemberName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 2,
+  },
+  selectedMemberId: {
+    fontSize: 11,
+    color: '#666',
+  },
+  selectedMemberContact: {
+    fontSize: 11,
+    color: '#666',
+    marginTop: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  selectedMemberRemove: {
+    padding: 8,
+  },
+  clearButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
+  voiceSearchButton: {
+    padding: 8,
+    marginLeft: 4,
+  },
   memberScrollView: {
     maxHeight: 250,
   },
   memberDropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#E8E8E8',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 4,
+    marginBottom: 3,
+    borderRadius: 8,
     justifyContent: 'space-between',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   memberItemContent: {
     flex: 1,
@@ -1084,54 +1172,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
   },
-  toggleContainer: {
+  radioGroup: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 20,
+    paddingVertical: 5,
   },
-  toggleButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#87CEEB',
-  },
-  toggleButtonActive: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
-  },
-  toggleButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#4A90E2',
-  },
-  toggleButtonTextActive: {
-    color: '#FFF',
-  },
-  checkboxContainer: {
+  radioButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    gap: 8,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#87CEEB',
-    marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxActive: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
-  },
-  checkboxLabel: {
+  radioLabel: {
     fontSize: 12,
     color: '#333',
     fontWeight: '500',
@@ -1154,21 +1205,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 8,
-  },
-  radioGroup: {
-    flexDirection: 'row',
-    gap: 20,
-    paddingVertical: 5,
-  },
-  radioButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  radioLabel: {
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '500',
   },
   // Success Screen Styles
   successOverlay: {

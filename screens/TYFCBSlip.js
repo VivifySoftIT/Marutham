@@ -28,14 +28,12 @@ const TYFCBSlip = () => {
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(true);
-  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
   const [showSuccessScreen, setShowSuccessScreen] = useState(false);
   const [savedData, setSavedData] = useState(null);
   const [isListening, setIsListening] = useState(null);
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
-
-  const [currentVoiceField, setCurrentVoiceField] = useState(null); // Track strictly which field is active
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
 
   const [formData, setFormData] = useState({
     memberName: '',
@@ -125,6 +123,17 @@ const TYFCBSlip = () => {
     setMemberSearchQuery('');
   };
 
+  const getFilteredMembers = () => {
+    if (!memberSearchQuery.trim()) return allMembers; // Show all members when no search query
+    return allMembers
+      .filter(member =>
+        member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
+        String(member.phone || '').includes(memberSearchQuery) ||
+        String(member.memberId || '').includes(memberSearchQuery) ||
+        member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
+      ); // Remove the slice limit to show all matching members
+  };
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -162,7 +171,6 @@ const TYFCBSlip = () => {
       await Voice.destroy();
       Voice.removeAllListeners();
 
-      setCurrentVoiceField(fieldName);
       setIsListening(fieldName); // UI feedback
 
       Voice.onSpeechStart = () => console.log('Voice started');
@@ -177,8 +185,26 @@ const TYFCBSlip = () => {
       Voice.onSpeechResults = (e) => {
         console.log('Voice Results:', e.value);
         if (e.value && e.value[0]) {
-          // Ensure we write to the Field we intended
-          handleInputChange(fieldName, e.value[0]);
+          const spokenText = e.value[0];
+          
+          // Handle member name field - find and auto-select matching member
+          if (fieldName === 'memberName') {
+            const matchedMember = allMembers.find(member =>
+              member.name.toLowerCase().includes(spokenText.toLowerCase()) ||
+              spokenText.toLowerCase().includes(member.name.toLowerCase())
+            );
+            
+            if (matchedMember) {
+              handleSelectMember(matchedMember);
+              Alert.alert(t('success'), `${t('memberSelected')}: ${matchedMember.name}`);
+            } else {
+              setMemberSearchQuery(spokenText);
+              Alert.alert(t('noMatch'), t('noMemberFoundWithThatName'));
+            }
+          } else {
+            // For other fields, just set the value
+            handleInputChange(fieldName, spokenText);
+          }
         }
       };
 
@@ -269,9 +295,10 @@ const TYFCBSlip = () => {
 
   const renderFormContent = () => (
     <>
-      {/* Member Selection with Search */}
+      {/* Member Selection with Search and Voice Input */}
       <View style={styles.section}>
         <Text style={styles.label}>{t('toMember')} *</Text>
+        
         <TouchableOpacity
           style={styles.memberDropdownButton}
           onPress={() => setShowMemberDropdown(!showMemberDropdown)}
@@ -300,55 +327,67 @@ const TYFCBSlip = () => {
                   <Icon name="close-circle" size={20} color="#999" />
                 </TouchableOpacity>
               )}
+              {/* Voice Search Button */}
+              <TouchableOpacity
+                onPressIn={() => startRecording('memberName')}
+                onPressOut={stopRecording}
+                style={styles.voiceSearchButton}
+                delayPressIn={100}
+              >
+                <Icon
+                  name={isListening === 'memberName' ? "microphone" : "microphone-outline"}
+                  size={20}
+                  color={isListening === 'memberName' ? "#FF4444" : "#4A90E2"}
+                />
+              </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
               {loadingMembers ? (
-                <View style={styles.noMembersContainer}>
+                <View style={styles.dropdownLoadingContainer}>
                   <ActivityIndicator size="small" color="#4A90E2" />
-                  <Text style={styles.noMembersText}>{t('loadingMembers')}</Text>
+                  <Text style={styles.dropdownLoadingText}>{t('loadingMembers')}</Text>
                 </View>
-              ) : allMembers && allMembers.length > 0 ? (
-                allMembers
-                  .filter(member =>
-                    member.name.toLowerCase().includes(memberSearchQuery.toLowerCase()) ||
-                    member.phone?.includes(memberSearchQuery) ||
-                    member.email?.toLowerCase().includes(memberSearchQuery.toLowerCase())
-                  )
-                  .map(member => (
-                    <TouchableOpacity
-                      key={member.id}
-                      style={styles.memberDropdownItem}
-                      onPress={() => {
-                        handleSelectMember(member);
-                        setMemberSearchQuery('');
-                      }}
-                    >
-                      <View style={styles.memberItemContent}>
-                        <Text style={styles.memberName}>{member.name}</Text>
-                        <View style={styles.memberDetailsRow}>
-                          <Text style={styles.memberDetail}>
-                            <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
-                          </Text>
-                          <Text style={styles.memberDetail}>
-                            <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
-                          </Text>
-                        </View>
-                        {member.email && (
-                          <Text style={styles.memberEmail}>
-                            <Icon name="email" size={12} color="#999" /> {member.email}
-                          </Text>
-                        )}
+              ) : getFilteredMembers().length > 0 ? (
+                getFilteredMembers().map(member => (
+                  <TouchableOpacity
+                    key={member.id}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      handleSelectMember(member);
+                      setMemberSearchQuery('');
+                    }}
+                  >
+                    <View style={styles.dropdownItemAvatar}>
+                      <Text style={styles.avatarText}>
+                        {member.name.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.dropdownItemContent}>
+                      <Text style={styles.dropdownItemName}>{member.name}</Text>
+                      <View style={styles.memberDetailsRow}>
+                        <Text style={styles.memberDetail}>
+                          <Icon name="id-card" size={12} color="#999" /> {member.memberId || 'N/A'}
+                        </Text>
+                        <Text style={styles.memberDetail}>
+                          <Icon name="phone" size={12} color="#999" /> {member.phone || 'N/A'}
+                        </Text>
                       </View>
-                      {formData.memberId === member.id && (
-                        <Icon name="check" size={20} color="#4A90E2" />
+                      {member.email && (
+                        <Text style={styles.memberEmail}>
+                          <Icon name="email" size={12} color="#999" /> {member.email}
+                        </Text>
                       )}
-                    </TouchableOpacity>
-                  ))
+                    </View>
+                    {formData.memberId === member.id && (
+                      <Icon name="check-circle" size={20} color="#4A90E2" />
+                    )}
+                  </TouchableOpacity>
+                ))
               ) : (
-                <View style={styles.noMembersContainer}>
+                <View style={styles.dropdownLoadingContainer}>
                   <Icon name="account-alert" size={24} color="#999" />
-                  <Text style={styles.noMembersText}>{t('noMembersAvailable')}</Text>
+                  <Text style={styles.dropdownLoadingText}>{t('noMembersAvailable')}</Text>
                 </View>
               )}
             </ScrollView>
@@ -693,6 +732,43 @@ const styles = StyleSheet.create({
     right: 8,
     top: 8,
   },
+
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    paddingHorizontal: 12,
+    minHeight: 50,
+    position: 'relative',
+  },
+  searchIcon: {
+    position: 'absolute',
+    left: 12,
+    zIndex: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#333',
+    paddingVertical: 12,
+    paddingLeft: 35,
+    paddingRight: 80,
+  },
+  clearButton: {
+    position: 'absolute',
+    right: 50,
+    padding: 8,
+    zIndex: 2,
+  },
+  voiceButtonInline: {
+    position: 'absolute',
+    right: 12,
+    padding: 8,
+    zIndex: 2,
+  },
   memberDropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -704,13 +780,21 @@ const styles = StyleSheet.create({
     minHeight: 45,
   },
   memberDropdownList: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#F8F9FA',
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E0E0E0',
     marginTop: 8,
     maxHeight: 300,
     elevation: 3,
+    paddingVertical: 4,
+  },
+  memberScrollView: {
+    maxHeight: 250,
+  },
+  voiceSearchButton: {
+    padding: 8,
+    marginLeft: 4,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -723,33 +807,66 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 12,
     color: '#333',
     marginLeft: 8,
     paddingVertical: 4,
   },
-  memberScrollView: {
-    maxHeight: 250,
+  memberDropdown: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    marginTop: 8,
+    maxHeight: 300,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    paddingVertical: 4,
   },
-  memberDropdownItem: {
+  dropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    justifyContent: 'space-between',
+    borderBottomColor: '#E8E8E8',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 4,
+    marginBottom: 3,
+    borderRadius: 8,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  memberItemContent: {
+  dropdownItemAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  dropdownItemContent: {
     flex: 1,
   },
-  memberName: {
-    fontSize: 14,
+  dropdownItemName: {
+    fontSize: 12,
     fontWeight: '600',
     color: '#333',
   },
-  memberEmail: {
-    fontSize: 12,
+  dropdownItemId: {
+    fontSize: 11,
     color: '#999',
     marginTop: 2,
   },
@@ -762,13 +879,22 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
   },
-  noMembersContainer: {
+  memberEmail: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 2,
+  },
+  dropdownLoadingContainer: {
     padding: 20,
     alignItems: 'center',
   },
-  noMembersText: {
-    fontSize: 14,
+  dropdownLoadingText: {
+    fontSize: 12,
     color: '#999',
+    marginTop: 8,
+  },
+  memberScrollView: {
+    maxHeight: 250,
   },
   confirmButton: {
     backgroundColor: '#4A90E2',
