@@ -65,7 +65,7 @@ const BirthdayWishesSection = ({ memberId }) => {
       >
         <View style={styles.birthdayWishCard}>
           <ActivityIndicator size="small" color="#4A90E2" />
-          <Text style={styles.birthdayWishLoading}>Checking for birthday wishes...</Text>
+          <Text style={styles.birthdayWishLoading}>{t('checkingBirthdayWishes')}</Text>
         </View>
       </Animatable.View>
     );
@@ -88,9 +88,9 @@ const BirthdayWishesSection = ({ memberId }) => {
         <View style={styles.birthdayWishHeader}>
           <Icon name="cake-variant" size={40} color="#FF6B6B" />
           <View style={styles.birthdayWishContent}>
-            <Text style={styles.birthdayWishTitle}>🎉 Birthday Wish Received!</Text>
+            <Text style={styles.birthdayWishTitle}>🎉 {t('birthdayWishReceived')}</Text>
             <Text style={styles.birthdayWishMessage}>
-              {birthdayWish.senderName || 'A member'} sent you birthday wishes today!
+              {birthdayWish.senderName || t('member')} {t('sentYouBirthdayWishes')}
             </Text>
             <Text style={styles.birthdayWishTime}>
               {new Date(birthdayWish.sentDate).toLocaleTimeString('en-US', {
@@ -138,15 +138,15 @@ const MemberDashboard = () => {
   // Handle logout
   const handleLogout = async () => {
     Alert.alert(
-      'Confirm Logout',
-      'Are you sure you want to logout?',
+      t('confirmTitle'),
+      t('areYouSureLogout'),
       [
         {
-          text: 'Cancel',
+          text: t('cancel'),
           style: 'cancel',
         },
         {
-          text: 'Logout',
+          text: t('logout'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -165,7 +165,7 @@ const MemberDashboard = () => {
               });
             } catch (error) {
               console.error('Error during logout:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
+              Alert.alert(t('error'), t('errorMessage'));
             }
           },
         },
@@ -233,17 +233,17 @@ const MemberDashboard = () => {
       const memberId = await MemberIdService.getCurrentUserMemberId();
       
       if (!memberId) {
-        Alert.alert('Error', 'Could not find your member ID. Please try again.');
+        Alert.alert(t('error'), t('couldNotFindMemberId'));
         return;
       }
 
       Alert.alert(
-        'Meeting Response',
-        'Respond to the meeting notification?',
+        t('meetingResponse'),
+        t('respondToMeetingNotification'),
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('cancel'), style: 'cancel' },
           {
-            text: 'Attend',
+            text: t('attend'),
             onPress: async () => {
               try {
                 setLoading(true);
@@ -270,9 +270,9 @@ const MemberDashboard = () => {
                   console.log('Meeting attendance response successful:', result);
                   
                   Alert.alert(
-                    'Success',
-                    'You have confirmed your attendance! ✅\n\nAttendance has been marked in the system.',
-                    [{ text: 'OK' }]
+                    t('success'),
+                    `${t('youHaveConfirmedAttendance')} ✅\n\n${t('attendanceMarkedInSystem')}.`,
+                    [{ text: t('ok') }]
                   );
                   
                   // Mark notification as read
@@ -287,9 +287,9 @@ const MemberDashboard = () => {
                   console.log('No birthday wish found, but meeting status recorded via status=1');
                   
                   Alert.alert(
-                    'Success',
-                    'Your attendance has been recorded! ✅\n\nMeeting response and attendance marked.',
-                    [{ text: 'OK' }]
+                    t('success'),
+                    `${t('yourResponseRecorded')} ✅\n\n${t('meetingResponseAndAttendanceMarked') || 'Meeting response and attendance marked'}.`,
+                    [{ text: t('ok') }]
                   );
                   
                   markNotificationAsRead(notification.id);
@@ -297,12 +297,12 @@ const MemberDashboard = () => {
                 } else {
                   const errorText = await response.text();
                   console.error('Meeting attendance API error:', errorText);
-                  Alert.alert('Success', 'Your attendance intention has been noted!');
+                  Alert.alert(t('success'), t('yourResponseRecorded'));
                   markNotificationAsRead(notification.id);
                 }
               } catch (error) {
                 console.error('Error confirming meeting attendance:', error);
-                Alert.alert('Success', 'Your attendance has been recorded!');
+                Alert.alert(t('success'), t('yourResponseRecorded'));
                 markNotificationAsRead(notification.id);
               } finally {
                 setLoading(false);
@@ -310,7 +310,7 @@ const MemberDashboard = () => {
             },
           },
           {
-            text: 'Not Attend',
+            text: t('notAttend'),
             style: 'destructive',
             onPress: async () => {
               try {
@@ -337,9 +337,9 @@ const MemberDashboard = () => {
                   console.log('Not-attend response successful:', result);
                   
                   Alert.alert(
-                    'Response Recorded',
-                    'You have indicated you will not attend. ❌\n\nResponse has been recorded in the system.',
-                    [{ text: 'OK' }]
+                    t('responseRecorded'),
+                    `${t('youIndicatedNotAttend')} ❌\n\n${t('responseRecordedInSystem')}.`,
+                    [{ text: t('ok') }]
                   );
                   
                   markNotificationAsRead(notification.id);
@@ -351,9 +351,9 @@ const MemberDashboard = () => {
                   console.log('No birthday wish found, but meeting status recorded via status=2');
                   
                   Alert.alert(
-                    'Response Recorded',
-                    'Your not-attend response has been recorded! ❌\n\nMeeting response noted.',
-                    [{ text: 'OK' }]
+                    t('responseRecorded'),
+                    `${t('yourResponseRecorded')} ❌\n\n${t('meetingResponseNoted') || 'Meeting response noted'}.`,
+                    [{ text: t('ok') }]
                   );
                   
                   markNotificationAsRead(notification.id);
@@ -361,7 +361,7 @@ const MemberDashboard = () => {
                 } else {
                   const errorText = await response.text();
                   console.error('Not-attend API error:', errorText);
-                  Alert.alert('Success', 'Your response has been recorded!');
+                  Alert.alert(t('success'), t('yourResponseRecorded'));
                   markNotificationAsRead(notification.id);
                 }
               } catch (error) {
@@ -377,7 +377,7 @@ const MemberDashboard = () => {
       );
     } catch (error) {
       console.error('Error in handleMeetingResponse:', error);
-      Alert.alert('Error', 'Failed to process meeting response.');
+      Alert.alert(t('error'), t('failedToProcessMeetingResponse'));
     }
   };
 
@@ -406,7 +406,7 @@ const MemberDashboard = () => {
       const senderMemberId = await MemberIdService.getCurrentUserMemberId();
       
       if (!senderMemberId) {
-        Alert.alert('Error', 'Could not find your member ID. Please try again.');
+        Alert.alert(t('error'), t('couldNotFindMemberId'));
         return;
       }
 
@@ -478,7 +478,7 @@ const MemberDashboard = () => {
       }
       
       if (!recipientMemberId) {
-        Alert.alert('Error', 'Could not find the member. Please try again.');
+        Alert.alert(t('error'), t('couldNotFindMember'));
         return;
       }
       
@@ -525,9 +525,9 @@ const MemberDashboard = () => {
                     
                     // Handle specific error cases
                     if (response.status === 404) {
-                      Alert.alert('Error', `Member not found. Please check if ${recipientName} is a valid member.`);
+                      Alert.alert(t('error'), `${t('memberNotFound')}. ${t('pleaseCheckIfValidMember') || 'Please check if'} ${recipientName} ${t('isValidMember') || 'is a valid member'}.`);
                     } else {
-                      let errorMessage = `Failed to send ${wishType.toLowerCase()}. Please try again.`;
+                      let errorMessage = `${t('failedToSendBirthdayWish') || 'Failed to send'} ${wishType.toLowerCase()}. ${t('tryAgain')}.`;
                       
                       try {
                         const errorJson = JSON.parse(errorText);
@@ -539,7 +539,7 @@ const MemberDashboard = () => {
                         }
                       }
                       
-                      Alert.alert('Error', errorMessage);
+                      Alert.alert(t('error'), errorMessage);
                     }
                     setLoading(false);
                     return;
@@ -575,7 +575,7 @@ const MemberDashboard = () => {
                   stack: error.stack,
                   notification: notification
                 });
-                Alert.alert('Error', `An error occurred: ${error.message || 'Unknown error'}`);
+                Alert.alert(t('error'), `${t('anErrorOccurred')}: ${error.message || t('unknownError')}`);
               } finally {
                 setLoading(false);
               }
@@ -585,7 +585,7 @@ const MemberDashboard = () => {
       );
     } catch (error) {
       console.error('Error in handleWishResponse:', error);
-      Alert.alert('Error', 'Failed to process wish request.');
+      Alert.alert(t('error'), t('failedToProcessWishRequest'));
     }
   };
 
@@ -597,17 +597,17 @@ const MemberDashboard = () => {
       let newQuote = '';
 
       if (currentHour >= 1 && currentHour < 12) {
-        newGreeting = '🌅 Good Morning';
-        newQuote = 'Start your day with positive energy!';
+        newGreeting = `🌅 ${t('goodMorning')}`;
+        newQuote = t('startYourDay');
       } else if (currentHour >= 12 && currentHour < 16) {
-        newGreeting = '☀️ Good Afternoon';
-        newQuote = 'Keep the momentum going!';
+        newGreeting = `☀️ ${t('goodAfternoon')}`;
+        newQuote = t('keepMomentum');
       } else if (currentHour >= 16 && currentHour < 20) {
-        newGreeting = ' 🌙 Good Evening';
-        newQuote = 'Reflect on today\'s achievements!';
+        newGreeting = `🌙 ${t('goodEvening')}`;
+        newQuote = t('reflectAchievements');
       } else if (currentHour >= 20 || currentHour < 1) {
-        newGreeting = '🌙 Good Night';
-        newQuote = 'Rest well and recharge!';
+        newGreeting = `🌙 ${t('goodNight') || 'Good Night'}`;
+        newQuote = t('restWellRecharge') || 'Rest well and recharge!';
       }
 
       console.log('Setting greeting to:', newGreeting); // Debug log
@@ -645,8 +645,8 @@ const MemberDashboard = () => {
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       Alert.alert(
-        'Info',
-        'Failed to load dashboard data. Please check your network connection.'
+        t('infoTitle'),
+        t('dataLoadFailed') + '. ' + (t('checkNetworkConnection') || 'Please check your network connection.')
       );
     } finally {
       setLoading(false);
@@ -707,7 +707,7 @@ const MemberDashboard = () => {
             type: 'birthday',
             messageType: 'Birthday',
             title: '🎂 Birthday Reminder',
-            message: `Today is ${reminder.memberName || 'a member'}'s birthday! Send them wishes.`,
+            message: `${t('todayIs')} ${reminder.memberName || t('member')}${t('birthdayOf')}! ${t('sendThemWishes') || 'Send them wishes'}.`,
             time: 'Today',
             icon: 'cake-variant',
             color: '#9C27B0',
@@ -727,7 +727,7 @@ const MemberDashboard = () => {
       if (newNotifications.length === 0) {
         // Try to get real member IDs for test notifications
         let testMemberId = null; // Don't use fallback ID that doesn't exist
-        let testMemberName = 'Test Member'; // fallback name
+        let testMemberName = t('member'); // fallback name
         
         try {
           const response = await fetch(`${API_BASE_URL}/api/Members`);
@@ -737,7 +737,7 @@ const MemberDashboard = () => {
               // Use the first member for test notifications
               const firstMember = members[0];
               testMemberId = firstMember.id;
-              testMemberName = firstMember.name || 'Test Member';
+              testMemberName = firstMember.name || t('member');
             }
           }
         } catch (error) {
@@ -752,7 +752,7 @@ const MemberDashboard = () => {
             type: 'birthday',
             messageType: 'Birthday',
             title: '🎂 Birthday Reminder',
-            message: `Today is ${testMemberName}'s birthday! Send them wishes.`,
+            message: `${t('todayIs')} ${testMemberName}${t('birthdayOf')}! ${t('sendThemWishes') || 'Send them wishes'}.`,
             time: 'Today',
             icon: 'cake-variant',
             color: '#9C27B0',
@@ -774,8 +774,8 @@ const MemberDashboard = () => {
           id: `test-meeting-${Date.now()}`,
           type: 'message',
           messageType: 'Meeting',
-          title: '📅 Meeting Notification',
-          message: `Monthly team meeting scheduled for tomorrow.`,
+          title: `📅 ${t('meetingNotification') || 'Meeting Notification'}`,
+          message: t('monthlyTeamMeetingScheduled') || 'Monthly team meeting scheduled for tomorrow.',
           time: 'Tomorrow',
           icon: 'calendar-clock',
           color: '#4ECDC4',
@@ -794,8 +794,8 @@ const MemberDashboard = () => {
           id: `test-payment-${Date.now()}`,
           type: 'message',
           messageType: 'Payment',
-          title: '💳 Payment Notification',
-          message: `Payment of ₹500 received successfully.`,
+          title: `💳 ${t('paymentNotification')}`,
+          message: t('paymentReceivedSuccessfully') || 'Payment of ₹500 received successfully.',
           time: 'Today',
           icon: 'credit-card-check',
           color: '#FFA726',
@@ -824,7 +824,7 @@ const MemberDashboard = () => {
           const typeConfig = notificationTypeMap[msg.messageType] ||
             { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
 
-          let notificationMessage = msg.content || 'New notification received';
+          let notificationMessage = msg.content || t('newNotificationReceived');
           if ((msg.messageType === 'Event' || msg.messageType === 'Meeting') && msg.date) {
             const eventDate = new Date(msg.date);
             const formattedDate = eventDate.toLocaleDateString('en-US', {
@@ -917,7 +917,7 @@ const MemberDashboard = () => {
           }
         } catch (error) {
           console.error('Error fetching member details:', error);
-          setMemberName('Admin User');
+          setMemberName(t('administrator'));
         }
       } else {
         console.log('No fullName or memberId found, using default');
@@ -946,42 +946,42 @@ const MemberDashboard = () => {
   const modules = [
     {
       id: 'new-member',
-      title: 'Add Member',
+      title: t('addMember'),
       icon: 'account-plus',
       action: () => navigation.navigate('NewMember'),
       badge: null,
     },
     {
       id: 'members',
-      title: 'Members List',
+      title: t('membersList'),
       icon: 'account-group',
       action: () => navigation.navigate('MembersList'),
       badge: null,
     },
     {
       id: 'payment',
-      title: 'Payment Details',
+      title: t('paymentDetails'),
       icon: 'credit-card-multiple',
       action: () => navigation.navigate('PaymentDetails'),
       badge: null,
     },
     {
       id: 'attendance',
-      title: 'Attendance',
+      title: t('attendance'),
       icon: 'calendar-check',
       action: () => navigation.navigate('Attendance'),
       badge: null,
     },
     {
       id: 'reports',
-      title: 'Reports',
+      title: t('reports'),
       icon: 'file-document',
       action: () => navigation.navigate('Reports'),
       badge: null,
     },
     {
       id: 'messages',
-      title: 'Messages',
+      title: t('messages'),
       icon: 'message-text',
       action: () => navigation.navigate('Messages'),
       badge: null,
@@ -992,26 +992,26 @@ const MemberDashboard = () => {
     {
       id: 'send-notice',
       icon: 'bullhorn',
-      title: 'Broadcast',
+      title: t('sendNotice'),
       action: () => navigation.navigate('Messages'),
     },
     {
       id: 'generate-report',
       icon: 'file-document',
-      title: 'Reports',
+      title: t('reports'),
       action: () => {
         try {
           navigation.navigate('Reports');
         } catch (error) {
           console.error('Error navigating to reports:', error);
-          Alert.alert('Error', 'Could not load reports at this time.');
+          Alert.alert(t('error'), t('errorMessage'));
         }
       },
     },
     {
       id: 'create-meeting',
       icon: 'calendar-plus',
-      title: 'Create Meeting',
+      title: t('createMeeting'),
       action: () => navigation.navigate('CreateMeeting'),
     },
   ];
@@ -1140,10 +1140,16 @@ const MemberDashboard = () => {
             <View style={styles.sectionHeader}>
               <View style={styles.notificationHeaderLeft}>
                 <Icon name="bell" size={20} color="#FFB300" />
-                <Text style={styles.sectionTitle}>{t('recentNotifications')}</Text>
+                <Text style={[
+                  styles.sectionTitle,
+                  t('recentNotifications') === 'சமீபத்திய அறிவிப்புகள்' && styles.sectionTitleTamil
+                ]}>{t('recentNotifications')}</Text>
               </View>
               <TouchableOpacity onPress={() => setShowNotifications(true)}>
-                <Text style={styles.viewAllNotifications}>View All</Text>
+                <Text style={[
+                  styles.viewAllNotifications,
+                  t('viewAll') === 'பார்க்க' && styles.viewAllNotificationsTamil
+                ]}>{t('viewAll')}</Text>
               </TouchableOpacity>
             </View>
             <ScrollView
@@ -1220,7 +1226,10 @@ const MemberDashboard = () => {
           style={styles.sectionContainer}
         >
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
+            <Text style={[
+              styles.sectionTitle,
+              t('quickActions') === 'விரைவு செயல்கள்' && styles.sectionTitleTamil
+            ]}>⚡ {t('quickActions')}</Text>
           </View>
 
           <View style={styles.quickActionsContainer}>
@@ -1267,9 +1276,15 @@ const MemberDashboard = () => {
           style={styles.sectionContainer}
         >
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>📱 Member Features</Text>
+            <Text style={[
+              styles.sectionTitle,
+              t('memberDetails') === 'உறுப்பினர் விவரங்கள்' && styles.sectionTitleTamil
+            ]}>📱 {t('memberDetails')}</Text>
             <TouchableOpacity style={styles.viewAllButton}>
-              <Text style={styles.viewAllText}>View All</Text>
+              <Text style={[
+                styles.viewAllText,
+                t('viewAll') === 'பார்க்க' && styles.viewAllTextTamil
+              ]}>{t('viewAll')}</Text>
               <Icon name="chevron-right" size={14} color={waterBlueColors.primary} />
             </TouchableOpacity>
           </View>
@@ -1308,8 +1323,11 @@ const MemberDashboard = () => {
           style={styles.activitySection}
         >
           <View style={styles.activityHeader}>
-            <Text style={styles.activityTitle}>📈 Recent Activity</Text>
-            <Text style={styles.activityTime}>Today</Text>
+            <Text style={[
+              styles.activityTitle,
+              t('recentActivity') === 'சமீபத்திய செயல்பாடு' && styles.activityTitleTamil
+            ]}>📈 {t('recentActivity')}</Text>
+            <Text style={styles.activityTime}>{t('today')}</Text>
           </View>
           <View style={styles.activityCard}>
             <View style={styles.activityItem}>
@@ -1317,7 +1335,7 @@ const MemberDashboard = () => {
                 <Icon name="bell-ring" size={18} color={waterBlueColors.primary} />
               </View>
               <View style={styles.activityContent}>
-                <Text style={styles.activityText}>New notification received</Text>
+                <Text style={styles.activityText}>{t('newNotificationReceived')}</Text>
                 <Text style={styles.activityTimeText}>10:30 AM</Text>
               </View>
             </View>
@@ -1326,7 +1344,7 @@ const MemberDashboard = () => {
                 <Icon name="calendar-check" size={18} color={waterBlueColors.primary} />
               </View>
               <View style={styles.activityContent}>
-                <Text style={styles.activityText}>Event registration confirmed</Text>
+                <Text style={styles.activityText}>{t('eventRegistrationConfirmed') || 'Event registration confirmed'}</Text>
                 <Text style={styles.activityTimeText}>09:15 AM</Text>
               </View>
             </View>
@@ -1349,14 +1367,14 @@ const MemberDashboard = () => {
           />
           <View style={styles.notificationModalContainer}>
             <View style={styles.notificationModalHeader}>
-              <Text style={styles.notificationModalTitle}>🔔 Notifications</Text>
+              <Text style={styles.notificationModalTitle}>🔔 {t('notifications')}</Text>
               <View style={styles.notificationHeaderActions}>
                 {notificationCount > 0 && (
                   <TouchableOpacity
                     style={styles.clearAllButton}
                     onPress={clearAllNotifications}
                   >
-                    <Text style={styles.clearAllText}>Clear All</Text>
+                    <Text style={styles.clearAllText}>{t('clearAll')}</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
@@ -1377,12 +1395,12 @@ const MemberDashboard = () => {
                 contentContainerStyle={styles.notificationFilterContent}
               >
                 {[
-                  { id: 'all', label: 'All', icon: 'bell', count: notifications.length },
-                  { id: 'Birthday', label: 'Birthday', icon: 'cake-variant', count: notifications.filter(n => n.messageType === 'Birthday').length },
-                  { id: 'Event', label: 'Event', icon: 'calendar-star', count: notifications.filter(n => n.messageType === 'Event').length },
-                  { id: 'Meeting', label: 'Meeting', icon: 'calendar-clock', count: notifications.filter(n => n.messageType === 'Meeting').length },
-                  { id: 'Payment', label: 'Payment', icon: 'credit-card', count: notifications.filter(n => n.messageType === 'Payment').length },
-                  { id: 'NewMember', label: 'Welcome', icon: 'account-plus', count: notifications.filter(n => n.messageType === 'NewMember').length },
+                  { id: 'all', label: t('all') || 'All', icon: 'bell', count: notifications.length },
+                  { id: 'Birthday', label: t('birthdays'), icon: 'cake-variant', count: notifications.filter(n => n.messageType === 'Birthday').length },
+                  { id: 'Event', label: t('event'), icon: 'calendar-star', count: notifications.filter(n => n.messageType === 'Event').length },
+                  { id: 'Meeting', label: t('meeting'), icon: 'calendar-clock', count: notifications.filter(n => n.messageType === 'Meeting').length },
+                  { id: 'Payment', label: t('payment'), icon: 'credit-card', count: notifications.filter(n => n.messageType === 'Payment').length },
+                  { id: 'NewMember', label: t('welcome'), icon: 'account-plus', count: notifications.filter(n => n.messageType === 'NewMember').length },
                 ].map((filter) => (
                   <TouchableOpacity
                     key={filter.id}
@@ -1433,10 +1451,10 @@ const MemberDashboard = () => {
                     <View style={styles.emptyNotifications}>
                       <Icon name="bell-off" size={48} color="#BDC3C7" />
                       <Text style={styles.emptyNotificationsText}>
-                        {selectedNotificationFilter === 'all' ? 'No notifications' : `No ${selectedNotificationFilter.toLowerCase()} notifications`}
+                        {selectedNotificationFilter === 'all' ? t('noNotifications') : `${t('no')} ${selectedNotificationFilter.toLowerCase()} ${t('notifications')}`}
                       </Text>
                       <Text style={styles.emptyNotificationsSubtext}>
-                        {selectedNotificationFilter === 'all' ? "You're all caught up!" : `No ${selectedNotificationFilter.toLowerCase()} notifications found`}
+                        {selectedNotificationFilter === 'all' ? t('youreAllCaughtUp') : `${t('no')} ${selectedNotificationFilter.toLowerCase()} ${t('notifications')} ${t('found')}`}
                       </Text>
                     </View>
                   );
@@ -1787,6 +1805,11 @@ const styles = StyleSheet.create({
     color: '#4A90E2',
     fontWeight: '600',
   },
+  viewAllNotificationsTamil: {
+    fontSize: 10,
+    color: '#4A90E2',
+    fontWeight: '600',
+  },
   notificationScrollView: {
     marginHorizontal: -10,
   },
@@ -1899,6 +1922,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    minHeight: 24,
   },
   notificationHeaderLeft: {
     flexDirection: 'row',
@@ -1910,6 +1934,14 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginLeft: 8,
   },
+  sectionTitleTamil: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#2C3E50',
+    marginLeft: 8,
+    lineHeight: 20,
+    flexShrink: 1,
+  },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1917,9 +1949,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
+    flexShrink: 0,
   },
   viewAllText: {
     fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  viewAllTextTamil: {
+    fontSize: 11,
     color: '#4A90E2',
     fontWeight: '600',
     marginRight: 4,
@@ -2069,6 +2108,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#2C3E50',
+  },
+  activityTitleTamil: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#2C3E50',
+    lineHeight: 22,
   },
   activityTime: {
     fontSize: 12,
