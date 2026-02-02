@@ -32,15 +32,16 @@ const MemberAttendanceScreen = () => {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [attendanceData, setAttendanceData] = useState({});
+  const [attendanceData, setAttendanceData] = useState({}); // { memberId: 'Present' | 'Late' | null }
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchType, setSearchType] = useState('name');
 
   // Voice search states
   const [isListening, setIsListening] = useState(false);
   const [lastSpokenName, setLastSpokenName] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [showMemberDropdown, setShowMemberDropdown] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
 
 
 
@@ -228,6 +229,32 @@ const MemberAttendanceScreen = () => {
     );
   };
 
+  // Filter members based on search query
+  const filteredMembers = members.filter(member => {
+    if (!searchQuery.trim()) return false;
+    const query = searchQuery.toLowerCase();
+    return (
+      member.name.toLowerCase().includes(query) ||
+      member.business?.toLowerCase().includes(query) ||
+      (member.employeeId && member.employeeId.toString().toLowerCase().includes(query)) ||
+      (member.phone && member.phone.toString().includes(query))
+    );
+  });
+
+  // Display all members by default, or filtered members when searching
+  const displayMembers = searchQuery.trim() ? filteredMembers : members;
+
+  // Handle member selection from dropdown
+  const handleSelectMember = (member) => {
+    setAttendanceData(prev => ({
+      ...prev,
+      [member.id]: true,
+    }));
+    setSelectedMember(member);
+    setShowMemberDropdown(false);
+    setSearchQuery('');
+  };
+
   // Load members from API
   const loadMembers = async () => {
     try {
@@ -373,19 +400,19 @@ const MemberAttendanceScreen = () => {
     }
   };
 
-  const toggleAttendance = (memberId) => {
+  const toggleAttendance = (memberId, status) => {
     setAttendanceData(prev => ({
       ...prev,
-      [memberId]: !prev[memberId],
+      [memberId]: prev[memberId] === status ? null : status,
     }));
   };
 
   const handleSaveAttendance = async () => {
-    const presentMembers = Object.entries(attendanceData)
-      .filter(([_, isPresent]) => isPresent)
-      .map(([memberId]) => parseInt(memberId));
+    const markedMembers = Object.entries(attendanceData)
+      .filter(([_, status]) => status) // Only get members with Present or Late status
+      .map(([memberId, status]) => ({ memberId: parseInt(memberId), status }));
 
-    if (presentMembers.length === 0) {
+    if (markedMembers.length === 0) {
       Alert.alert('No Changes', 'Please mark attendance for at least one member');
       return;
     }
@@ -403,14 +430,14 @@ const MemberAttendanceScreen = () => {
       let successCount = 0;
       let errorCount = 0;
 
-      for (const memberId of presentMembers) {
+      for (const { memberId, status } of markedMembers) {
         try {
-          console.log('Saving attendance for member ID:', memberId);
+          console.log('Saving attendance for member ID:', memberId, 'Status:', status);
 
           const requestData = {
             MemberId: memberId,
             AdminMemberId: adminMemberId,
-            Notes: `Marked via Attendance Screen on ${new Date().toLocaleString()}`,
+            Notes: `${status} - Marked via Attendance Screen on ${new Date().toLocaleString()}`,
             CreatedBy: adminMemberId.toString()
           };
 
@@ -454,115 +481,45 @@ const MemberAttendanceScreen = () => {
     }
   };
 
-  // Filter members based on search query and search type
-  const filteredMembers = members.filter(member => {
-    if (!searchQuery.trim()) return true;
+  const presentCount = Object.values(attendanceData).filter(status => status).length; // Count both Present and Late
 
-    const query = searchQuery.toLowerCase();
-
-    switch (searchType) {
-      case 'name':
-        return member.name.toLowerCase().includes(query);
-      case 'business':
-        return member.business?.toLowerCase().includes(query);
-      case 'id':
-        return member.employeeId?.toLowerCase().includes(query);
-      case 'phone':
-        return member.phone?.includes(query);
-      default:
-        return member.name.toLowerCase().includes(query);
-    }
-  });
-
-  const presentCount = Object.values(attendanceData).filter(status => status === true).length;
-
-  // Quick action buttons
-  const quickMarkButtons = [
-    {
-      title: 'Mark All Present',
-      icon: 'check-all',
-      color: '#4CAF50',
-      onPress: () => {
-        const updatedAttendance = {};
-        members.forEach(member => {
-          updatedAttendance[member.id] = true;
-        });
-        setAttendanceData(updatedAttendance);
-        Alert.alert('All Marked', `Marked all ${members.length} members as present.`);
-      }
-    },
-    {
-      title: 'Clear All',
-      icon: 'close-box-multiple',
-      color: '#F44336',
-      onPress: () => {
-        setAttendanceData({});
-        setLastSpokenName('');
-        Alert.alert('Cleared', 'Cleared all attendance marks.');
-      }
-    },
-    {
-      title: 'Mark by Voice',
-      icon: 'microphone',
-      color: '#FF9800',
-      title: 'Mark by Voice',
-      icon: 'microphone',
-      color: '#FF9800',
-      onPress: () => Alert.alert('Voice Mode', 'Please use the microphone icon in the search bar (Hold to Speak).')
-    }
-  ];
-
-  return (
+return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
-      {/* Header */}
+      {/* Header - Fixed */}
       <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        {/* Left: Back Button */}
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Mark Attendance</Text>
-        <TouchableOpacity onPress={handleExcelUpload} style={{ marginRight: 15 }} disabled={uploading}>
-          {uploading ? (
-            <ActivityIndicator size="small" color="#FFF" />
-          ) : (
-            <Icon name="file-excel" size={24} color="#FFF" />
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity onPress={loadMembers}>
-          <Icon name="refresh" size={24} color="#FFF" />
-        </TouchableOpacity>
+
+        {/* Center: Title */}
+        <View style={styles.headerTitleContainer}>
+          <Text style={styles.headerTitle}>Mark Attendance</Text>
+        </View>
+
+        {/* Right: Excel and Refresh Buttons */}
+        <View style={styles.headerRightContainer}>
+          <TouchableOpacity 
+            onPress={handleExcelUpload} 
+            style={styles.headerButton}
+            disabled={uploading}
+          >
+            {uploading ? (
+              <ActivityIndicator size="small" color="#FFF" />
+            ) : (
+              <Icon name="file-excel" size={25} color="#FFF" />
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={loadMembers} style={styles.headerButton}>
+            <Icon name="refresh" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Quick Actions */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-          </View>
-          <View style={styles.quickActionsContainer}>
-            {quickMarkButtons.map((action, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.quickActionButton, { borderLeftColor: action.color }]}
-                onPress={action.onPress}
-              >
-                <Icon name={action.icon} size={20} color={action.color} />
-                <Text style={styles.quickActionText}>{action.title}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {lastSpokenName && (
-            <View style={styles.lastMarkedContainer}>
-              <Icon name="check-circle" size={16} color="#4CAF50" />
-              <Text style={styles.lastMarkedText}>
-                Last marked via voice: <Text style={styles.lastMarkedName}>{lastSpokenName}</Text>
-              </Text>
-            </View>
-          )}
-        </View>
-
         {/* Date Selection */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
@@ -600,146 +557,130 @@ const MemberAttendanceScreen = () => {
           )}
         </View>
 
-        {/* Search Card */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('search') || 'Search'} {t('members') || 'Members'}</Text>
-            {searchQuery && (
-              <TouchableOpacity
-                style={styles.markAllButton}
-                onPress={() => markAllMatching(searchQuery)}
-              >
-                <Icon name="check-all" size={16} color="#4CAF50" />
-                <Text style={styles.markAllText}>Mark All Matching</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+        {/* Search Card and Save Button Row */}
+        <View style={styles.searchSaveRow}>
+          {/* Search Card */}
+          <View style={[styles.sectionCard, styles.searchCardInRow]}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{t('search') || 'Search'} {t('members') || 'Members'}</Text>
+            </View>
 
-          {/* Search Type Tabs */}
-          <View style={styles.searchTypeContainer}>
-            {['name', 'business', 'id', 'phone'].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.searchTypeButton,
-                  searchType === type && styles.searchTypeButtonActive
-                ]}
-                onPress={() => setSearchType(type)}
-              >
-                <Text style={[
-                  styles.searchTypeText,
-                  searchType === type && styles.searchTypeTextActive
-                ]}>
-                  {t(type) || type}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.searchContainer}>
-            <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder={`Search by ${searchType}...`}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#999"
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearButton}>
-                <Icon name="close-circle" size={20} color="#666" />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={[
-                styles.voiceButtonInline,
-                isListening && styles.voiceButtonActive
-              ]}
-              onPressIn={startVoiceRecording}
-              onPressOut={stopVoiceRecording}
-              delayPressIn={100}
-            >
-              <Icon
-                name={isListening ? "microphone" : "microphone-outline"}
-                size={20}
-                color={isListening ? "#FF6B6B" : "#4A90E2"}
+            <View style={styles.searchContainer}>
+              <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search member..."
+                value={searchQuery}
+                onChangeText={(text) => {
+                  setSearchQuery(text);
+                  setShowMemberDropdown(text.length > 0);
+                }}
+                placeholderTextColor="#999"
               />
-            </TouchableOpacity>
-          </View>
-
-          {isListening ? (
-            <View style={styles.listeningIndicator}>
-              <Icon name="microphone" size={16} color="#FF6B6B" />
-              <Text style={styles.listeningText}>
-                Recording... Release to search
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.voiceHintContainer}>
-              <Icon name="information" size={14} color="#4A90E2" />
-              <Text style={styles.voiceHint}>
-                Hold microphone icon to search by voice and auto-mark present
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Statistics Cards */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Attendance Summary</Text>
-            <Text style={styles.summaryDate}>{selectedDate.toDateString()}</Text>
-          </View>
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryItem}>
-              <View style={[styles.summaryIcon, { backgroundColor: '#E3F2FD' }]}>
-                <Icon name="account-group" size={24} color="#4A90E2" />
-              </View>
-              <View style={styles.summaryText}>
-                <Text style={styles.summaryNumber}>{members.length}</Text>
-                <Text style={styles.summaryLabel}>Total Members</Text>
-              </View>
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => {
+                  setSearchQuery('');
+                  setShowMemberDropdown(false);
+                }} style={styles.clearButton}>
+                  <Icon name="close-circle" size={20} color="#666" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={[
+                  styles.voiceButtonInline,
+                  isListening && styles.voiceButtonActive
+                ]}
+                onPressIn={startVoiceRecording}
+                onPressOut={stopVoiceRecording}
+                delayPressIn={100}
+              >
+                <Icon
+                  name={isListening ? "microphone" : "microphone-outline"}
+                  size={20}
+                  color={isListening ? "#FF6B6B" : "#4A90E2"}
+                />
+              </TouchableOpacity>
             </View>
 
-            <View style={styles.summaryItem}>
-              <View style={[styles.summaryIcon, { backgroundColor: '#E8F5E9' }]}>
-                <Icon name="check-circle" size={24} color="#4CAF50" />
-              </View>
-              <View style={styles.summaryText}>
-                <Text style={[styles.summaryNumber, { color: '#4CAF50' }]}>{presentCount}</Text>
-                <Text style={styles.summaryLabel}>Present</Text>
-              </View>
-            </View>
-
-            <View style={styles.summaryItem}>
-              <View style={[styles.summaryIcon, { backgroundColor: '#FFEBEE' }]}>
-                <Icon name="close-circle" size={24} color="#F44336" />
-              </View>
-              <View style={styles.summaryText}>
-                <Text style={[styles.summaryNumber, { color: '#F44336' }]}>
-                  {members.length - presentCount}
+            {isListening ? (
+              <View style={styles.listeningIndicator}>
+                <Icon name="microphone" size={16} color="#FF6B6B" />
+                <Text style={styles.listeningText}>
+                  Recording... Release to search
                 </Text>
-                <Text style={styles.summaryLabel}>Absent</Text>
               </View>
-            </View>
-          </View>
+            ) : (
+              <View style={styles.voiceHintContainer}>
+                <Icon name="information" size={14} color="#4A90E2" />
+                <Text style={styles.voiceHint}>
+                  Hold microphone to search
+                </Text>
+              </View>
+            )}
 
-          {searchQuery && (
-            <View style={styles.searchResultsInfo}>
-              <Icon name="information" size={16} color="#666" />
-              <Text style={styles.searchResultsText}>
-                Showing {filteredMembers.length} of {members.length} members
-                {filteredMembers.length > 0 && ` • ${filteredMembers.filter(m => attendanceData[m.id]).length} marked present`}
-              </Text>
-            </View>
-          )}
+            {/* Member Dropdown */}
+            {showMemberDropdown && searchQuery.length > 0 && (
+              <View style={styles.memberDropdown}>
+                {loading ? (
+                  <View style={styles.noMembersContainer}>
+                    <ActivityIndicator size="small" color="#4A90E2" />
+                    <Text style={styles.noMembersText}>Loading members...</Text>
+                  </View>
+                ) : filteredMembers && filteredMembers.length > 0 ? (
+                  filteredMembers.slice(0, 5).map(member => (
+                    <TouchableOpacity
+                      key={member.id}
+                      style={styles.dropdownItem}
+                      onPress={() => handleSelectMember(member)}
+                    >
+                      <View style={styles.dropdownItemAvatar}>
+                        <Text style={styles.dropdownItemAvatarText}>
+                          {member.name.charAt(0)}
+                        </Text>
+                      </View>
+                      <View style={styles.dropdownItemContent}>
+                        <Text style={styles.dropdownItemName}>{member.name}</Text>
+                        <Text style={styles.dropdownItemBusiness}>
+                          {member.employeeId || 'N/A'}
+                        </Text>
+                      </View>
+                      <Icon name="chevron-right" size={20} color="#4A90E2" />
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={styles.noMembersContainer}>
+                    <Icon name="account-alert" size={24} color="#999" />
+                    <Text style={styles.noMembersText}>No members found</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Members List */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Members List</Text>
-            <Text style={styles.memberCount}>{filteredMembers.length} members</Text>
+            <View style={styles.memberHeaderLeft}>
+              <Text style={styles.sectionTitle}>Members</Text>
+              <Text style={styles.memberCount}>{displayMembers.length} members</Text>
+            </View>
+            {presentCount > 0 && (
+              <TouchableOpacity
+                style={styles.saveButtonSmall}
+                onPress={handleSaveAttendance}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <>
+                    <Icon name="content-save" size={16} color="white" />
+                    <Text style={styles.saveButtonSmallText}>Save</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
 
           {loading ? (
@@ -747,28 +688,16 @@ const MemberAttendanceScreen = () => {
               <ActivityIndicator size="large" color="#4A90E2" />
               <Text style={styles.loadingText}>Loading...</Text>
             </View>
-          ) : filteredMembers.length === 0 ? (
+          ) : displayMembers.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Icon name="account-multiple-off" size={60} color="#ccc" />
               <Text style={styles.emptyText}>No Members Found</Text>
               <Text style={styles.emptySubtext}>
-                {members.length === 0 ? 'Failed to load members' :
-                  searchQuery ? 'No members match your search' : 'No members available'}
+                {members.length === 0 ? 'Failed to load members' : 'No members match your search'}
               </Text>
-              {members.length === 0 ? (
-                <TouchableOpacity style={styles.retryButton} onPress={loadMembers}>
-                  <Icon name="refresh" size={16} color="#FFF" />
-                  <Text style={styles.retryButtonText}>Try Again</Text>
-                </TouchableOpacity>
-              ) : searchQuery ? (
-                <TouchableOpacity style={styles.retryButton} onPress={() => setSearchQuery('')}>
-                  <Icon name="close" size={16} color="#FFF" />
-                  <Text style={styles.retryButtonText}>Cancel Search</Text>
-                </TouchableOpacity>
-              ) : null}
             </View>
           ) : (
-            filteredMembers.map(member => (
+            displayMembers.map(member => (
               <View
                 key={member.id}
                 style={[
@@ -815,52 +744,75 @@ const MemberAttendanceScreen = () => {
                   </View>
                 </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.attendanceButton,
-                    attendanceData[member.id] ? styles.presentButton : styles.absentButton,
-                  ]}
-                  onPress={() => toggleAttendance(member.id)}
-                >
-                  <Icon
-                    name={attendanceData[member.id] ? 'check-circle' : 'circle-outline'}
-                    size={24}
-                    color={attendanceData[member.id] ? '#4CAF50' : '#666'}
-                  />
-                  <Text style={styles.attendanceText}>
-                    {attendanceData[member.id] ? 'Present' : 'Mark Attendance'}
-                  </Text>
-                </TouchableOpacity>
+                <View style={styles.attendanceButtonGroup}>
+                  <TouchableOpacity
+                    style={[
+                      styles.attendanceButton,
+                      attendanceData[member.id] === 'Present' ? styles.presentButton : styles.absentButton,
+                    ]}
+                    onPress={() => toggleAttendance(member.id, 'Present')}
+                  >
+                    <Icon
+                      name={attendanceData[member.id] === 'Present' ? 'check-circle' : 'circle-outline'}
+                      size={20}
+                      color={attendanceData[member.id] === 'Present' ? '#4CAF50' : '#666'}
+                    />
+                    <Text style={[
+                      styles.attendanceText,
+                      attendanceData[member.id] === 'Present' && styles.attendanceTextActive
+                    ]}>
+                      Present
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.attendanceButton,
+                      attendanceData[member.id] === 'Late' ? styles.lateButton : styles.absentButton,
+                    ]}
+                    onPress={() => toggleAttendance(member.id, 'Late')}
+                  >
+                    <Icon
+                      name={attendanceData[member.id] === 'Late' ? 'clock-check' : 'clock-outline'}
+                      size={20}
+                      color={attendanceData[member.id] === 'Late' ? '#FF9800' : '#666'}
+                    />
+                    <Text style={[
+                      styles.attendanceText,
+                      attendanceData[member.id] === 'Late' && styles.attendanceTextActive
+                    ]}>
+                      Late
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))
           )}
         </View>
 
-        {/* Save Button Section */}
-        {presentCount > 0 && (
+        {/* Selected Member Display */}
+        {selectedMember && (
           <View style={styles.sectionCard}>
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={handleSaveAttendance}
-              disabled={saving}
-            >
-              {saving ? (
-                <View style={styles.savingContainer}>
-                  <ActivityIndicator size="small" color="white" />
-                  <Text style={styles.saveButtonText}>Saving...</Text>
+            <View style={styles.selectedMemberCard}>
+              <View style={styles.selectedMemberInfo}>
+                <View style={styles.selectedMemberAvatar}>
+                  <Text style={styles.selectedMemberAvatarText}>
+                    {selectedMember.name.charAt(0)}
+                  </Text>
                 </View>
-              ) : (
-                <>
-                  <Icon name="content-save" size={24} color="white" />
-                  <View style={styles.saveButtonContent}>
-                    <Text style={styles.saveButtonText}>Save Attendance</Text>
-                    <Text style={styles.saveButtonSubtext}>
-                      {presentCount} member(s) marked as present
-                    </Text>
-                  </View>
-                </>
-              )}
-            </TouchableOpacity>
+                <View style={styles.selectedMemberDetails}>
+                  <Text style={styles.selectedMemberName}>{selectedMember.name}</Text>
+                  <Text style={styles.selectedMemberBusiness}>{selectedMember.business}</Text>
+                  <Text style={styles.selectedMemberId}>ID: {selectedMember.employeeId}</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSelectedMember(null)}
+                style={styles.selectedMemberRemove}
+              >
+                <Icon name="close" size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -878,15 +830,34 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     height: 56,
+  },
+  headerButton: {
+    padding: 8,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 10,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
+    textAlign: 'center',
+  },
+  headerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    minWidth: 100, // Ensure enough space for both icons
   },
   content: {
     flex: 1,
@@ -915,59 +886,34 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#4A90E2',
   },
-  quickActionsContainer: {
+  searchSaveRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    gap: 10,
+    marginBottom: 15,
   },
-  quickActionButton: {
+  searchCardInRow: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginBottom: 0,
+  },
+  saveButtonInRow: {
+    backgroundColor: '#4A90E2',
+    borderRadius: 12,
+    padding: 15,
     justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    marginHorizontal: 4,
-    backgroundColor: '#F8FBFF',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-  },
-  quickActionText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginLeft: 6,
-  },
-  lastMarkedContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    elevation: 2,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    minWidth: 70,
   },
-  lastMarkedText: {
-    fontSize: 13,
-    color: '#666',
-    marginLeft: 6,
-  },
-  lastMarkedName: {
+  saveButtonInRowText: {
+    color: 'white',
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#4CAF50',
-  },
-  markAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 6,
-  },
-  markAllText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#4CAF50',
-    marginLeft: 4,
+    marginTop: 6,
+    textAlign: 'center',
   },
   dateButton: {
     padding: 5,
@@ -1008,17 +954,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F9FC',
     alignItems: 'center',
   },
-  searchTypeButtonActive: {
-    backgroundColor: '#4A90E2',
-  },
-  searchTypeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-  },
-  searchTypeTextActive: {
-    color: '#FFF',
-  },
   searchContainer: {
     position: 'relative',
     marginBottom: 15,
@@ -1027,7 +962,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 12,
     top: '50%',
-    transform: [{ translateY: -10 }],
+    transform: [{ translateY: -12 }],
     zIndex: 1,
   },
   searchInput: {
@@ -1045,14 +980,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 45,
     top: '50%',
-    transform: [{ translateY: -10 }],
+    transform: [{ translateY: -12 }],
     zIndex: 1,
   },
   voiceButtonInline: {
     position: 'absolute',
     right: 10,
     top: '50%',
-    transform: [{ translateY: -10 }],
+    transform: [{ translateY: -12 }],
     padding: 8,
     borderRadius: 20,
     backgroundColor: '#E3F2FD',
@@ -1073,6 +1008,156 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontStyle: 'italic',
   },
+  memberDropdown: {
+    marginTop: 12,
+    backgroundColor: '#F8FBFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E3F2FD',
+  },
+  dropdownItemAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  dropdownItemAvatarText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  dropdownItemContent: {
+    flex: 1,
+  },
+  dropdownItemName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 2,
+  },
+  dropdownItemBusiness: {
+    fontSize: 12,
+    color: '#666',
+  },
+  dropdownMoreText: {
+    fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '600',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    textAlign: 'center',
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  noResultsText: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 8,
+  },
+  noMembersContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  noMembersText: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 8,
+  },
+  selectedMemberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#E3F2FD',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#4A90E2',
+  },
+  selectedMemberInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  selectedMemberAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  selectedMemberAvatarText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  selectedMemberDetails: {
+    flex: 1,
+  },
+  selectedMemberName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2C3E50',
+    marginBottom: 2,
+  },
+  selectedMemberBusiness: {
+    fontSize: 12,
+    color: '#4A90E2',
+    marginBottom: 2,
+  },
+  selectedMemberId: {
+    fontSize: 11,
+    color: '#666',
+  },
+  selectedMemberRemove: {
+    padding: 8,
+  },
+  memberHeaderLeft: {
+    flex: 1,
+  },
+  saveButtonSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    gap: 6,
+  },
+  saveButtonSmallText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  attendanceButtonGroup: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  lateButton: {
+    borderColor: '#FF9800',
+    backgroundColor: '#FFF3E0',
+  },
+  attendanceTextActive: {
+    fontWeight: '700',
+  },
   listeningIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1089,54 +1174,6 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
     marginLeft: 6,
     fontWeight: '600',
-  },
-  summaryDate: {
-    fontSize: 12,
-    color: '#666',
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  summaryItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  summaryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  summaryText: {
-    flex: 1,
-  },
-  summaryNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4A90E2',
-    marginBottom: 2,
-  },
-  summaryLabel: {
-    fontSize: 12,
-    color: '#666',
-  },
-  searchResultsInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  searchResultsText: {
-    fontSize: 13,
-    color: '#666',
-    marginLeft: 6,
   },
   memberCount: {
     fontSize: 14,
