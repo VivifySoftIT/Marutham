@@ -66,6 +66,11 @@ const CreateMeeting = () => {
   const [isListening, setIsListening] = useState(false);
   const [activeVoiceField, setActiveVoiceField] = useState(null);
 
+  // Contact person dropdown states
+  const [showContactPersonDropdown, setShowContactPersonDropdown] = useState(false);
+  const [contactPersonSearchQuery, setContactPersonSearchQuery] = useState('');
+  const [filteredContactPersons, setFilteredContactPersons] = useState([]);
+
   // Load members
   useEffect(() => {
     loadMembers();
@@ -166,7 +171,10 @@ const CreateMeeting = () => {
           setMeetingDescription(spokenText);
           break;
         case 'contactPerson':
-          setContactPerson(spokenText);
+          // For voice input, search for matching members and show dropdown
+          setContactPersonSearchQuery(spokenText);
+          handleContactPersonSearch(spokenText);
+          setShowContactPersonDropdown(true);
           break;
         case 'contactNumber':
           // Extract only numbers from spoken text
@@ -214,6 +222,7 @@ const CreateMeeting = () => {
       const members = await ApiService.getMembers();
       setAllMembers(members);
       setFilteredMembers(members);
+      setFilteredContactPersons(members); // Initialize contact person options
     } catch (error) {
       console.error('Error loading members:', error);
       Alert.alert('Error', 'Failed to load members');
@@ -247,6 +256,30 @@ const CreateMeeting = () => {
         member.business?.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredMembers(filtered);
+    }
+  };
+
+  const handleContactPersonSearch = (query) => {
+    setContactPersonSearchQuery(query);
+    
+    if (query.trim() === '') {
+      setFilteredContactPersons(allMembers);
+    } else {
+      const filtered = allMembers.filter(member =>
+        member.name.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredContactPersons(filtered);
+    }
+  };
+
+  const selectContactPerson = (member) => {
+    setContactPerson(member.name);
+    setContactPersonSearchQuery(member.name);
+    setShowContactPersonDropdown(false);
+    
+    // Auto-fill contact number if available
+    if (member.phone) {
+      setContactNumber(member.phone.replace(/\D/g, '').slice(0, 10));
     }
   };
 
@@ -374,6 +407,8 @@ const CreateMeeting = () => {
       setMeetingTitle('');
       setMeetingDescription('');
       setContactPerson('');
+      setContactPersonSearchQuery('');
+      setShowContactPersonDropdown(false);
       setContactNumber('');
       setPlace('');
       setVirtualLink('');
@@ -521,25 +556,88 @@ const CreateMeeting = () => {
           <View style={styles.row}>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>Contact Person *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="account" size={16} color={waterBlueColors.primary} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Name"
-                  value={contactPerson}
-                  onChangeText={setContactPerson}
-                  placeholderTextColor="#999"
-                />
+              <View style={styles.dropdownContainer}>
                 <TouchableOpacity
-                  onPress={() => isListening && activeVoiceField === 'contactPerson' ? stopVoiceInput() : startVoiceInput('contactPerson')}
-                  style={styles.voiceButton}
+                  style={styles.inputContainer}
+                  onPress={() => setShowContactPersonDropdown(!showContactPersonDropdown)}
                 >
+                  <Icon name="account" size={16} color={waterBlueColors.primary} />
+                  <Text style={[styles.input, { color: contactPerson ? '#333' : '#999' }]}>
+                    {contactPerson || 'Select member or type name'}
+                  </Text>
                   <Icon 
-                    name={isListening && activeVoiceField === 'contactPerson' ? "microphone" : "microphone-outline"} 
-                    size={18} 
-                    color={isListening && activeVoiceField === 'contactPerson' ? '#E91E63' : waterBlueColors.primary} 
+                    name={showContactPersonDropdown ? 'chevron-up' : 'chevron-down'} 
+                    size={16} 
+                    color={waterBlueColors.primary} 
                   />
+                  <TouchableOpacity
+                    onPress={() => isListening && activeVoiceField === 'contactPerson' ? stopVoiceInput() : startVoiceInput('contactPerson')}
+                    style={styles.voiceButton}
+                  >
+                    <Icon 
+                      name={isListening && activeVoiceField === 'contactPerson' ? "microphone" : "microphone-outline"} 
+                      size={18} 
+                      color={isListening && activeVoiceField === 'contactPerson' ? '#E91E63' : waterBlueColors.primary} 
+                    />
+                  </TouchableOpacity>
                 </TouchableOpacity>
+                
+                {/* Contact Person Dropdown */}
+                {showContactPersonDropdown && (
+                  <View style={styles.contactPersonDropdown}>
+                    {/* Search Input */}
+                    <View style={styles.searchContainer}>
+                      <Icon name="magnify" size={16} color="#999" />
+                      <TextInput
+                        style={styles.searchInput}
+                        placeholder="Search members..."
+                        value={contactPersonSearchQuery}
+                        onChangeText={handleContactPersonSearch}
+                        placeholderTextColor="#999"
+                      />
+                      {contactPersonSearchQuery.length > 0 && (
+                        <TouchableOpacity 
+                          onPress={() => {
+                            setContactPersonSearchQuery('');
+                            setFilteredContactPersons(allMembers);
+                          }}
+                        >
+                          <Icon name="close-circle" size={16} color="#999" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    
+                    <ScrollView 
+                      style={styles.contactPersonList}
+                      nestedScrollEnabled={true}
+                      showsVerticalScrollIndicator={true}
+                    >
+                      {filteredContactPersons.map((member, index) => (
+                        <TouchableOpacity
+                          key={member.id}
+                          style={styles.contactPersonItem}
+                          onPress={() => selectContactPerson(member)}
+                        >
+                          <View style={styles.contactPersonInfo}>
+                            <Text style={styles.contactPersonName}>{member.name}</Text>
+                            {member.phone && (
+                              <Text style={styles.contactPersonPhone}>
+                                <Icon name="phone" size={12} color="#666" /> {member.phone}
+                              </Text>
+                            )}
+                          </View>
+                          <Icon name="arrow-right" size={16} color={waterBlueColors.primary} />
+                        </TouchableOpacity>
+                      ))}
+                      {filteredContactPersons.length === 0 && (
+                        <View style={styles.noContactPersonsContainer}>
+                          <Icon name="account-alert" size={24} color="#999" />
+                          <Text style={styles.noContactPersonsText}>No matching members found</Text>
+                        </View>
+                      )}
+                    </ScrollView>
+                  </View>
+                )}
               </View>
             </View>
 
@@ -979,6 +1077,83 @@ const styles = StyleSheet.create({
   voiceButtonTextArea: {
     alignSelf: 'flex-start',
     marginTop: 2,
+  },
+  dropdownContainer: {
+    position: 'relative',
+    zIndex: 1000,
+  },
+  contactPersonDropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFF',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: waterBlueColors.secondary,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    maxHeight: 250,
+    zIndex: 1001,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+    backgroundColor: '#F8F9FA',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 12,
+    color: '#333',
+    marginLeft: 8,
+    paddingVertical: 4,
+  },
+  contactPersonList: {
+    maxHeight: 180,
+  },
+  contactPersonItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  contactPersonInfo: {
+    flex: 1,
+  },
+  contactPersonName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: waterBlueColors.dark,
+    marginBottom: 2,
+  },
+  contactPersonPhone: {
+    fontSize: 11,
+    color: '#666',
+  },
+  noContactPersonsContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noContactPersonsText: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  clearButton: {
+    padding: 4,
+    marginRight: 4,
   },
   modalOverlay: {
     flex: 1,

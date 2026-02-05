@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Voice from '@react-native-voice/voice';
 
 /**
  * SpeechToTextInput - A TextInput component with enhanced Google Web Speech API
@@ -41,6 +42,9 @@ const SpeechToTextInput = ({
     // Cleanup on unmount
     return () => {
       setIsListening(false);
+      if (Platform.OS !== 'web') {
+        Voice.destroy().then(Voice.removeAllListeners);
+      }
     };
   }, []);
 
@@ -69,7 +73,7 @@ const SpeechToTextInput = ({
     return numberMatch ? numberMatch[0] : text;
   };
 
-  // Enhanced Google Web Speech API for voice input
+  // Enhanced voice input for both web and mobile
   const startListening = async () => {
     // For Web Platform - Enhanced Google Web Speech API
     if (Platform.OS === 'web') {
@@ -177,18 +181,81 @@ const SpeechToTextInput = ({
         Alert.alert('Error', 'Could not start voice recognition. Please try again.');
       }
     } 
-    // For Mobile Platform - Fallback with helpful message
+    // For Mobile Platform - React Native Voice
     else {
-      Alert.alert(
-        'Voice Input - Web Browser Recommended',
-        'For the best voice recognition experience, please use this app in a web browser (Chrome, Edge, or Safari). Voice input is optimized for web platforms.',
-        [{ text: 'OK' }]
-      );
+      try {
+        await Voice.destroy();
+        Voice.removeAllListeners();
+
+        setIsListening(true);
+
+        Voice.onSpeechStart = () => {
+          console.log('Mobile voice recognition started');
+        };
+
+        Voice.onSpeechEnd = () => {
+          console.log('Mobile voice recognition ended');
+          setIsListening(false);
+        };
+
+        Voice.onSpeechError = (error) => {
+          console.error('Mobile voice recognition error:', error);
+          setIsListening(false);
+          Alert.alert('Voice Input Error', 'Voice recognition failed. Please try again.');
+        };
+
+        Voice.onSpeechResults = (event) => {
+          console.log('Mobile voice results:', event.value);
+          if (event.value && event.value.length > 0) {
+            const spokenText = event.value[0].trim();
+            console.log('Mobile voice input received:', spokenText);
+            
+            // Process the text based on field type
+            let processedText = spokenText;
+            
+            // Special processing for amount field
+            if (fieldType === 'amount') {
+              processedText = convertSpokenNumbersToDigits(spokenText);
+            }
+            
+            // Special processing for rating field
+            if (fieldType === 'rating') {
+              const ratingMatch = spokenText.match(/(\d+)/);
+              if (ratingMatch) {
+                const rating = parseInt(ratingMatch[1]);
+                if (rating >= 1 && rating <= 5) {
+                  processedText = rating.toString();
+                }
+              }
+            }
+            
+            // Append or replace text based on multiline
+            if (multiline && value) {
+              onChangeText(`${value} ${processedText}`);
+            } else {
+              onChangeText(processedText);
+            }
+          }
+        };
+
+        await Voice.start('en-IN');
+      } catch (error) {
+        console.error('Error starting mobile voice recognition:', error);
+        setIsListening(false);
+        Alert.alert('Voice Input Error', 'Could not start voice recognition. Please try again.');
+      }
     }
   };
 
-  const stopListening = () => {
+  const stopListening = async () => {
     setIsListening(false);
+    if (Platform.OS !== 'web') {
+      try {
+        await Voice.stop();
+      } catch (error) {
+        console.error('Error stopping voice recognition:', error);
+      }
+    }
   };
 
   return (

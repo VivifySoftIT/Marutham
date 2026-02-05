@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ActivityIndicator, RefreshControl, Alert, ImageBackground, Modal, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ActivityIndicator, RefreshControl, Alert, ImageBackground, Modal, ScrollView, TextInput, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import Voice from '@react-native-voice/voice';
 import API_BASE_URL from '../apiConfig';
 import { useLanguage } from '../service/LanguageContext';
 
@@ -37,6 +38,9 @@ const MyFeed = ({ route }) => {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [showPaymentMethodDropdown, setShowPaymentMethodDropdown] = useState(false);
+  const [showMonthDropdown, setShowMonthDropdown] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [activeVoiceField, setActiveVoiceField] = useState(null);
 
   const paymentMethods = [
     { label: t('upi'), value: 'UPI', icon: 'qrcode' },
@@ -47,9 +51,31 @@ const MyFeed = ({ route }) => {
     { label: t('other'), value: 'Others', icon: 'dots-horizontal' }
   ];
 
+  const months = [
+    { label: t('january') || 'January', value: 'Jan', fullName: 'January' },
+    { label: t('february') || 'February', value: 'Feb', fullName: 'February' },
+    { label: t('march') || 'March', value: 'Mar', fullName: 'March' },
+    { label: t('april') || 'April', value: 'Apr', fullName: 'April' },
+    { label: t('may') || 'May', value: 'May', fullName: 'May' },
+    { label: t('june') || 'June', value: 'Jun', fullName: 'June' },
+    { label: t('july') || 'July', value: 'Jul', fullName: 'July' },
+    { label: t('august') || 'August', value: 'Aug', fullName: 'August' },
+    { label: t('september') || 'September', value: 'Sep', fullName: 'September' },
+    { label: t('october') || 'October', value: 'Oct', fullName: 'October' },
+    { label: t('november') || 'November', value: 'Nov', fullName: 'November' },
+    { label: t('december') || 'December', value: 'Dec', fullName: 'December' }
+  ];
+
   useFocusEffect(
     React.useCallback(() => {
       loadFeedData();
+      
+      // Cleanup function for voice recognition
+      return () => {
+        if (Platform.OS !== 'web') {
+          Voice.destroy().then(Voice.removeAllListeners);
+        }
+      };
     }, [activeTab, referralTab])
   );
 
@@ -442,6 +468,76 @@ const MyFeed = ({ route }) => {
     setShowPaymentDatePicker(false);
     if (selectedDate) {
       setPaymentForm(prev => ({ ...prev, paymentDate: selectedDate }));
+    }
+  };
+
+  const startVoiceInput = async (fieldName) => {
+    if (Platform.OS === 'web') {
+      Alert.alert(t('voiceInput'), t('pleaseUseMobileApp'));
+      return;
+    }
+
+    try {
+      setIsListening(true);
+      setActiveVoiceField(fieldName);
+      
+      // Set up voice recognition event handlers
+      Voice.onSpeechStart = () => {
+        console.log('Voice recognition started for:', fieldName);
+      };
+
+      Voice.onSpeechEnd = () => {
+        console.log('Voice recognition ended');
+        setIsListening(false);
+        setActiveVoiceField(null);
+      };
+
+      Voice.onSpeechResults = (event) => {
+        console.log('Voice results:', event.value);
+        if (event.value && event.value.length > 0) {
+          const spokenText = event.value[0];
+          console.log('Spoken text for', fieldName, ':', spokenText);
+          
+          switch (fieldName) {
+            case 'amount':
+              // Extract numbers from spoken text
+              const amountMatch = spokenText.match(/\d+/g);
+              if (amountMatch) {
+                const amount = amountMatch.join('');
+                setPaymentForm(prev => ({ ...prev, amount: amount }));
+              }
+              break;
+              
+            case 'transactionId':
+              // Clean up spoken text for transaction ID
+              const cleanTransactionId = spokenText.replace(/\s+/g, '').toUpperCase();
+              setPaymentForm(prev => ({ ...prev, transactionId: cleanTransactionId }));
+              break;
+              
+            case 'paymentForMonth':
+              setPaymentForm(prev => ({ ...prev, paymentForMonth: spokenText }));
+              setShowMonthDropdown(true);
+              break;
+              
+            default:
+              break;
+          }
+        }
+      };
+
+      Voice.onSpeechError = (error) => {
+        console.error('Voice recognition error:', error);
+        setIsListening(false);
+        setActiveVoiceField(null);
+        Alert.alert(t('voiceError'), t('voiceRecognitionFailed'));
+      };
+
+      await Voice.start('en-IN');
+    } catch (error) {
+      console.error('Error starting voice recognition:', error);
+      setIsListening(false);
+      setActiveVoiceField(null);
+      Alert.alert(t('voiceError'), t('voiceRecognitionFailed'));
     }
   };
 
@@ -1170,7 +1266,7 @@ ${t('electronicReceipt')}
             style={[styles.tabButton, (activeTab === 'visitor' || activeTab === 'visitors') && styles.tabButtonActive]}
             onPress={() => setActiveTab('visitors')}
           >
-            <Text style={[styles.tabButtonText, activeTab === 'visitor' && styles.tabButtonTextActive]}>{t('visitors')}</Text>
+            <Text style={[styles.tabButtonText, (activeTab === 'visitor' || activeTab === 'visitors') && styles.tabButtonTextActive]}>{t('visitors')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -1483,12 +1579,13 @@ ${t('electronicReceipt')}
         onRequestClose={() => {
           setShowAddPaymentModal(false);
           setShowPaymentMethodDropdown(false);
+          setShowMonthDropdown(false);
         }}
       >
         <TouchableOpacity 
           style={styles.modalOverlay}
           activeOpacity={1}
-          onPress={() => setShowPaymentMethodDropdown(false)}
+          onPress={() => setShowPaymentMethodDropdown(false) || setShowMonthDropdown(false)}
         >
           <TouchableOpacity 
             style={styles.modalContainer}
@@ -1500,6 +1597,7 @@ ${t('electronicReceipt')}
               <TouchableOpacity onPress={() => {
                 setShowAddPaymentModal(false);
                 setShowPaymentMethodDropdown(false);
+                setShowMonthDropdown(false);
               }}>
                 <Icon name="close" size={24} color="#333" />
               </TouchableOpacity>
@@ -1519,6 +1617,17 @@ ${t('electronicReceipt')}
                     keyboardType="numeric"
                     placeholderTextColor="#999"
                   />
+                  {/* Voice Input Button */}
+                  <TouchableOpacity
+                    onPress={() => startVoiceInput('amount')}
+                    style={[styles.voiceButton, isListening && activeVoiceField === 'amount' && { backgroundColor: '#FFE5E5' }]}
+                  >
+                    <Icon 
+                      name={isListening && activeVoiceField === 'amount' ? "microphone" : "microphone-outline"} 
+                      size={18} 
+                      color={isListening && activeVoiceField === 'amount' ? "#F44336" : "#4A90E2"} 
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -1546,7 +1655,11 @@ ${t('electronicReceipt')}
                 </TouchableOpacity>
                 
                 {showPaymentMethodDropdown && (
-                  <View style={styles.dropdownList}>
+                  <ScrollView 
+                    style={styles.dropdownList}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={true}
+                  >
                     {paymentMethods.map((method, index) => (
                       <TouchableOpacity
                         key={index}
@@ -1571,7 +1684,7 @@ ${t('electronicReceipt')}
                         )}
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 )}
               </View>
 
@@ -1609,6 +1722,17 @@ ${t('electronicReceipt')}
                     onChangeText={(text) => setPaymentForm(prev => ({ ...prev, transactionId: text }))}
                     placeholderTextColor="#999"
                   />
+                  {/* Voice Input Button */}
+                  <TouchableOpacity
+                    onPress={() => startVoiceInput('transactionId')}
+                    style={[styles.voiceButton, isListening && activeVoiceField === 'transactionId' && { backgroundColor: '#FFE5E5' }]}
+                  >
+                    <Icon 
+                      name={isListening && activeVoiceField === 'transactionId' ? "microphone" : "microphone-outline"} 
+                      size={18} 
+                      color={isListening && activeVoiceField === 'transactionId' ? "#F44336" : "#4A90E2"} 
+                    />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -1618,16 +1742,93 @@ ${t('electronicReceipt')}
                 <Text style={styles.formHint}>
                   {t('enterMonthHint')}
                 </Text>
+                
+                {/* Single Input Field with Autocomplete */}
                 <View style={styles.inputContainer}>
                   <Icon name="calendar-month" size={18} color="#4A90E2" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder={t('enterMonth')}
                     value={paymentForm.paymentForMonth}
-                    onChangeText={(text) => setPaymentForm(prev => ({ ...prev, paymentForMonth: text }))}
+                    onChangeText={(text) => {
+                      setPaymentForm(prev => ({ ...prev, paymentForMonth: text }));
+                      // Show dropdown when user starts typing
+                      setShowMonthDropdown(text.length > 0);
+                    }}
+                    onFocus={() => {
+                      // Show dropdown when field is focused and has text
+                      if (paymentForm.paymentForMonth.length > 0) {
+                        setShowMonthDropdown(true);
+                      }
+                    }}
                     placeholderTextColor="#999"
                   />
+                  {paymentForm.paymentForMonth.length > 0 && (
+                    <TouchableOpacity 
+                      onPress={() => {
+                        setPaymentForm(prev => ({ ...prev, paymentForMonth: '' }));
+                        setShowMonthDropdown(false);
+                      }}
+                      style={styles.clearButton}
+                    >
+                      <Icon name="close-circle" size={18} color="#999" />
+                    </TouchableOpacity>
+                  )}
+                  {/* Voice Input Button */}
+                  <TouchableOpacity
+                    onPress={() => startVoiceInput('paymentForMonth')}
+                    style={[styles.voiceButton, isListening && activeVoiceField === 'paymentForMonth' && { backgroundColor: '#FFE5E5' }]}
+                  >
+                    <Icon 
+                      name={isListening && activeVoiceField === 'paymentForMonth' ? "microphone" : "microphone-outline"} 
+                      size={18} 
+                      color={isListening && activeVoiceField === 'paymentForMonth' ? "#F44336" : "#4A90E2"} 
+                    />
+                  </TouchableOpacity>
                 </View>
+                
+                {/* Smart Autocomplete Dropdown */}
+                {showMonthDropdown && paymentForm.paymentForMonth.length > 0 && (
+                  <ScrollView 
+                    style={styles.dropdownList}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {months
+                      .filter(month => 
+                        month.label.toLowerCase().includes(paymentForm.paymentForMonth.toLowerCase()) ||
+                        month.value.toLowerCase().includes(paymentForm.paymentForMonth.toLowerCase()) ||
+                        month.fullName.toLowerCase().includes(paymentForm.paymentForMonth.toLowerCase())
+                      )
+                      .map((month, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setPaymentForm(prev => ({ ...prev, paymentForMonth: month.value }));
+                            setShowMonthDropdown(false);
+                          }}
+                        >
+                          <Icon name="calendar" size={18} color="#4A90E2" />
+                          <Text style={styles.dropdownItemText}>
+                            {month.label} ({month.value})
+                          </Text>
+                          <Icon name="arrow-right" size={16} color="#4A90E2" />
+                        </TouchableOpacity>
+                      ))
+                    }
+                    {months.filter(month => 
+                      month.label.toLowerCase().includes(paymentForm.paymentForMonth.toLowerCase()) ||
+                      month.value.toLowerCase().includes(paymentForm.paymentForMonth.toLowerCase()) ||
+                      month.fullName.toLowerCase().includes(paymentForm.paymentForMonth.toLowerCase())
+                    ).length === 0 && (
+                      <View style={styles.noResultsContainer}>
+                        <Icon name="calendar-alert" size={24} color="#999" />
+                        <Text style={styles.noResultsText}>{t('noMatchingMonths')}</Text>
+                      </View>
+                    )}
+                  </ScrollView>
+                )}
               </View>
 
               {/* Submit Button */}
@@ -1651,6 +1852,7 @@ ${t('electronicReceipt')}
                 onPress={() => {
                   setShowAddPaymentModal(false);
                   setShowPaymentMethodDropdown(false);
+                  setShowMonthDropdown(false);
                 }}
                 disabled={loading}
               >
@@ -2011,7 +2213,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     maxWidth: 500,
-    maxHeight: '90%',
+    maxHeight: '75%',
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -2036,13 +2238,13 @@ const styles = StyleSheet.create({
     padding: 4
   },
   modalContent: {
-    padding: 20
+    padding: 16
   },
   // Detail Modal Styles
   detailHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20
+    marginBottom: 16
   },
   detailIconContainer: {
     width: 60,
@@ -2071,8 +2273,8 @@ const styles = StyleSheet.create({
     fontSize: 14
   },
   detailsGrid: {
-    marginBottom: 20,
-    gap: 12
+    marginBottom: 16,
+    gap: 10
   },
   detailRow: {
     flexDirection: 'row',
@@ -2081,7 +2283,7 @@ const styles = StyleSheet.create({
   detailItem: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-    padding: 15,
+    padding: 12,
     borderRadius: 10,
     alignItems: 'center'
   },
@@ -2099,9 +2301,9 @@ const styles = StyleSheet.create({
   },
   descriptionContainer: {
     backgroundColor: '#F8F9FA',
-    padding: 15,
+    padding: 12,
     borderRadius: 10,
-    marginBottom: 20
+    marginBottom: 16
   },
   descriptionLabel: {
     fontSize: 14,
@@ -2116,9 +2318,9 @@ const styles = StyleSheet.create({
   },
   notesContainer: {
     backgroundColor: '#FFF8E1',
-    padding: 15,
+    padding: 12,
     borderRadius: 10,
-    marginBottom: 20,
+    marginBottom: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#FF9800'
   },
@@ -2134,7 +2336,7 @@ const styles = StyleSheet.create({
     lineHeight: 20
   },
   actionButtonsContainer: {
-    marginTop: 20
+    marginTop: 16
   },
   actionTitle: {
     fontSize: 16,
@@ -2254,7 +2456,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    maxHeight: 200
+    maxHeight: 200,
+    overflow: 'hidden',
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -2276,6 +2479,31 @@ const styles = StyleSheet.create({
   dropdownItemTextSelected: {
     color: '#4A90E2',
     fontWeight: '600'
+  },
+  orText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#666',
+    marginVertical: 8,
+    fontStyle: 'italic',
+  },
+  clearButton: {
+    padding: 4,
+  },
+  voiceButton: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  noResultsContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noResultsText: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 8,
+    textAlign: 'center',
   },
   submitButton: { 
     backgroundColor: '#4A90E2', 

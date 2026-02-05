@@ -308,11 +308,6 @@ const handleSubmit = async () => {
       setTimeout(() => {
         resetForm();
         setShowSuccessModal(false);
-        Alert.alert(
-          t('success'),
-          t('visitorRegisteredSuccessfullyWithName').replace('{{name}}', visitorData.VisitorName),
-          [{ text: t('ok') }]
-        );
       }, 2000);
     } else {
       Alert.alert(
