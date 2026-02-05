@@ -24,7 +24,7 @@ import { useLanguage } from '../service/LanguageContext';
 import LanguageSelector from '../components/LanguageSelector';
 
 const Messages = ({ navigation }) => {
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showComposeModal, setShowComposeModal] = useState(false);
@@ -140,7 +140,7 @@ const Messages = ({ navigation }) => {
       console.log('Messages - Members loaded successfully');
     } catch (error) {
       console.error('Messages - Error loading members:', error);
-      Alert.alert('Error', 'Failed to load members list');
+      Alert.alert(t('error'), t('failedToLoadMembersList') || 'Failed to load members list');
     } finally {
       setLoadingMembers(false);
     }
@@ -156,58 +156,64 @@ const Messages = ({ navigation }) => {
     }
   };
 
-  const messageTemplates = [
+  // Message templates - using useMemo to make it reactive to language changes
+  const messageTemplates = React.useMemo(() => [
     {
       id: 1,
-      title: 'Birthday Wish',
+      title: t('birthdayWish') || 'Birthday Wish',
       icon: 'cake-variant',
       color: '#E91E63',
-      description: 'Send birthday wishes to members',
-      defaultSubject: 'Happy Birthday! 🎉',
-      defaultContent: 'Dear Member,\n\nWishing you a wonderful birthday filled with joy and success!\n\nMay this year bring you great opportunities and prosperity.\n\nHappy Birthday!\nAlaigal Team',
+      description: t('sendBirthdayWishesToMembers') || 'Send birthday wishes to members',
+      defaultSubject: t('happyBirthday') || 'Happy Birthday! 🎉',
+      defaultContent: t('birthdayWishContent') || 'Dear Member,\n\nWishing you a wonderful birthday filled with joy and success!\n\nMay this year bring you great opportunities and prosperity.\n\nHappy Birthday!\nAlaigal Team',
       messageType: 'Birthday'
     },
     {
       id: 2,
-      title: 'Payment Reminder',
+      title: t('paymentReminder'),
       icon: 'cash-clock',
       color: '#FF9800',
-      description: 'Send payment reminder (validates payment status)',
-      defaultSubject: 'Payment Reminder - Alaigal Membership',
-      defaultContent: 'Dear Member,\n\nThis is a friendly reminder that your membership payment is due.\n\nPlease make the payment at your earliest convenience.\n\nThank you,\nAlaigal Team',
+      description: t('sendPaymentReminderDesc') || 'Send payment reminder (validates payment status)',
+      defaultSubject: t('paymentReminderSubject') || 'Payment Reminder - Alaigal Membership',
+      defaultContent: t('paymentReminderContent') || 'Dear Member,\n\nThis is a friendly reminder that your membership payment is due.\n\nPlease make the payment at your earliest convenience.\n\nThank you,\nAlaigal Team',
       messageType: 'Payment'
     },
     {
       id: 3,
-      title: 'Event Notification',
+      title: t('eventNotification') || 'Event Notification',
       icon: 'calendar-star',
       color: '#2196F3',
-      description: 'Notify members about upcoming events',
-      defaultSubject: 'Upcoming Event - Alaigal Networking',
-      defaultContent: 'Dear Member,\n\nWe are excited to invite you to our upcoming networking event!\n\nEvent Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nLooking forward to seeing you there!\n\nAlaigal Team',
+      description: t('notifyMembersAboutEvents') || 'Notify members about upcoming events',
+      defaultSubject: t('upcomingEventSubject') || 'Upcoming Event - Alaigal Networking',
+      defaultContent: t('eventNotificationContent') || 'Dear Member,\n\nWe are excited to invite you to our upcoming networking event!\n\nEvent Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nLooking forward to seeing you there!\n\nAlaigal Team',
       messageType: 'Event'
     },
     {
       id: 4,
-      title: 'Meeting Notification',
+      title: t('meetingNotification'),
       icon: 'account-group',
       color: '#00BCD4',
-      description: 'Notify members about meetings',
-      defaultSubject: 'Meeting Notification - Alaigal',
-      defaultContent: 'Dear Member,\n\nYou are invited to attend our upcoming meeting.\n\nMeeting Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nPlease confirm your attendance.\n\nAlaigal Team',
+      description: t('notifyMembersAboutMeetings') || 'Notify members about meetings',
+      defaultSubject: t('meetingNotificationSubject') || 'Meeting Notification - Alaigal',
+      defaultContent: t('meetingNotificationContent') || 'Dear Member,\n\nYou are invited to attend our upcoming meeting.\n\nMeeting Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nPlease confirm your attendance.\n\nAlaigal Team',
       messageType: 'Meeting'
     },
     {
       id: 5,
-      title: 'Welcome Message',
+      title: t('welcomeMessage'),
       icon: 'hand-wave',
       color: '#4CAF50',
-      description: 'Welcome new members',
-      defaultSubject: 'Welcome to Alaigal!',
-      defaultContent: 'Dear Member,\n\nWelcome to Alaigal! We are excited to have you as part of our community.\n\nFeel free to connect with other members and grow your business together.\n\nBest regards,\nAlaigal Team',
+      description: t('welcomeNewMembers') || 'Welcome new members',
+      defaultSubject: t('welcomeToAlaigal'),
+      defaultContent: t('welcomeMessageContent') || 'Dear Member,\n\nWelcome to Alaigal! We are excited to have you as part of our community.\n\nFeel free to connect with other members and grow your business together.\n\nBest regards,\nAlaigal Team',
       messageType: 'Welcome'
     },
-  ];
+  ], [t]); // Re-compute when translation function changes
+
+  // Function to get translated message type
+  const getTranslatedMessageType = (messageType) => {
+    return t(messageType) || messageType;
+  };
 
   const toggleMemberSelection = (member) => {
     setSelectedMembers(prev => {
@@ -299,35 +305,35 @@ const Messages = ({ navigation }) => {
         type: [DocumentPicker.types.allFiles],
       });
       setAttachment(result);
-      Alert.alert('Success', `File attached: ${result.name}`);
+      Alert.alert(t('success'), `${t('fileAttached')}: ${result.name}`);
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         console.log('User cancelled file picker');
       } else {
-        Alert.alert('Error', 'Failed to pick file');
+        Alert.alert(t('error'), t('failedToPickFile'));
       }
     }
   };
 
   const validateForm = () => {
     if (!selectedTemplate) {
-      Alert.alert('Error', 'Please select a template');
+      Alert.alert(t('error'), t('pleaseSelectTemplate') || 'Please select a template');
       return false;
     }
     if (formData.recipientType === 'member' && selectedMembers.length === 0) {
-      Alert.alert('Error', 'Please select at least one member');
+      Alert.alert(t('error'), t('pleaseSelectAtLeastOneMember') || 'Please select at least one member');
       return false;
     }
     if (!formData.subject.trim()) {
-      Alert.alert('Error', 'Please enter subject');
+      Alert.alert(t('error'), t('pleaseEnterSubject') || 'Please enter subject');
       return false;
     }
     if (!formData.content.trim()) {
-      Alert.alert('Error', 'Please enter message content');
+      Alert.alert(t('error'), t('pleaseEnterMessageContent') || 'Please enter message content');
       return false;
     }
     if (!adminMemberId) {
-      Alert.alert('Error', 'Admin member ID not found. Please try again.');
+      Alert.alert(t('error'), t('adminMemberIdNotFound') || 'Admin member ID not found. Please try again.');
       return false;
     }
     return true;
@@ -341,7 +347,7 @@ const Messages = ({ navigation }) => {
       // Get fresh admin member ID
       const currentAdminMemberId = await getCurrentUserMemberId();
       if (!currentAdminMemberId) {
-        Alert.alert('Error', 'Admin member ID not found. Please login again.');
+        Alert.alert(t('error'), t('adminMemberIdNotFoundLoginAgain') || 'Admin member ID not found. Please login again.');
         setLoading(false);
         return;
       }
@@ -369,8 +375,8 @@ const Messages = ({ navigation }) => {
 
       // Add payment-specific fields if Payment type
       if (formData.messageType === 'Payment') {
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                           'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthNames = [t('january'), t('february'), t('march'), t('april'), t('may'), t('june'), 
+                           t('july'), t('august'), t('september'), t('october'), t('november'), t('december')];
         notificationData.PaymentForMonth = `${monthNames[formData.paymentMonth - 1]} ${formData.paymentYear}`;
         notificationData.PaymentDate = new Date().toISOString();
       }
@@ -383,11 +389,11 @@ const Messages = ({ navigation }) => {
       console.log('Message sent successfully:', response);
 
       Alert.alert(
-        'Success',
-        `Message sent successfully!${formData.recipientType === 'all' ? ' (All members)' : ` (${selectedMembers.length} member${selectedMembers.length > 1 ? 's' : ''})`}`,
+        t('success'),
+        `${t('messageSentSuccessfully')}!${formData.recipientType === 'all' ? ` (${t('allMembers')})` : ` (${selectedMembers.length} ${t('member')}${selectedMembers.length > 1 ? 's' : ''})`}`,
         [
           {
-            text: 'OK',
+            text: t('ok'),
             onPress: () => {
               setShowComposeModal(false);
               setSelectedTemplate(null);
@@ -414,7 +420,7 @@ const Messages = ({ navigation }) => {
       );
     } catch (error) {
       console.error('Error sending message:', error);
-      let errorMessage = 'Failed to send message';
+      let errorMessage = t('failedToSendMessage') || 'Failed to send message';
       
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -422,7 +428,7 @@ const Messages = ({ navigation }) => {
         errorMessage = error.message;
       }
       
-      Alert.alert('Error', errorMessage);
+      Alert.alert(t('error'), errorMessage);
     } finally {
       setLoading(false);
     }
@@ -440,8 +446,14 @@ const Messages = ({ navigation }) => {
         <View style={[styles.templateIcon, { backgroundColor: item.color }]}>
           <Icon name={item.icon} size={28} color="#FFF" />
         </View>
-        <Text style={styles.templateTitle}>{item.title}</Text>
-        <Text style={styles.templateDescription}>{item.description}</Text>
+        <Text style={[
+          styles.templateTitle,
+          currentLanguage === 'ta' && styles.templateTitleTamil
+        ]}>{item.title}</Text>
+        <Text style={[
+          styles.templateDescription,
+          currentLanguage === 'ta' && styles.templateDescriptionTamil
+        ]}>{item.description}</Text>
       </LinearGradient>
     </TouchableOpacity>
   );
@@ -451,9 +463,9 @@ const Messages = ({ navigation }) => {
 
     const getRecipientInfo = () => {
       if (formData.recipientType === 'all') {
-        return 'All active members';
+        return t('allActiveMembers') || 'All active members';
       }
-      return `${selectedMembers.length} selected member${selectedMembers.length !== 1 ? 's' : ''}`;
+      return `${selectedMembers.length} ${t('selectedMember')}${selectedMembers.length !== 1 ? 's' : ''}`;
     };
 
     return (
@@ -471,7 +483,7 @@ const Messages = ({ navigation }) => {
             <TouchableOpacity onPress={() => setShowComposeModal(false)}>
               <Icon name="close" size={24} color="#FFF" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Compose Message</Text>
+            <Text style={styles.modalTitle}>{t('composeMessage')}</Text>
             <View style={{ width: 24 }} />
           </LinearGradient>
 
@@ -484,39 +496,46 @@ const Messages = ({ navigation }) => {
               <View style={styles.templateInfoText}>
                 <Text style={styles.templateInfoTitle}>{selectedTemplate.title}</Text>
                 <Text style={styles.templateInfoSubtitle}>
-                  Type: {formData.messageType}
+                  {t('type')}: {getTranslatedMessageType(formData.messageType)}
                 </Text>
               </View>
             </View>
 
             {/* Recipient Type Selection */}
             <View style={styles.section}>
-              <Text style={styles.label}>Send To *</Text>
+              <Text style={[
+                styles.label,
+                currentLanguage === 'ta' && styles.labelTamil
+              ]}>{t('sendTo')} *</Text>
               <View style={styles.recipientTypeContainer}>
                 <TouchableOpacity
                   style={[
                     styles.recipientTypeButton,
-                    formData.recipientType === 'member' && styles.recipientTypeButtonActive
+                    formData.recipientType === 'member' && styles.recipientTypeButtonActive,
+                    currentLanguage === 'ta' && styles.recipientTypeButtonTamil
                   ]}
                   onPress={() => handleInputChange('recipientType', 'member')}
                 >
                   <Icon 
                     name="account" 
-                    size={20} 
+                    size={currentLanguage === 'ta' ? 18 : 20} 
                     color={formData.recipientType === 'member' ? '#FFF' : '#4A90E2'} 
+                    style={styles.recipientTypeIcon}
                   />
                   <Text style={[
                     styles.recipientTypeText,
-                    formData.recipientType === 'member' && styles.recipientTypeTextActive
+                    formData.recipientType === 'member' && styles.recipientTypeTextActive,
+                    currentLanguage === 'ta' && styles.recipientTypeTextTamil
                   ]}>
-                    Specific Members
+                    {t('specificMembers')}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[
                     styles.recipientTypeButton,
-                    formData.recipientType === 'all' && styles.recipientTypeButtonActive
+                    formData.recipientType === 'all' && styles.recipientTypeButtonActive,
+                    currentLanguage === 'ta' && styles.recipientTypeButtonTamil
                   ]}
                   onPress={() => {
                     handleInputChange('recipientType', 'all');
@@ -525,14 +544,16 @@ const Messages = ({ navigation }) => {
                 >
                   <Icon 
                     name="account-multiple" 
-                    size={20} 
+                    size={currentLanguage === 'ta' ? 18 : 20} 
                     color={formData.recipientType === 'all' ? '#FFF' : '#4A90E2'} 
+                    style={styles.recipientTypeIcon}
                   />
                   <Text style={[
                     styles.recipientTypeText,
-                    formData.recipientType === 'all' && styles.recipientTypeTextActive
+                    formData.recipientType === 'all' && styles.recipientTypeTextActive,
+                    currentLanguage === 'ta' && styles.recipientTypeTextTamil
                   ]}>
-                    All Members
+                    {t('allMembers')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -541,7 +562,7 @@ const Messages = ({ navigation }) => {
             {/* Member Selection Button (if specific members) */}
             {formData.recipientType === 'member' && (
               <View style={styles.section}>
-                <Text style={styles.label}>Select Members *</Text>
+                <Text style={styles.label}>{t('selectMembers')} *</Text>
                 <TouchableOpacity
                   style={styles.memberSelectionButton}
                   onPress={() => setShowMemberSelectionModal(true)}
@@ -549,8 +570,8 @@ const Messages = ({ navigation }) => {
                   <Icon name="account-multiple" size={20} color="#4A90E2" style={styles.icon} />
                   <Text style={[styles.input, { color: selectedMembers.length > 0 ? '#333' : '#999' }]}>
                     {selectedMembers.length > 0 
-                      ? `${selectedMembers.length} member${selectedMembers.length > 1 ? 's' : ''} selected`
-                      : 'Tap to select members'}
+                      ? `${selectedMembers.length} ${t('member')}${selectedMembers.length > 1 ? 's' : ''} ${t('selected')}`
+                      : t('tapToSelectMembers') || 'Tap to select members'}
                   </Text>
                   <Icon name="chevron-right" size={20} color="#4A90E2" />
                 </TouchableOpacity>
@@ -567,7 +588,7 @@ const Messages = ({ navigation }) => {
                     ))}
                     {selectedMembers.length > 3 && (
                       <Text style={styles.moreSelectedText}>
-                        +{selectedMembers.length - 3} more
+                        +{selectedMembers.length - 3} {t('more') || 'more'}
                       </Text>
                     )}
                   </View>
@@ -580,7 +601,7 @@ const Messages = ({ navigation }) => {
               <View style={styles.infoCard}>
                 <Icon name="information" size={20} color="#2196F3" />
                 <Text style={styles.infoText}>
-                  This message will be sent to all active members in your sub-company
+                  {t('messageWillBeSentToAllActiveMembers') || 'This message will be sent to all active members in your sub-company'}
                 </Text>
               </View>
             )}
@@ -589,7 +610,7 @@ const Messages = ({ navigation }) => {
             {(formData.messageType === 'Event' || formData.messageType === 'Meeting') && (
               <View style={styles.section}>
                 <Text style={styles.label}>
-                  {formData.messageType === 'Event' ? 'Event Date' : 'Meeting Date'} *
+                  {formData.messageType === 'Event' ? t('eventDate') : t('meetingDate')} *
                 </Text>
                 <View style={styles.dateInputRow}>
                   {/* Text Input for manual entry */}
@@ -597,7 +618,7 @@ const Messages = ({ navigation }) => {
                     <Icon name="calendar" size={20} color="#4A90E2" style={styles.icon} />
                     <TextInput
                       style={styles.input}
-                      placeholder="YYYY-MM-DD (e.g., 2025-02-15)"
+                      placeholder={t('dateFormatPlaceholder') || 'YYYY-MM-DD (e.g., 2025-02-15)'}
                       value={formData.eventDate}
                       onChangeText={(text) => handleInputChange('eventDate', text)}
                       placeholderTextColor="#999"
@@ -630,7 +651,7 @@ const Messages = ({ navigation }) => {
                   </TouchableOpacity>
                 </View>
                 <Text style={styles.dateHint}>
-                  Enter date manually or tap the calendar button to select
+                  {t('enterDateManuallyOrCalendar') || 'Enter date manually or tap the calendar button to select'}
                 </Text>
               </View>
             )}
@@ -646,7 +667,7 @@ const Messages = ({ navigation }) => {
                 <View style={styles.datePickerModalOverlay}>
                   <View style={styles.datePickerModalContent}>
                     <View style={styles.datePickerHeader}>
-                      <Text style={styles.datePickerTitle}>Select Date</Text>
+                      <Text style={styles.datePickerTitle}>{t('selectDate')}</Text>
                       <TouchableOpacity onPress={() => setShowDatePicker(false)}>
                         <Icon name="close" size={24} color="#333" />
                       </TouchableOpacity>
@@ -678,7 +699,7 @@ const Messages = ({ navigation }) => {
                           style={[styles.datePickerButton, styles.datePickerCancelButton]}
                           onPress={() => setShowDatePicker(false)}
                         >
-                          <Text style={styles.datePickerCancelText}>Cancel</Text>
+                          <Text style={styles.datePickerCancelText}>{t('cancel')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.datePickerButton, styles.datePickerConfirmButton]}
@@ -688,7 +709,7 @@ const Messages = ({ navigation }) => {
                             setShowDatePicker(false);
                           }}
                         >
-                          <Text style={styles.datePickerConfirmText}>Confirm</Text>
+                          <Text style={styles.datePickerConfirmText}>{t('confirm')}</Text>
                         </TouchableOpacity>
                       </View>
                     )}
@@ -703,17 +724,17 @@ const Messages = ({ navigation }) => {
                 <View style={[styles.infoCard, { backgroundColor: '#FFF3E0' }]}>
                   <Icon name="alert" size={20} color="#FF9800" />
                   <Text style={[styles.infoText, { color: '#E65100' }]}>
-                    Payment messages are validated. Only members with valid payment records will receive this message.
+                    {t('paymentMessagesValidated') || 'Payment messages are validated. Only members with valid payment records will receive this message.'}
                   </Text>
                 </View>
 
                 {/* Payment Month/Year Selection */}
                 <View style={styles.section}>
-                  <Text style={styles.label}>Payment Period *</Text>
+                  <Text style={styles.label}>{t('paymentPeriod')} *</Text>
                   <View style={styles.paymentPeriodContainer}>
                     {/* Month Picker */}
                     <View style={styles.paymentPeriodItem}>
-                      <Text style={styles.paymentPeriodLabel}>Month</Text>
+                      <Text style={styles.paymentPeriodLabel}>{t('month')}</Text>
                       <View style={styles.pickerContainer}>
                         <Icon name="calendar-month" size={20} color="#4A90E2" style={styles.pickerIcon} />
                         <Picker
@@ -721,25 +742,25 @@ const Messages = ({ navigation }) => {
                           onValueChange={(value) => handleInputChange('paymentMonth', value)}
                           style={styles.picker}
                         >
-                          <Picker.Item label="January" value={1} />
-                          <Picker.Item label="February" value={2} />
-                          <Picker.Item label="March" value={3} />
-                          <Picker.Item label="April" value={4} />
-                          <Picker.Item label="May" value={5} />
-                          <Picker.Item label="June" value={6} />
-                          <Picker.Item label="July" value={7} />
-                          <Picker.Item label="August" value={8} />
-                          <Picker.Item label="September" value={9} />
-                          <Picker.Item label="October" value={10} />
-                          <Picker.Item label="November" value={11} />
-                          <Picker.Item label="December" value={12} />
+                          <Picker.Item label={t('january')} value={1} />
+                          <Picker.Item label={t('february')} value={2} />
+                          <Picker.Item label={t('march')} value={3} />
+                          <Picker.Item label={t('april')} value={4} />
+                          <Picker.Item label={t('may')} value={5} />
+                          <Picker.Item label={t('june')} value={6} />
+                          <Picker.Item label={t('july')} value={7} />
+                          <Picker.Item label={t('august')} value={8} />
+                          <Picker.Item label={t('september')} value={9} />
+                          <Picker.Item label={t('october')} value={10} />
+                          <Picker.Item label={t('november')} value={11} />
+                          <Picker.Item label={t('december')} value={12} />
                         </Picker>
                       </View>
                     </View>
 
                     {/* Year Picker */}
                     <View style={styles.paymentPeriodItem}>
-                      <Text style={styles.paymentPeriodLabel}>Year</Text>
+                      <Text style={styles.paymentPeriodLabel}>{t('year')}</Text>
                       <View style={styles.pickerContainer}>
                         <Icon name="calendar" size={20} color="#4A90E2" style={styles.pickerIcon} />
                         <Picker
@@ -756,8 +777,8 @@ const Messages = ({ navigation }) => {
                     </View>
                   </View>
                   <Text style={styles.paymentPeriodHint}>
-                    Reminder for: {['January', 'February', 'March', 'April', 'May', 'June', 
-                                   'July', 'August', 'September', 'October', 'November', 'December'][formData.paymentMonth - 1]} {formData.paymentYear}
+                    {t('reminderFor')}: {[t('january'), t('february'), t('march'), t('april'), t('may'), t('june'), 
+                                       t('july'), t('august'), t('september'), t('october'), t('november'), t('december')][formData.paymentMonth - 1]} {formData.paymentYear}
                   </Text>
                 </View>
               </>
@@ -765,12 +786,12 @@ const Messages = ({ navigation }) => {
 
             {/* Subject */}
             <View style={styles.section}>
-              <Text style={styles.label}>Subject *</Text>
+              <Text style={styles.label}>{t('subject')} *</Text>
               <View style={styles.inputContainer}>
                 <Icon name="format-title" size={20} color="#4A90E2" style={styles.icon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter subject"
+                  placeholder={t('enterSubject') || 'Enter subject'}
                   value={formData.subject}
                   onChangeText={(text) => handleInputChange('subject', text)}
                   placeholderTextColor="#999"
@@ -780,11 +801,11 @@ const Messages = ({ navigation }) => {
 
             {/* Content */}
             <View style={styles.section}>
-              <Text style={styles.label}>Message Content *</Text>
+              <Text style={styles.label}>{t('messageContent')} *</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
                 <TextInput
                   style={[styles.input, styles.textArea]}
-                  placeholder="Enter message content"
+                  placeholder={t('enterMessageContent') || 'Enter message content'}
                   value={formData.content}
                   onChangeText={(text) => handleInputChange('content', text)}
                   multiline
@@ -797,15 +818,15 @@ const Messages = ({ navigation }) => {
 
             {/* Preview */}
             <View style={styles.section}>
-              <Text style={styles.label}>Preview</Text>
+              <Text style={styles.label}>{t('preview')}</Text>
               <View style={styles.previewCard}>
                 <View style={styles.previewHeader}>
-                  <Text style={styles.previewLabel}>To:</Text>
+                  <Text style={styles.previewLabel}>{t('recipient')}:</Text>
                   <Text style={styles.previewValue}>{getRecipientInfo()}</Text>
                 </View>
                 <View style={styles.previewHeader}>
-                  <Text style={styles.previewLabel}>Type:</Text>
-                  <Text style={styles.previewValue}>{formData.messageType}</Text>
+                  <Text style={styles.previewLabel}>{t('type')}:</Text>
+                  <Text style={styles.previewValue}>{getTranslatedMessageType(formData.messageType)}</Text>
                 </View>
                 <Text style={styles.previewSubject}>{formData.subject}</Text>
                 <Text style={styles.previewContent}>{formData.content}</Text>
@@ -823,7 +844,7 @@ const Messages = ({ navigation }) => {
               ) : (
                 <>
                   <Icon name="send" size={20} color="#FFF" />
-                  <Text style={styles.sendButtonText}>Send Message</Text>
+                  <Text style={styles.sendButtonText}>{t('sendMessage')}</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -853,12 +874,15 @@ const Messages = ({ navigation }) => {
         <View style={styles.infoCard}>
           <Icon name="information" size={20} color="#4A90E2" />
           <Text style={styles.infoText}>
-            Select a template to send messages to members. Payment Reminder automatically sends to unpaid members.
+            {t('selectTemplateToSendMessages') || 'Select a template to send messages to members. Payment Reminder automatically sends to unpaid members.'}
           </Text>
         </View>
 
         {/* Message Templates */}
-        <Text style={styles.sectionTitle}>Message Templates</Text>
+        <Text style={[
+          styles.sectionTitle,
+          currentLanguage === 'ta' && styles.sectionTitleTamil
+        ]}>{t('messageTemplates') || 'Message Templates'}</Text>
         <FlatList
           data={messageTemplates}
           renderItem={renderTemplateCard}
@@ -872,12 +896,18 @@ const Messages = ({ navigation }) => {
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Icon name="email-send" size={24} color="#4A90E2" />
-            <Text style={styles.statLabel}>Total Messages</Text>
+            <Text style={[
+              styles.statLabel, 
+              currentLanguage === 'ta' && styles.statLabelTamil
+            ]}>{t('totalMessages')}</Text>
             <Text style={styles.statValue}>{totalMessagesCount}</Text>
           </View>
           <View style={styles.statCard}>
             <Icon name="account-multiple" size={24} color="#4CAF50" />
-            <Text style={styles.statLabel}>Active Members</Text>
+            <Text style={[
+              styles.statLabel, 
+              currentLanguage === 'ta' && styles.statLabelTamil
+            ]}>{t('activeMembers')}</Text>
             <Text style={styles.statValue}>{allMembers.length}</Text>
           </View>
         </View>
@@ -894,7 +924,7 @@ const Messages = ({ navigation }) => {
       >
         <View style={styles.templateModalOverlay}>
           <View style={styles.templateModalContent}>
-            <Text style={styles.templateModalTitle}>Select Template</Text>
+            <Text style={styles.templateModalTitle}>{t('selectTemplate')}</Text>
             <FlatList
               data={messageTemplates}
               renderItem={({ item }) => (
@@ -917,7 +947,7 @@ const Messages = ({ navigation }) => {
               style={styles.templateModalClose}
               onPress={() => setShowTemplateModal(false)}
             >
-              <Text style={styles.templateModalCloseText}>Close</Text>
+              <Text style={styles.templateModalCloseText}>{t('close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -939,15 +969,24 @@ const Messages = ({ navigation }) => {
           <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
           {/* Modal Header */}
-          <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.modalHeader}>
+          <LinearGradient colors={['#4A90E2', '#87CEEB']} style={[
+            styles.modalHeader,
+            currentLanguage === 'ta' && styles.modalHeaderTamil
+          ]}>
             <TouchableOpacity onPress={() => {
               setShowMemberSelectionModal(false);
               setMemberSearchQuery(''); // Clear search when modal closes
             }}>
               <Icon name="close" size={24} color="#FFF" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Select Members</Text>
-            <View style={styles.headerRightButtons}>
+            <Text style={[
+              styles.modalTitle,
+              currentLanguage === 'ta' && styles.modalTitleTamil
+            ]}>{t('selectMembers')}</Text>
+            <View style={[
+              styles.headerRightButtons,
+              currentLanguage === 'ta' && styles.headerRightButtonsTamil
+            ]}>
               <TouchableOpacity onPress={() => {
                 console.log('Messages - Refresh button pressed');
                 setMemberSearchQuery(''); // Clear search when refreshing
@@ -960,14 +999,28 @@ const Messages = ({ navigation }) => {
                   <Icon name="refresh" size={20} color="#FFF" />
                 )}
               </TouchableOpacity>
-              <TouchableOpacity onPress={selectAllMembers}>
-                <Text style={styles.selectAllText}>
+              <TouchableOpacity 
+                onPress={selectAllMembers}
+                style={[
+                  styles.selectAllButton,
+                  currentLanguage === 'ta' && styles.selectAllButtonTamil
+                ]}
+              >
+                <Text 
+                  style={[
+                    styles.selectAllText,
+                    currentLanguage === 'ta' && styles.selectAllTextTamil
+                  ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit={currentLanguage === 'ta'}
+                  minimumFontScale={0.8}
+                >
                   {(() => {
                     const filteredMembers = getFilteredMembers();
                     const allFilteredSelected = filteredMembers.every(member => 
                       selectedMembers.some(selected => selected.id === member.id)
                     );
-                    return allFilteredSelected && filteredMembers.length > 0 ? 'Deselect All' : 'Select All';
+                    return allFilteredSelected && filteredMembers.length > 0 ? t('deselectAll') : t('selectAll');
                   })()}
                 </Text>
               </TouchableOpacity>
@@ -978,11 +1031,11 @@ const Messages = ({ navigation }) => {
           <View style={styles.selectedCountContainer}>
             <Icon name="account-check" size={20} color="#4A90E2" />
             <Text style={styles.selectedCountText}>
-              {selectedMembers.length} member{selectedMembers.length !== 1 ? 's' : ''} selected
+              {selectedMembers.length} {t('member')}{selectedMembers.length !== 1 ? 's' : ''} {t('selected')}
               {memberSearchQuery.trim() && (
                 <Text style={styles.searchResultsText}>
                   {' • '}
-                  {getFilteredMembers().length} result{getFilteredMembers().length !== 1 ? 's' : ''}
+                  {getFilteredMembers().length} {t('result')}{getFilteredMembers().length !== 1 ? 's' : ''}
                 </Text>
               )}
             </Text>
@@ -994,7 +1047,7 @@ const Messages = ({ navigation }) => {
               <Icon name="magnify" size={20} color="#4A90E2" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search members by name, email, or phone..."
+                placeholder={t('searchMembersByNameEmailPhone')}
                 value={memberSearchQuery}
                 onChangeText={setMemberSearchQuery}
                 placeholderTextColor="#999"
@@ -1014,7 +1067,7 @@ const Messages = ({ navigation }) => {
           {loadingMembers ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#4A90E2" />
-              <Text style={styles.loadingText}>Loading members...</Text>
+              <Text style={styles.loadingText}>{t('loadingMembers')}</Text>
             </View>
           ) : (
             <FlatList
@@ -1034,7 +1087,7 @@ const Messages = ({ navigation }) => {
                       <View style={styles.memberInfo}>
                         <Text style={styles.memberSelectionName}>{item.name}</Text>
                         <Text style={styles.memberSelectionContact}>
-                          {item.email || item.phone || 'No contact'}
+                          {item.email || item.phone || t('noContact')}
                         </Text>
                       </View>
                     </View>
@@ -1046,14 +1099,14 @@ const Messages = ({ navigation }) => {
                 <View style={styles.emptyContainer}>
                   <Icon name="account-off" size={48} color="#D1D5DB" />
                   <Text style={styles.emptyText}>
-                    {memberSearchQuery.trim() ? 'No members found' : 'No members found'}
+                    {memberSearchQuery.trim() ? t('noMembersFound') : t('noMembersFound')}
                   </Text>
                   <Text style={styles.emptySubtext}>
                     {memberSearchQuery.trim() 
-                      ? 'Try adjusting your search terms' 
+                      ? t('tryAdjustingSearchTerms') 
                       : allMembers.length === 0 
-                        ? 'No active members available' 
-                        : 'Try refreshing the screen'
+                        ? t('noActiveMembersAvailable') 
+                        : t('tryRefreshingScreen')
                     }
                   </Text>
                 </View>
@@ -1070,7 +1123,7 @@ const Messages = ({ navigation }) => {
             }}
           >
             <Text style={styles.doneButtonText}>
-              Done
+              {t('done')}
             </Text>
           </TouchableOpacity>
         </SafeAreaView>
@@ -1123,6 +1176,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     marginTop: 10,
   },
+  sectionTitleTamil: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
   templateGrid: {
     justifyContent: 'space-between',
     marginBottom: 12,
@@ -1152,10 +1209,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
   },
+  templateTitleTamil: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
   templateDescription: {
     fontSize: 11,
     color: '#666',
     textAlign: 'center',
+  },
+  templateDescriptionTamil: {
+    fontSize: 10,
+    lineHeight: 14,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -1175,6 +1240,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginTop: 8,
+    textAlign: 'center',
+  },
+  statLabelTamil: {
+    fontSize: 10,
+    lineHeight: 14,
+    textAlign: 'center',
   },
   statValue: {
     fontSize: 20,
@@ -1194,10 +1265,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 15,
   },
+  modalHeaderTamil: {
+    paddingVertical: 12,
+    minHeight: 60,
+  },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
+  },
+  modalTitleTamil: {
+    fontSize: 16,
+    lineHeight: 20,
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 10,
   },
   modalContent: {
     flex: 1,
@@ -1241,6 +1323,10 @@ const styles = StyleSheet.create({
     color: '#4A90E2',
     marginBottom: 8,
   },
+  labelTamil: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
   recipientTypeContainer: {
     flexDirection: 'row',
     gap: 10,
@@ -1252,12 +1338,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     borderRadius: 10,
     backgroundColor: '#FFF',
     borderWidth: 2,
     borderColor: '#87CEEB',
     gap: 8,
+    minHeight: 48,
+  },
+  recipientTypeButtonTamil: {
+    minHeight: 52,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    gap: 6,
   },
   recipientTypeButtonActive: {
     backgroundColor: '#4A90E2',
@@ -1267,6 +1360,18 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#4A90E2',
+    textAlign: 'center',
+    flexShrink: 1,
+  },
+  recipientTypeTextTamil: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+    flexShrink: 1,
+  },
+  recipientTypeIcon: {
+    flexShrink: 0,
+    alignSelf: 'center',
   },
   recipientTypeTextActive: {
     color: '#FFF',
@@ -1529,10 +1634,40 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFF',
   },
+  selectAllTextTamil: {
+    fontSize: 14,
+    lineHeight: 18,
+    textAlign: 'center',
+    flexShrink: 0,
+    fontWeight: '700',
+  },
   headerRightButtons: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  headerRightButtonsTamil: {
+    gap: 10,
+    flexShrink: 0,
+    minWidth: 130,
+    justifyContent: 'flex-end',
+  },
+  selectAllButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectAllButtonTamil: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    minWidth: 100,
+    maxWidth: 100,
+    minHeight: 40,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   refreshButton: {
     padding: 8,
