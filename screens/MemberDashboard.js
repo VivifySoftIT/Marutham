@@ -25,9 +25,10 @@ import API_BASE_URL from '../apiConfig';
 
 // Birthday Wishes Section Component for MemberDashboard
 const BirthdayWishesSection = ({ memberId }) => {
+  const { t } = useLanguage();
   const [birthdayWish, setBirthdayWish] = useState(null);
   const [loading, setLoading] = useState(false);
- 
+
   useEffect(() => {
     if (memberId) {
       loadBirthdayWish();
@@ -93,7 +94,7 @@ const BirthdayWishesSection = ({ memberId }) => {
               {birthdayWish.senderName || t('member')} {t('sentYouBirthdayWishes')}
             </Text>
             <Text style={styles.birthdayWishTime}>
-              {new Date(birthdayWish.sentDate).toLocaleTimeString('en-US', {
+              {new Date(birthdayWish.sentDate).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit'
               })}
@@ -138,7 +139,7 @@ const MemberDashboard = () => {
   // Handle logout
   const handleLogout = async () => {
     Alert.alert(
-      t('confirmTitle'),
+      t('confirmLogout'),
       t('areYouSureLogout'),
       [
         {
@@ -165,7 +166,7 @@ const MemberDashboard = () => {
               });
             } catch (error) {
               console.error('Error during logout:', error);
-              Alert.alert(t('error'), t('errorMessage'));
+              Alert.alert('Error', 'Failed to logout. Please try again.');
             }
           },
         },
@@ -231,9 +232,9 @@ const MemberDashboard = () => {
   const handleMeetingResponse = async (notification) => {
     try {
       const memberId = await MemberIdService.getCurrentUserMemberId();
-      
+
       if (!memberId) {
-        Alert.alert(t('error'), t('couldNotFindMemberId'));
+        Alert.alert('Error', 'Could not find your member ID. Please try again.');
         return;
       }
 
@@ -247,9 +248,9 @@ const MemberDashboard = () => {
             onPress: async () => {
               try {
                 setLoading(true);
-                
+
                 console.log('Sending attendance response for member:', memberId, 'status: 1 (Attend)');
-                
+
                 // Call the birthday-wish API with status=1 for "Attend"
                 // This API handles both birthday wishes AND meeting responses
                 const response = await fetch(
@@ -268,41 +269,41 @@ const MemberDashboard = () => {
                 if (response.ok) {
                   const result = await response.json();
                   console.log('Meeting attendance response successful:', result);
-                  
+
                   Alert.alert(
                     t('success'),
-                    `${t('youHaveConfirmedAttendance')} ✅\n\n${t('attendanceMarkedInSystem')}.`,
+                    `${t('youHaveConfirmedAttendance')} ✅\n\n${t('attendanceMarkedInSystem')}`,
                     [{ text: t('ok') }]
                   );
-                  
+
                   // Mark notification as read
                   markNotificationAsRead(notification.id);
-                  
+
                   // Refresh notifications to update UI
                   await loadNotifications();
-                  
+
                 } else if (response.status === 404) {
                   // For meeting responses, 404 is expected (no birthday wish exists)
                   // But the status parameter still creates the meeting status and attendance
                   console.log('No birthday wish found, but meeting status recorded via status=1');
-                  
+
                   Alert.alert(
                     t('success'),
-                    `${t('yourResponseRecorded')} ✅\n\n${t('meetingResponseAndAttendanceMarked') || 'Meeting response and attendance marked'}.`,
+                    `${t('yourResponseRecorded')} ✅\n\n${t('attendanceMarkedInSystem')}`,
                     [{ text: t('ok') }]
                   );
-                  
+
                   markNotificationAsRead(notification.id);
                   await loadNotifications();
                 } else {
                   const errorText = await response.text();
                   console.error('Meeting attendance API error:', errorText);
-                  Alert.alert(t('success'), t('yourResponseRecorded'));
+                  Alert.alert('Success', 'Your attendance intention has been noted!');
                   markNotificationAsRead(notification.id);
                 }
               } catch (error) {
                 console.error('Error confirming meeting attendance:', error);
-                Alert.alert(t('success'), t('yourResponseRecorded'));
+                Alert.alert('Success', 'Your attendance has been recorded!');
                 markNotificationAsRead(notification.id);
               } finally {
                 setLoading(false);
@@ -310,14 +311,14 @@ const MemberDashboard = () => {
             },
           },
           {
-            text: t('notAttend'),
+            text: 'Not Attend',
             style: 'destructive',
             onPress: async () => {
               try {
                 setLoading(true);
-                
+
                 console.log('Sending not-attend response for member:', memberId, 'status: 2 (Not Attend)');
-                
+
                 // Call the birthday-wish API with status=2 for "Not Attend"
                 const response = await fetch(
                   `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberId}?status=2`,
@@ -335,33 +336,33 @@ const MemberDashboard = () => {
                 if (response.ok) {
                   const result = await response.json();
                   console.log('Not-attend response successful:', result);
-                  
+
                   Alert.alert(
                     t('responseRecorded'),
-                    `${t('youIndicatedNotAttend')} ❌\n\n${t('responseRecordedInSystem')}.`,
+                    `${t('youIndicatedNotAttend')} ❌\n\n${t('responseRecordedInSystem')}`,
                     [{ text: t('ok') }]
                   );
-                  
+
                   markNotificationAsRead(notification.id);
                   await loadNotifications();
-                  
+
                 } else if (response.status === 404) {
                   // For meeting responses, 404 is expected (no birthday wish exists)
                   // But the status parameter still creates the meeting status
                   console.log('No birthday wish found, but meeting status recorded via status=2');
-                  
+
                   Alert.alert(
                     t('responseRecorded'),
-                    `${t('yourResponseRecorded')} ❌\n\n${t('meetingResponseNoted') || 'Meeting response noted'}.`,
+                    `${t('yourResponseRecorded')} ❌\n\n${t('responseRecordedInSystem')}`,
                     [{ text: t('ok') }]
                   );
-                  
+
                   markNotificationAsRead(notification.id);
                   await loadNotifications();
                 } else {
                   const errorText = await response.text();
                   console.error('Not-attend API error:', errorText);
-                  Alert.alert(t('success'), t('yourResponseRecorded'));
+                  Alert.alert('Success', 'Your response has been recorded!');
                   markNotificationAsRead(notification.id);
                 }
               } catch (error) {
@@ -377,19 +378,19 @@ const MemberDashboard = () => {
       );
     } catch (error) {
       console.error('Error in handleMeetingResponse:', error);
-      Alert.alert(t('error'), t('failedToProcessMeetingResponse'));
+      Alert.alert('Error', 'Failed to process meeting response.');
     }
   };
 
   // Handle payment response
   const handlePaymentResponse = (notification) => {
     Alert.alert(
-      'Payment Notification',
-      'View payment details?',
+      t('paymentNotification'),
+      t('viewPaymentDetails'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: 'View Details',
+          text: t('viewDetails'),
           onPress: () => {
             markNotificationAsRead(notification.id);
             // Navigate to payments or show details
@@ -404,18 +405,18 @@ const MemberDashboard = () => {
     try {
       // Get sender's member ID (current user)
       const senderMemberId = await MemberIdService.getCurrentUserMemberId();
-      
+
       if (!senderMemberId) {
-        Alert.alert(t('error'), t('couldNotFindMemberId'));
+        Alert.alert('Error', 'Could not find your member ID. Please try again.');
         return;
       }
 
       const isBirthday = notification.messageType === 'Birthday';
-      const wishType = isBirthday ? 'Birthday Wishes' : 'Welcome Wishes';
-      const recipientName = notification.recipientName || 'member';
-      
+      const wishType = isBirthday ? t('birthdayWishes') : t('welcomeWishes');
+      let recipientName = notification.recipientName || t('member');
+
       console.log('Processing wish response for:', recipientName, 'Type:', wishType);
-      
+
       // Skip if recipient name is just "member" (generic placeholder)
       if (recipientName === 'member') {
         // Try one more time to extract from notification content if available
@@ -426,7 +427,7 @@ const MemberDashboard = () => {
             /(?:New member)\s+([A-Za-z\s]+?)(?:\s|$|!|\.|,)/i,
             /([A-Za-z\s]+?)(?:'s birthday|has joined)/i
           ];
-          
+
           for (const pattern of patterns) {
             const match = notification.message.match(pattern);
             if (match && match[1] && match[1].trim() !== 'member') {
@@ -436,21 +437,21 @@ const MemberDashboard = () => {
             }
           }
         }
-        
+
         // If still "member", show error
-        if (recipientName === 'member') {
+        if (recipientName === t('member')) {
           Alert.alert(
-            'Unable to Send Wish',
-            'Could not identify the recipient for this notification. The member information is missing from the notification content.',
-            [{ text: 'OK' }]
+            t('unableToSendWish'),
+            t('couldNotIdentifyRecipient'),
+            [{ text: t('ok') }]
           );
           return;
         }
       }
-      
+
       // Fetch the actual member ID by name if not already set
       let recipientMemberId = notification.recipientMemberId;
-      
+
       if (!recipientMemberId && recipientName && recipientName !== 'member') {
         console.log('Fetching member ID for:', recipientName);
         try {
@@ -459,12 +460,12 @@ const MemberDashboard = () => {
             const members = await response.json();
             // Try exact match first
             let member = members.find(m => m.name && m.name.toLowerCase() === recipientName.toLowerCase());
-            
+
             // If no exact match, try partial match
             if (!member) {
               member = members.find(m => m.name && m.name.toLowerCase().includes(recipientName.toLowerCase()));
             }
-            
+
             if (member) {
               recipientMemberId = member.id;
               console.log('Found member ID:', recipientMemberId, 'for name:', recipientName);
@@ -476,12 +477,12 @@ const MemberDashboard = () => {
           console.error('Error fetching member ID:', error);
         }
       }
-      
+
       if (!recipientMemberId) {
-        Alert.alert(t('error'), t('couldNotFindMember'));
+        Alert.alert('Error', 'Could not find the member. Please try again.');
         return;
       }
-      
+
       Alert.alert(
         `Send ${wishType}`,
         `Send ${wishType.toLowerCase()} to ${recipientName}?`,
@@ -522,13 +523,13 @@ const MemberDashboard = () => {
                     const errorText = await response.text();
                     console.error(`${wishType} API error - Status:`, response.status);
                     console.error(`${wishType} API error - Response:`, errorText);
-                    
+
                     // Handle specific error cases
                     if (response.status === 404) {
-                      Alert.alert(t('error'), `${t('memberNotFound')}. ${t('pleaseCheckIfValidMember') || 'Please check if'} ${recipientName} ${t('isValidMember') || 'is a valid member'}.`);
+                      Alert.alert('Error', `Member not found. Please check if ${recipientName} is a valid member.`);
                     } else {
-                      let errorMessage = `${t('failedToSendBirthdayWish') || 'Failed to send'} ${wishType.toLowerCase()}. ${t('tryAgain')}.`;
-                      
+                      let errorMessage = `Failed to send ${wishType.toLowerCase()}. Please try again.`;
+
                       try {
                         const errorJson = JSON.parse(errorText);
                         errorMessage = errorJson.title || errorJson.message || errorJson.error || errorMessage;
@@ -538,8 +539,8 @@ const MemberDashboard = () => {
                           errorMessage = errorText;
                         }
                       }
-                      
-                      Alert.alert(t('error'), errorMessage);
+
+                      Alert.alert('Error', errorMessage);
                     }
                     setLoading(false);
                     return;
@@ -555,19 +556,19 @@ const MemberDashboard = () => {
                   setLoading(false);
                   return;
                 }
-                
+
                 // Mark notification as read
                 markNotificationAsRead(notification.id);
-                
+
                 Alert.alert(
                   'Success',
                   `${wishType} sent to ${recipientName}! 🎉`,
                   [{ text: 'OK' }]
                 );
-                
+
                 // Refresh notifications to update UI
                 await loadNotifications();
-                
+
               } catch (error) {
                 console.error(`Error sending ${wishType}:`, error);
                 console.error('Error details:', {
@@ -575,7 +576,7 @@ const MemberDashboard = () => {
                   stack: error.stack,
                   notification: notification
                 });
-                Alert.alert(t('error'), `${t('anErrorOccurred')}: ${error.message || t('unknownError')}`);
+                Alert.alert('Error', `An error occurred: ${error.message || 'Unknown error'}`);
               } finally {
                 setLoading(false);
               }
@@ -585,7 +586,7 @@ const MemberDashboard = () => {
       );
     } catch (error) {
       console.error('Error in handleWishResponse:', error);
-      Alert.alert(t('error'), t('failedToProcessWishRequest'));
+      Alert.alert('Error', 'Failed to process wish request.');
     }
   };
 
@@ -598,16 +599,16 @@ const MemberDashboard = () => {
 
       if (currentHour >= 1 && currentHour < 12) {
         newGreeting = `🌅 ${t('goodMorning')}`;
-        newQuote = t('startYourDay');
+        newQuote = t('startDayPositive');
       } else if (currentHour >= 12 && currentHour < 16) {
         newGreeting = `☀️ ${t('goodAfternoon')}`;
         newQuote = t('keepMomentum');
       } else if (currentHour >= 16 && currentHour < 20) {
-        newGreeting = `🌙 ${t('goodEvening')}`;
+        newGreeting = ` 🌙 ${t('goodEvening')}`;
         newQuote = t('reflectAchievements');
       } else if (currentHour >= 20 || currentHour < 1) {
-        newGreeting = `🌙 ${t('goodNight') || 'Good Night'}`;
-        newQuote = t('restWellRecharge') || 'Rest well and recharge!';
+        newGreeting = `🌙 ${t('goodNight')}`;
+        newQuote = t('restWellRecharge');
       }
 
       console.log('Setting greeting to:', newGreeting); // Debug log
@@ -645,8 +646,8 @@ const MemberDashboard = () => {
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       Alert.alert(
-        t('infoTitle'),
-        t('dataLoadFailed') + '. ' + (t('checkNetworkConnection') || 'Please check your network connection.')
+        'Info',
+        'Failed to load dashboard data. Please check your network connection.'
       );
     } finally {
       setLoading(false);
@@ -668,7 +669,7 @@ const MemberDashboard = () => {
 
       let messageNotifications = null;
       let birthdayReminders = null;
-      
+
       try {
         messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
         console.log('MemberDashboard - Message notifications response:', messageNotifications);
@@ -706,8 +707,8 @@ const MemberDashboard = () => {
             id: `birthday-reminder-${reminder.id || Date.now()}`,
             type: 'birthday',
             messageType: 'Birthday',
-            title: '🎂 Birthday Reminder',
-            message: `${t('todayIs')} ${reminder.memberName || t('member')}${t('birthdayOf')}! ${t('sendThemWishes') || 'Send them wishes'}.`,
+            title: `🎂 Birthday Reminder`,
+            message: `Today is ${reminder.memberName || 'Member'}'s Birthday! Send them wishes.`,
             time: 'Today',
             icon: 'cake-variant',
             color: '#9C27B0',
@@ -727,8 +728,8 @@ const MemberDashboard = () => {
       if (newNotifications.length === 0) {
         // Try to get real member IDs for test notifications
         let testMemberId = null; // Don't use fallback ID that doesn't exist
-        let testMemberName = t('member'); // fallback name
-        
+        let testMemberName = 'Test Member'; // fallback name
+
         try {
           const response = await fetch(`${API_BASE_URL}/api/Members`);
           if (response.ok) {
@@ -737,7 +738,7 @@ const MemberDashboard = () => {
               // Use the first member for test notifications
               const firstMember = members[0];
               testMemberId = firstMember.id;
-              testMemberName = firstMember.name || t('member');
+              testMemberName = firstMember.name || 'Test Member';
             }
           }
         } catch (error) {
@@ -751,8 +752,8 @@ const MemberDashboard = () => {
             id: `test-birthday-${Date.now()}`,
             type: 'birthday',
             messageType: 'Birthday',
-            title: '🎂 Birthday Reminder',
-            message: `${t('todayIs')} ${testMemberName}${t('birthdayOf')}! ${t('sendThemWishes') || 'Send them wishes'}.`,
+            title: `🎂 Birthday Reminder`,
+            message: `Today is ${testMemberName}'s Birthday. Send them wishes!`,
             time: 'Today',
             icon: 'cake-variant',
             color: '#9C27B0',
@@ -774,8 +775,8 @@ const MemberDashboard = () => {
           id: `test-meeting-${Date.now()}`,
           type: 'message',
           messageType: 'Meeting',
-          title: `📅 ${t('meetingNotification') || 'Meeting Notification'}`,
-          message: t('monthlyTeamMeetingScheduled') || 'Monthly team meeting scheduled for tomorrow.',
+          title: `📅 Meeting Notification`,
+          message: 'Monthly meeting scheduled',
           time: 'Tomorrow',
           icon: 'calendar-clock',
           color: '#4ECDC4',
@@ -794,8 +795,8 @@ const MemberDashboard = () => {
           id: `test-payment-${Date.now()}`,
           type: 'message',
           messageType: 'Payment',
-          title: `💳 ${t('paymentNotification')}`,
-          message: t('paymentReceivedSuccessfully') || 'Payment of ₹500 received successfully.',
+          title: `💳 Payment Notification`,
+          message: `Payment of ₹500 received successfully.`,
           time: 'Today',
           icon: 'credit-card-check',
           color: '#FFA726',
@@ -824,7 +825,7 @@ const MemberDashboard = () => {
           const typeConfig = notificationTypeMap[msg.messageType] ||
             { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
 
-          let notificationMessage = msg.content || t('newNotificationReceived');
+          let notificationMessage = msg.content || 'New notification received';
           if ((msg.messageType === 'Event' || msg.messageType === 'Meeting') && msg.date) {
             const eventDate = new Date(msg.date);
             const formattedDate = eventDate.toLocaleDateString('en-US', {
@@ -838,7 +839,7 @@ const MemberDashboard = () => {
           // Extract member IDs for Birthday and NewMember notifications
           let recipientMemberId = null;
           let recipientName = null;
-          
+
           if (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') {
             // Extract name from content for Birthday notifications
             if (msg.messageType === 'Birthday' && msg.content) {
@@ -847,7 +848,7 @@ const MemberDashboard = () => {
                 recipientName = match[1];
               }
             }
-            
+
             // Extract name from content for NewMember notifications
             if (msg.messageType === 'NewMember' && msg.content) {
               const match = msg.content.match(/New member joined: (.+)/);
@@ -863,12 +864,12 @@ const MemberDashboard = () => {
             messageType: msg.messageType,
             title: msg.subject || `${msg.messageType} Notification`,
             message: notificationMessage,
-            time: msg.messageType === 'Meeting' && msg.date 
-              ? new Date(msg.date).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric'
-                })
+            time: msg.messageType === 'Meeting' && msg.date
+              ? new Date(msg.date).toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+              })
               : (msg.createdDate ? new Date(msg.createdDate).toLocaleDateString() : 'Recent'),
             icon: typeConfig.icon,
             color: typeConfig.color,
@@ -899,25 +900,25 @@ const MemberDashboard = () => {
     try {
       const fullName = await AsyncStorage.getItem('fullName');
       const memberId = await MemberIdService.getCurrentUserMemberId();
-      
+
       console.log('Loading member name - fullName:', fullName, 'memberId:', memberId); // Debug log
-      
+
       if (fullName) {
         console.log('Setting member name from AsyncStorage:', fullName);
         setMemberName(fullName);
       } else if (memberId) {
         // Try to get member details from API
         try {
-          const response = await fetch(`https://www.vivifysoft.in/AlaigalBE/api/Members/${memberId}`);
+          const response = await fetch(`${API_BASE_URL}/api/Members/${memberId}`);
           if (response.ok) {
             const memberDetails = await response.json();
-            const name = memberDetails?.name || 'Member';
+            const name = memberDetails?.name || t('member');
             console.log('Setting member name from API:', name);
             setMemberName(name);
           }
         } catch (error) {
           console.error('Error fetching member details:', error);
-          setMemberName(t('administrator'));
+          setMemberName('Admin User');
         }
       } else {
         console.log('No fullName or memberId found, using default');
@@ -992,7 +993,7 @@ const MemberDashboard = () => {
     {
       id: 'send-notice',
       icon: 'bullhorn',
-      title: t('sendNotice'),
+      title: t('broadcast'),
       action: () => navigation.navigate('Messages'),
     },
     {
@@ -1004,7 +1005,7 @@ const MemberDashboard = () => {
           navigation.navigate('Reports');
         } catch (error) {
           console.error('Error navigating to reports:', error);
-          Alert.alert(t('error'), t('errorMessage'));
+          Alert.alert(t('error'), t('operationFailed'));
         }
       },
     },
@@ -1055,61 +1056,61 @@ const MemberDashboard = () => {
       >
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
-  {/* Left: Settings Icon */}
-  <TouchableOpacity
-    style={styles.headerIconButton}
-    onPress={() => navigation.navigate('SettingsScreen')}
-  >
-    <Icon name="cog" size={24} color="#FFF" />
-  </TouchableOpacity>
+            {/* Left: Settings Icon */}
+            <TouchableOpacity
+              style={styles.headerIconButton}
+              onPress={() => navigation.navigate('SettingsScreen')}
+            >
+              <Icon name="cog" size={24} color="#FFF" />
+            </TouchableOpacity>
 
-  {/* Center: Alaigal Title with Logo - Takes up remaining space */}
-  <View style={styles.headerTitleContainer}>
-    <View style={styles.logoTitleContainer}>
-      <View style={styles.logoContainer}>
-        <Image 
-          source={require('../assets/logoicon2.png')} 
-          style={styles.headerLogo}
-          resizeMode="contain"
-        />
-      </View>
-      <Text style={[
-  styles.welcomeText,
-  t('alaigal') === 'அலைகள்' && styles.tamilText
-]}>
-  {t('alaigal')}
-</Text>
-    </View>
-  </View>
-
-  {/* Right: Notification and Logout Icons */}
-  <View style={styles.headerRightContainer}>
-    <TouchableOpacity
-      onPress={() => setShowNotifications(true)}
-      style={styles.headerActionButton}
-    >
-      <Icon name="bell" size={22} color="#FFF" />
-      {notificationCount > 0 && (
-        <View style={styles.notificationDot}>
-          <Text style={styles.notificationDotText}>{notificationCount}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-
-    <TouchableOpacity
-      onPress={handleLogout}
-      style={styles.headerActionButton}
-    >
-      <Icon name="logout" size={22} color="#FFF" />
-    </TouchableOpacity>
-  </View>
-</View>
-<View style={styles.headerCenterContent}>
-              
-              <Text style={styles.thirukkuralQuote}>
-  "தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்" — திருக்குறள் 619
-</Text>
+            {/* Center: Alaigal Title with Logo - Takes up remaining space */}
+            <View style={styles.headerTitleContainer}>
+              <View style={styles.logoTitleContainer}>
+                <View style={styles.logoContainer}>
+                  <Image
+                    source={require('../assets/logoicon2.png')}
+                    style={styles.headerLogo}
+                    resizeMode="contain"
+                  />
+                </View>
+                <Text style={[
+                  styles.welcomeText,
+                  t('alaigal') === 'அலைகள்' && styles.tamilText
+                ]}>
+                  {t('alaigal')}
+                </Text>
+              </View>
             </View>
+
+            {/* Right: Notification and Logout Icons */}
+            <View style={styles.headerRightContainer}>
+              <TouchableOpacity
+                onPress={() => setShowNotifications(true)}
+                style={styles.headerActionButton}
+              >
+                <Icon name="bell" size={22} color="#FFF" />
+                {notificationCount > 0 && (
+                  <View style={styles.notificationDot}>
+                    <Text style={styles.notificationDotText}>{notificationCount}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleLogout}
+                style={styles.headerActionButton}
+              >
+                <Icon name="logout" size={22} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={styles.headerCenterContent}>
+
+            <Text style={styles.thirukkuralQuote}>
+              "தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்" — திருக்குறள் 619
+            </Text>
+          </View>
           {/* Enhanced Member Info Card - My Card Style */}
           {/* Card removed as requested */}
         </View>
@@ -1127,8 +1128,8 @@ const MemberDashboard = () => {
           />
         }
       >
-       
-       
+
+
 
         {/* Recent Notifications Section - Matching UserDashboard Layout */}
         {notifications.length > 0 && (
@@ -1140,16 +1141,10 @@ const MemberDashboard = () => {
             <View style={styles.sectionHeader}>
               <View style={styles.notificationHeaderLeft}>
                 <Icon name="bell" size={20} color="#FFB300" />
-                <Text style={[
-                  styles.sectionTitle,
-                  t('recentNotifications') === 'சமீபத்திய அறிவிப்புகள்' && styles.sectionTitleTamil
-                ]}>{t('recentNotifications')}</Text>
+                <Text style={styles.sectionTitle}>{t('recentNotifications')}</Text>
               </View>
               <TouchableOpacity onPress={() => setShowNotifications(true)}>
-                <Text style={[
-                  styles.viewAllNotifications,
-                  t('viewAll') === 'பார்க்க' && styles.viewAllNotificationsTamil
-                ]}>{t('viewAll')}</Text>
+                <Text style={styles.viewAllNotifications}>{t('viewAll')}</Text>
               </TouchableOpacity>
             </View>
             <ScrollView
@@ -1204,8 +1199,8 @@ const MemberDashboard = () => {
                     {notification.canRespond && (
                       <View style={styles.tapToRespondBadge}>
                         <Text style={styles.tapToRespondText}>
-                          {notification.messageType === 'Meeting' ? 'Tap to respond' : 
-                           notification.messageType === 'Payment' ? 'Tap to view' : 'Tap to respond'}
+                          {notification.messageType === 'Meeting' ? t('tapToRespond') :
+                            notification.messageType === 'Payment' ? t('tapToView') : t('tapToRespond')}
                         </Text>
                       </View>
                     )}
@@ -1218,7 +1213,7 @@ const MemberDashboard = () => {
             </ScrollView>
           </Animatable.View>
         )}
-    
+
         {/* Quick Actions - Swipeable */}
         <Animatable.View
           animation="fadeInUp"
@@ -1226,10 +1221,7 @@ const MemberDashboard = () => {
           style={styles.sectionContainer}
         >
           <View style={styles.sectionHeader}>
-            <Text style={[
-              styles.sectionTitle,
-              t('quickActions') === 'விரைவு செயல்கள்' && styles.sectionTitleTamil
-            ]}>⚡ {t('quickActions')}</Text>
+            <Text style={styles.sectionTitle}>⚡ {t('quickActions')}</Text>
           </View>
 
           <View style={styles.quickActionsContainer}>
@@ -1276,15 +1268,9 @@ const MemberDashboard = () => {
           style={styles.sectionContainer}
         >
           <View style={styles.sectionHeader}>
-            <Text style={[
-              styles.sectionTitle,
-              t('memberDetails') === 'உறுப்பினர் விவரங்கள்' && styles.sectionTitleTamil
-            ]}>📱 {t('memberDetails')}</Text>
-            <TouchableOpacity style={styles.viewAllButton}>
-              <Text style={[
-                styles.viewAllText,
-                t('viewAll') === 'பார்க்க' && styles.viewAllTextTamil
-              ]}>{t('viewAll')}</Text>
+            <Text style={styles.sectionTitle}>📱 {t('memberFeatures')}</Text>
+            <TouchableOpacity style={styles.viewAllButton} onPress={() => navigation.navigate('MembersList')}>
+              <Text style={styles.viewAllText}>{t('viewAll')}</Text>
               <Icon name="chevron-right" size={14} color={waterBlueColors.primary} />
             </TouchableOpacity>
           </View>
@@ -1305,7 +1291,7 @@ const MemberDashboard = () => {
                     <View style={[styles.moduleIconContainer, { backgroundColor: `${waterBlueColors.primary}15` }]}>
                       <Icon name={module.icon} size={22} color={waterBlueColors.primary} />
                     </View>
-                    <Text style={styles.moduleTitle}>{module.title}</Text>
+                    <Text style={styles.moduleTitle} numberOfLines={2}>{module.title}</Text>
                   </View>
                   <View style={styles.moduleArrow}>
                     <Icon name="chevron-right" size={16} color={waterBlueColors.primary} />
@@ -1323,10 +1309,7 @@ const MemberDashboard = () => {
           style={styles.activitySection}
         >
           <View style={styles.activityHeader}>
-            <Text style={[
-              styles.activityTitle,
-              t('recentActivity') === 'சமீபத்திய செயல்பாடு' && styles.activityTitleTamil
-            ]}>📈 {t('recentActivity')}</Text>
+            <Text style={styles.activityTitle}>📈 {t('recentActivity')}</Text>
             <Text style={styles.activityTime}>{t('today')}</Text>
           </View>
           <View style={styles.activityCard}>
@@ -1344,7 +1327,7 @@ const MemberDashboard = () => {
                 <Icon name="calendar-check" size={18} color={waterBlueColors.primary} />
               </View>
               <View style={styles.activityContent}>
-                <Text style={styles.activityText}>{t('eventRegistrationConfirmed') || 'Event registration confirmed'}</Text>
+                <Text style={styles.activityText}>{t('eventRegistrationConfirmed')}</Text>
                 <Text style={styles.activityTimeText}>09:15 AM</Text>
               </View>
             </View>
@@ -1388,18 +1371,18 @@ const MemberDashboard = () => {
 
             {/* Notification Filter Tabs */}
             <View style={styles.notificationFilterContainer}>
-              <ScrollView 
-                horizontal 
+              <ScrollView
+                horizontal
                 showsHorizontalScrollIndicator={false}
                 style={styles.notificationFilterScroll}
                 contentContainerStyle={styles.notificationFilterContent}
               >
                 {[
-                  { id: 'all', label: t('all') || 'All', icon: 'bell', count: notifications.length },
-                  { id: 'Birthday', label: t('birthdays'), icon: 'cake-variant', count: notifications.filter(n => n.messageType === 'Birthday').length },
-                  { id: 'Event', label: t('event'), icon: 'calendar-star', count: notifications.filter(n => n.messageType === 'Event').length },
-                  { id: 'Meeting', label: t('meeting'), icon: 'calendar-clock', count: notifications.filter(n => n.messageType === 'Meeting').length },
-                  { id: 'Payment', label: t('payment'), icon: 'credit-card', count: notifications.filter(n => n.messageType === 'Payment').length },
+                  { id: 'all', label: t('all'), icon: 'bell', count: notifications.length },
+                  { id: 'Birthday', label: t('Birthday'), icon: 'cake-variant', count: notifications.filter(n => n.messageType === 'Birthday').length },
+                  { id: 'Event', label: t('Event'), icon: 'calendar-star', count: notifications.filter(n => n.messageType === 'Event').length },
+                  { id: 'Meeting', label: t('Meeting'), icon: 'calendar-clock', count: notifications.filter(n => n.messageType === 'Meeting').length },
+                  { id: 'Payment', label: t('Payment'), icon: 'credit-card', count: notifications.filter(n => n.messageType === 'Payment').length },
                   { id: 'NewMember', label: t('welcome'), icon: 'account-plus', count: notifications.filter(n => n.messageType === 'NewMember').length },
                 ].map((filter) => (
                   <TouchableOpacity
@@ -1410,10 +1393,10 @@ const MemberDashboard = () => {
                     ]}
                     onPress={() => setSelectedNotificationFilter(filter.id)}
                   >
-                    <Icon 
-                      name={filter.icon} 
-                      size={16} 
-                      color={selectedNotificationFilter === filter.id ? '#FFF' : waterBlueColors.primary} 
+                    <Icon
+                      name={filter.icon}
+                      size={16}
+                      color={selectedNotificationFilter === filter.id ? '#FFF' : waterBlueColors.primary}
                     />
                     <Text style={[
                       styles.notificationFilterTabText,
@@ -1442,8 +1425,8 @@ const MemberDashboard = () => {
             <ScrollView style={styles.notificationsList} showsVerticalScrollIndicator={false}>
               {(() => {
                 // Filter notifications based on selected filter
-                const filteredNotifications = selectedNotificationFilter === 'all' 
-                  ? notifications 
+                const filteredNotifications = selectedNotificationFilter === 'all'
+                  ? notifications
                   : notifications.filter(n => n.messageType === selectedNotificationFilter);
 
                 if (filteredNotifications.length === 0) {
@@ -1451,10 +1434,10 @@ const MemberDashboard = () => {
                     <View style={styles.emptyNotifications}>
                       <Icon name="bell-off" size={48} color="#BDC3C7" />
                       <Text style={styles.emptyNotificationsText}>
-                        {selectedNotificationFilter === 'all' ? t('noNotifications') : `${t('no')} ${selectedNotificationFilter.toLowerCase()} ${t('notifications')}`}
+                        {selectedNotificationFilter === 'all' ? t('noNotifications') : `${t('noRecordsFound')}`}
                       </Text>
                       <Text style={styles.emptyNotificationsSubtext}>
-                        {selectedNotificationFilter === 'all' ? t('youreAllCaughtUp') : `${t('no')} ${selectedNotificationFilter.toLowerCase()} ${t('notifications')} ${t('found')}`}
+                        {selectedNotificationFilter === 'all' ? t('youreAllCaughtUp') : t('noRecordsFound')}
                       </Text>
                     </View>
                   );
@@ -1789,7 +1772,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   // Recent Notifications Styles
-    notificationCardHeader: {
+  notificationCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -1802,11 +1785,6 @@ const styles = StyleSheet.create({
   },
   viewAllNotifications: {
     fontSize: 11,
-    color: '#4A90E2',
-    fontWeight: '600',
-  },
-  viewAllNotificationsTamil: {
-    fontSize: 10,
     color: '#4A90E2',
     fontWeight: '600',
   },
@@ -1922,25 +1900,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-    minHeight: 24,
+    width: '100%',
   },
   notificationHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: '#2C3E50',
     marginLeft: 8,
-  },
-  sectionTitleTamil: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginLeft: 8,
-    lineHeight: 20,
-    flexShrink: 1,
+    flex: 1,
   },
   viewAllButton: {
     flexDirection: 'row',
@@ -1949,15 +1922,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
-    flexShrink: 0,
   },
   viewAllText: {
-    fontSize: 12,
-    color: '#4A90E2',
-    fontWeight: '600',
-    marginRight: 4,
-  },
-  viewAllTextTamil: {
     fontSize: 11,
     color: '#4A90E2',
     fontWeight: '600',
@@ -1973,8 +1939,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   quickActionCard: {
-    width: 90,
-    height: 75,
+    width: 105,
+    height: 80,
     marginRight: 10,
     borderRadius: 16,
     backgroundColor: '#FFF',
@@ -2011,7 +1977,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   quickActionText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     color: '#2C3E50',
     textAlign: 'center',
@@ -2083,7 +2049,8 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 2,
     lineHeight: 16,
-    minHeight: 16,
+    height: 32, // Fixed height for 2 lines to ensure alignment
+    textAlignVertical: 'center',
   },
   moduleDescription: {
     fontSize: 11,
@@ -2108,12 +2075,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#2C3E50',
-  },
-  activityTitleTamil: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#2C3E50',
-    lineHeight: 22,
   },
   activityTime: {
     fontSize: 12,
