@@ -1115,6 +1115,21 @@ const translations = {
     allTimePayments: 'All time payments',
     nextDue: 'Next Due',
     paymentDeadline: 'Payment deadline',
+
+    membersList: 'Members List',
+    searchByNameIdPhoneEmail: 'Search by name, ID, phone or email...',
+    loadingMembers: 'Loading members...',
+    membersFound: 'Members Found',
+    filterComingSoon: 'Filter functionality coming soon',
+    noResults: 'No Results',
+    noMembersFoundMessage: 'No members found matching your search.',
+    searchFailed: 'Search failed',
+    failedToLoadMembers: 'Failed to load members',
+    tryDifferentSearchTerm: 'Try a different search term',
+    addNewMembersToStart: 'Add new members to get started',
+    addNewMember: 'Add New Member',
+    joinDate: 'Joined',
+    inactive: 'Inactive',
   },
   ta: {
     // Common
@@ -2290,6 +2305,21 @@ const translations = {
     allTimePayments: 'அனைத்து நேர பணம்',
     nextDue: 'அடுத்த நிலுவை',
     paymentDeadline: 'பணம் காலக்கெடு',
+    // MembersList Screen Specific
+    membersList: 'உறுப்பினர்கள் பட்டியல்',
+    searchByNameIdPhoneEmail: 'பெயர், அடையாளம், தொலைபேசி அல்லது மின்னஞ்சல் மூலம் தேடு...',
+    loadingMembers: 'உறுப்பினர்களை ஏற்றுகிறது...',
+    membersFound: 'உறுப்பினர்கள் கிடைத்தன',
+    filterComingSoon: 'வடிகட்டி செயல்பாடு விரைவில் வரும்',
+    noResults: 'முடிவுகள் இல்லை',
+    noMembersFoundMessage: 'உங்கள் தேடலுக்கு பொருந்தும் உறுப்பினர்கள் கிடைக்கவில்லை.',
+    searchFailed: 'தேடல் தோல்வியடைந்தது',
+    failedToLoadMembers: 'உறுப்பினர்களை ஏற்ற முடியவில்லை',
+    tryDifferentSearchTerm: 'வேறு தேடல் சொல்லை முயற்சி செய்யவும்',
+    addNewMembersToStart: 'தொடங்க புதிய உறுப்பினர்களைச் சேர்க்கவும்',
+    addNewMember: 'புதிய உறுப்பினர் சேர்க்கவும்',
+    joinDate: 'சேர்ந்தது',
+    inactive: 'செயலற்ற',
   },
 
 };
