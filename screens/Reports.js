@@ -32,10 +32,12 @@ const { width } = Dimensions.get('window');
 
 // Graph View Component
 const GraphView = ({ reportType, data, stats }) => {
+  const { t } = useLanguage();
+
   if (!data || data.length === 0) {
     return (
       <View style={styles.graphContainer}>
-        <Text style={styles.graphEmptyText}>No data available for graph</Text>
+        <Text style={styles.graphEmptyText}>{t('noDataAvailableForGraph')}</Text>
       </View>
     );
   }
@@ -47,11 +49,11 @@ const GraphView = ({ reportType, data, stats }) => {
         const presentCount = data.filter(d => d.status === 'Present').length;
         const absentCount = data.filter(d => d.status === 'Absent').length;
         return {
-          labels: ['Present', 'Absent'],
+          labels: [t('present'), t('absent')],
           values: [presentCount, absentCount],
           colors: ['#4CAF50', '#F44336'],
         };
-      
+
       case 'tyfcb':
         const tyfcbByMonth = {};
         data.forEach(item => {
@@ -63,47 +65,47 @@ const GraphView = ({ reportType, data, stats }) => {
           values: Object.values(tyfcbByMonth),
           colors: ['#4A90E2', '#87CEEB', '#5DADE2', '#2C5F8D'],
         };
-      
+
       case 'payment':
         const paidCount = data.filter(d => d.status === 'Paid' || d.status === 'Completed').length;
         const pendingCount = data.length - paidCount;
         return {
-          labels: ['Paid', 'Pending'],
+          labels: [t('paid'), t('pending')],
           values: [paidCount, pendingCount],
           colors: ['#4CAF50', '#FF9800'],
         };
-      
+
       case 'meeting':
         const completedCount = data.filter(d => d.status === 'Completed').length;
         const pendingMeetings = data.length - completedCount;
         return {
-          labels: ['Completed', 'Pending'],
+          labels: [t('completed'), t('pending')],
           values: [completedCount, pendingMeetings],
           colors: ['#4CAF50', '#FF9800'],
         };
-      
+
       case 'referral':
         const confirmedCount = data.filter(d => d.status === 'Confirmed' || d.status === 'Confirm').length;
         const pendingReferrals = data.filter(d => d.status === 'Pending').length;
         const rejectedCount = data.filter(d => d.status === 'Rejected' || d.status === 'Reject').length;
         return {
-          labels: ['Confirmed', 'Pending', 'Rejected'],
+          labels: [t('confirmed'), t('pending'), t('rejected')],
           values: [confirmedCount, pendingReferrals, rejectedCount],
           colors: ['#4CAF50', '#FF9800', '#F44336'],
         };
-      
+
       case 'visitor':
         const becameMemberCount = data.filter(d => d.becameMember).length;
         const stillVisitor = data.length - becameMemberCount;
         return {
-          labels: ['Became Members', 'Still Visitors'],
+          labels: [t('becameMembers'), t('stillVisitors')],
           values: [becameMemberCount, stillVisitor],
           colors: ['#4CAF50', '#4A90E2'],
         };
-      
+
       default:
         return {
-          labels: ['Total'],
+          labels: [t('total')],
           values: [data.length],
           colors: ['#4A90E2'],
         };
@@ -117,15 +119,18 @@ const GraphView = ({ reportType, data, stats }) => {
     <View style={styles.graphContainer}>
       <View style={styles.graphContent}>
         <Text style={styles.graphTitle}>
-          {reportType.charAt(0).toUpperCase() + reportType.slice(1)} Report Graph
+          {t(reportType === 'tyfcb' ? 'thanksNote' :
+            reportType === 'meeting' ? 'oneToOneMeeting' :
+              reportType === 'alaigalmeeting' ? 'alaigalMeeting' :
+                reportType)} {t('reportGraph')}
         </Text>
-        
+
         {/* Simple Bar Chart */}
         <View style={styles.barChartContainer}>
           {graphData.labels.map((label, index) => {
             const value = graphData.values[index];
             const percentage = maxValue > 0 ? (value / maxValue) * 100 : 0;
-            
+
             return (
               <View key={index} style={styles.barChartItem}>
                 <View style={styles.barChartLabelContainer}>
@@ -133,10 +138,10 @@ const GraphView = ({ reportType, data, stats }) => {
                   <Text style={styles.barChartValue}>{value}</Text>
                 </View>
                 <View style={styles.barChartBarContainer}>
-                  <View 
+                  <View
                     style={[
                       styles.barChartBar,
-                      { 
+                      {
                         width: `${percentage}%`,
                         backgroundColor: graphData.colors[index % graphData.colors.length]
                       }
@@ -152,10 +157,10 @@ const GraphView = ({ reportType, data, stats }) => {
         <View style={styles.graphSummary}>
           <View style={styles.graphSummaryItem}>
             <Icon name="chart-line" size={24} color="#4A90E2" />
-            <Text style={styles.graphSummaryLabel}>Total Records</Text>
+            <Text style={styles.graphSummaryLabel}>{t('totalRecords')}</Text>
             <Text style={styles.graphSummaryValue}>{data.length}</Text>
           </View>
-          
+
           {stats && (
             <>
               {stats.stat2 && (
@@ -165,7 +170,7 @@ const GraphView = ({ reportType, data, stats }) => {
                   <Text style={styles.graphSummaryValue}>{stats.stat2.value}</Text>
                 </View>
               )}
-              
+
               {stats.stat3 && (
                 <View style={styles.graphSummaryItem}>
                   <Icon name="alert-circle" size={24} color="#FF9800" />
@@ -196,10 +201,10 @@ const Reports = ({ navigation }) => {
   const [allMembers, setAllMembers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMembers, setFilteredMembers] = useState([]);
-  
+
   // View mode state - 'list' or 'graph'
   const [viewMode, setViewMode] = useState('list');
-  
+
   // Date picker states
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showCustomDateModal, setShowCustomDateModal] = useState(false);
@@ -211,13 +216,13 @@ const Reports = ({ navigation }) => {
   const [currentMemberId, setCurrentMemberId] = useState(null);
 
   const reportTabs = [
-    { id: 'attendance', title: 'Attendance', icon: 'calendar-check', endpoint: 'attendance' },
-    { id: 'tyfcb', title: 'ThanksNote', icon: 'handshake', endpoint: 'tyfcb' },
-    { id: 'meeting', title: '1:1 Meeting', icon: 'account-multiple', endpoint: 'meeting' },
-    { id: 'alaigalmeeting', title: 'Alaigal Meeting', icon: 'calendar-account', endpoint: 'alaigalmeeting' },
-    { id: 'visitor', title: 'Visitor', icon: 'account-plus', endpoint: 'visitor' },
-    { id: 'payment', title: 'Payment', icon: 'cash-multiple', endpoint: 'payment' },
-    { id: 'referral', title: 'Referral', icon: 'share-variant', endpoint: 'referral' },
+    { id: 'attendance', title: t('attendance'), icon: 'calendar-check', endpoint: 'attendance' },
+    { id: 'tyfcb', title: t('thanksNote'), icon: 'handshake', endpoint: 'tyfcb' },
+    { id: 'meeting', title: t('oneToOneMeeting'), icon: 'account-multiple', endpoint: 'meeting' },
+    { id: 'alaigalmeeting', title: t('alaigalMeeting'), icon: 'calendar-account', endpoint: 'alaigalmeeting' },
+    { id: 'visitor', title: t('visitor'), icon: 'account-plus', endpoint: 'visitor' },
+    { id: 'payment', title: t('payment'), icon: 'cash-multiple', endpoint: 'payment' },
+    { id: 'referral', title: t('referral'), icon: 'share-variant', endpoint: 'referral' },
   ];
 
   useEffect(() => {
@@ -299,7 +304,7 @@ const Reports = ({ navigation }) => {
       // For attendance report, use the new API
       if (selectedReportTab === 'attendance') {
         let attendanceData;
-        
+
         if (selectedPeriod === 'custom') {
           // Use custom date range
           const formattedFromDate = fromDate.toISOString().split('T')[0];
@@ -311,20 +316,20 @@ const Reports = ({ navigation }) => {
           console.log('Reports - Fetching attendance with period:', selectedPeriod, 'Admin Member ID:', currentMemberId);
           attendanceData = await ApiService.getAttendanceWithFilters(null, null, selectedPeriod, null, currentMemberId);
         }
-        
+
         console.log('Attendance data received:', attendanceData);
         setReportData(attendanceData);
       } else if (selectedReportTab === 'tyfcb') {
         // For ThanksNote report, use the new API with member selection
         let tyfcbData;
-        
+
         if (selectedPeriod === 'custom') {
           const formattedFromDate = fromDate.toISOString().split('T')[0];
           const formattedToDate = toDate.toISOString().split('T')[0];
           console.log('Reports - Fetching ThanksNote with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           tyfcbData = await ApiService.getTYFCBReport(
-            formattedFromDate, 
-            formattedToDate, 
+            formattedFromDate,
+            formattedToDate,
             null,
             selectedMemberForReport?.id || null,
             currentMemberId
@@ -332,27 +337,27 @@ const Reports = ({ navigation }) => {
         } else {
           console.log('Reports - Fetching ThanksNote with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           tyfcbData = await ApiService.getTYFCBReport(
-            null, 
-            null, 
+            null,
+            null,
             selectedPeriod,
             selectedMemberForReport?.id || null,
             currentMemberId
           );
         }
-        
+
         console.log('ThanksNote data received:', tyfcbData);
         setReportData(tyfcbData);
       } else if (selectedReportTab === 'meeting') {
         // For One-to-One Meeting report, use the new API with member selection
         let meetingData;
-        
+
         if (selectedPeriod === 'custom') {
           const formattedFromDate = fromDate.toISOString().split('T')[0];
           const formattedToDate = toDate.toISOString().split('T')[0];
           console.log('Reports - Fetching One-to-One Meeting with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           meetingData = await ApiService.getOneToOneMeetingReport(
-            formattedFromDate, 
-            formattedToDate, 
+            formattedFromDate,
+            formattedToDate,
             null,
             selectedMemberForReport?.id || null,
             currentMemberId
@@ -360,27 +365,27 @@ const Reports = ({ navigation }) => {
         } else {
           console.log('Reports - Fetching One-to-One Meeting with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           meetingData = await ApiService.getOneToOneMeetingReport(
-            null, 
-            null, 
+            null,
+            null,
             selectedPeriod,
             selectedMemberForReport?.id || null,
             currentMemberId
           );
         }
-        
+
         console.log('One-to-One Meeting data received:', meetingData);
         setReportData(meetingData);
       } else if (selectedReportTab === 'referral') {
         // For Referral report, use the new API with member selection
         let referralData;
-        
+
         if (selectedPeriod === 'custom') {
           const formattedFromDate = fromDate.toISOString().split('T')[0];
           const formattedToDate = toDate.toISOString().split('T')[0];
           console.log('Reports - Fetching Referral with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           referralData = await ApiService.getReferralReport(
-            formattedFromDate, 
-            formattedToDate, 
+            formattedFromDate,
+            formattedToDate,
             null,
             selectedMemberForReport?.id || null,
             currentMemberId
@@ -388,83 +393,27 @@ const Reports = ({ navigation }) => {
         } else {
           console.log('Reports - Fetching Referral with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           referralData = await ApiService.getReferralReport(
-            null, 
-            null, 
+            null,
+            null,
             selectedPeriod,
             selectedMemberForReport?.id || null,
             currentMemberId
           );
         }
-        
+
         console.log('Referral data received:', referralData);
         setReportData(referralData);
-      } else if (selectedReportTab === 'payment') {
-        // For Payment report, use the new API with member selection
-        let paymentData;
-        
-        if (selectedPeriod === 'custom') {
-          const formattedFromDate = fromDate.toISOString().split('T')[0];
-          const formattedToDate = toDate.toISOString().split('T')[0];
-          console.log('Reports - Fetching Payment with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
-          paymentData = await ApiService.getPaymentReport(
-            formattedFromDate, 
-            formattedToDate, 
-            null,
-            selectedMemberForReport?.id || null,
-            currentMemberId
-          );
-        } else {
-          console.log('Reports - Fetching Payment with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
-          paymentData = await ApiService.getPaymentReport(
-            null, 
-            null, 
-            selectedPeriod,
-            selectedMemberForReport?.id || null,
-            currentMemberId
-          );
-        }
-        
-        console.log('Payment data received:', paymentData);
-        setReportData(paymentData);
-      } else if (selectedReportTab === 'alaigalmeeting') {
-        // For Alaigal Meeting report, use the new API with member selection
-        let alaigalMeetingData;
-        
-        if (selectedPeriod === 'custom') {
-          const formattedFromDate = fromDate.toISOString().split('T')[0];
-          const formattedToDate = toDate.toISOString().split('T')[0];
-          console.log('Reports - Fetching Alaigal Meeting with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
-          alaigalMeetingData = await ApiService.getAlaigalMeetingReport(
-            formattedFromDate, 
-            formattedToDate, 
-            null,
-            selectedMemberForReport?.id || null,
-            currentMemberId
-          );
-        } else {
-          console.log('Reports - Fetching Alaigal Meeting with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
-          alaigalMeetingData = await ApiService.getAlaigalMeetingReport(
-            null, 
-            null, 
-            selectedPeriod,
-            selectedMemberForReport?.id || null,
-            currentMemberId
-          );
-        }
-        
-        console.log('Alaigal Meeting data received:', alaigalMeetingData);
-        setReportData(alaigalMeetingData);
       } else if (selectedReportTab === 'visitor') {
         // For Visitor report, use the new API with member selection
         let visitorData;
-        
+
         if (selectedPeriod === 'custom') {
           const formattedFromDate = fromDate.toISOString().split('T')[0];
           const formattedToDate = toDate.toISOString().split('T')[0];
           console.log('Reports - Fetching Visitor with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           visitorData = await ApiService.getVisitorReport(
-            formattedFromDate, 
-            formattedToDate, 
+            formattedFromDate,
+            formattedToDate,
             null,
             selectedMemberForReport?.id || null,
             currentMemberId
@@ -472,40 +421,76 @@ const Reports = ({ navigation }) => {
         } else {
           console.log('Reports - Fetching Visitor with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
           visitorData = await ApiService.getVisitorReport(
-            null, 
-            null, 
+            null,
+            null,
             selectedPeriod,
             selectedMemberForReport?.id || null,
             currentMemberId
           );
         }
-        
+
         console.log('Visitor data received:', visitorData);
         setReportData(visitorData);
-      } else {
-        // For other reports, use generic endpoint
-        const apiUrl = `https://www.vivifysoft.in/AlaigalBE/api/Inventory/reports/${selectedReportTab}?period=${selectedPeriod}&memberId=${currentMemberId}`;
-        console.log('Fetching report:', apiUrl);
+      } else if (selectedReportTab === 'payment') {
+        // For Payment report, use the new API with member selection
+        let paymentData;
 
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (selectedPeriod === 'custom') {
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching Payment with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          paymentData = await ApiService.getPaymentReport(
+            formattedFromDate,
+            formattedToDate,
+            null,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        } else {
+          console.log('Reports - Fetching Payment with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          paymentData = await ApiService.getPaymentReport(
+            null,
+            null,
+            selectedPeriod,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
         }
 
-        const data = await response.json();
-        console.log('Report data received:', data);
-        setReportData(data);
+        console.log('Payment data received:', paymentData);
+        setReportData(paymentData);
+      } else if (selectedReportTab === 'alaigalmeeting') {
+        // For Alaigal Meeting report, use the new API with member selection
+        let alaigalMeetingData;
+
+        if (selectedPeriod === 'custom') {
+          const formattedFromDate = fromDate.toISOString().split('T')[0];
+          const formattedToDate = toDate.toISOString().split('T')[0];
+          console.log('Reports - Fetching Alaigal Meeting with custom dates:', formattedFromDate, formattedToDate, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          alaigalMeetingData = await ApiService.getAlaigalMeetingReport(
+            formattedFromDate,
+            formattedToDate,
+            null,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        } else {
+          console.log('Reports - Fetching Alaigal Meeting with period:', selectedPeriod, 'Admin Member ID:', currentMemberId, 'Selected Member ID:', selectedMemberForReport?.id);
+          alaigalMeetingData = await ApiService.getAlaigalMeetingReport(
+            null,
+            null,
+            selectedPeriod,
+            selectedMemberForReport?.id || null,
+            currentMemberId
+          );
+        }
+
+        console.log('Alaigal Meeting data received:', alaigalMeetingData);
+        setReportData(alaigalMeetingData);
       }
-    } catch (err) {
-      console.error('Error fetching report:', err);
-      setError(err.message);
-      Alert.alert('Error', 'Failed to load report. Please try again.');
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+      setError(t('failedToLoadReport') || 'Failed to load report. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -517,24 +502,45 @@ const Reports = ({ navigation }) => {
     setRefreshing(false);
   };
 
+  // Period selection options
+  const periodOptions = [
+    { id: 'daily', title: t('daily') },
+    { id: 'weekly', title: t('weekly') },
+    { id: 'monthly', title: t('monthly') },
+    { id: 'yearly', title: t('yearly') },
+    { id: 'custom', title: t('custom') },
+  ];
+
+  // Handle custom date selection
+  const handleCustomDateSelect = () => {
+    setShowCustomDateModal(true);
+  };
+
+  const applyCustomDateRange = () => {
+    setSelectedPeriod('custom');
+    setShowCustomDateModal(false);
+  };
+
+  // Generate PDF report
+  // Download report function
   const downloadReport = async (format) => {
     try {
       if (!reportData || !reportData.data || reportData.data.length === 0) {
-        Alert.alert('Error', 'No data to download');
+        Alert.alert(t('error'), t('noDataToDownload'));
         return;
       }
 
       const timestamp = new Date().toISOString().split('T')[0];
-      const attendanceData = reportData.data;
+      const reportDataArray = reportData.data;
 
       if (format === 'pdf') {
-        await generatePDF(attendanceData, timestamp);
+        await generatePDF(reportDataArray, timestamp);
       } else if (format === 'excel') {
-        await generateExcel(attendanceData, timestamp);
+        await generateExcel(reportDataArray, timestamp);
       }
     } catch (err) {
       console.error('Download error:', err);
-      Alert.alert('Error', 'Failed to download report: ' + err.message);
+      Alert.alert(t('error'), t('failedToDownloadReport') + ': ' + err.message);
     }
   };
 
@@ -542,7 +548,7 @@ const Reports = ({ navigation }) => {
     try {
       let htmlContent = '';
       const currentTab = reportTabs.find(t => t.id === selectedReportTab);
-      
+
       // Generate different content based on report type
       switch (selectedReportTab) {
         case 'attendance':
@@ -570,9 +576,16 @@ const Reports = ({ navigation }) => {
           htmlContent = generateAttendancePDFContent(reportData, currentTab.title);
       }
 
+      // Log HTML content for debugging
+      console.log('Generated HTML preview (first 500 chars):', htmlContent.substring(0, 500));
+
+      if (!htmlContent) {
+        throw new Error('Generated HTML content is empty');
+      }
+
       // Generate PDF
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-      
+
       // Share the PDF
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
@@ -580,9 +593,9 @@ const Reports = ({ navigation }) => {
           dialogTitle: `Share ${currentTab.title} Report`,
           UTI: 'com.adobe.pdf',
         });
-        Alert.alert('Success', `${currentTab.title} PDF report generated successfully!`);
+        Alert.alert(t('success'), `${currentTab.title} ${t('pdfReportGeneratedSuccessfully')}`);
       } else {
-        Alert.alert('Success', `PDF saved to: ${uri}`);
+        Alert.alert(t('success'), `${t('pdfSavedTo')}: ${uri}`);
       }
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -597,9 +610,9 @@ const Reports = ({ navigation }) => {
       <html>
       <head>
         <meta charset="utf-8">
-        <title>${title} Report</title>
+        <title>${title} ${t('report')}</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
+          body { font-family: sans-serif; padding: 20px; }
           h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -612,32 +625,32 @@ const Reports = ({ navigation }) => {
         </style>
       </head>
       <body>
-        <h1>${title} Report</h1>
+        <h1>${title} ${t('report')}</h1>
         <div class="report-info">
-          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
-          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>${t('period')}:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>${t('dateRange')}:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>${t('totalRecords')}:</strong> ${reportData.totalRecords}</p>
+          <p><strong>${t('generated')}:</strong> ${new Date().toLocaleString()}</p>
         </div>
         
         <table>
           <thead>
             <tr>
-              <th>S.No</th>
-              <th>Member Name</th>
-              <th>Date</th>
-              <th>Check-In Time</th>
-              <th>Check-Out Time</th>
-              <th>Status</th>
-              <th>Batch</th>
-              <th>Notes</th>
+              <th>${t('serialNumber')}</th>
+              <th>${t('memberName')}</th>
+              <th>${t('date')}</th>
+              <th>${t('checkInTime')}</th>
+              <th>${t('checkOutTime')}</th>
+              <th>${t('status')}</th>
+              <th>${t('batch')}</th>
+              <th>${t('notes')}</th>
             </tr>
           </thead>
           <tbody>
             ${data.map((item, index) => `
               <tr>
                 <td>${index + 1}</td>
-                <td>${item.memberName || 'Unknown'}</td>
+                <td>${item.memberName || t('unknown')}</td>
                 <td>${new Date(item.attendanceDate).toLocaleDateString()}</td>
                 <td>${item.checkInTime || '-'}</td>
                 <td>${item.checkOutTime || '-'}</td>
@@ -651,7 +664,7 @@ const Reports = ({ navigation }) => {
         
         <div class="footer">
           <p>Alaigal Member Management System</p>
-          <p>Report generated on ${new Date().toLocaleString()}</p>
+          <p>${t('report')} ${t('generated')} ${new Date().toLocaleString()}</p>
         </div>
       </body>
       </html>
@@ -665,9 +678,9 @@ const Reports = ({ navigation }) => {
       <html>
       <head>
         <meta charset="utf-8">
-        <title>${title} Report</title>
+        <title>${title} ${t('report')}</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
+          body { font-family: sans-serif; padding: 20px; }
           h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -680,39 +693,39 @@ const Reports = ({ navigation }) => {
         </style>
       </head>
       <body>
-        <h1>${title} Report</h1>
+        <h1>${title} ${t('report')}</h1>
         <div class="report-info">
-          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
-          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>${t('period')}:</strong> ${selectedPeriod.toUpperCase()}</p>
+          <p><strong>${t('dateRange')}:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
+          <p><strong>${t('totalRecords')}:</strong> ${reportData.totalRecords}</p>
+          <p><strong>${t('generated')}:</strong> ${new Date().toLocaleString()}</p>
         </div>
         
         <table>
           <thead>
             <tr>
-              <th>S.No</th>
-              <th>Given By</th>
-              <th>Received By</th>
-              <th>Visit Date</th>
-              <th>Amount</th>
-              <th>Rating</th>
-              <th>Business Visited</th>
-              <th>Status</th>
-              <th>Notes</th>
+              <th>${t('serialNumber')}</th>
+              <th>${t('givenBy')}</th>
+              <th>${t('receivedBy')}</th>
+              <th>${t('visitDate')}</th>
+              <th>${t('amount')}</th>
+              <th>${t('rating')}</th>
+              <th>${t('businessVisited')}</th>
+              <th>${t('status')}</th>
+              <th>${t('notes')}</th>
             </tr>
           </thead>
           <tbody>
             ${data.map((item, index) => `
               <tr>
                 <td>${index + 1}</td>
-                <td>${item.givenByMemberName || 'Unknown'}</td>
-                <td>${item.receivedByMemberName || 'Unknown'}</td>
+                <td>${item.givenByMemberName || t('unknown')}</td>
+                <td>${item.receivedByMemberName || t('unknown')}</td>
                 <td>${new Date(item.visitDate).toLocaleDateString()}</td>
                 <td>₹${item.amount || 0}</td>
                 <td>${item.rating || '-'}/5</td>
                 <td>${item.businessVisited || '-'}</td>
-                <td class="status-${item.status?.toLowerCase()}">${item.status || 'Pending'}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || t('pending')}</td>
                 <td>${item.notes || '-'}</td>
               </tr>
             `).join('')}
@@ -721,7 +734,7 @@ const Reports = ({ navigation }) => {
         
         <div class="footer">
           <p>Alaigal Member Management System</p>
-          <p>Report generated on ${new Date().toLocaleString()}</p>
+          <p>${t('report')} ${t('generated')} ${new Date().toLocaleString()}</p>
         </div>
       </body>
       </html>
@@ -737,7 +750,7 @@ const Reports = ({ navigation }) => {
         <meta charset="utf-8">
         <title>${title} Report</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
+          body { font-family: sans-serif; padding: 20px; }
           h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -761,28 +774,28 @@ const Reports = ({ navigation }) => {
         <table>
           <thead>
             <tr>
-              <th>S.No</th>
-              <th>Member 1</th>
-              <th>Member 2</th>
-              <th>Meeting Date</th>
-              <th>Location</th>
-              <th>Duration</th>
-              <th>Topic</th>
-              <th>Status</th>
-              <th>Notes</th>
+              <th>${t('serialNumber')}</th>
+              <th>${t('member1Name')}</th>
+              <th>${t('member2Name')}</th>
+              <th>${t('meetingDate')}</th>
+              <th>${t('location')}</th>
+              <th>${t('duration')}</th>
+              <th>${t('topic')}</th>
+              <th>${t('status')}</th>
+              <th>${t('notes')}</th>
             </tr>
           </thead>
           <tbody>
             ${data.map((item, index) => `
               <tr>
                 <td>${index + 1}</td>
-                <td>${item.member1Name || 'Unknown'}</td>
-                <td>${item.member2Name || 'Unknown'}</td>
+                <td>${item.member1Name || t('unknown')}</td>
+                <td>${item.member2Name || t('unknown')}</td>
                 <td>${new Date(item.meetingDate).toLocaleDateString()}</td>
                 <td>${item.location || '-'}</td>
                 <td>${item.duration || '-'} min</td>
                 <td>${item.topic || '-'}</td>
-                <td class="status-${item.status?.toLowerCase()}">${item.status || 'Completed'}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || t('completed')}</td>
                 <td>${item.notes || '-'}</td>
               </tr>
             `).join('')}
@@ -807,7 +820,7 @@ const Reports = ({ navigation }) => {
         <meta charset="utf-8">
         <title>${title} Report</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
+          body { font-family: sans-serif; padding: 20px; }
           h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -832,28 +845,28 @@ const Reports = ({ navigation }) => {
         <table>
           <thead>
             <tr>
-              <th>S.No</th>
-              <th>Given By</th>
-              <th>Received By</th>
-              <th>Client Name</th>
-              <th>Client Phone</th>
-              <th>Business Type</th>
-              <th>Revenue</th>
-              <th>Status</th>
-              <th>Date</th>
+              <th>${t('serialNumber')}</th>
+              <th>${t('givenBy')}</th>
+              <th>${t('receivedBy')}</th>
+              <th>${t('clientName')}</th>
+              <th>${t('clientPhone')}</th>
+              <th>${t('businessType')}</th>
+              <th>${t('revenue')}</th>
+              <th>${t('status')}</th>
+              <th>${t('date')}</th>
             </tr>
           </thead>
           <tbody>
             ${data.map((item, index) => `
               <tr>
                 <td>${index + 1}</td>
-                <td>${item.givenByMemberName || 'Unknown'}</td>
-                <td>${item.receivedByMemberName || 'Unknown'}</td>
+                <td>${item.givenByMemberName || t('unknown')}</td>
+                <td>${item.receivedByMemberName || t('unknown')}</td>
                 <td>${item.clientName || '-'}</td>
                 <td>${item.clientPhone || '-'}</td>
                 <td>${item.businessType || '-'}</td>
                 <td>₹${item.revenue || 0}</td>
-                <td class="status-${item.status?.toLowerCase()}">${item.status || 'Pending'}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || t('pending')}</td>
                 <td>${new Date(item.referralDate).toLocaleDateString()}</td>
               </tr>
             `).join('')}
@@ -878,7 +891,7 @@ const Reports = ({ navigation }) => {
         <meta charset="utf-8">
         <title>${title} Report</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
+          body { font-family: sans-serif; padding: 20px; }
           h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -904,28 +917,28 @@ const Reports = ({ navigation }) => {
         <table>
           <thead>
             <tr>
-              <th>S.No</th>
-              <th>Member Name</th>
-              <th>Amount</th>
-              <th>Payment Date</th>
-              <th>Payment For</th>
-              <th>Payment Method</th>
-              <th>Receipt No</th>
-              <th>Status</th>
-              <th>Transaction ID</th>
+              <th>${t('serialNumber')}</th>
+              <th>${t('memberName')}</th>
+              <th>${t('amount')}</th>
+              <th>${t('paymentDate')}</th>
+              <th>${t('paymentFor')}</th>
+              <th>${t('paymentMethod')}</th>
+              <th>${t('receiptNo')}</th>
+              <th>${t('status')}</th>
+              <th>${t('transactionId')}</th>
             </tr>
           </thead>
           <tbody>
             ${data.map((item, index) => `
               <tr>
                 <td>${index + 1}</td>
-                <td>${item.memberName || 'Unknown'}</td>
+                <td>${item.memberName || t('unknown')}</td>
                 <td>₹${item.amount || 0}</td>
                 <td>${new Date(item.paymentDate).toLocaleDateString()}</td>
                 <td>${item.paymentForMonth || '-'}</td>
                 <td>${item.paymentMethod || '-'}</td>
                 <td>${item.receiptNumber || '-'}</td>
-                <td class="status-${item.status?.toLowerCase()}">${item.status || 'Paid'}</td>
+                <td class="status-${item.status?.toLowerCase()}">${item.status || t('paid')}</td>
                 <td>${item.transactionId || '-'}</td>
               </tr>
             `).join('')}
@@ -950,7 +963,7 @@ const Reports = ({ navigation }) => {
         <meta charset="utf-8">
         <title>${title} Report</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
+          body { font-family: sans-serif; padding: 20px; }
           h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -972,15 +985,15 @@ const Reports = ({ navigation }) => {
         <table>
           <thead>
             <tr>
-              <th>S.No</th>
-              <th>Meeting Title</th>
-              <th>Meeting Code</th>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Type</th>
-              <th>Place</th>
-              <th>Contact Person</th>
-              <th>Contact Number</th>
+              <th>${t('serialNumber')}</th>
+              <th>${t('meetingTitle')}</th>
+              <th>${t('meetingCode')}</th>
+              <th>${t('date')}</th>
+              <th>${t('time')}</th>
+              <th>${t('type')}</th>
+              <th>${t('place')}</th>
+              <th>${t('contactPerson')}</th>
+              <th>${t('contactNumber')}</th>
             </tr>
           </thead>
           <tbody>
@@ -1018,7 +1031,7 @@ const Reports = ({ navigation }) => {
         <meta charset="utf-8">
         <title>${title} Report</title>
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; }
+          body { font-family: sans-serif; padding: 20px; }
           h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -1042,26 +1055,26 @@ const Reports = ({ navigation }) => {
         <table>
           <thead>
             <tr>
-              <th>S.No</th>
-              <th>Visitor Name</th>
-              <th>Phone</th>
-              <th>Business</th>
-              <th>City</th>
-              <th>Brought By</th>
-              <th>Visit Date</th>
-              <th>Status</th>
-              <th>Company</th>
+              <th>${t('serialNumber')}</th>
+              <th>${t('visitorName')}</th>
+              <th>${t('phone')}</th>
+              <th>${t('business')}</th>
+              <th>${t('city')}</th>
+              <th>${t('broughtBy')}</th>
+              <th>${t('visitDate')}</th>
+              <th>${t('status')}</th>
+              <th>${t('company')}</th>
             </tr>
           </thead>
           <tbody>
             ${data.map((item, index) => `
               <tr>
                 <td>${index + 1}</td>
-                <td>${item.visitorName || 'Unknown'}</td>
+                <td>${item.visitorName || t('unknown')}</td>
                 <td>${item.visitorPhone || '-'}</td>
                 <td>${item.visitorBusiness || '-'}</td>
                 <td>${item.visitorCity || '-'}</td>
-                <td>${item.broughtByMemberName || 'Unknown'}</td>
+                <td>${item.broughtByMemberName || t('unknown')}</td>
                 <td>${new Date(item.visitDate).toLocaleDateString()}</td>
                 <td class="status-${item.becameMember ? 'member' : 'visitor'}">${item.becameMember ? 'Member' : 'Visitor'}</td>
                 <td>${item.company || '-'}</td>
@@ -1211,7 +1224,7 @@ const Reports = ({ navigation }) => {
           // Fallback to attendance format
           excelData = generateAttendanceExcelData(reportData);
           columnWidths = [
-            { wch: 6 }, { wch: 20 }, { wch: 12 }, { wch: 15 }, 
+            { wch: 6 }, { wch: 20 }, { wch: 12 }, { wch: 15 },
             { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 30 }
           ];
           sheetName = 'Report';
@@ -1243,9 +1256,9 @@ const Reports = ({ navigation }) => {
           mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           dialogTitle: `Share ${currentTab.title} Report`,
         });
-        Alert.alert('Success', `${currentTab.title} Excel report generated successfully!`);
+        Alert.alert(t('success'), `${currentTab.title} ${t('excelReportGeneratedSuccessfully')}`);
       } else {
-        Alert.alert('Success', `Excel file saved to: ${filepath}`);
+        Alert.alert(t('success'), `${t('excelFileSavedTo')}: ${filepath}`);
       }
     } catch (error) {
       console.error('Excel generation error:', error);
@@ -1256,104 +1269,104 @@ const Reports = ({ navigation }) => {
   // Generate Attendance Excel Data
   const generateAttendanceExcelData = (data) => {
     return data.map((item, index) => ({
-      'S.No': index + 1,
-      'Member Name': item.memberName || 'Unknown',
-      'Date': new Date(item.attendanceDate).toLocaleDateString(),
-      'Check-In Time': item.checkInTime || '-',
-      'Check-Out Time': item.checkOutTime || '-',
-      'Status': item.status || '-',
-      'Batch': item.batch || '-',
-      'Notes': item.notes || '-',
+      [t('serialNumber')]: index + 1,
+      [t('memberName')]: item.memberName || t('unknown'),
+      [t('date')]: new Date(item.attendanceDate).toLocaleDateString(),
+      [t('checkInTime')]: item.checkInTime || '-',
+      [t('checkOutTime')]: item.checkOutTime || '-',
+      [t('status')]: item.status || '-',
+      [t('batch')]: item.batch || '-',
+      [t('notes')]: item.notes || '-',
     }));
   };
 
   // Generate ThanksNote Excel Data
   const generateTYFCBExcelData = (data) => {
     return data.map((item, index) => ({
-      'S.No': index + 1,
-      'Given By': item.givenByMemberName || 'Unknown',
-      'Received By': item.receivedByMemberName || 'Unknown',
-      'Visit Date': new Date(item.visitDate).toLocaleDateString(),
-      'Amount': `₹${item.amount || 0}`,
-      'Rating': `${item.rating || '-'}/5`,
-      'Business Visited': item.businessVisited || '-',
-      'Status': item.status || 'Pending',
-      'Notes': item.notes || '-',
+      [t('serialNumber')]: index + 1,
+      [t('givenBy')]: item.givenByMemberName || t('unknown'),
+      [t('receivedBy')]: item.receivedByMemberName || t('unknown'),
+      [t('visitDate')]: new Date(item.visitDate).toLocaleDateString(),
+      [t('amount')]: `₹${item.amount || 0}`,
+      [t('rating')]: `${item.rating || '-'}/5`,
+      [t('businessVisited')]: item.businessVisited || '-',
+      [t('status')]: item.status || t('pending'),
+      [t('notes')]: item.notes || '-',
     }));
   };
 
   // Generate Meeting Excel Data
   const generateMeetingExcelData = (data) => {
     return data.map((item, index) => ({
-      'S.No': index + 1,
-      'Member 1': item.member1Name || 'Unknown',
-      'Member 2': item.member2Name || 'Unknown',
-      'Meeting Date': new Date(item.meetingDate).toLocaleDateString(),
-      'Location': item.location || '-',
-      'Duration': item.duration ? `${item.duration} min` : '-',
-      'Topic': item.topic || '-',
-      'Status': item.status || 'Completed',
-      'Notes': item.notes || '-',
+      [t('serialNumber')]: index + 1,
+      [t('member1Name')]: item.member1Name || t('unknown'),
+      [t('member2Name')]: item.member2Name || t('unknown'),
+      [t('meetingDate')]: new Date(item.meetingDate).toLocaleDateString(),
+      [t('location')]: item.location || '-',
+      [t('duration')]: item.duration ? `${item.duration} min` : '-',
+      [t('topic')]: item.topic || '-',
+      [t('status')]: item.status || t('completed'),
+      [t('notes')]: item.notes || '-',
     }));
   };
 
   // Generate Referral Excel Data
   const generateReferralExcelData = (data) => {
     return data.map((item, index) => ({
-      'S.No': index + 1,
-      'Given By': item.givenByMemberName || 'Unknown',
-      'Received By': item.receivedByMemberName || 'Unknown',
-      'Client Name': item.clientName || '-',
-      'Client Phone': item.clientPhone || '-',
-      'Business Type': item.businessType || '-',
-      'Revenue': `₹${item.revenue || 0}`,
-      'Status': item.status || 'Pending',
-      'Date': new Date(item.referralDate).toLocaleDateString(),
+      [t('serialNumber')]: index + 1,
+      [t('givenBy')]: item.givenByMemberName || t('unknown'),
+      [t('receivedBy')]: item.receivedByMemberName || t('unknown'),
+      [t('clientName')]: item.clientName || '-',
+      [t('clientPhone')]: item.clientPhone || '-',
+      [t('businessType')]: item.businessType || '-',
+      [t('revenue')]: `₹${item.revenue || 0}`,
+      [t('status')]: item.status || t('pending'),
+      [t('date')]: new Date(item.referralDate).toLocaleDateString(),
     }));
   };
 
   // Generate Payment Excel Data
   const generatePaymentExcelData = (data) => {
     return data.map((item, index) => ({
-      'S.No': index + 1,
-      'Member Name': item.memberName || 'Unknown',
-      'Amount': `₹${item.amount || 0}`,
-      'Payment Date': new Date(item.paymentDate).toLocaleDateString(),
-      'Payment For': item.paymentForMonth || '-',
-      'Payment Method': item.paymentMethod || '-',
-      'Receipt No': item.receiptNumber || '-',
-      'Status': item.status || 'Paid',
-      'Transaction ID': item.transactionId || '-',
+      [t('serialNumber')]: index + 1,
+      [t('memberName')]: item.memberName || t('unknown'),
+      [t('amount')]: `₹${item.amount || 0}`,
+      [t('paymentDate')]: new Date(item.paymentDate).toLocaleDateString(),
+      [t('paymentFor')]: item.paymentForMonth || '-',
+      [t('paymentMethod')]: item.paymentMethod || '-',
+      [t('receiptNo')]: item.receiptNumber || '-',
+      [t('status')]: item.status || t('paid'),
+      [t('transactionId')]: item.transactionId || '-',
     }));
   };
 
   // Generate Alaigal Meeting Excel Data
   const generateAlaigalMeetingExcelData = (data) => {
     return data.map((item, index) => ({
-      'S.No': index + 1,
-      'Meeting Title': item.meetingTitle || item.meetingCode || 'Untitled',
-      'Meeting Code': item.meetingCode || '-',
-      'Date': new Date(item.meetingDate).toLocaleDateString(),
-      'Time': item.time || '-',
-      'Type': item.meetingType || 'In-Person',
-      'Place': item.place || '-',
-      'Contact Person': item.contactPersonName || '-',
-      'Contact Number': item.contactPersonNum || '-',
+      [t('serialNumber')]: index + 1,
+      [t('meetingTitle')]: item.meetingTitle || item.meetingCode || 'Untitled',
+      [t('meetingCode')]: item.meetingCode || '-',
+      [t('date')]: new Date(item.meetingDate).toLocaleDateString(),
+      [t('time')]: item.time || '-',
+      [t('type')]: item.meetingType || 'In-Person',
+      [t('place')]: item.place || '-',
+      [t('contactPerson')]: item.contactPersonName || '-',
+      [t('contactNumber')]: item.contactPersonNum || '-',
     }));
   };
 
   // Generate Visitor Excel Data
   const generateVisitorExcelData = (data) => {
     return data.map((item, index) => ({
-      'S.No': index + 1,
-      'Visitor Name': item.visitorName || 'Unknown',
-      'Phone': item.visitorPhone || '-',
-      'Business': item.visitorBusiness || '-',
-      'City': item.visitorCity || '-',
-      'Brought By': item.broughtByMemberName || 'Unknown',
-      'Visit Date': new Date(item.visitDate).toLocaleDateString(),
-      'Status': item.becameMember ? 'Member' : 'Visitor',
-      'Company': item.company || '-',
+      [t('serialNumber')]: index + 1,
+      [t('visitorName')]: item.visitorName || t('unknown'),
+      [t('phone')]: item.visitorPhone || '-',
+      [t('business')]: item.visitorBusiness || '-',
+      [t('city')]: item.visitorCity || '-',
+      [t('broughtBy')]: item.broughtByMemberName || t('unknown'),
+      [t('visitDate')]: new Date(item.visitDate).toLocaleDateString(),
+      [t('status')]: item.becameMember ? 'Member' : 'Visitor',
+      [t('company')]: item.company || '-',
     }));
   };
 
@@ -1367,18 +1380,18 @@ const Reports = ({ navigation }) => {
         const totalRecords = reportData.totalRecords || attendanceData.length;
         const presentCount = attendanceData.filter(a => a.status === 'Present').length;
         const absentCount = attendanceData.filter(a => a.status === 'Absent').length;
-        
+
         return {
-          stat1: { 
-            label: 'Total Records', 
+          stat1: {
+            label: t('totalRecords'),
             value: totalRecords
           },
-          stat2: { 
-            label: 'Present', 
+          stat2: {
+            label: t('present'),
             value: presentCount
           },
-          stat3: { 
-            label: 'Absent', 
+          stat3: {
+            label: t('absent'),
             value: absentCount
           },
         };
@@ -1387,18 +1400,18 @@ const Reports = ({ navigation }) => {
         const totalTYFCB = reportData.totalRecords || tyfcbData.length;
         const tyfcbTotalAmount = tyfcbData.reduce((sum, t) => sum + (t.amount || 0), 0);
         const pendingCount = tyfcbData.filter(t => t.status === 'Pending').length;
-        
+
         return {
-          stat1: { 
-            label: 'Total Records', 
+          stat1: {
+            label: t('totalRecords'),
             value: totalTYFCB
           },
-          stat2: { 
-            label: 'Total Amount', 
+          stat2: {
+            label: t('totalAmount'),
             value: `₹${tyfcbTotalAmount.toFixed(2)}`
           },
-          stat3: { 
-            label: 'Pending', 
+          stat3: {
+            label: t('pending'),
             value: pendingCount
           },
         };
@@ -1407,18 +1420,18 @@ const Reports = ({ navigation }) => {
         const totalMeetings = reportData.totalRecords || meetingData.length;
         const completedCount = meetingData.filter(m => m.status === 'Completed').length;
         const pendingMeetings = meetingData.filter(m => m.status === 'Pending' || m.status === 'Scheduled').length;
-        
+
         return {
-          stat1: { 
-            label: 'Total Meetings', 
+          stat1: {
+            label: t('totalMeetings'),
             value: totalMeetings
           },
-          stat2: { 
-            label: 'Completed', 
+          stat2: {
+            label: t('completed'),
             value: completedCount
           },
-          stat3: { 
-            label: 'Pending', 
+          stat3: {
+            label: t('pending'),
             value: pendingMeetings
           },
         };
@@ -1427,18 +1440,18 @@ const Reports = ({ navigation }) => {
         const totalReferrals = reportData.totalRecords || referralData.length;
         const confirmedCount = referralData.filter(r => r.status === 'Confirmed').length;
         const totalRevenue = referralData.reduce((sum, r) => sum + (r.revenue || 0), 0);
-        
+
         return {
-          stat1: { 
-            label: 'Total Referrals', 
+          stat1: {
+            label: t('totalReferrals'),
             value: totalReferrals
           },
-          stat2: { 
-            label: 'Confirmed', 
+          stat2: {
+            label: t('confirmed'),
             value: confirmedCount
           },
-          stat3: { 
-            label: 'Revenue', 
+          stat3: {
+            label: t('revenue'),
             value: `₹${totalRevenue.toFixed(2)}`
           },
         };
@@ -1447,18 +1460,18 @@ const Reports = ({ navigation }) => {
         const totalPayments = reportData.totalRecords || paymentData.length;
         const paymentTotalAmount = reportData.totalAmount || paymentData.reduce((sum, p) => sum + (p.amount || 0), 0);
         const paidCount = paymentData.filter(p => p.status === 'Paid' || p.status === 'Completed').length;
-        
+
         return {
-          stat1: { 
-            label: 'Total Payments', 
+          stat1: {
+            label: t('totalPayments'),
             value: totalPayments
           },
-          stat2: { 
-            label: 'Total Amount', 
+          stat2: {
+            label: t('totalAmount'),
             value: `₹${paymentTotalAmount.toFixed(2)}`
           },
-          stat3: { 
-            label: 'Paid', 
+          stat3: {
+            label: t('paid'),
             value: paidCount
           },
         };
@@ -1467,18 +1480,18 @@ const Reports = ({ navigation }) => {
         const totalAlaigalMeetings = reportData.totalRecords || alaigalMeetingData.length;
         const inPersonCount = alaigalMeetingData.filter(m => m.meetingType === 'In-Person').length;
         const virtualCount = alaigalMeetingData.filter(m => m.meetingType === 'Virtual').length;
-        
+
         return {
-          stat1: { 
-            label: 'Total Meetings', 
+          stat1: {
+            label: t('totalMeetings'),
             value: totalAlaigalMeetings
           },
-          stat2: { 
-            label: 'In-Person', 
+          stat2: {
+            label: t('inPerson'),
             value: inPersonCount
           },
-          stat3: { 
-            label: 'Virtual', 
+          stat3: {
+            label: t('virtual'),
             value: virtualCount
           },
         };
@@ -1487,26 +1500,26 @@ const Reports = ({ navigation }) => {
         const totalVisitors = reportData.totalRecords || visitorData.length;
         const becameMemberCount = visitorData.filter(v => v.becameMember === true).length;
         const pendingVisitors = visitorData.filter(v => !v.becameMember).length;
-        
+
         return {
-          stat1: { 
-            label: 'Total Visitors', 
+          stat1: {
+            label: t('totalVisitors'),
             value: totalVisitors
           },
-          stat2: { 
-            label: 'Became Members', 
+          stat2: {
+            label: t('becameMembers'),
             value: becameMemberCount
           },
-          stat3: { 
-            label: 'Pending', 
+          stat3: {
+            label: t('pending'),
             value: pendingVisitors
           },
         };
       default:
         return {
-          stat1: { label: 'Total', value: 0 },
-          stat2: { label: 'Active', value: 0 },
-          stat3: { label: 'Inactive', value: 0 },
+          stat1: { label: t('total'), value: 0 },
+          stat2: { label: t('active'), value: 0 },
+          stat3: { label: t('inactive'), value: 0 },
         };
     }
   };
@@ -1514,7 +1527,7 @@ const Reports = ({ navigation }) => {
   const renderMemberItem = (attendance) => (
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
-        <Text style={styles.memberName}>{attendance.memberName || 'Unknown'}</Text>
+        <Text style={styles.memberName}>{attendance.memberName || t('unknown')}</Text>
         <View style={[
           styles.statusBadge,
           attendance.status === 'Present' && styles.statusPresent,
@@ -1565,23 +1578,23 @@ const Reports = ({ navigation }) => {
   const handleTYFCBStatusUpdate = async (tyfcbId, status) => {
     try {
       Alert.alert(
-        `${status} ThanksNote`,
-        `Are you sure you want to ${status.toLowerCase()} this ThanksNote record?`,
+        `${status === 'Confirm' ? t('confirmThanksNote') : t('rejectThanksNote')}`,
+        `${status === 'Confirm' ? t('areYouSureConfirm') : t('areYouSureReject')} ${t('thanksNoteRecord')}?`,
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('cancel'), style: 'cancel' },
           {
-            text: status,
+            text: status === 'Confirm' ? t('confirm') : t('reject'),
             style: status === 'Reject' ? 'destructive' : 'default',
             onPress: async () => {
               try {
                 setLoading(true);
                 await ApiService.updateTYFCBStatus(tyfcbId, status);
-                Alert.alert('Success', `ThanksNote ${status.toLowerCase()}ed successfully`);
+                Alert.alert(t('success'), `${t('thanksNote')} ${status === 'Confirm' ? t('confirmedSuccessfully') : t('rejectedSuccessfully')}`);
                 // Reload the report data
-                await loadReportData();
+                await fetchReportData();
               } catch (error) {
                 console.error(`Error ${status.toLowerCase()}ing ThanksNote:`, error);
-                Alert.alert('Error', `Failed to ${status.toLowerCase()} ThanksNote`);
+                Alert.alert(t('error'), `${status === 'Confirm' ? t('failedToConfirm') : t('failedToReject')} ${t('thanksNote')}`);
               } finally {
                 setLoading(false);
               }
@@ -1597,23 +1610,23 @@ const Reports = ({ navigation }) => {
   const handleReferralStatusUpdate = async (referralId, status) => {
     try {
       Alert.alert(
-        `${status} Referral`,
-        `Are you sure you want to ${status.toLowerCase()} this referral?`,
+        `${status === 'Confirm' ? t('confirmReferral') : t('rejectReferral')}`,
+        `${status === 'Confirm' ? t('areYouSureConfirm') : t('areYouSureReject')} ${t('referralRecord')}?`,
         [
-          { text: 'Cancel', style: 'cancel' },
+          { text: t('cancel'), style: 'cancel' },
           {
-            text: status,
+            text: status === 'Confirm' ? t('confirm') : t('reject'),
             style: status === 'Reject' ? 'destructive' : 'default',
             onPress: async () => {
               try {
                 setLoading(true);
                 await ApiService.updateReferralStatus(referralId, status);
-                Alert.alert('Success', `Referral ${status.toLowerCase()}ed successfully`);
+                Alert.alert(t('success'), `${t('referral')} ${status === 'Confirm' ? t('confirmedSuccessfully') : t('rejectedSuccessfully')}`);
                 // Reload the report data
-                await loadReportData();
+                await fetchReportData();
               } catch (error) {
                 console.error(`Error ${status.toLowerCase()}ing referral:`, error);
-                Alert.alert('Error', `Failed to ${status.toLowerCase()} referral`);
+                Alert.alert(t('error'), `${status === 'Confirm' ? t('failedToConfirm') : t('failedToReject')} ${t('referral')}`);
               } finally {
                 setLoading(false);
               }
@@ -1630,8 +1643,8 @@ const Reports = ({ navigation }) => {
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
         <View>
-          <Text style={styles.memberName}>{tyfcb.givenByMemberName || 'Unknown'}</Text>
-          <Text style={styles.memberSubtext}>→ {tyfcb.receivedByMemberName || 'Unknown'}</Text>
+          <Text style={styles.memberName}>{tyfcb.givenByMemberName || t('unknown')}</Text>
+          <Text style={styles.memberSubtext}>→ {tyfcb.receivedByMemberName || t('unknown')}</Text>
         </View>
         <View style={[
           styles.statusBadge,
@@ -1682,8 +1695,8 @@ const Reports = ({ navigation }) => {
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
         <View>
-          <Text style={styles.memberName}>{meeting.member1Name || 'Unknown'}</Text>
-          <Text style={styles.memberSubtext}>↔ {meeting.member2Name || 'Unknown'}</Text>
+          <Text style={styles.memberName}>{meeting.member1Name || t('unknown')}</Text>
+          <Text style={styles.memberSubtext}>↔ {meeting.member2Name || t('unknown')}</Text>
         </View>
         <View style={[
           styles.statusBadge,
@@ -1729,7 +1742,7 @@ const Reports = ({ navigation }) => {
       {meeting.metWith && (
         <View style={styles.notesContainer}>
           <Icon name="account-check" size={14} color="#666" />
-          <Text style={styles.notesText}>Met with: {meeting.metWith}</Text>
+          <Text style={styles.notesText}>{t('metWith')}: {meeting.metWith}</Text>
         </View>
       )}
     </View>
@@ -1739,8 +1752,8 @@ const Reports = ({ navigation }) => {
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
         <View>
-          <Text style={styles.memberName}>{referral.givenByMemberName || 'Unknown'}</Text>
-          <Text style={styles.memberSubtext}>→ {referral.receivedByMemberName || 'Unknown'}</Text>
+          <Text style={styles.memberName}>{referral.givenByMemberName || t('unknown')}</Text>
+          <Text style={styles.memberSubtext}>→ {referral.receivedByMemberName || t('unknown')}</Text>
         </View>
         <View style={[
           styles.statusBadge,
@@ -1804,8 +1817,8 @@ const Reports = ({ navigation }) => {
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
         <View>
-          <Text style={styles.memberName}>{payment.memberName || 'Unknown'}</Text>
-          <Text style={styles.memberSubtext}>{payment.paymentForMonth || 'N/A'}</Text>
+          <Text style={styles.memberName}>{payment.memberName || t('unknown')}</Text>
+          <Text style={styles.memberSubtext}>{payment.paymentForMonth || t('na')}</Text>
         </View>
         <View style={[
           styles.statusBadge,
@@ -1844,7 +1857,7 @@ const Reports = ({ navigation }) => {
       {payment.transactionId && (
         <View style={styles.notesContainer}>
           <Icon name="barcode" size={14} color="#666" />
-          <Text style={styles.notesText}>TXN: {payment.transactionId}</Text>
+          <Text style={styles.notesText}>{t('txn')}: {payment.transactionId}</Text>
         </View>
       )}
       {payment.notes && (
@@ -1860,11 +1873,11 @@ const Reports = ({ navigation }) => {
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.memberName}>{meeting.meetingTitle || meeting.meetingCode || 'Untitled Meeting'}</Text>
-          <Text style={styles.memberSubtext}>{meeting.meetingType || 'In-Person'}</Text>
+          <Text style={styles.memberName}>{meeting.meetingTitle || meeting.meetingCode || t('untitled')}</Text>
+          <Text style={styles.memberSubtext}>{meeting.meetingType || t('inPerson')}</Text>
         </View>
         <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>{meeting.meetingCode || 'N/A'}</Text>
+          <Text style={styles.statusText}>{meeting.meetingCode || t('na')}</Text>
         </View>
       </View>
       <View style={styles.memberStats}>
@@ -1896,13 +1909,13 @@ const Reports = ({ navigation }) => {
       {meeting.contactPersonNum && (
         <View style={styles.notesContainer}>
           <Icon name="phone" size={14} color="#666" />
-          <Text style={styles.notesText}>Contact: {meeting.contactPersonNum}</Text>
+          <Text style={styles.notesText}>{t('contact')}: {meeting.contactPersonNum}</Text>
         </View>
       )}
       {meeting.memberDetails && (
         <View style={styles.notesContainer}>
           <Icon name="account-group" size={14} color="#666" />
-          <Text style={styles.notesText}>Members: {meeting.memberDetails}</Text>
+          <Text style={styles.notesText}>{t('members')}: {meeting.memberDetails}</Text>
         </View>
       )}
       {meeting.description && (
@@ -1924,14 +1937,14 @@ const Reports = ({ navigation }) => {
     <View style={styles.memberCard}>
       <View style={styles.memberHeader}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.memberName}>{visitor.visitorName || 'Unknown Visitor'}</Text>
-          <Text style={styles.memberSubtext}>Brought by: {visitor.broughtByMemberName || 'Unknown'}</Text>
+          <Text style={styles.memberName}>{visitor.visitorName || t('unknownVisitor')}</Text>
+          <Text style={styles.memberSubtext}>{t('broughtBy')}: {visitor.broughtByMemberName || t('unknown')}</Text>
         </View>
         <View style={[
           styles.statusBadge,
           visitor.becameMember ? styles.statusCompleted : styles.statusPending,
         ]}>
-          <Text style={styles.statusText}>{visitor.becameMember ? 'Member' : 'Visitor'}</Text>
+          <Text style={styles.statusText}>{visitor.becameMember ? t('member') : t('visitor')}</Text>
         </View>
       </View>
       <View style={styles.memberStats}>
@@ -1969,7 +1982,7 @@ const Reports = ({ navigation }) => {
       {visitor.company && (
         <View style={styles.notesContainer}>
           <Icon name="office-building" size={14} color="#666" />
-          <Text style={styles.notesText}>Company: {visitor.company}</Text>
+          <Text style={styles.notesText}>{t('company')}: {visitor.company}</Text>
         </View>
       )}
       {visitor.visitorAddress && (
@@ -2040,494 +2053,500 @@ const Reports = ({ navigation }) => {
         data={[{ key: 'main-content' }]}
         renderItem={() => (
           <View>
-        {/* Period Selection */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Select Period</Text>
-          <View style={styles.periodContainer}>
-            {['daily', 'weekly', 'monthly', 'yearly', 'custom'].map(period => (
-              <TouchableOpacity
-                key={period}
-                style={[
-                  styles.periodButton,
-                  selectedPeriod === period && styles.activePeriod
-                ]}
-                onPress={() => {
-                  if (period === 'custom') {
-                    setShowCustomDateModal(true);
-                  }
-                  setSelectedPeriod(period);
-                }}
-              >
-                <Text style={[
-                  styles.periodText,
-                  selectedPeriod === period && styles.activePeriodText
-                ]}>
-                  {period.charAt(0).toUpperCase() + period.slice(1)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          
-          {selectedPeriod === 'custom' && (
-            <View style={styles.customDateDisplay}>
-              <Text style={styles.customDateText}>
-                {fromDate.toLocaleDateString()} - {toDate.toLocaleDateString()}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Report Tabs */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Report Type</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.tabScroll}
-            contentContainerStyle={{ paddingRight: 20 }} // Ensure content has proper padding
-          >
-            {reportTabs.map((tab, index) => (
-              <TouchableOpacity
-                key={tab.id}
-                style={[
-                  styles.tab,
-                  selectedReportTab === tab.id && styles.activeTab,
-                  index === reportTabs.length - 1 && { marginRight: 20 } // Add extra margin to last tab
-                ]}
-                onPress={() => setSelectedReportTab(tab.id)}
-              >
-                <Icon 
-                  name={tab.icon} 
-                  size={18} 
-                  color={selectedReportTab === tab.id ? '#FFF' : '#4A90E2'} 
-                />
-                <Text style={[
-                  styles.tabText,
-                  selectedReportTab === tab.id && styles.activeTabText
-                ]}>
-                  {tab.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Loading State */}
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#4A90E2" />
-            <Text style={styles.loadingText}>Loading report...</Text>
-          </View>
-        ) : error ? (
-          <View style={styles.errorContainer}>
-            <Icon name="alert-circle" size={48} color="#EF4444" />
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity 
-              style={styles.retryButton}
-              onPress={fetchReportData}
-            >
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </TouchableOpacity>
-          </View>
-        ) : reportData ? (
-          <>
-            {/* Report Card */}
+            {/* Period Selection */}
             <View style={styles.section}>
-              <View style={styles.reportCard}>
-                <View style={styles.reportHeader}>
-                  <View>
-                    <Text style={styles.reportTitle}>{currentTab.title} Report</Text>
-                    <Text style={styles.reportSubtitle}>
-                      {selectedPeriod.charAt(0).toUpperCase() + selectedPeriod.slice(1)} Report
-                    </Text>
-                    {reportData.fromDate && reportData.toDate && (
-                      <Text style={styles.periodRange}>
-                        {new Date(reportData.fromDate).toLocaleDateString()} - {new Date(reportData.toDate).toLocaleDateString()}
-                      </Text>
-                    )}
-                  </View>
-                  <View style={styles.reportIcon}>
-                    <Icon 
-                      name={currentTab.icon} 
-                      size={28} 
-                      color="#4A90E2" 
-                    />
-                  </View>
-                </View>
-
-                {/* Report Stats */}
-                {stats && (
-                  <View style={styles.reportStats}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>{stats.stat1.label}</Text>
-                      <Text style={styles.statValue}>{stats.stat1.value}</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>{stats.stat2.label}</Text>
-                      <Text style={styles.statValue}>{stats.stat2.value}</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statLabel}>{stats.stat3.label}</Text>
-                      <Text style={styles.statValue}>{stats.stat3.value}</Text>
-                    </View>
-                  </View>
-                )}
-
-                {/* Download Buttons */}
-                <View style={styles.downloadContainer}>
-                  <TouchableOpacity 
-                    style={styles.downloadButton}
-                    onPress={() => downloadReport('pdf')}
-                  >
-                    <Icon name="file-pdf-box" size={20} color="#FFF" />
-                    <Text style={styles.downloadButtonText}>PDF</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.downloadButton, styles.excelButton]}
-                    onPress={() => downloadReport('excel')}
-                  >
-                    <Icon name="file-excel-box" size={20} color="#FFF" />
-                    <Text style={styles.downloadButtonText}>Excel</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-
-            {/* Member Filter Tabs */}
-            {selectedReportTab === 'attendance' && reportData && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Attendance Details</Text>
-                <View style={styles.filterTabs}>
+              <Text style={styles.sectionTitle}>{t('selectPeriod')}</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.periodScroll}
+                contentContainerStyle={{ paddingRight: 20 }}
+              >
+                {['daily', 'weekly', 'monthly', 'yearly', 'custom'].map((period, index) => (
                   <TouchableOpacity
+                    key={period}
                     style={[
-                      styles.filterTab,
-                      activeMemberTab === 'all' && styles.activeFilterTab
+                      styles.periodButton,
+                      selectedPeriod === period && styles.activePeriod,
+                      index === 4 && { marginRight: 20 } // Add extra margin to last button
                     ]}
-                    onPress={() => setActiveMemberTab('all')}
-                  >
-                    <Text style={[
-                      styles.filterTabText,
-                      activeMemberTab === 'all' && styles.activeFilterTabText
-                    ]}>
-                      All ({reportData.totalRecords || 0})
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.filterTab,
-                      activeMemberTab === 'present' && styles.activeFilterTab
-                    ]}
-                    onPress={() => setActiveMemberTab('present')}
-                  >
-                    <Text style={[
-                      styles.filterTabText,
-                      activeMemberTab === 'present' && styles.activeFilterTabText
-                    ]}>
-                      Present ({(reportData.data || []).filter(a => a.status === 'Present').length})
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.filterTab,
-                      activeMemberTab === 'absent' && styles.activeFilterTab
-                    ]}
-                    onPress={() => setActiveMemberTab('absent')}
-                  >
-                    <Text style={[
-                      styles.filterTabText,
-                      activeMemberTab === 'absent' && styles.activeFilterTabText
-                    ]}>
-                      Absent ({(reportData.data || []).filter(a => a.status === 'Absent').length})
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-
-            {/* Payment Member Selection */}
-            {selectedReportTab === 'payment' && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Filter by Member</Text>
-                <TouchableOpacity
-                  style={styles.memberSelectButton}
-                  onPress={() => setShowMemberListModal(true)}
-                >
-                  <Icon name="account-search" size={18} color="#4A90E2" />
-                  <Text style={styles.memberSelectText}>
-                    {selectedMemberForReport 
-                      ? selectedMemberForReport.name 
-                      : 'All Members (Tap to filter)'}
-                  </Text>
-                  <Icon name="chevron-right" size={18} color="#4A90E2" />
-                </TouchableOpacity>
-                {selectedMemberForReport && (
-                  <TouchableOpacity
-                    style={styles.clearFilterButton}
-                    onPress={clearMemberSelection}
-                  >
-                    <Icon name="close-circle" size={16} color="#EF4444" />
-                    <Text style={styles.clearFilterText}>Clear Filter</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-            {/* TYFCB Member Selection */}
-            {selectedReportTab === 'tyfcb' && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Filter by Member</Text>
-                <TouchableOpacity
-                  style={styles.memberSelectButton}
-                  onPress={() => setShowMemberListModal(true)}
-                >
-                  <Icon name="account-search" size={18} color="#4A90E2" />
-                  <Text style={styles.memberSelectText}>
-                    {selectedMemberForReport 
-                      ? selectedMemberForReport.name 
-                      : 'All Members (Tap to filter)'}
-                  </Text>
-                  <Icon name="chevron-right" size={18} color="#4A90E2" />
-                </TouchableOpacity>
-                {selectedMemberForReport && (
-                  <TouchableOpacity
-                    style={styles.clearFilterButton}
-                    onPress={clearMemberSelection}
-                  >
-                    <Icon name="close-circle" size={16} color="#EF4444" />
-                    <Text style={styles.clearFilterText}>Clear Filter</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-            {/* One-to-One Meeting Member Selection */}
-            {selectedReportTab === 'meeting' && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Filter by Member</Text>
-                <TouchableOpacity
-                  style={styles.memberSelectButton}
-                  onPress={() => setShowMemberListModal(true)}
-                >
-                  <Icon name="account-search" size={18} color="#4A90E2" />
-                  <Text style={styles.memberSelectText}>
-                    {selectedMemberForReport 
-                      ? selectedMemberForReport.name 
-                      : 'All Members (Tap to filter)'}
-                  </Text>
-                  <Icon name="chevron-right" size={18} color="#4A90E2" />
-                </TouchableOpacity>
-                {selectedMemberForReport && (
-                  <TouchableOpacity
-                    style={styles.clearFilterButton}
-                    onPress={clearMemberSelection}
-                  >
-                    <Icon name="close-circle" size={16} color="#EF4444" />
-                    <Text style={styles.clearFilterText}>Clear Filter</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-            {/* Referral Member Selection */}
-            {selectedReportTab === 'referral' && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Filter by Member</Text>
-                <TouchableOpacity
-                  style={styles.memberSelectButton}
-                  onPress={() => setShowMemberListModal(true)}
-                >
-                  <Icon name="account-search" size={18} color="#4A90E2" />
-                  <Text style={styles.memberSelectText}>
-                    {selectedMemberForReport 
-                      ? selectedMemberForReport.name 
-                      : 'All Members (Tap to filter)'}
-                  </Text>
-                  <Icon name="chevron-right" size={18} color="#4A90E2" />
-                </TouchableOpacity>
-                {selectedMemberForReport && (
-                  <TouchableOpacity
-                    style={styles.clearFilterButton}
-                    onPress={clearMemberSelection}
-                  >
-                    <Icon name="close-circle" size={16} color="#EF4444" />
-                    <Text style={styles.clearFilterText}>Clear Filter</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-            {/* Alaigal Meeting Member Selection */}
-            {selectedReportTab === 'alaigalmeeting' && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Filter by Member</Text>
-                <TouchableOpacity
-                  style={styles.memberSelectButton}
-                  onPress={() => setShowMemberListModal(true)}
-                >
-                  <Icon name="account-search" size={18} color="#4A90E2" />
-                  <Text style={styles.memberSelectText}>
-                    {selectedMemberForReport 
-                      ? selectedMemberForReport.name 
-                      : 'All Members (Tap to filter)'}
-                  </Text>
-                  <Icon name="chevron-right" size={18} color="#4A90E2" />
-                </TouchableOpacity>
-                {selectedMemberForReport && (
-                  <TouchableOpacity
-                    style={styles.clearFilterButton}
-                    onPress={clearMemberSelection}
-                  >
-                    <Icon name="close-circle" size={16} color="#EF4444" />
-                    <Text style={styles.clearFilterText}>Clear Filter</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-            {/* Visitor Member Selection */}
-            {selectedReportTab === 'visitor' && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Filter by Member</Text>
-                <TouchableOpacity
-                  style={styles.memberSelectButton}
-                  onPress={() => setShowMemberListModal(true)}
-                >
-                  <Icon name="account-search" size={18} color="#4A90E2" />
-                  <Text style={styles.memberSelectText}>
-                    {selectedMemberForReport 
-                      ? selectedMemberForReport.name 
-                      : 'All Members (Tap to filter)'}
-                  </Text>
-                  <Icon name="chevron-right" size={18} color="#4A90E2" />
-                </TouchableOpacity>
-                {selectedMemberForReport && (
-                  <TouchableOpacity
-                    style={styles.clearFilterButton}
-                    onPress={clearMemberSelection}
-                  >
-                    <Icon name="close-circle" size={16} color="#EF4444" />
-                    <Text style={styles.clearFilterText}>Clear Filter</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-            {/* Members List */}
-            <View style={styles.section}>
-              <View style={styles.membersHeader}>
-                <View style={styles.membersHeaderLeft}>
-                  <Text style={styles.sectionTitle}>
-                    {selectedReportTab === 'attendance' 
-                      ? activeMemberTab === 'present' ? 'Present Records' 
-                        : activeMemberTab === 'absent' ? 'Absent Records' 
-                        : 'All Records'
-                      : selectedReportTab === 'payment'
-                      ? activePaymentTab === 'paid' ? 'Paid Members' : 'All Members'
-                      : 'Records'}
-                  </Text>
-                  <Text style={styles.memberCount}>
-                    {membersList.length} records
-                  </Text>
-                </View>
-                
-                {/* View Toggle Button */}
-                <View style={styles.viewToggleContainer}>
-                  <TouchableOpacity
-                    style={[
-                      styles.viewToggleButton,
-                      viewMode === 'list' && styles.viewToggleButtonActive
-                    ]}
-                    onPress={() => setViewMode('list')}
-                  >
-                    <Icon 
-                      name="format-list-bulleted" 
-                      size={18} 
-                      color={viewMode === 'list' ? '#FFF' : '#4A90E2'} 
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.viewToggleButton,
-                      viewMode === 'graph' && styles.viewToggleButtonActive
-                    ]}
-                    onPress={() => setViewMode('graph')}
-                  >
-                    <Icon 
-                      name="chart-bar" 
-                      size={18} 
-                      color={viewMode === 'graph' ? '#FFF' : '#4A90E2'} 
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              
-              {membersList.length > 0 ? (
-                viewMode === 'list' ? (
-                  <ScrollView 
-                    style={styles.recordsList}
-                    contentContainerStyle={styles.recordsListContent}
-                    showsVerticalScrollIndicator={true}
-                    nestedScrollEnabled={true}
-                  >
-                    {membersList.map((item, index) => {
-                      let renderedItem;
-                      if (selectedReportTab === 'tyfcb') {
-                        renderedItem = renderTYFCBItem(item);
-                      } else if (selectedReportTab === 'meeting') {
-                        renderedItem = renderOneToOneMeetingItem(item);
-                      } else if (selectedReportTab === 'referral') {
-                        renderedItem = renderReferralItem(item);
-                      } else if (selectedReportTab === 'payment') {
-                        renderedItem = renderPaymentItem(item);
-                      } else if (selectedReportTab === 'alaigalmeeting') {
-                        renderedItem = renderAlaigalMeetingItem(item);
-                      } else if (selectedReportTab === 'visitor') {
-                        renderedItem = renderVisitorItem(item);
-                      } else {
-                        renderedItem = renderMemberItem(item);
+                    onPress={() => {
+                      if (period === 'custom') {
+                        setShowCustomDateModal(true);
                       }
-                      
-                      return (
-                        <View key={item.id?.toString() || index.toString()}>
-                          {renderedItem}
-                        </View>
-                      );
-                    })}
-                  </ScrollView>
-                ) : (
-                  <GraphView 
-                    reportType={selectedReportTab}
-                    data={membersList}
-                    stats={stats}
-                  />
-                )
-              ) : (
-                <View style={styles.emptyContainer}>
-                  <Icon name="clipboard-text-off" size={48} color="#CCC" />
-                  <Text style={styles.emptyText}>No records found</Text>
+                      setSelectedPeriod(period);
+                    }}
+                  >
+                    <Text style={[
+                      styles.periodText,
+                      selectedPeriod === period && styles.activePeriodText
+                    ]}>
+                      {t(period)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {selectedPeriod === 'custom' && (
+                <View style={styles.customDateDisplay}>
+                  <Text style={styles.customDateText}>
+                    {fromDate.toLocaleDateString()} - {toDate.toLocaleDateString()}
+                  </Text>
                 </View>
               )}
             </View>
-          </>
-        ) : (
-          <View style={styles.noDataContainer}>
-            <Icon name="clipboard-text-outline" size={48} color="#CCC" />
-            <Text style={styles.noDataText}>No report data available</Text>
-            <Text style={styles.noDataSubtext}>
-              Select a period and report type to generate report
-            </Text>
-          </View>
-        )}
 
-        <View style={{ height: 20 }} />
+            {/* Report Tabs */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{t('reportType')}</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.tabScroll}
+                contentContainerStyle={{ paddingRight: 20 }} // Ensure content has proper padding
+              >
+                {reportTabs.map((tab, index) => (
+                  <TouchableOpacity
+                    key={tab.id}
+                    style={[
+                      styles.tab,
+                      selectedReportTab === tab.id && styles.activeTab,
+                      index === reportTabs.length - 1 && { marginRight: 20 } // Add extra margin to last tab
+                    ]}
+                    onPress={() => setSelectedReportTab(tab.id)}
+                  >
+                    <Icon
+                      name={tab.icon}
+                      size={18}
+                      color={selectedReportTab === tab.id ? '#FFF' : '#4A90E2'}
+                    />
+                    <Text style={[
+                      styles.tabText,
+                      selectedReportTab === tab.id && styles.activeTabText
+                    ]}>
+                      {tab.title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Loading State */}
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#4A90E2" />
+                <Text style={styles.loadingText}>{t('loadingReport')}</Text>
+              </View>
+            ) : error ? (
+              <View style={styles.errorContainer}>
+                <Icon name="alert-circle" size={48} color="#EF4444" />
+                <Text style={styles.errorText}>{error}</Text>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={fetchReportData}
+                >
+                  <Text style={styles.retryButtonText}>{t('retry')}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : reportData ? (
+              <>
+                {/* Report Card */}
+                <View style={styles.section}>
+                  <View style={styles.reportCard}>
+                    <View style={styles.reportHeader}>
+                      <View style={styles.reportTextContainer}>
+                        <Text style={styles.reportTitle}>{currentTab.title} {t('report')}</Text>
+                        <Text style={styles.reportSubtitle}>
+                          {t(selectedPeriod)} {t('report')}
+                        </Text>
+                        {reportData.fromDate && reportData.toDate && (
+                          <Text style={styles.periodRange}>
+                            {new Date(reportData.fromDate).toLocaleDateString()} - {new Date(reportData.toDate).toLocaleDateString()}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={styles.reportIcon}>
+                        <Icon
+                          name={currentTab.icon}
+                          size={28}
+                          color="#4A90E2"
+                        />
+                      </View>
+                    </View>
+
+                    {/* Report Stats */}
+                    {stats && (
+                      <View style={styles.reportStats}>
+                        <View style={styles.statItem}>
+                          <Text style={styles.statLabel}>{stats.stat1.label}</Text>
+                          <Text style={styles.statValue}>{stats.stat1.value}</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                          <Text style={styles.statLabel}>{stats.stat2.label}</Text>
+                          <Text style={styles.statValue}>{stats.stat2.value}</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                          <Text style={styles.statLabel}>{stats.stat3.label}</Text>
+                          <Text style={styles.statValue}>{stats.stat3.value}</Text>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Download Buttons */}
+                    <View style={styles.downloadContainer}>
+                      <TouchableOpacity
+                        style={styles.downloadButton}
+                        onPress={() => downloadReport('pdf')}
+                      >
+                        <Icon name="file-pdf-box" size={20} color="#FFF" />
+                        <Text style={styles.downloadButtonText}>{t('pdf')}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.downloadButton, styles.excelButton]}
+                        onPress={() => downloadReport('excel')}
+                      >
+                        <Icon name="file-excel-box" size={20} color="#FFF" />
+                        <Text style={styles.downloadButtonText}>{t('excel')}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Member Filter Tabs */}
+                {selectedReportTab === 'attendance' && reportData && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('attendanceDetails')}</Text>
+                    <View style={styles.filterTabs}>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterTab,
+                          activeMemberTab === 'all' && styles.activeFilterTab
+                        ]}
+                        onPress={() => setActiveMemberTab('all')}
+                      >
+                        <Text style={[
+                          styles.filterTabText,
+                          activeMemberTab === 'all' && styles.activeFilterTabText
+                        ]}>
+                          {t('all')} ({reportData.totalRecords || 0})
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterTab,
+                          activeMemberTab === 'present' && styles.activeFilterTab
+                        ]}
+                        onPress={() => setActiveMemberTab('present')}
+                      >
+                        <Text style={[
+                          styles.filterTabText,
+                          activeMemberTab === 'present' && styles.activeFilterTabText
+                        ]}>
+                          {t('present')} ({(reportData.data || []).filter(a => a.status === 'Present').length})
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.filterTab,
+                          activeMemberTab === 'absent' && styles.activeFilterTab
+                        ]}
+                        onPress={() => setActiveMemberTab('absent')}
+                      >
+                        <Text style={[
+                          styles.filterTabText,
+                          activeMemberTab === 'absent' && styles.activeFilterTabText
+                        ]}>
+                          {t('absent')} ({(reportData.data || []).filter(a => a.status === 'Absent').length})
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                {/* Payment Member Selection */}
+                {selectedReportTab === 'payment' && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('filterByMember')}</Text>
+                    <TouchableOpacity
+                      style={styles.memberSelectButton}
+                      onPress={() => setShowMemberListModal(true)}
+                    >
+                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Text style={styles.memberSelectText}>
+                        {selectedMemberForReport
+                          ? selectedMemberForReport.name
+                          : t('allMembersFilter')}
+                      </Text>
+                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                    </TouchableOpacity>
+                    {selectedMemberForReport && (
+                      <TouchableOpacity
+                        style={styles.clearFilterButton}
+                        onPress={clearMemberSelection}
+                      >
+                        <Icon name="close-circle" size={16} color="#EF4444" />
+                        <Text style={styles.clearFilterText}>{t('clearFilter')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* TYFCB Member Selection */}
+                {selectedReportTab === 'tyfcb' && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('filterByMember')}</Text>
+                    <TouchableOpacity
+                      style={styles.memberSelectButton}
+                      onPress={() => setShowMemberListModal(true)}
+                    >
+                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Text style={styles.memberSelectText}>
+                        {selectedMemberForReport
+                          ? selectedMemberForReport.name
+                          : t('allMembersFilter')}
+                      </Text>
+                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                    </TouchableOpacity>
+                    {selectedMemberForReport && (
+                      <TouchableOpacity
+                        style={styles.clearFilterButton}
+                        onPress={clearMemberSelection}
+                      >
+                        <Icon name="close-circle" size={16} color="#EF4444" />
+                        <Text style={styles.clearFilterText}>{t('clearFilter')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* One-to-One Meeting Member Selection */}
+                {selectedReportTab === 'meeting' && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('filterByMember')}</Text>
+                    <TouchableOpacity
+                      style={styles.memberSelectButton}
+                      onPress={() => setShowMemberListModal(true)}
+                    >
+                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Text style={styles.memberSelectText}>
+                        {selectedMemberForReport
+                          ? selectedMemberForReport.name
+                          : t('allMembersFilter')}
+                      </Text>
+                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                    </TouchableOpacity>
+                    {selectedMemberForReport && (
+                      <TouchableOpacity
+                        style={styles.clearFilterButton}
+                        onPress={clearMemberSelection}
+                      >
+                        <Icon name="close-circle" size={16} color="#EF4444" />
+                        <Text style={styles.clearFilterText}>{t('clearFilter')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Referral Member Selection */}
+                {selectedReportTab === 'referral' && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('filterByMember')}</Text>
+                    <TouchableOpacity
+                      style={styles.memberSelectButton}
+                      onPress={() => setShowMemberListModal(true)}
+                    >
+                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Text style={styles.memberSelectText}>
+                        {selectedMemberForReport
+                          ? selectedMemberForReport.name
+                          : t('allMembersFilter')}
+                      </Text>
+                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                    </TouchableOpacity>
+                    {selectedMemberForReport && (
+                      <TouchableOpacity
+                        style={styles.clearFilterButton}
+                        onPress={clearMemberSelection}
+                      >
+                        <Icon name="close-circle" size={16} color="#EF4444" />
+                        <Text style={styles.clearFilterText}>{t('clearFilter')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Alaigal Meeting Member Selection */}
+                {selectedReportTab === 'alaigalmeeting' && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('filterByMember')}</Text>
+                    <TouchableOpacity
+                      style={styles.memberSelectButton}
+                      onPress={() => setShowMemberListModal(true)}
+                    >
+                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Text style={styles.memberSelectText}>
+                        {selectedMemberForReport
+                          ? selectedMemberForReport.name
+                          : t('allMembersFilter')}
+                      </Text>
+                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                    </TouchableOpacity>
+                    {selectedMemberForReport && (
+                      <TouchableOpacity
+                        style={styles.clearFilterButton}
+                        onPress={clearMemberSelection}
+                      >
+                        <Icon name="close-circle" size={16} color="#EF4444" />
+                        <Text style={styles.clearFilterText}>{t('clearFilter')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Visitor Member Selection */}
+                {selectedReportTab === 'visitor' && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('filterByMember')}</Text>
+                    <TouchableOpacity
+                      style={styles.memberSelectButton}
+                      onPress={() => setShowMemberListModal(true)}
+                    >
+                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Text style={styles.memberSelectText}>
+                        {selectedMemberForReport
+                          ? selectedMemberForReport.name
+                          : t('allMembersFilter')}
+                      </Text>
+                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                    </TouchableOpacity>
+                    {selectedMemberForReport && (
+                      <TouchableOpacity
+                        style={styles.clearFilterButton}
+                        onPress={clearMemberSelection}
+                      >
+                        <Icon name="close-circle" size={16} color="#EF4444" />
+                        <Text style={styles.clearFilterText}>{t('clearFilter')}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Members List */}
+                <View style={styles.section}>
+                  <View style={styles.membersHeader}>
+                    <View style={styles.membersHeaderLeft}>
+                      <Text style={styles.sectionTitle}>
+                        {selectedReportTab === 'attendance'
+                          ? activeMemberTab === 'present' ? t('presentRecords')
+                            : activeMemberTab === 'absent' ? t('absentRecords')
+                              : t('allRecords')
+                          : selectedReportTab === 'payment'
+                            ? activePaymentTab === 'paid' ? t('paidMembers') : t('allMembers')
+                            : t('records')}
+                      </Text>
+                      <Text style={styles.memberCount}>
+                        {membersList.length} {t('recordsCount')}
+                      </Text>
+                    </View>
+
+                    {/* View Toggle Button */}
+                    <View style={styles.viewToggleContainer}>
+                      <TouchableOpacity
+                        style={[
+                          styles.viewToggleButton,
+                          viewMode === 'list' && styles.viewToggleButtonActive
+                        ]}
+                        onPress={() => setViewMode('list')}
+                      >
+                        <Icon
+                          name="format-list-bulleted"
+                          size={18}
+                          color={viewMode === 'list' ? '#FFF' : '#4A90E2'}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[
+                          styles.viewToggleButton,
+                          viewMode === 'graph' && styles.viewToggleButtonActive
+                        ]}
+                        onPress={() => setViewMode('graph')}
+                      >
+                        <Icon
+                          name="chart-bar"
+                          size={18}
+                          color={viewMode === 'graph' ? '#FFF' : '#4A90E2'}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {membersList.length > 0 ? (
+                    viewMode === 'list' ? (
+                      <ScrollView
+                        style={styles.recordsList}
+                        contentContainerStyle={styles.recordsListContent}
+                        showsVerticalScrollIndicator={true}
+                        nestedScrollEnabled={true}
+                      >
+                        {membersList.map((item, index) => {
+                          let renderedItem;
+                          if (selectedReportTab === 'tyfcb') {
+                            renderedItem = renderTYFCBItem(item);
+                          } else if (selectedReportTab === 'meeting') {
+                            renderedItem = renderOneToOneMeetingItem(item);
+                          } else if (selectedReportTab === 'referral') {
+                            renderedItem = renderReferralItem(item);
+                          } else if (selectedReportTab === 'payment') {
+                            renderedItem = renderPaymentItem(item);
+                          } else if (selectedReportTab === 'alaigalmeeting') {
+                            renderedItem = renderAlaigalMeetingItem(item);
+                          } else if (selectedReportTab === 'visitor') {
+                            renderedItem = renderVisitorItem(item);
+                          } else {
+                            renderedItem = renderMemberItem(item);
+                          }
+
+                          return (
+                            <View key={item.id?.toString() || index.toString()}>
+                              {renderedItem}
+                            </View>
+                          );
+                        })}
+                      </ScrollView>
+                    ) : (
+                      <GraphView
+                        reportType={selectedReportTab}
+                        data={membersList}
+                        stats={stats}
+                      />
+                    )
+                  ) : (
+                    <View style={styles.emptyContainer}>
+                      <Icon name="clipboard-text-off" size={48} color="#CCC" />
+                      <Text style={styles.emptyText}>{t('noRecordsFound')}</Text>
+                    </View>
+                  )}
+                </View>
+              </>
+            ) : (
+              <View style={styles.noDataContainer}>
+                <Icon name="clipboard-text-outline" size={48} color="#CCC" />
+                <Text style={styles.noDataText}>{t('noReportDataAvailable')}</Text>
+                <Text style={styles.noDataSubtext}>
+                  {t('selectPeriodAndReportType')}
+                </Text>
+              </View>
+            )}
+
+            <View style={{ height: 20 }} />
           </View>
         )}
         keyExtractor={(item) => item.key}
         style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
+          <RefreshControl
+            refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor="#4A90E2"
             colors={['#4A90E2']}
@@ -2545,14 +2564,14 @@ const Reports = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Date Range</Text>
+              <Text style={styles.modalTitle}>{t('selectDateRange')}</Text>
               <TouchableOpacity onPress={() => setShowCustomDateModal(false)}>
                 <Icon name="close" size={24} color="#4A90E2" />
               </TouchableOpacity>
             </View>
 
             <View style={styles.dateInputGroup}>
-              <Text style={styles.dateLabel}>From Date</Text>
+              <Text style={styles.dateLabel}>{t('fromDate')}</Text>
               <TouchableOpacity
                 style={styles.dateInput}
                 onPress={() => {
@@ -2566,7 +2585,7 @@ const Reports = ({ navigation }) => {
             </View>
 
             <View style={styles.dateInputGroup}>
-              <Text style={styles.dateLabel}>To Date</Text>
+              <Text style={styles.dateLabel}>{t('toDate')}</Text>
               <TouchableOpacity
                 style={styles.dateInput}
                 onPress={() => {
@@ -2588,7 +2607,7 @@ const Reports = ({ navigation }) => {
                 }
               }}
             >
-              <Text style={styles.applyButtonText}>Apply</Text>
+              <Text style={styles.applyButtonText}>{t('apply')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -2624,7 +2643,7 @@ const Reports = ({ navigation }) => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Member</Text>
+              <Text style={styles.modalTitle}>{t('selectMember')}</Text>
               <TouchableOpacity onPress={() => setShowMemberListModal(false)}>
                 <Icon name="close" size={24} color="#4A90E2" />
               </TouchableOpacity>
@@ -2635,7 +2654,7 @@ const Reports = ({ navigation }) => {
               <Icon name="magnify" size={18} color="#999" />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search members..."
+                placeholder={t('searchMembers')}
                 value={searchQuery}
                 onChangeText={handleMemberSearch}
                 placeholderTextColor="#999"
@@ -2682,16 +2701,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F9FC',
   },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 15, 
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
     paddingVertical: 15,
   },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#FFF',
     textAlign: 'center',
     flex: 1,
@@ -2709,20 +2728,20 @@ const styles = StyleSheet.create({
     color: '#4A90E2',
     marginBottom: 12,
   },
-  periodContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+  periodScroll: {
+    marginHorizontal: -15,
+    paddingHorizontal: 15,
   },
   periodButton: {
-    flex: 1,
-    minWidth: '18%',
     paddingVertical: 10,
+    paddingHorizontal: 16,
     borderRadius: 8,
     backgroundColor: '#FFF',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#87CEEB',
+    marginRight: 8,
+    minWidth: 80,
   },
   activePeriod: {
     backgroundColor: '#4A90E2',
@@ -2809,8 +2828,12 @@ const styles = StyleSheet.create({
   reportHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 15,
+  },
+  reportTextContainer: {
+    flex: 1,
+    marginRight: 15,
   },
   reportTitle: {
     fontSize: 16,
@@ -2843,14 +2866,24 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: '#E0E0E0',
     marginBottom: 15,
+    minHeight: 80,
+    alignItems: 'flex-start',
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 4,
+    minHeight: 60,
+    justifyContent: 'center',
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#999',
     marginBottom: 4,
+    textAlign: 'center',
+    lineHeight: 14,
+    flexWrap: 'wrap',
+    maxWidth: '100%',
   },
   statValue: {
     fontSize: 18,
@@ -3183,9 +3216,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
+    flex: 1,
     fontSize: 18,
     fontWeight: '600',
     color: '#4A90E2',
+    marginRight: 10,
   },
   dateInputGroup: {
     marginBottom: 15,
@@ -3351,5 +3386,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+
 
 export default Reports;
