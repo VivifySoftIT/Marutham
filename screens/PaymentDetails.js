@@ -89,7 +89,7 @@ const PaymentDetails = () => {
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Error', 'Failed to load data. Please try again.');
+      Alert.alert(t('error'), t('dataLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -251,7 +251,7 @@ const PaymentDetails = () => {
         </LinearGradient>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4A90E2" />
-          <Text style={styles.loadingText}>Loading payment details...</Text>
+          <Text style={styles.loadingText}>{t('loadingData')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -295,7 +295,7 @@ const PaymentDetails = () => {
       >
         {/* Member Selection Card */}
         <View style={styles.selectionCard}>
-          <Text style={styles.selectionLabel}>SELECT MEMBER</Text>
+          <Text style={styles.selectionLabel}>{t('selectMember').toUpperCase()}</Text>
           <TouchableOpacity
             style={styles.selectionButton}
             onPress={() => setShowMemberSearch(true)}
@@ -305,10 +305,10 @@ const PaymentDetails = () => {
               <Icon name="account-circle" size={24} color="#4A90E2" />
               <View style={styles.selectionTextContainer}>
                 <Text style={styles.selectionName}>
-                  {memberData?.name || 'Select a member'}
+                  {memberData?.name || t('selectMember')}
                 </Text>
                 <Text style={styles.selectionHint}>
-                  {memberData ? 'Tap to change member' : 'Tap to select member'}
+                  {memberData ? t('tapToChangeMember') : t('tapToSelectMember')}
                 </Text>
               </View>
               <Icon name="chevron-right" size={24} color="#4A90E2" />
@@ -351,12 +351,12 @@ const PaymentDetails = () => {
               <View style={styles.memberCardFooter}>
                 <View style={styles.memberStat}>
                   <Text style={styles.statValue}>{paymentSummary?.paymentCount || 0}</Text>
-                  <Text style={styles.statLabel}>Payments</Text>
+                  <Text style={styles.statLabel}>{t('payments')}</Text>
                 </View>
                 <View style={styles.divider} />
                 <View style={styles.memberStat}>
                   <Text style={styles.statValue}>{formatCurrency(paymentSummary?.totalPaid || 0)}</Text>
-                  <Text style={styles.statLabel}>Total Paid</Text>
+                  <Text style={styles.statLabel}>{t('totalPaid')}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -365,7 +365,7 @@ const PaymentDetails = () => {
 
         {/* Payment Summary Cards */}
         <View style={styles.summaryContainer}>
-          <Text style={styles.sectionTitle}>Payment Summary</Text>
+          <Text style={styles.sectionTitle}>{t('paymentSummary')}</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -375,33 +375,33 @@ const PaymentDetails = () => {
               <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
                 <Icon name="wallet" size={24} color="#10B981" />
               </View>
-              <Text style={styles.summaryCardLabel}>Total Paid</Text>
+              <Text style={styles.summaryCardLabel}>{t('totalPaid')}</Text>
               <Text style={styles.summaryCardValue}>
                 {formatCurrency(paymentSummary?.totalPaid || 0)}
               </Text>
-              <Text style={styles.summaryCardSubtext}>All time payments</Text>
+              <Text style={styles.summaryCardSubtext}>{t('allTimePayments')}</Text>
             </View>
 
             <View style={styles.summaryCard}>
               <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(245, 158, 11, 0.1)' }]}>
                 <Icon name="alert-circle" size={24} color="#F59E0B" />
               </View>
-              <Text style={styles.summaryCardLabel}>Pending</Text>
+              <Text style={styles.summaryCardLabel}>{t('pending')}</Text>
               <Text style={styles.summaryCardValue}>
                 {formatCurrency(paymentSummary?.totalDue || 0)}
               </Text>
-              <Text style={styles.summaryCardSubtext}>Amount due</Text>
+              <Text style={styles.summaryCardSubtext}>{t('amountDue')}</Text>
             </View>
 
             <View style={styles.summaryCard}>
               <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
                 <Icon name="calendar-clock" size={24} color="#8B5CF6" />
               </View>
-              <Text style={styles.summaryCardLabel}>Next Due</Text>
+              <Text style={styles.summaryCardLabel}>{t('nextDue')}</Text>
               <Text style={styles.summaryCardValue}>
-                {paymentSummary?.nextDueDate ? formatDate(paymentSummary.nextDueDate) : 'N/A'}
+                {paymentSummary?.nextDueDate ? formatDate(paymentSummary.nextDueDate) : t('notAvailable')}
               </Text>
-              <Text style={styles.summaryCardSubtext}>Payment deadline</Text>
+              <Text style={styles.summaryCardSubtext}>{t('paymentDeadline')}</Text>
             </View>
           </ScrollView>
         </View>
@@ -409,10 +409,10 @@ const PaymentDetails = () => {
         {/* Payment History */}
         <View style={styles.historyContainer}>
           <View style={styles.historyHeader}>
-            <Text style={styles.sectionTitle}>Payment History</Text>
+            <Text style={styles.sectionTitle}>{t('paymentHistory')}</Text>
             <View style={styles.historyStats}>
               <Text style={styles.historyCount}>
-                {paymentHistory.length} {paymentHistory.length === 1 ? 'Payment' : 'Payments'}
+                {paymentHistory.length} {paymentHistory.length === 1 ? t('payment') : t('payments')}
               </Text>
             </View>
           </View>
@@ -428,6 +428,14 @@ const PaymentDetails = () => {
                 }}
               >
                 <View style={styles.paymentCardContent}>
+                  {/* Member Name Row */}
+                  {memberData && (
+                    <View style={styles.paymentMemberRow}>
+                      <Icon name="account" size={16} color="#4A90E2" />
+                      <Text style={styles.paymentMemberName}>{memberData.name}</Text>
+                    </View>
+                  )}
+                  
                   <View style={styles.paymentCardHeader}>
                     <View style={[styles.paymentIconContainer, 
                       { backgroundColor: index % 3 === 0 ? 'rgba(16, 185, 129, 0.1)' : 
@@ -442,7 +450,7 @@ const PaymentDetails = () => {
                     </View>
                     <View style={styles.paymentInfo}>
                       <Text style={styles.paymentDescription} numberOfLines={1}>
-                        {payment.paymentForMonth || payment.description || 'Membership Payment'}
+                        {payment.paymentForMonth || payment.description || t('membershipPayment')}
                       </Text>
                       <Text style={styles.paymentDate}>
                         {formatDate(payment.paymentDate || payment.createdAt)}
@@ -456,7 +464,7 @@ const PaymentDetails = () => {
                         { backgroundColor: `rgba(${getStatusColor('paid').replace('#', '')}, 0.1)` }
                       ]}>
                         <Text style={[styles.statusText, { color: getStatusColor('paid') }]}>
-                          Paid
+                          {t('paid')}
                         </Text>
                       </View>
                     </View>
@@ -466,7 +474,7 @@ const PaymentDetails = () => {
                     <View style={styles.paymentMethod}>
                       <Icon name={getPaymentMethodIcon(payment.paymentMethod)} size={12} color="#6B7280" />
                       <Text style={styles.paymentMethodText}>
-                        {payment.paymentMethod || 'Cash'}
+                        {payment.paymentMethod || t('cash')}
                       </Text>
                     </View>
                     {payment.transactionId && (
@@ -486,11 +494,11 @@ const PaymentDetails = () => {
               <View style={styles.emptyIconContainer}>
                 <Icon name="receipt-outline" size={64} color="#D1D5DB" />
               </View>
-              <Text style={styles.emptyStateTitle}>No Payment History</Text>
+              <Text style={styles.emptyStateTitle}>{t('noPaymentHistory')}</Text>
               <Text style={styles.emptyStateText}>
                 {memberData ? 
-                  `No payments found for ${memberData.name}` : 
-                  'Select a member to view payment history'
+                  `${t('noPaymentsFoundFor')} ${memberData.name}` : 
+                  t('selectMemberToViewHistory')
                 }
               </Text>
             </View>
@@ -519,7 +527,7 @@ const PaymentDetails = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Member</Text>
+              <Text style={styles.modalTitle}>{t('selectMember')}</Text>
               <TouchableOpacity onPress={() => {
                 setShowMemberSearch(false);
                 setSearchQuery('');
@@ -532,7 +540,7 @@ const PaymentDetails = () => {
               <Icon name="magnify" size={20} color="#9CA3AF" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search by name, ID, phone..."
+                placeholder={t('searchByNameIdPhone')}
                 value={searchQuery}
                 onChangeText={handleSearch}
                 autoFocus
@@ -567,8 +575,8 @@ const PaymentDetails = () => {
               {filteredMembers.length === 0 && (
                 <View style={styles.noResults}>
                   <Icon name="account-search" size={48} color="#D1D5DB" />
-                  <Text style={styles.noResultsText}>No members found</Text>
-                  <Text style={styles.noResultsSubtext}>Try a different search term</Text>
+                  <Text style={styles.noResultsText}>{t('noMembersFound')}</Text>
+                  <Text style={styles.noResultsSubtext}>{t('tryDifferentSearch')}</Text>
                 </View>
               )}
             </ScrollView>
@@ -834,6 +842,22 @@ const styles = StyleSheet.create({
   },
   paymentCardContent: {
     padding: 16,
+  },
+  paymentMemberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F8FF',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: '#4A90E2',
+  },
+  paymentMemberName: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1976D2',
   },
   paymentCardHeader: {
     flexDirection: 'row',

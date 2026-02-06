@@ -20,11 +20,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
 import MemberIdService from '../service/MemberIdService';
+import { useLanguage } from '../service/LanguageContext';
 
 const NewMember = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { member, isEditing } = route.params || {};
+  const { t, language } = useLanguage();
 
   const [formData, setFormData] = useState({
     memberName: "",
@@ -119,7 +121,7 @@ const NewMember = () => {
       }
     } catch (error) {
       console.error('Error loading main companies:', error);
-      Alert.alert('Error', 'Failed to load main companies');
+      Alert.alert(t('error'), t('failedToLoadMainCompanies'));
     } finally {
       setLoadingMainCompanies(false);
     }
@@ -138,7 +140,7 @@ const NewMember = () => {
       }
     } catch (error) {
       console.error('Error loading sub-companies:', error);
-      Alert.alert('Error', 'Failed to load sub-companies');
+      Alert.alert(t('error'), t('failedToLoadSubCompanies'));
     } finally {
       setLoadingSubCompanies(false);
     }
@@ -269,34 +271,34 @@ const NewMember = () => {
     const { memberName, mobileNum, joiningDate, business } = formData;
 
     if (!memberName.trim()) {
-      Alert.alert("Validation Error", "Member Name is required.");
+      Alert.alert(t('validationError'), t('memberNameRequired'));
       return;
     }
     if (mobileNum.length !== 10) {
-      Alert.alert("Validation Error", "Mobile Number must be exactly 10 digits.");
+      Alert.alert(t('validationError'), t('mobileNumberMustBe10Digits'));
       return;
     }
     if (!joiningDate.trim()) {
-      Alert.alert("Validation Error", "Joining Date is required.");
+      Alert.alert(t('validationError'), t('joiningDateRequired'));
       return;
     }
     
     if (!formData.subCompanyId) {
-      Alert.alert("Validation Error", "Sub Company selection is required.");
+      Alert.alert(t('validationError'), t('subCompanyRequired'));
       return;
     }
     
     if (!isValidDate(joiningDate)) {
       Alert.alert(
-        "Invalid Date Format", 
-        "Please enter date in YYYY-MM-DD format or use calendar picker.",
+        t('invalidDateFormat'), 
+        t('pleaseEnterDateInYYYYMMDD'),
         [
           {
-            text: "Use Calendar",
+            text: t('useCalendar'),
             onPress: openJoiningDatePicker
           },
           {
-            text: "OK",
+            text: t('ok'),
             style: "default"
           }
         ]
@@ -307,15 +309,15 @@ const NewMember = () => {
     // Validate date of birth if provided
     if (formData.dateOfBirth && !isValidDate(formData.dateOfBirth)) {
       Alert.alert(
-        "Invalid Date of Birth Format", 
-        "Please enter date in YYYY-MM-DD format or use calendar picker.",
+        t('invalidDOBFormat'), 
+        t('pleaseEnterDateInYYYYMMDD'),
         [
           {
-            text: "Use Calendar",
+            text: t('useCalendar'),
             onPress: openDOBDatePicker
           },
           {
-            text: "OK",
+            text: t('ok'),
             style: "default"
           }
         ]
@@ -346,9 +348,9 @@ const NewMember = () => {
         console.log('Updating member:', memberData);
         await ApiService.updateMember(member.id, memberData);
         
-        Alert.alert("Success", "Member updated successfully!", [
+        Alert.alert(t('success'), t('memberUpdatedSuccessfully'), [
           {
-            text: "OK",
+            text: t('ok'),
             onPress: () => navigation.goBack(),
           },
         ]);
@@ -357,7 +359,7 @@ const NewMember = () => {
         // Get admin member ID using robust 3-tier lookup
         const adminMemberId = await getCurrentUserMemberId();
         if (!adminMemberId) {
-          Alert.alert("Error", "Admin member ID not found. Please login again.");
+          Alert.alert(t('error'), t('adminMemberIdNotFound'));
           setLoading(false);
           return;
         }
@@ -387,15 +389,15 @@ const NewMember = () => {
         setSelectedJoiningDate(new Date());
         setSelectedDOBDate(new Date());
         
-        Alert.alert("Success", "Member added successfully!", [
+        Alert.alert(t('success'), t('memberAddedSuccessfully'), [
           {
-            text: "OK",
+            text: t('ok'),
             onPress: () => {},
           },
         ]);
       }
     } catch (error) {
-      Alert.alert("Error", error.message || "Failed to save member");
+      Alert.alert(t('error'), error.message || t('failedToSaveMember'));
       console.error('Error:', error);
     } finally {
       setLoading(false);
@@ -411,7 +413,7 @@ const NewMember = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{isEditing ? 'Edit Member' : 'Add New Member'}</Text>
+        <Text style={styles.headerTitle}>{isEditing ? t('editMember') : t('addNewMember')}</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity 
             style={styles.resetButton}
@@ -438,12 +440,12 @@ const NewMember = () => {
       >
         {/* Member Name */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Member Name *</Text>
+          <Text style={styles.label}>{t('memberName')} *</Text>
           <View style={styles.inputContainer}>
             <Icon name="account" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Enter member name"
+              placeholder={t('enterMemberName')}
               value={formData.memberName}
               onChangeText={(text) => handleInputChange("memberName", text)}
               placeholderTextColor="#999"
@@ -454,12 +456,12 @@ const NewMember = () => {
 
         {/* Mobile Number */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Mobile Number *</Text>
+          <Text style={styles.label}>{t('mobileNumber')} *</Text>
           <View style={styles.inputContainer}>
             <Icon name="phone" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="10-digit mobile number"
+              placeholder={t('tenDigitMobile')}
               value={formData.mobileNum}
               onChangeText={(text) => handleInputChange("mobileNum", text)}
               keyboardType="phone-pad"
@@ -472,12 +474,12 @@ const NewMember = () => {
 
         {/* Email */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
+          <Text style={styles.label}>{t('email')}</Text>
           <View style={styles.inputContainer}>
             <Icon name="email" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Enter email address"
+              placeholder={t('enterEmail')}
               value={formData.email}
               onChangeText={(text) => handleInputChange("email", text)}
               keyboardType="email-address"
@@ -490,7 +492,7 @@ const NewMember = () => {
 
         {/* Gender Radio Buttons */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Gender</Text>
+          <Text style={styles.label}>{t('gender')}</Text>
           <View style={styles.radioGroup}>
             <TouchableOpacity
               style={styles.radioButton}
@@ -500,7 +502,7 @@ const NewMember = () => {
               <View style={[styles.radioCircle, formData.gender === "Male" && styles.radioCircleSelected]}>
                 {formData.gender === "Male" && <View style={styles.radioInner} />}
               </View>
-              <Text style={styles.radioLabel}>Male</Text>
+              <Text style={styles.radioLabel}>{t('male')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -511,15 +513,15 @@ const NewMember = () => {
               <View style={[styles.radioCircle, formData.gender === "Female" && styles.radioCircleSelected]}>
                 {formData.gender === "Female" && <View style={styles.radioInner} />}
               </View>
-              <Text style={styles.radioLabel}>Female</Text>
+              <Text style={styles.radioLabel}>{t('female')}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Date of Birth with Calendar Icon INSIDE the input */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Date of Birth</Text>
-          <Text style={styles.dateHelperText}>Format: YYYY-MM-DD</Text>
+          <Text style={styles.label}>{t('dateOfBirth')}</Text>
+          <Text style={styles.dateHelperText}>{t('formatYYYYMMDD')}</Text>
           <View style={styles.inputContainer}>
             <Icon name="cake" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
@@ -544,8 +546,8 @@ const NewMember = () => {
 
         {/* Joining Date with Calendar Icon INSIDE the input */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Joining Date *</Text>
-          <Text style={styles.dateHelperText}>Format: YYYY-MM-DD</Text>
+          <Text style={styles.label}>{t('joiningDate')} *</Text>
+          <Text style={styles.dateHelperText}>{t('formatYYYYMMDD')}</Text>
           <View style={styles.inputContainer}>
             <Icon name="calendar" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
@@ -588,12 +590,12 @@ const NewMember = () => {
 
         {/* Address */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Address</Text>
+          <Text style={styles.label}>{t('address')}</Text>
           <View style={styles.inputContainer}>
             <Icon name="map-marker" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
               style={[styles.input, styles.textArea]}
-              placeholder="Enter address"
+              placeholder={t('enterAddress')}
               value={formData.address}
               onChangeText={(text) => handleInputChange("address", text)}
               placeholderTextColor="#999"
@@ -606,12 +608,12 @@ const NewMember = () => {
 
         {/* Business */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Business/Occupation</Text>
+          <Text style={styles.label}>{t('businessOccupation')}</Text>
           <View style={styles.inputContainer}>
             <Icon name="briefcase" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="Enter business or occupation"
+              placeholder={t('enterBusiness')}
               value={formData.business}
               onChangeText={(text) => handleInputChange("business", text)}
               placeholderTextColor="#999"
@@ -631,7 +633,7 @@ const NewMember = () => {
             disabled={loading}
           >
             <Icon name="refresh" size={18} color="#4A90E2" />
-            <Text style={styles.resetButtonText}>Reset Form</Text>
+            <Text style={styles.resetButtonText}>{t('resetForm')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -644,7 +646,7 @@ const NewMember = () => {
             ) : (
               <>
                 <Icon name={isEditing ? "pencil" : "account-plus"} size={18} color="#FFF" />
-                <Text style={styles.addButtonText}>{isEditing ? 'Update Member' : 'Add Member'}</Text>
+                <Text style={styles.addButtonText}>{isEditing ? t('updateMember') : t('addMember')}</Text>
               </>
             )}
           </TouchableOpacity>

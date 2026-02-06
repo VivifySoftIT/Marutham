@@ -16,9 +16,11 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
+import { useLanguage } from '../service/LanguageContext';
 
 const MemberList = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [members, setMembers] = useState([]);
@@ -52,7 +54,7 @@ const MemberList = () => {
         phone: member.Phone || member.phone,
         email: member.Email || member.email,
         joinDate: member.Joined || member.joined,
-        status: (member.IsActive || member.isActive) ? 'Active' : 'Inactive',
+        status: (member.IsActive || member.isActive) ? t('active') : t('inactive'),
         feesStatus: member.FeesStatus || member.feesStatus,
         amount: member.Amount || member.amount,
         batch: 'N/A',
@@ -80,7 +82,7 @@ const MemberList = () => {
       });
     } catch (error) {
       console.error('MembersList - Error loading members:', error);
-      Alert.alert('Error', 'Failed to load members: ' + error.message);
+      Alert.alert(t('error'), t('failedToLoadMembers') + ': ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -100,13 +102,13 @@ const MemberList = () => {
       
       if (results.length === 0) {
         Alert.alert(
-          'No Results',
-          'No members found matching your search.',
-          [{ text: 'OK', onPress: () => setSearchQuery('') }]
+          t('noResults'),
+          t('noMembersFoundMessage'),
+          [{ text: t('ok'), onPress: () => setSearchQuery('') }]
         );
       }
     } catch (error) {
-      Alert.alert('Error', 'Search failed: ' + error.message);
+      Alert.alert(t('error'), t('searchFailed') + ': ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -136,15 +138,15 @@ const MemberList = () => {
           <Text style={styles.memberId}>ID: {item.memberId || 'N/A'}</Text>
           <View style={styles.statusRow}>
             <View style={[styles.statusBadge, { 
-              backgroundColor: item.status === 'Active' ? '#E8F5E9' : '#FFEBEE' 
+              backgroundColor: item.status === t('active') ? '#E8F5E9' : '#FFEBEE' 
             }]}>
               <Icon 
-                name={item.status === 'Active' ? 'check-circle' : 'alert-circle'} 
+                name={item.status === t('active') ? 'check-circle' : 'alert-circle'} 
                 size={12} 
-                color={item.status === 'Active' ? '#4CAF50' : '#F44336'} 
+                color={item.status === t('active') ? '#4CAF50' : '#F44336'} 
               />
               <Text style={[styles.statusText, { 
-                color: item.status === 'Active' ? '#4CAF50' : '#F44336' 
+                color: item.status === t('active') ? '#4CAF50' : '#F44336' 
               }]}>
                 {item.status}
               </Text>
@@ -160,7 +162,7 @@ const MemberList = () => {
               <Text style={[styles.feesStatusText, { 
                 color: item.feesStatus === 'Paid' ? '#4CAF50' : '#FF9800' 
               }]}>
-                {item.feesStatus}
+                {item.feesStatus === 'Paid' ? t('paid') : item.feesStatus}
               </Text>
             </View>
           </View>
@@ -185,13 +187,13 @@ const MemberList = () => {
       <View style={styles.detailsGrid}>
         <View style={styles.detailBox}>
           <Icon name="calendar" size={16} color="#4A90E2" />
-          <Text style={styles.detailLabel}>Joined</Text>
-          <Text style={styles.detailValue}>{item.joinDate || 'N/A'}</Text>
+          <Text style={styles.detailLabel}>{t('joinDate')}</Text>
+          <Text style={styles.detailValue}>{item.joinDate || t('notAvailable')}</Text>
         </View>
         
         <View style={styles.detailBox}>
           <Icon name="cash" size={16} color="#4A90E2" />
-          <Text style={styles.detailLabel}>Amount</Text>
+          <Text style={styles.detailLabel}>{t('amount')}</Text>
           <Text style={styles.detailValue}>₹{item.amount || '0'}</Text>
         </View>
       </View>
@@ -203,7 +205,7 @@ const MemberList = () => {
           onPress={() => navigation.navigate('MemberDetails', { memberId: item.id })}
         >
           <Icon name="eye" size={16} color="#2196F3" />
-          <Text style={[styles.actionButtonText, { color: '#2196F3' }]}>View</Text>
+          <Text style={[styles.actionButtonText, { color: '#2196F3' }]}>{t('view')}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -211,7 +213,7 @@ const MemberList = () => {
           onPress={() => navigation.navigate('NewMember', { member: item, isEditing: true })}
         >
           <Icon name="pencil" size={16} color="#FF9800" />
-          <Text style={[styles.actionButtonText, { color: '#FF9800' }]}>Edit</Text>
+          <Text style={[styles.actionButtonText, { color: '#FF9800' }]}>{t('edit')}</Text>
         </TouchableOpacity>
         
         {/* <TouchableOpacity 
@@ -219,7 +221,7 @@ const MemberList = () => {
           onPress={() => navigation.navigate('PaymentDetails', { memberId: item.id })}
         >
           <Icon name="cash-plus" size={16} color="#4CAF50" />
-          <Text style={[styles.actionButtonText, { color: '#4CAF50' }]}>Payment</Text>
+          <Text style={[styles.actionButtonText, { color: '#4CAF50' }]}>{t('payment')}</Text>
         </TouchableOpacity> */}
       </View>
     </View>
@@ -234,7 +236,7 @@ const MemberList = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Members List</Text>
+        <Text style={styles.headerTitle}>{t('membersList')}</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity 
             onPress={() => navigation.navigate('NewMember')}
@@ -247,17 +249,17 @@ const MemberList = () => {
       {/* Search Section */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
+          <Icon name="magnify" size={20} color="#4A90E2" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by name, ID, phone or email..."
+            placeholder={t('searchByNameIdPhoneEmail')}
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={handleSearch}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={handleClearSearch}>
-              <Icon name="close-circle" size={20} color="#666" />
+              <Icon name="close-circle" size={20} color="#4A90E2" />
             </TouchableOpacity>
           )}
         </View>
@@ -276,19 +278,25 @@ const MemberList = () => {
         <View style={[styles.statCard, styles.totalCard]}>
           <Icon name="account-group" size={22} color="#2196F3" />
           <Text style={styles.statNumber}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Total Members</Text>
+          <Text style={styles.statLabel}>{t('totalMembers')}</Text>
         </View>
         
         <View style={[styles.statCard, styles.activeCard]}>
           <Icon name="account-check" size={22} color="#4CAF50" />
           <Text style={styles.statNumber}>{stats.active}</Text>
-          <Text style={styles.statLabel}>Active</Text>
+          <Text style={styles.statLabel}>{t('active')}</Text>
+        </View>
+        
+        <View style={[styles.statCard, styles.pendingCard]}>
+          <Icon name="clock-alert" size={22} color="#FF9800" />
+          <Text style={styles.statNumber}>{stats.pending}</Text>
+          <Text style={styles.statLabel}>{t('pending')}</Text>
         </View>
         
         <View style={[styles.statCard, styles.unpaidCard]}>
           <Icon name="alert-circle" size={22} color="#F44336" />
           <Text style={styles.statNumber}>{stats.unpaid}</Text>
-          <Text style={styles.statLabel}>Unpaid</Text>
+          <Text style={styles.statLabel}>{t('unpaid')}</Text>
         </View>
       </ScrollView>
 
@@ -297,36 +305,36 @@ const MemberList = () => {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#212c62" />
-            <Text style={styles.loadingText}>Loading members...</Text>
+            <Text style={styles.loadingText}>{t('loadingMembers')}</Text>
           </View>
         ) : (
           <>
             <View style={styles.listHeader}>
               <Text style={styles.listTitle}>
-                {filteredMembers.length} Members Found
+                {filteredMembers.length} {t('membersFound')}
               </Text>
               <TouchableOpacity 
                 style={styles.filterButton}
-                onPress={() => Alert.alert('Filter', 'Filter functionality coming soon')}
+                onPress={() => Alert.alert(t('filter'), t('filterComingSoon'))}
               >
                 <Icon name="filter-variant" size={20} color="#212c62" />
-                <Text style={styles.filterButtonText}>Filter</Text>
+                <Text style={styles.filterButtonText}>{t('filter')}</Text>
               </TouchableOpacity>
             </View>
 
             {filteredMembers.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Icon name="account-off" size={60} color="#CCC" />
-                <Text style={styles.emptyText}>No members found</Text>
+                <Text style={styles.emptyText}>{t('noMembersFound')}</Text>
                 <Text style={styles.emptySubtext}>
-                  {searchQuery ? 'Try a different search term' : 'Add new members to get started'}
+                  {searchQuery ? t('tryDifferentSearchTerm') : t('addNewMembersToStart')}
                 </Text>
                 <TouchableOpacity 
                   style={styles.addMemberButton}
                   onPress={() => navigation.navigate('NewMember')}
                 >
                   <Icon name="account-plus" size={20} color="#FFF" />
-                  <Text style={styles.addMemberButtonText}>Add New Member</Text>
+                  <Text style={styles.addMemberButtonText}>{t('addNewMember')}</Text>
                 </TouchableOpacity>
               </View>
             ) : (
