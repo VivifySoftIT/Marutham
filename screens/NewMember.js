@@ -72,7 +72,7 @@ const NewMember = () => {
         subCompanyId: member.subCompanyId || null,
         gender: member.gender || "",
       });
-      
+
       // Set the joining date if available
       if (member.joinDate) {
         try {
@@ -81,7 +81,7 @@ const NewMember = () => {
           console.error('Error parsing joining date:', error);
         }
       }
-      
+
       // Set the date of birth if available
       if (member.dateOfBirth) {
         try {
@@ -113,7 +113,7 @@ const NewMember = () => {
       setLoadingMainCompanies(true);
       const mainCompaniesData = await ApiService.getMainCompanies();
       setMainCompanies(mainCompaniesData || []);
-      
+
       // If no main company selected and there's a default company, select it
       if (!selectedMainCompanyId && mainCompaniesData && mainCompaniesData.length > 0) {
         const defaultMainCompany = mainCompaniesData.find(c => c.companyCode === 'ALAIGAL') || mainCompaniesData[0];
@@ -132,7 +132,7 @@ const NewMember = () => {
       setLoadingSubCompanies(true);
       const subCompaniesData = await ApiService.getSubCompaniesByMainCompany(mainCompanyId);
       setSubCompanies(subCompaniesData || []);
-      
+
       // If no sub-company selected and there's a default sub-company, select it
       if (!formData.subCompanyId && subCompaniesData && subCompaniesData.length > 0) {
         const defaultSubCompany = subCompaniesData.find(sc => sc.subCompanyCode === 'MAIN') || subCompaniesData[0];
@@ -161,6 +161,7 @@ const NewMember = () => {
     address: "",
     batch: "",
     subCompanyId: null,
+    gender: "",
   };
 
   const handleInputChange = (field, value) => {
@@ -174,14 +175,14 @@ const NewMember = () => {
 
   const handleJoiningDateChange = (_, date) => {
     setShowJoiningDatePicker(false);
-    
+
     if (date) {
       setSelectedJoiningDate(date);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
-      
+
       setFormData((prev) => ({ ...prev, joiningDate: formattedDate }));
       console.log("Joining Date selected from calendar:", formattedDate);
     }
@@ -189,14 +190,14 @@ const NewMember = () => {
 
   const handleDOBDateChange = (_, date) => {
     setShowDOBDatePicker(false);
-    
+
     if (date) {
       setSelectedDOBDate(date);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       const day = String(date.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
-      
+
       setFormData((prev) => ({ ...prev, dateOfBirth: formattedDate }));
       console.log("Date of Birth selected from calendar:", formattedDate);
     }
@@ -204,7 +205,7 @@ const NewMember = () => {
 
   const openJoiningDatePicker = () => {
     Keyboard.dismiss();
-    
+
     if (formData.joiningDate) {
       try {
         const dateParts = formData.joiningDate.split('-');
@@ -221,13 +222,13 @@ const NewMember = () => {
         console.log("Error parsing joining date:", error);
       }
     }
-    
+
     setShowJoiningDatePicker(true);
   };
 
   const openDOBDatePicker = () => {
     Keyboard.dismiss();
-    
+
     if (formData.dateOfBirth) {
       try {
         const dateParts = formData.dateOfBirth.split('-');
@@ -244,7 +245,7 @@ const NewMember = () => {
         console.log("Error parsing date of birth:", error);
       }
     }
-    
+
     setShowDOBDatePicker(true);
   };
 
@@ -253,7 +254,7 @@ const NewMember = () => {
     setSelectedJoiningDate(new Date());
     setSelectedDOBDate(new Date());
     Keyboard.dismiss();
-    
+
     if (Platform.OS === 'web' && document.activeElement) {
       document.activeElement.blur();
     }
@@ -262,7 +263,7 @@ const NewMember = () => {
   const isValidDate = (dateString) => {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
     if (!regex.test(dateString)) return false;
-    
+
     const date = new Date(dateString);
     return date instanceof Date && !isNaN(date);
   };
@@ -282,15 +283,15 @@ const NewMember = () => {
       Alert.alert(t('validationError'), t('joiningDateRequired'));
       return;
     }
-    
+
     if (!formData.subCompanyId) {
       Alert.alert(t('validationError'), t('subCompanyRequired'));
       return;
     }
-    
+
     if (!isValidDate(joiningDate)) {
       Alert.alert(
-        t('invalidDateFormat'), 
+        t('invalidDateFormat'),
         t('pleaseEnterDateInYYYYMMDD'),
         [
           {
@@ -309,7 +310,7 @@ const NewMember = () => {
     // Validate date of birth if provided
     if (formData.dateOfBirth && !isValidDate(formData.dateOfBirth)) {
       Alert.alert(
-        t('invalidDOBFormat'), 
+        t('invalidDOBFormat'),
         t('pleaseEnterDateInYYYYMMDD'),
         [
           {
@@ -347,7 +348,7 @@ const NewMember = () => {
 
         console.log('Updating member:', memberData);
         await ApiService.updateMember(member.id, memberData);
-        
+
         Alert.alert(t('success'), t('memberUpdatedSuccessfully'), [
           {
             text: t('ok'),
@@ -383,16 +384,16 @@ const NewMember = () => {
         console.log('Creating new member with admin ID:', adminMemberId);
         console.log('Member data:', memberData);
         await ApiService.createMember(memberData);
-        
+
         // Clear all form fields
         setFormData(initialFormState);
         setSelectedJoiningDate(new Date());
         setSelectedDOBDate(new Date());
-        
+
         Alert.alert(t('success'), t('memberAddedSuccessfully'), [
           {
             text: t('ok'),
-            onPress: () => {},
+            onPress: () => { },
           },
         ]);
       }
@@ -407,7 +408,7 @@ const NewMember = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
-      
+
       {/* Header - MembersDirectory Style */}
       <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -415,15 +416,15 @@ const NewMember = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{isEditing ? t('editMember') : t('addNewMember')}</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.resetButton}
             onPress={resetForm}
             disabled={loading}
           >
             <Icon name="refresh" size={22} color="#FFF" />
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.excelButton}
             onPress={() => navigation.navigate('BulkMemberImport')}
             disabled={loading}
@@ -433,8 +434,8 @@ const NewMember = () => {
         </View>
       </LinearGradient>
 
-      <ScrollView 
-        style={styles.content} 
+      <ScrollView
+        style={styles.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -526,7 +527,7 @@ const NewMember = () => {
             <Icon name="cake" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="YYYY-MM-DD"
+              placeholder={t('dobPlaceholder')}
               value={formData.dateOfBirth}
               onChangeText={(text) => handleInputChange("dateOfBirth", text)}
               placeholderTextColor="#999"
@@ -534,7 +535,7 @@ const NewMember = () => {
               keyboardType="numbers-and-punctuation"
               maxLength={10}
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.calendarIconInside, loading && styles.disabledButton]}
               onPress={openDOBDatePicker}
               disabled={loading}
@@ -552,7 +553,7 @@ const NewMember = () => {
             <Icon name="calendar" size={18} color="#4A90E2" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder="YYYY-MM-DD"
+              placeholder={t('dobPlaceholder')}
               value={formData.joiningDate}
               onChangeText={(text) => handleInputChange("joiningDate", text)}
               placeholderTextColor="#999"
@@ -560,7 +561,7 @@ const NewMember = () => {
               keyboardType="numbers-and-punctuation"
               maxLength={10}
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.calendarIconInside, loading && styles.disabledButton]}
               onPress={openJoiningDatePicker}
               disabled={loading}
@@ -623,7 +624,7 @@ const NewMember = () => {
         </View>
 
         {/* Main Company Dropdown */}
-       
+
 
         {/* Buttons Container */}
         <View style={styles.buttonsContainer}>
@@ -663,16 +664,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F9FC',
   },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 15, 
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
     paddingVertical: 15,
   },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#FFF',
     textAlign: 'center',
     flex: 1,

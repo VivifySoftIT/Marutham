@@ -58,7 +58,7 @@ const MemberAttendanceScreen = () => {
     console.log('Cleaned search text:', cleanedText);
 
     if (!cleanedText) {
-      Alert.alert('No Name Provided', 'Please speak a member name clearly.');
+      Alert.alert(t('error'), t('voiceErrorMessage') || 'Please speak a member name clearly.');
       return;
     }
 
@@ -88,11 +88,11 @@ const MemberAttendanceScreen = () => {
 
     if (matchingMembers.length === 0) {
       Alert.alert(
-        'No Match Found',
-        `No member found matching "${spokenText}".\n\nPlease try speaking the full name clearly or type manually.`,
+        t('noMatchFound'),
+        `${t('noMemberFoundMessage')} "${spokenText}".\n\n${t('tryDifferentSearchTerm')}`,
         [
-          { text: 'Try Again', onPress: () => setTimeout(startVoiceSearch, 500) },
-          { text: 'Cancel', style: 'cancel' }
+          { text: t('retry') || 'Try Again', onPress: () => setTimeout(startVoiceRecording, 500) },
+          { text: t('cancel'), style: 'cancel' }
         ]
       );
       return;
@@ -105,32 +105,28 @@ const MemberAttendanceScreen = () => {
         [member.id]: true,
       }));
 
-      Alert.alert(
-        'Marked Present!',
-        `Successfully marked "${member.name}" as present.`,
-        [{ text: 'OK' }]
-      );
+      Alert.alert(t('markedPresentStatus'), `${t('successfullyMarked')} "${member.name}" ${t('asPresent')}.`);
 
       setSearchQuery('');
       setLastSpokenName(member.name);
     } else {
       Alert.alert(
-        'Multiple Matches Found',
-        `Found ${matchingMembers.length} members matching "${spokenText}".\n\nSelect one to mark as present:`,
+        t('multipleMatchesFound') || 'Multiple Matches Found',
+        `${t('found')} ${matchingMembers.length} ${t('membersCount')} "${spokenText}".\n\n${t('selectOneToMark') || 'Select one to mark as present:'}`,
         [
           ...matchingMembers.slice(0, 5).map((member, index) => ({
             text: `${member.name} (${member.business || 'N/A'})`,
             onPress: () => {
               setAttendanceData(prev => ({
                 ...prev,
-                [member.id]: true,
+                [member.id]: 'Present',
               }));
               setSearchQuery('');
               setLastSpokenName(member.name);
-              Alert.alert('Marked Present!', `Successfully marked "${member.name}" as present.`);
+              Alert.alert(t('markedPresentStatus'), `${t('successfullyMarked')} "${member.name}" ${t('asPresent')}.`);
             }
           })),
-          { text: 'Cancel', style: 'cancel' }
+          { text: t('cancel'), style: 'cancel' }
         ]
       );
     }
@@ -207,7 +203,7 @@ const MemberAttendanceScreen = () => {
     );
 
     if (matchingMembers.length === 0) {
-      Alert.alert('No Matches', `No members found matching "${searchText}"`);
+      Alert.alert(t('noMatches'), `${t('noMemberFoundMessage')} "${searchText}"`);
       return;
     }
 
@@ -224,8 +220,8 @@ const MemberAttendanceScreen = () => {
     setAttendanceData(updatedAttendance);
 
     Alert.alert(
-      'Batch Mark Complete',
-      `Marked ${newlyMarked} member(s) as present.\nTotal present: ${Object.values(updatedAttendance).filter(status => status).length}`
+      t('batchMarkComplete'),
+      t('batchMarkedMsg').replace('{count}', newlyMarked.toString()).replace('{total}', Object.values(updatedAttendance).filter(status => status).length.toString())
     );
   };
 
@@ -330,7 +326,7 @@ const MemberAttendanceScreen = () => {
       const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
       if (jsonData.length === 0) {
-        Alert.alert('Empty File', 'The Excel file contains no data.');
+        Alert.alert(t('emptyFile'), t('noResults'));
         setUploading(false);
         return;
       }
@@ -372,11 +368,11 @@ const MemberAttendanceScreen = () => {
       const apiResult = await ApiService.createBulkAttendance(bulkRequest);
 
       Alert.alert(
-        'Bulk Upload Complete',
-        `Successfully processed: ${apiResult.successCount}\nFailed: ${apiResult.failCount}`,
+        t('uploadComplete'),
+        `${t('processed')}: ${apiResult.successCount}\n${t('failed')}: ${apiResult.failCount}`,
         [
           {
-            text: 'OK',
+            text: t('ok'),
             onPress: () => {
               loadMembers();
             }
@@ -413,7 +409,7 @@ const MemberAttendanceScreen = () => {
       .map(([memberId, status]) => ({ memberId: parseInt(memberId), status }));
 
     if (markedMembers.length === 0) {
-      Alert.alert('No Changes', 'Please mark attendance for at least one member');
+      Alert.alert(t('noChanges'), t('selectMemberToViewHistory') || 'Please mark attendance for at least one member');
       return;
     }
 
@@ -460,11 +456,11 @@ const MemberAttendanceScreen = () => {
       }
 
       Alert.alert(
-        'Attendance Result',
-        `Successfully recorded: ${successCount} members\nFailed: ${errorCount} members`,
+        t('attendanceResult') || 'Attendance Result',
+        `${t('successfullyRecorded') || 'Successfully recorded'}: ${successCount} ${t('membersCount')}\n${t('failed') || 'Failed'}: ${errorCount} ${t('membersCount')}`,
         [
           {
-            text: 'OK',
+            text: t('ok'),
             onPress: () => {
               setAttendanceData({});
               setLastSpokenName('');
@@ -475,7 +471,7 @@ const MemberAttendanceScreen = () => {
       );
     } catch (error) {
       console.error('Error in handleSaveAttendance:', error);
-      Alert.alert('Error', `Failed to save attendance: ${error.message || 'Please try again'}`);
+      Alert.alert(t('error'), `${t('failedToSaveAttendance') || 'Failed to save attendance'}: ${error.message || t('pleaseTryAgain')}`);
     } finally {
       setSaving(false);
     }
@@ -483,26 +479,28 @@ const MemberAttendanceScreen = () => {
 
   const presentCount = Object.values(attendanceData).filter(status => status).length; // Count both Present and Late
 
-return (
+  return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
 
       {/* Header - Fixed */}
       <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
-        {/* Left: Back Button */}
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
-          <Icon name="arrow-left" size={24} color="#FFF" />
-        </TouchableOpacity>
+        {/* Left Container */}
+        <View style={styles.headerLeftContainer}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
+            <Icon name="arrow-left" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
 
         {/* Center: Title */}
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>Mark Attendance</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>{t('markAttendance')}</Text>
         </View>
 
-        {/* Right: Excel and Refresh Buttons */}
+        {/* Right Container */}
         <View style={styles.headerRightContainer}>
-          <TouchableOpacity 
-            onPress={handleExcelUpload} 
+          <TouchableOpacity
+            onPress={handleExcelUpload}
             style={styles.headerButton}
             disabled={uploading}
           >
@@ -512,9 +510,8 @@ return (
               <Icon name="file-excel" size={25} color="#FFF" />
             )}
           </TouchableOpacity>
-          
           <TouchableOpacity onPress={loadMembers} style={styles.headerButton}>
-            <Icon name="refresh" size={24} color="#FFF" />
+            <Icon name="refresh" size={25} color="#FFF" />
           </TouchableOpacity>
         </View>
       </LinearGradient>
@@ -543,7 +540,7 @@ return (
           </TouchableOpacity>
 
           <Text style={styles.dateNote}>
-            Note: Attendance will be recorded for today's date automatically by the system
+            {t('attendanceNote')}
           </Text>
 
           {showDatePicker && (
@@ -569,7 +566,7 @@ return (
               <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search member..."
+                placeholder={t('searchMember')}
                 value={searchQuery}
                 onChangeText={(text) => {
                   setSearchQuery(text);
@@ -606,14 +603,14 @@ return (
               <View style={styles.listeningIndicator}>
                 <Icon name="microphone" size={16} color="#FF6B6B" />
                 <Text style={styles.listeningText}>
-                  Recording... Release to search
+                  {t('recordingSearch')}
                 </Text>
               </View>
             ) : (
               <View style={styles.voiceHintContainer}>
                 <Icon name="information" size={14} color="#4A90E2" />
                 <Text style={styles.voiceHint}>
-                  Hold microphone to search
+                  {t('holdToSearch')}
                 </Text>
               </View>
             )}
@@ -624,7 +621,7 @@ return (
                 {loading ? (
                   <View style={styles.noMembersContainer}>
                     <ActivityIndicator size="small" color="#4A90E2" />
-                    <Text style={styles.noMembersText}>Loading members...</Text>
+                    <Text style={styles.noMembersText}>{t('loadingMembers')}</Text>
                   </View>
                 ) : filteredMembers && filteredMembers.length > 0 ? (
                   filteredMembers.slice(0, 5).map(member => (
@@ -650,7 +647,7 @@ return (
                 ) : (
                   <View style={styles.noMembersContainer}>
                     <Icon name="account-alert" size={24} color="#999" />
-                    <Text style={styles.noMembersText}>No members found</Text>
+                    <Text style={styles.noMembersText}>{t('noResults')}</Text>
                   </View>
                 )}
               </View>
@@ -662,8 +659,8 @@ return (
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
             <View style={styles.memberHeaderLeft}>
-              <Text style={styles.sectionTitle}>Members</Text>
-              <Text style={styles.memberCount}>{displayMembers.length} members</Text>
+              <Text style={styles.sectionTitle}>{t('members')}</Text>
+              <Text style={styles.memberCount}>{displayMembers.length} {t('membersCount')}</Text>
             </View>
             {presentCount > 0 && (
               <TouchableOpacity
@@ -676,7 +673,7 @@ return (
                 ) : (
                   <>
                     <Icon name="content-save" size={16} color="white" />
-                    <Text style={styles.saveButtonSmallText}>Save</Text>
+                    <Text style={styles.saveButtonSmallText}>{t('save')}</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -686,14 +683,14 @@ return (
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#4A90E2" />
-              <Text style={styles.loadingText}>Loading...</Text>
+              <Text style={styles.loadingText}>{t('loading')}</Text>
             </View>
           ) : displayMembers.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Icon name="account-multiple-off" size={60} color="#ccc" />
-              <Text style={styles.emptyText}>No Members Found</Text>
+              <Text style={styles.emptyText}>{t('noResults')}</Text>
               <Text style={styles.emptySubtext}>
-                {members.length === 0 ? 'Failed to load members' : 'No members match your search'}
+                {members.length === 0 ? t('failedToLoadMembers') : t('noMemberMatch')}
               </Text>
             </View>
           ) : (
@@ -708,40 +705,38 @@ return (
                   }
                 ]}
               >
-                <View style={styles.memberInfo}>
-                  <View style={styles.memberHeader}>
-                    <View style={styles.memberAvatar}>
-                      <Text style={styles.avatarText}>
-                        {member.name.charAt(0)}
-                      </Text>
-                    </View>
-                    <View style={styles.memberDetails}>
-                      <Text style={styles.memberName}>{member.name}</Text>
-                      <Text style={styles.memberId}>ID: {member.employeeId}</Text>
-                    </View>
-                  </View>
-
-                  {/* Business Information */}
-                  <View style={styles.businessContainer}>
-                    <Icon name="office-building" size={16} color="#4A90E2" />
-                    <Text style={styles.businessText} numberOfLines={1}>
-                      {member.business}
+                <View style={styles.memberHeader}>
+                  <View style={styles.memberAvatar}>
+                    <Text style={styles.avatarText}>
+                      {member.name.charAt(0)}
                     </Text>
                   </View>
-
-                  {/* Additional Info */}
-                  <View style={styles.extraInfoContainer}>
-                    <View style={styles.extraInfoItem}>
-                      <Icon name="phone" size={14} color="#666" />
-                      <Text style={styles.extraInfoText}>{member.phone}</Text>
-                    </View>
-                    {member.batch && (
-                      <View style={styles.extraInfoItem}>
-                        <Icon name="clock" size={14} color="#666" />
-                        <Text style={styles.extraInfoText}>{member.batch}</Text>
-                      </View>
-                    )}
+                  <View style={styles.memberDetails}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    <Text style={styles.memberId}>{t('id') || 'ID'}: {member.employeeId}</Text>
                   </View>
+                </View>
+
+                {/* Business Information */}
+                <View style={styles.businessContainer}>
+                  <Icon name="office-building" size={16} color="#4A90E2" />
+                  <Text style={styles.businessText} numberOfLines={1}>
+                    {member.business}
+                  </Text>
+                </View>
+
+                {/* Additional Info */}
+                <View style={styles.extraInfoContainer}>
+                  <View style={styles.extraInfoItem}>
+                    <Icon name="phone" size={14} color="#666" />
+                    <Text style={styles.extraInfoText}>{member.phone}</Text>
+                  </View>
+                  {member.batch && (
+                    <View style={styles.extraInfoItem}>
+                      <Icon name="clock" size={14} color="#666" />
+                      <Text style={styles.extraInfoText}>{member.batch}</Text>
+                    </View>
+                  )}
                 </View>
 
                 <View style={styles.attendanceButtonGroup}>
@@ -761,7 +756,7 @@ return (
                       styles.attendanceText,
                       attendanceData[member.id] === 'Present' && styles.attendanceTextActive
                     ]}>
-                      Present
+                      {t('present')}
                     </Text>
                   </TouchableOpacity>
 
@@ -781,7 +776,7 @@ return (
                       styles.attendanceText,
                       attendanceData[member.id] === 'Late' && styles.attendanceTextActive
                     ]}>
-                      Late
+                      {t('late')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -803,7 +798,7 @@ return (
                 <View style={styles.selectedMemberDetails}>
                   <Text style={styles.selectedMemberName}>{selectedMember.name}</Text>
                   <Text style={styles.selectedMemberBusiness}>{selectedMember.business}</Text>
-                  <Text style={styles.selectedMemberId}>ID: {selectedMember.employeeId}</Text>
+                  <Text style={styles.selectedMemberId}>{t('id') || 'ID'}: {selectedMember.employeeId}</Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -818,7 +813,7 @@ return (
 
         <View style={{ height: 20 }} />
       </ScrollView>
-    </SafeAreaView>
+    </SafeAreaView >
   );
 };
 
@@ -830,14 +825,20 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 12,
-    height: 56,
+    height: 64, // Reduced from implicit tall height
+  },
+  headerLeftContainer: {
+    width: 80, // Slightly narrower
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   headerButton: {
     padding: 8,
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -845,19 +846,20 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: 8,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFF',
     textAlign: 'center',
+    lineHeight: 28, // Better for Tamil
   },
   headerRightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    minWidth: 100, // Ensure enough space for both icons
+    width: 80, // Match left container
   },
   content: {
     flex: 1,
@@ -1150,6 +1152,10 @@ const styles = StyleSheet.create({
   attendanceButtonGroup: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8F1FF',
+    paddingTop: 12,
   },
   lateButton: {
     borderColor: '#FF9800',
@@ -1181,9 +1187,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   memberCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#F8FBFF',
     padding: 12,
     marginBottom: 10,
