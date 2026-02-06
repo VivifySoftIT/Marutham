@@ -7,6 +7,8 @@ import API_BASE_URL from '../apiConfig';
 import styles from '../styles/styles';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MemberIdService from '../service/MemberIdService';
+import ApiService from '../service/api';
 
 const CustomDrawerContent = (props) => {
   const [employeeName, setEmployeeName] = useState('');
@@ -16,10 +18,43 @@ const CustomDrawerContent = (props) => {
   const [showSafetyModal, setShowSafetyModal] = useState(false);
 
   useEffect(() => {
+    const loadFallbackInfo = async () => {
+      try {
+        const fullName = await AsyncStorage.getItem('fullName');
+        const designation = await AsyncStorage.getItem('designation');
+
+        if (fullName) setEmployeeName(fullName);
+        if (designation) setEmployeeDesignation(designation);
+
+        const memberId = await MemberIdService.getCurrentUserMemberId();
+        if (memberId) {
+          try {
+            const memberDetails = await ApiService.getMember(memberId);
+            if (memberDetails) {
+              if (!employeeName && memberDetails.name) setEmployeeName(memberDetails.name);
+              if (!employeeDesignation && memberDetails.designation) {
+                setEmployeeDesignation(memberDetails.designation);
+              } else if (!employeeDesignation) {
+                setEmployeeDesignation('Member');
+              }
+              if (memberDetails.photoPath) setProfileImage(memberDetails.photoPath);
+            }
+          } catch (e) {
+            console.log('Drawer fallback API fetch failed');
+          }
+        }
+      } catch (e) {
+        console.error('Drawer fallback storage error:', e);
+      }
+    };
+
     const fetchDashboardInfo = async () => {
       try {
         const token = await AsyncStorage.getItem('jwt_token');
-        if (!token) return;
+        if (!token) {
+          loadFallbackInfo();
+          return;
+        }
 
         const response = await fetch(`${API_BASE_URL}/api/Dashboard/GetDashboardInfo`, {
           method: 'GET',
@@ -36,72 +71,76 @@ const CustomDrawerContent = (props) => {
           setEmployeeName(data.result.name || 'No Name');
           setEmployeeDesignation(data.result.designation || 'No Designation');
           setProfileImage(data.result.photoPath);
+
+          if (data.result.name) await AsyncStorage.setItem('fullName', data.result.name);
+          if (data.result.designation) await AsyncStorage.setItem('designation', data.result.designation);
         }
       } catch (error) {
-        console.error('Error fetching dashboard info:', error);
+        console.log('Error fetching dashboard info, using fallback');
+        loadFallbackInfo();
       }
     };
 
     fetchDashboardInfo();
   }, []);
 
-const handleSignOut = async () => {
-  Alert.alert(
-    'Confirm Sign Out',
-    'Are you sure you want to sign out?',
-    [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            // ✅ Clear ALL saved credentials
-            await AsyncStorage.removeItem('jwt_token');
-            await AsyncStorage.removeItem('username');
-            await AsyncStorage.removeItem('password');
-
-            // ✅ Reset navigation to Login screen
-            props.navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-          } catch (error) {
-            console.error('Error during sign out:', error);
-            Alert.alert('Error', 'Failed to sign out. Please try again.');
-          }
+  const handleSignOut = async () => {
+    Alert.alert(
+      'Confirm Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
         },
-      },
-    ]
-  );
-};
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // ✅ Clear ALL saved credentials
+              await AsyncStorage.removeItem('jwt_token');
+              await AsyncStorage.removeItem('username');
+              await AsyncStorage.removeItem('password');
+
+              // ✅ Reset navigation to Login screen
+              props.navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              console.error('Error during sign out:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
   const menuItems = [
     // { label: 'Home', screen: 'InventoryForm', icon: 'home' },
     { label: 'Members Dashboard', screen: 'MemberDashboard', icon: 'home' },
     { label: 'Mark Attendance', screen: 'Attendance', icon: 'event-available' },
-     { label: 'MembersList', screen: 'MembersList', icon: 'description' },
-    
+    { label: 'MembersList', screen: 'MembersList', icon: 'description' },
+
     { label: 'Reports', icon: 'folder', isReports: true },
     { label: 'Sign Out', icon: 'exit-to-app', isSignOut: true },
   ];
 
   const reportItems = [
-   
+
     { label: 'Biometric Report', screen: 'BiometricReport', icon: 'fingerprint' },
-    
+
   ];
 
-  
+
   return (
     <DrawerContentScrollView {...props} style={styles.drawerBackground}>
       {/* Profile Section */}
       <View style={styles.profileContainer}>
-        <Image 
-          source={profileImage ? { uri: profileImage } : require('../assets/Profile.png')} 
-          style={styles.profileImage} 
+        <Image
+          source={profileImage ? { uri: profileImage } : require('../assets/Profile.png')}
+          style={styles.profileImage}
         />
         <View style={styles.profileDetails}>
           <Text style={styles.profileName}>{employeeName || 'Loading...'}</Text>
@@ -115,10 +154,10 @@ const handleSignOut = async () => {
           key={index}
           label={() => <Text style={styles.drawerItemLabel}>{item.label}</Text>}
           icon={() => <MaterialIcons name={item.icon} size={22} color="#212c62" />}
-          onPress={item.isSignOut 
-            ? handleSignOut 
-            : item.isReports 
-              ? () => setShowReportsModal(true) 
+          onPress={item.isSignOut
+            ? handleSignOut
+            : item.isReports
+              ? () => setShowReportsModal(true)
               : item.isSafety
                 ? () => setShowSafetyModal(true)
                 : () => props.navigation.navigate(item.screen)}
@@ -141,7 +180,7 @@ const handleSignOut = async () => {
                 <MaterialIcons name="close" size={24} color="#212c62" />
               </TouchableOpacity>
             </View>
-            
+
             {reportItems.map((item, index) => (
               <TouchableOpacity
                 key={index}
@@ -174,8 +213,8 @@ const handleSignOut = async () => {
                 <MaterialIcons name="close" size={24} color="#212c62" />
               </TouchableOpacity>
             </View>
-            
-          
+
+
           </View>
         </View>
       </Modal>

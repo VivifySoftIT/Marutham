@@ -23,7 +23,7 @@ const translations = {
     sort: 'Sort',
     export: 'Export',
     import: 'Import',
-    
+
     // Dashboard
     goodMorning: 'Good Morning',
     goodAfternoon: 'Good Afternoon',
@@ -40,7 +40,7 @@ const translations = {
     managementModules: 'Management Modules',
     recentActivity: 'Recent Activity',
     today: 'Today',
-    
+
     // Notifications
     notifications: 'Notifications',
     noNotifications: 'No notifications',
@@ -48,7 +48,7 @@ const translations = {
     newMemberRegistered: 'New Member Registered',
     paymentReceived: 'Payment Received',
     pendingPaymentsAlert: 'Pending Payments Alert',
-    
+
     // Settings
     settings: 'Settings',
     language: 'Language',
@@ -57,7 +57,7 @@ const translations = {
     editProfile: 'Edit Profile',
     changePassword: 'Change Password',
     privacySecurity: 'Privacy & Security',
-    
+
     // Attendance
     attendance: 'Attendance',
     markAttendance: 'Mark Attendance',
@@ -74,7 +74,7 @@ const translations = {
     business: 'Business',
     id: 'ID',
     phone: 'Phone',
-    
+
     // Voice Search
     voiceSearch: 'Voice Search',
     voiceError: 'Voice Error',
@@ -87,7 +87,7 @@ const translations = {
     summary: 'Summary',
     saving: 'Saving',
     markAttendance: 'Mark',
-    
+
     // Members
     members: 'Members',
     membersList: 'Members List',
@@ -98,7 +98,7 @@ const translations = {
     newMember: 'New Member',
     bulkImport: 'Bulk Import',
     membersDirectory: 'Members Directory',
-    
+
     // Profile
     profile: 'Profile',
     myProfile: 'My Profile',
@@ -109,13 +109,13 @@ const translations = {
     phone: 'Phone',
     address: 'Address',
     designation: 'Designation',
-    
+
     // Menu
     home: 'Home',
     signOut: 'Sign Out',
     confirmSignOut: 'Are you sure you want to sign out?',
     membersDashboard: 'Members Dashboard',
-    
+
     // Payments
     payments: 'Payments',
     paymentDetails: 'Payment Details',
@@ -127,13 +127,13 @@ const translations = {
     status: 'Status',
     paid: 'Paid',
     pending: 'Pending',
-    
+
     // Reports
     reports: 'Reports',
     generateReport: 'Generate Report',
     biometricReport: 'Biometric Report',
     referralReports: 'Referral Reports',
-    
+
     // Messages & Notices
     messages: 'Messages',
     sendNotice: 'Send Notice',
@@ -141,39 +141,39 @@ const translations = {
     message: 'Message',
     recipient: 'Recipient',
     send: 'Send',
-    
+
     // Admin
     adminMeeting: 'Admin Meeting',
     adminNotifications: 'Admin Notifications',
-    
+
     // Inventory
     inventory: 'Inventory',
     inventoryForm: 'Inventory Form',
-    
+
     // Visitors
     visitors: 'Visitors',
     addVisitor: 'Add Visitor',
     visitorName: 'Visitor Name',
-    
+
     // Batches
     batches: 'Batches',
     addBatch: 'Add Batch',
     batchName: 'Batch Name',
-    
+
     // CEU
     ceu: 'CEU',
     myCEUs: 'My CEUs',
-    
+
     // Feed
     feed: 'Feed',
     myFeed: 'My Activity',
     myActivityLog: 'My Activity Log',
-    
+
     // Slips
     tyfcbSlip: 'TYFCB Slip',
     referralSlip: 'Referral Slip',
     oneToOneSlip: 'One to One Slip',
-    
+
     // Form Fields
     firstName: 'First Name',
     lastName: 'Last Name',
@@ -183,7 +183,7 @@ const translations = {
     male: 'Male',
     female: 'Female',
     other: 'Other',
-    
+
     // Actions
     submit: 'Submit',
     update: 'Update',
@@ -193,14 +193,14 @@ const translations = {
     download: 'Download',
     upload: 'Upload',
     chooseFile: 'Choose File',
-    
+
     // Messages
     successMessage: 'Operation completed successfully',
     errorMessage: 'An error occurred. Please try again.',
     confirmDelete: 'Are you sure you want to delete this?',
     noDataAvailable: 'No data available',
     tryAgain: 'Try Again',
-    
+
     // Time
     morning: 'Morning',
     afternoon: 'Afternoon',
@@ -208,7 +208,7 @@ const translations = {
     yesterday: 'Yesterday',
     thisWeek: 'This Week',
     thisMonth: 'This Month',
-    
+
     // Login Screen
     username: 'Username',
     password: 'Password',
@@ -220,17 +220,17 @@ const translations = {
     biometricLogin: 'Biometric Login',
     authenticateToAccess: 'Authenticate to access Alaigal',
     noSavedCredentials: 'No saved credentials found. Please log in manually.',
-    
+
     // Settings Screen
     myDetails: 'My Details',
     viewManageAccount: 'View and manage your account information',
     currentLanguage: 'Current',
     updatePassword: 'Update your account password',
     languageChanged: 'Language changed to',
-    
+
     // Menu Items (Drawer)
     markAttendance: 'Mark Attendance',
-    
+
     // Report Types
     thanksNote: 'ThanksNote',
     oneToOneMeeting: '1:1 Meeting',
@@ -238,7 +238,7 @@ const translations = {
     visitor: 'Visitor',
     payment: 'Payment',
     referral: 'Referral',
-    
+
     // Messages Screen
     templates: 'Templates',
     compose: 'Compose',
@@ -264,14 +264,14 @@ const translations = {
     attachment: 'Attachment',
     sendMessage: 'Send Message',
     totalMessages: 'Total Messages',
-    
+
     // Message Types
     Birthday: 'Birthday',
     Payment: 'Payment',
     Event: 'Event',
     Meeting: 'Meeting',
     Welcome: 'Welcome',
-    
+
     // Additional Messages Screen translations
     birthdayWish: 'Birthday Wish',
     sendBirthdayWishesToMembers: 'Send birthday wishes to members',
@@ -331,43 +331,43 @@ const translations = {
     noContact: 'No contact',
     fileAttached: 'File attached',
     failedToPickFile: 'Failed to pick file',
-    
+
     // Common Alerts
     confirmTitle: 'Confirm',
     warningTitle: 'Warning',
     infoTitle: 'Information',
-    
+
     // Form Validation
     fieldRequired: 'This field is required',
     invalidEmail: 'Please enter a valid email address',
     invalidPhone: 'Please enter a valid phone number',
     passwordTooShort: 'Password must be at least 6 characters',
-    
+
     // Status Messages
     operationSuccessful: 'Operation completed successfully',
     operationFailed: 'Operation failed. Please try again.',
     dataLoaded: 'Data loaded successfully',
     dataLoadFailed: 'Failed to load data',
-    
+
     // Navigation
     goBack: 'Go Back',
     next: 'Next',
     previous: 'Previous',
     finish: 'Finish',
-    
+
     // File Operations
     selectFile: 'Select File',
     fileSelected: 'File Selected',
     fileUploadSuccess: 'File uploaded successfully',
     fileUploadFailed: 'File upload failed',
-    
+
     // Search & Filter
     searchPlaceholder: 'Search...',
     filterBy: 'Filter by',
     sortBy: 'Sort by',
     noResults: 'No results found',
     clearFilter: 'Clear Filter',
-    
+
     // Months
     january: 'January',
     february: 'February',
@@ -381,7 +381,7 @@ const translations = {
     october: 'October',
     november: 'November',
     december: 'December',
-    
+
     // Dashboard & Member Management
     dashboard: 'Dashboard',
     memberDashboard: 'Member Dashboard',
@@ -393,7 +393,7 @@ const translations = {
     bulkImport: 'Bulk Import',
     newMemberUpload: 'New Member Upload',
     memberForm: 'Member Form',
-    
+
     // Attendance
     attendanceReport: 'Attendance Report',
     attendanceUpload: 'Attendance Upload',
@@ -401,7 +401,7 @@ const translations = {
     markAbsent: 'Mark Absent',
     selectAll: 'Select All',
     deselectAll: 'Deselect All',
-    
+
     // Payments & Fees
     feesManagement: 'Fees Management',
     paymentHistory: 'Payment History',
@@ -416,7 +416,7 @@ const translations = {
     debitCard: 'Debit Card',
     netBanking: 'Net Banking',
     online: 'Online',
-    
+
     // Meetings & Events
     createMeeting: 'Create Meeting',
     meetingDetails: 'Meeting Details',
@@ -424,14 +424,43 @@ const translations = {
     meetingLocation: 'Meeting Location',
     attendees: 'Attendees',
     agenda: 'Agenda',
-    
+    meetingCode: 'Meeting Code',
+    meetingCodeOptional: 'Meeting Code (Optional)',
+    autoGenerated: 'Auto-generated',
+    meetingTitleLabel: 'Meeting Title',
+    enterDescription: 'Enter description',
+    contactPerson: 'Contact Person',
+    selectMemberOrType: 'Select member or type name',
+    noMatchingMembers: 'No matching members found',
+    contactNumber: 'Contact Number',
+    tenDigits: '10 digits',
+    inPerson: 'In-Person',
+    virtual: 'Virtual',
+    placeLabel: 'Place',
+    enterPlace: 'Enter place',
+    virtualLink: 'Virtual Link',
+    enterLink: 'Enter link',
+    invite: 'Invite',
+    selected: 'selected',
+    failedToStartVoice: 'Failed to start voice input',
+    pleaseEnterMeetingTitle: 'Please enter meeting title',
+    pleaseEnterContactPerson: 'Please enter contact person name',
+    pleaseEnterContactNumber: 'Please enter contact number',
+    contactNumberLengthError: 'Contact number must be 10 digits',
+    pleaseEnterPlace: 'Please enter meeting place',
+    pleaseEnterVirtualLink: 'Please enter virtual meeting link',
+    meetingCreatedSuccess: 'Meeting created successfully! Form has been cleared.',
+    failedToCreateMeeting: 'Failed to create meeting. Please try again.',
+    loadingMembers: 'Loading members...',
+    failedToLoadMembers: 'Failed to load members',
+
     // Notifications
     sendNotification: 'Send Notification',
     notificationTitle: 'Notification Title',
     notificationMessage: 'Notification Message',
     sendToAll: 'Send to All',
     sendToSelected: 'Send to Selected',
-    
+
     // Profile & Account
     personalDetails: 'Personal Details',
     contactDetails: 'Contact Details',
@@ -439,7 +468,7 @@ const translations = {
     dateOfBirth: 'Date of Birth',
     joiningDate: 'Joining Date',
     membershipType: 'Membership Type',
-    
+
     // Forms & Validation
     required: 'Required',
     optional: 'Optional',
@@ -447,7 +476,7 @@ const translations = {
     pleaseEnter: 'Please Enter',
     invalidFormat: 'Invalid Format',
     fieldCannotBeEmpty: 'Field cannot be empty',
-    
+
     // Actions & Buttons
     add: 'Add',
     modify: 'Modify',
@@ -464,7 +493,7 @@ const translations = {
     given: 'Given',
     visited: 'Visited',
     met: 'Met',
-    
+
     // Status & States
     active: 'Active',
     inactive: 'Inactive',
@@ -474,51 +503,52 @@ const translations = {
     approved: 'Approved',
     rejected: 'Rejected',
     draft: 'Draft',
-    
+
     // File Operations
     uploadFile: 'Upload File',
     downloadFile: 'Download File',
     selectImage: 'Select Image',
     takePhoto: 'Take Photo',
     chooseFromGallery: 'Choose from Gallery',
-    
+
     // Time & Date
     selectTime: 'Select Time',
     fromDate: 'From Date',
     toDate: 'To Date',
+    selectDateRange: 'Select Date Range',
     startDate: 'Start Date',
     endDate: 'End Date',
-    
+
     // Search & Filter
     searchMembers: 'Search Members',
     filterResults: 'Filter Results',
     sortResults: 'Sort Results',
     showAll: 'Show All',
-    
+
     // Inventory & Batches
     inventory: 'Inventory',
     addBatch: 'Add Batch',
     batchDetails: 'Batch Details',
     quantity: 'Quantity',
     description: 'Description',
-    
+
     // Reports & Analytics
     generateReport: 'Generate Report',
     exportReport: 'Export Report',
     reportType: 'Report Type',
     dateRange: 'Date Range',
-    
+
     // Slips & Documents
     tyfcbSlip: 'TYFCB Slip',
     referralSlip: 'Referral Slip',
     oneToOneSlip: 'One to One Slip',
-    
+
     // Visitors
     visitorManagement: 'Visitor Management',
     visitorDetails: 'Visitor Details',
     purpose: 'Purpose',
     visitDate: 'Visit Date',
-    
+
     // CEU & Feed
     myCEUs: 'My CEUs',
     myFeed: 'My Activity',
@@ -535,17 +565,17 @@ const translations = {
     thanksNoteGiven: 'Thanks Note Given',
     oneToOneMeeting: 'One to One Meeting',
     visitorMeeting: 'Visitor Meeting',
-    
+
     // Biometric
     biometricReport: 'Biometric Report',
     fingerprint: 'Fingerprint',
     faceRecognition: 'Face Recognition',
-    
+
     // Excel & Data
     excelViewer: 'Excel Viewer',
     dataImport: 'Data Import',
     dataExport: 'Data Export',
-    
+
     // Password & Security
     currentPassword: 'Current Password',
     newPassword: 'New Password',
@@ -553,7 +583,7 @@ const translations = {
     forgotPassword: 'Forgot Password',
     resetPassword: 'Reset Password',
     passwordChanged: 'Password Changed Successfully',
-    
+
     // Common Messages
     operationCompleted: 'Operation Completed',
     dataUpdated: 'Data Updated',
@@ -563,7 +593,7 @@ const translations = {
     loadingData: 'Loading Data...',
     savingData: 'Saving Data...',
     processingRequest: 'Processing Request...',
-    
+
     // Settings Screen Additional
     role: 'Role',
     interfaceMode: 'Interface Mode',
@@ -577,7 +607,7 @@ const translations = {
     updateProfileInfo: 'Update your profile information',
     readPrivacyPolicy: 'Read our privacy policy and terms',
     privacyPolicyContent: 'Privacy Policy and Terms of Service\n\n• Your data is secure with us\n• We respect your privacy\n• Terms and conditions apply\n• Contact support for more info',
-    
+
     // Additional Common Terms
     administrator: 'Administrator',
     user: 'User',
@@ -586,25 +616,42 @@ const translations = {
     appInfo: 'App Information',
     version: 'Version',
     professionalNetworking: 'Professional Networking Platform',
-    
+
     // Thirukkural
     thirukkural: 'Thirukkural',
     thirukkuralQuote: '"Virtue is the highest good; those without it have nothing else." — Thirukkural 34',
     welcomeToAlaigal: 'Welcome to Alaigal',
     alaigal: 'Alaigal',
-    
+
     // Time Periods
     daily: 'Daily',
     weekly: 'Weekly',
     monthly: 'Monthly',
     yearly: 'Yearly',
-    
+    custom: 'Custom',
+
     // Report Terms
     totalMembers: 'Total Members',
     presentCount: 'Present',
     absentCount: 'Absent',
     attendancePercentage: 'Attendance %',
-    
+    selectPeriod: 'Select Period',
+    reportType: 'Report Type',
+    attendanceDetails: 'Attendance Details',
+    all: 'All',
+    allMembersFilter: 'All Members',
+    noReportDataAvailable: 'No report data available',
+    selectPeriodAndReportType: 'Select a period and report type to view data',
+    period: 'Period',
+    generated: 'Generated',
+    allRecords: 'All Records',
+    recordsCount: 'records',
+    presentRecords: 'Present Records',
+    absentRecords: 'Absent Records',
+    paidMembers: 'Paid Members',
+    allMembers: 'All Members',
+    records: 'Records',
+
     // Excel Viewer
     excelViewer: 'Excel Viewer',
     uploadExcelFile: 'Upload Excel File',
@@ -636,7 +683,7 @@ const translations = {
     dataView: 'Data View',
     showingRowsOf: 'Showing {{filtered}} of {{total}} rows',
     andMoreRows: '... and {{count}} more rows (click rows above for details)',
-    
+
     // Visitor/CEU Form
     country: 'Country',
     region: 'Region',
@@ -657,7 +704,7 @@ const translations = {
     confirmDetails: 'Confirm Details',
     englishLanguage: 'English Language',
     tamilLanguage: 'Tamil Language',
-    
+
     // Visitors Screen Specific
     registerVisitor: 'Register Visitor',
     visitorRegisteredUnderAccount: 'Visitor will be registered under your account (Member ID: {{memberId}})',
@@ -717,7 +764,7 @@ const translations = {
     enterAmount: 'e.g., 5000',
     enterPaymentMethod: 'e.g., UPI, Credit Card, Net Banking',
     enterTransactionId: 'e.g., TXN123456789',
-    
+
     // MyPayments Screen Specific
     myPayments: 'My Payments',
     loadingPayments: 'Loading payments...',
@@ -777,7 +824,67 @@ const translations = {
     method: 'Method',
     paid: 'Paid',
     unpaid: 'Unpaid',
-    
+    additionalNotes: 'Additional Notes',
+    birthdayReminder: 'Birthday Reminder',
+    broadcast: 'Broadcast',
+    memberFeatures: 'Member Features',
+    confirmLogout: 'Confirm Logout',
+    failedToLogout: 'Failed to logout. Please try again.',
+    tapToRespond: 'Tap to respond',
+    tapToView: 'Tap to view',
+    tomorrow: 'Tomorrow',
+    birthdayWishes: 'Birthday Wishes',
+    welcomeWishes: 'Welcome Wishes',
+
+    // PDF & Report Specific
+    serialNumber: 'S.No',
+    memberName: 'Member Name',
+    checkInTime: 'Check-In',
+    checkOutTime: 'Check-Out',
+    batch: 'Batch',
+    notes: 'Notes',
+    status: 'Status',
+    totalRecords: 'Total Records',
+    pdfReportGeneratedSuccessfully: 'PDF Report Generated Successfully',
+    pdfSavedTo: 'PDF Saved to',
+    report: 'Report',
+    excelReportGeneratedSuccessfully: 'Excel Report Generated Successfully',
+    excelFileSavedTo: 'Excel File Saved to',
+    noDataToDownload: 'No data to download',
+    failedToLoadReport: 'Failed to load report',
+
+    // Graph Labels
+    present: 'Present',
+    absent: 'Absent',
+    paid: 'Paid',
+    pending: 'Pending',
+    completed: 'Completed',
+    confirmed: 'Confirmed',
+    rejected: 'Rejected',
+    becameMembers: 'Became Members',
+    stillVisitors: 'Still Visitors',
+    total: 'Total',
+
+    // Table Headers
+    givenBy: 'Given By',
+    receivedBy: 'Received By',
+    visitDate: 'Visit Date',
+    businessVisited: 'Business Visited',
+    rating: 'Rating',
+    clientName: 'Client Name',
+    clientPhone: 'Client Phone',
+    businessType: 'Business Type',
+    revenue: 'Revenue',
+    meetingTitle: 'Meeting Title',
+    meetingCode: 'Meeting Code',
+    time: 'Time',
+    place: 'Place',
+    contactPerson: 'Contact Person',
+    contactNumber: 'Contact Number',
+    visitorName: 'Visitor Name',
+    broughtBy: 'Brought By',
+    company: 'Company',
+
     // Change Password Screen
     validationError: 'Validation Error',
     currentPasswordRequired: 'Current password is required',
@@ -795,7 +902,7 @@ const translations = {
     atLeast6Characters: 'At least 6 characters',
     passwordsMatch: 'Passwords match',
     differentFromCurrentPassword: 'Different from current password',
-    
+
     // Profile Screen
     phoneNumberMustBe10Digits: 'Phone number must be exactly 10 digits.',
     contactNumberMustBe10Digits: 'Contact number must be exactly 10 digits.',
@@ -823,10 +930,10 @@ const translations = {
     joinDate: 'Join Date',
     saveChanges: 'Save Changes',
     setProfilePicture: 'Set Profile Picture',
-    
+
     // Status values
     completed: 'Completed',
-    
+
     // UserDashboard specific translations
     welcomeToAlaigal: 'Welcome to Alaigal',
     checkingBirthdayWishes: 'Checking for birthday wishes...',
@@ -918,7 +1025,7 @@ const translations = {
     for: 'for',
     from: 'from',
     successfully: 'successfully',
-    
+
     // Referral Slip translations
     referral: 'Referral',
     referralFor: 'Referral for',
@@ -950,7 +1057,7 @@ const translations = {
     pleaseEnterReferralNumber: 'Please enter referral number',
     pleaseEnterTelephone: 'Please enter telephone number',
     pleaseEnterValidPhone: 'Please enter a valid 10-digit telephone number',
-    
+
     // Additional ReferralSlip translations
     failedToLoadMembers: 'Failed to load members. Please try again.',
     voiceInput: 'Voice Input',
@@ -964,7 +1071,7 @@ const translations = {
     memberIdNotAvailable: 'Your member ID is not available. Please re-login.',
     failedToSubmitReferral: 'Failed to submit referral',
     unknown: 'Unknown',
-    
+
     // TYFCBSlip translations
     thanksNote: 'Thanks Note',
     toMember: 'To Member',
@@ -994,6 +1101,35 @@ const translations = {
     couldNotFindMemberId: 'Could not find your member ID. Please try again.',
     failedToSubmitTYFCBSlip: 'Failed to submit TYFCB slip',
     recording: 'Recording...',
+
+    searchByNameIdPhone: 'Search by name, ID, phone...',
+    tryDifferentSearch: 'Try a different search term',
+    payment: 'Payment',
+    membershipPayment: 'Membership Payment',
+    noPaymentHistory: 'No Payment History',
+    noPaymentsFoundFor: 'No payments found for',
+    selectMemberToViewHistory: 'Select a member to view payment history',
+    tapToChangeMember: 'Tap to change member',
+    tapToSelectMember: 'Tap to select member',
+    paymentSummary: 'Payment Summary',
+    allTimePayments: 'All time payments',
+    nextDue: 'Next Due',
+    paymentDeadline: 'Payment deadline',
+
+    membersList: 'Members List',
+    searchByNameIdPhoneEmail: 'Search by name, ID, phone or email...',
+    loadingMembers: 'Loading members...',
+    membersFound: 'Members Found',
+    filterComingSoon: 'Filter functionality coming soon',
+    noResults: 'No Results',
+    noMembersFoundMessage: 'No members found matching your search.',
+    searchFailed: 'Search failed',
+    failedToLoadMembers: 'Failed to load members',
+    tryDifferentSearchTerm: 'Try a different search term',
+    addNewMembersToStart: 'Add new members to get started',
+    addNewMember: 'Add New Member',
+    joinDate: 'Joined',
+    inactive: 'Inactive',
   },
   ta: {
     // Common
@@ -1001,7 +1137,7 @@ const translations = {
     cancel: 'ரத்து செய்க',
     delete: 'நீக்கு',
     edit: 'திருத்து',
-    back: 'பின்னால்',
+    back: 'திரும்பு',
     loading: 'ஏற்றுகிறது...',
     error: 'பிழை',
     success: 'வெற்றி',
@@ -1014,7 +1150,7 @@ const translations = {
     sort: 'வரிசைப்படுத்து',
     export: 'ஏற்றுமதி',
     import: 'இறக்குமதி',
-    
+
     // Dashboard
     goodMorning: 'காலை வணக்கம்',
     goodAfternoon: 'மதிய வணக்கம்',
@@ -1031,7 +1167,7 @@ const translations = {
     managementModules: 'நிர்வாக தொகுதிகள்',
     recentActivity: 'சமீபத்திய செயல்பாடு',
     today: 'இன்று',
-    
+
     // Notifications
     notifications: 'அறிவிப்புகள்',
     noNotifications: 'அறிவிப்புகள் இல்லை',
@@ -1039,7 +1175,7 @@ const translations = {
     newMemberRegistered: 'புதிய உறுப்பினர் பதிவு செய்யப்பட்டார்',
     paymentReceived: 'பணம் பெறப்பட்டது',
     pendingPaymentsAlert: 'நிலுவையில் உள்ள பணம் எச்சரிக்கை',
-    
+
     // Settings
     settings: 'அமைப்புகள்',
     language: 'மொழி',
@@ -1048,9 +1184,9 @@ const translations = {
     editProfile: 'சுயவிவரத்தை திருத்து',
     changePassword: 'கடவுச்சொல்லை மாற்று',
     privacySecurity: 'தனியுரிமை மற்றும் பாதுகாப்பு',
-    
+
     // Attendance
-    attendance: 'கலந்து கொள்ளுதல்',
+    attendance: 'வருகை பதிவு',
     markAttendance: 'கலந்து கொள்ளுதல் குறிக்கவும்',
     uploadExcel: 'Excel பதிவேற்றவும்',
     selectDate: 'தேதி தேர்ந்தெடுக்கவும்',
@@ -1065,7 +1201,7 @@ const translations = {
     business: 'வணிகம்',
     id: 'அடையாள எண்',
     phone: 'தொலைபேசி',
-    
+
     // Voice Search
     voiceSearch: 'குரல் தேடல்',
     voiceError: 'குரல் பிழை',
@@ -1078,38 +1214,36 @@ const translations = {
     summary: 'சுருக்கம்',
     saving: 'சேமிக்கிறது',
     markAttendance: 'குறிக்க',
-    
+
     // Members
     members: 'உறுப்பினர்கள்',
-    membersList: 'உறுப்பினர்கள் பட்டியல்',
-    addMember: 'உறுப்பினர் சேர்க்கவும்',
+    membersList: 'உறுப்பினர்கள்',
+    addMember: 'உறுப்பினர் சேர்',
     editMember: 'உறுப்பினர் திருத்தவும்',
     deleteMember: 'உறுப்பினர் நீக்கவும்',
     memberDetails: 'உறுப்பினர் விவரங்கள்',
     newMember: 'புதிய உறுப்பினர்',
     bulkImport: 'மொத்த இறக்குமதி',
     membersDirectory: 'உறுப்பினர்கள் அடைவு',
-    
+
     // Profile
     profile: 'சுயவிவரம்',
     myProfile: 'என் சுயவிவரம்',
-    personalInfo: 'ব்যக்திगत தகவல்',
+    personalInfo: 'தனிப்பட்ட தகவல்',
     contactInfo: 'தொடர்பு தகவல்',
     name: 'பெயர்',
     email: 'மின்னஞ்சல்',
     phone: 'தொலைபேசி',
     address: 'முகவரி',
     designation: 'பதவி',
-    
+
     // Menu
     home: 'வீடு',
     signOut: 'வெளியேறு',
     confirmSignOut: 'நீங்கள் வெளியேற விரும்புகிறீர்களா?',
     membersDashboard: 'உறுப்பினர்கள் டாஷ்போர்டு',
-    
-    // Payments
-    payments: 'பணம்',
-    paymentDetails: 'பணம் விவரங்கள்',
+
+    paymentDetails: 'பணம் விவரம்',
     takePayment: 'பணம் வசூல் செய்க',
     myPayments: 'என் பணம்',
     feesManagement: 'கட்டணம் நிர்வாகம்',
@@ -1118,13 +1252,13 @@ const translations = {
     status: 'நிலை',
     paid: 'செலுத்தப்பட்ட',
     pending: 'நிலுவையில்',
-    
+
     // Reports
     reports: 'அறிக்கைகள்',
     generateReport: 'அறிக்கை உருவாக்கு',
     biometricReport: 'உயிரியல் அறிக்கை',
     referralReports: 'பரிந்துரை அறிக்கைகள்',
-    
+
     // Messages & Notices
     messages: 'செய்திகள்',
     sendNotice: 'அறிவிப்பு அனுப்பு',
@@ -1132,39 +1266,39 @@ const translations = {
     message: 'செய்தி',
     recipient: 'பெறுநர்',
     send: 'அனுப்பு',
-    
+
     // Admin
     adminMeeting: 'நிர்வாக கூட்டம்',
     adminNotifications: 'நிர்வாக அறிவிப்புகள்',
-    
+
     // Inventory
     inventory: 'சரக்கு',
     inventoryForm: 'சரக்கு படிவம்',
-    
+
     // Visitors
     visitors: 'பார்வையாளர்கள்',
     addVisitor: 'பார்வையாளர் சேர்க்கவும்',
     visitorName: 'பார்வையாளர் பெயர்',
-    
+
     // Batches
     batches: 'தொகுப்புகள்',
     addBatch: 'தொகுப்பு சேர்க்கவும்',
     batchName: 'தொகுப்பு பெயர்',
-    
+
     // CEU
     ceu: 'CEU',
     myCEUs: 'என் CEU',
-    
+
     // Feed
     feed: 'ஊட்ட',
     myFeed: 'என் செயல்பாடுகள்',
     myActivityLog: 'என் செயல்பாட்டு பதிவு',
-    
+
     // Slips
     tyfcbSlip: 'TYFCB சீட்டு',
     referralSlip: 'பரிந்துரை சீட்டு',
     oneToOneSlip: 'ஒன்றுக்கு ஒன்று சீட்டு',
-    
+
     // Form Fields
     firstName: 'முதல் பெயர்',
     lastName: 'கடைசி பெயர்',
@@ -1174,7 +1308,7 @@ const translations = {
     male: 'ஆண்',
     female: 'பெண்',
     other: 'மற்றவை',
-    
+
     // Actions
     submit: 'சமர்ப்பிக்க',
     update: 'புதுப்பிக்க',
@@ -1184,14 +1318,14 @@ const translations = {
     download: 'பதிவிறக்கம்',
     upload: 'பதிவேற்றம்',
     chooseFile: 'கோப்பு தேர்ந்தெடுக்கவும்',
-    
+
     // Messages
     successMessage: 'செயல்பாடு வெற்றிகரமாக முடிந்தது',
     errorMessage: 'ஒரு பிழை ஏற்பட்டது. மீண்டும் முயற்சி செய்யவும்.',
     confirmDelete: 'இதை நீக்க விரும்புகிறீர்களா?',
     noDataAvailable: 'தரவு கிடைக்கவில்லை',
     tryAgain: 'மீண்டும் முயற்சி செய்க',
-    
+
     // Time
     morning: 'காலை',
     afternoon: 'மதியம்',
@@ -1199,7 +1333,7 @@ const translations = {
     yesterday: 'நேற்று',
     thisWeek: 'இந்த வாரம்',
     thisMonth: 'இந்த மாதம்',
-    
+
     // Login Screen
     username: 'பயனர் பெயர்',
     password: 'கடவுச்சொல்',
@@ -1211,17 +1345,17 @@ const translations = {
     biometricLogin: 'உயிரியல் உள்நுழைவு',
     authenticateToAccess: 'அலைகலை அணுக அங்கீகரிக்கவும்',
     noSavedCredentials: 'சேமிக்கப்பட்ட சான்றுகள் இல்லை. கைமுறையாக உள்நுழையவும்.',
-    
+
     // Settings Screen
     myDetails: 'என் விவரங்கள்',
     viewManageAccount: 'உங்கள் கணக்கு தகவலைப் பார்க்கவும் மற்றும் நிர்வகிக்கவும்',
     currentLanguage: 'தற்போதைய',
     updatePassword: 'உங்கள் கணக்கு கடவுச்சொல்லை புதுப்பிக்கவும்',
     languageChanged: 'மொழி மாற்றப்பட்டது',
-    
+
     // Menu Items (Drawer)
     markAttendance: 'கலந்து கொள்ளுதல் குறிக்கவும்',
-    
+
     // Report Types
     thanksNote: 'நன்றி குறிப்பு',
     oneToOneMeeting: '1:1 கூட்டம்',
@@ -1229,7 +1363,7 @@ const translations = {
     visitor: 'பார்வையாளர்',
     payment: 'பணம்',
     referral: 'பரிந்துரை',
-    
+
     // Messages Screen
     templates: 'வார்ப்புருக்கள்',
     compose: 'எழுது',
@@ -1255,14 +1389,14 @@ const translations = {
     attachment: 'இணைப்பு',
     sendMessage: 'செய்தி அனுப்பு',
     totalMessages: 'மொத்த செய்திகள்',
-    
+
     // Message Types
     Birthday: 'பிறந்தநாள்',
     Payment: 'பணம்',
     Event: 'நிகழ்வு',
     Meeting: 'கூட்டம்',
     Welcome: 'வரவேற்பு',
-    
+
     // Additional Messages Screen translations
     birthdayWish: 'பிறந்தநாள் வாழ்த்து',
     sendBirthdayWishesToMembers: 'உறுப்பினர்களுக்கு பிறந்தநாள் வாழ்த்துகள் அனுப்பு',
@@ -1322,43 +1456,43 @@ const translations = {
     noContact: 'தொடர்பு இல்லை',
     fileAttached: 'கோப்பு இணைக்கப்பட்டது',
     failedToPickFile: 'கோப்பு தேர்ந்தெடுக்க முடியவில்லை',
-    
+
     // Common Alerts
     confirmTitle: 'உறுதிப்படுத்து',
     warningTitle: 'எச்சரிக்கை',
     infoTitle: 'தகவல்',
-    
+
     // Form Validation
     fieldRequired: 'இந்த புலம் தேவை',
     invalidEmail: 'சரியான மின்னஞ்சல் முகவரியை உள்ளிடவும்',
     invalidPhone: 'சரியான தொலைபேசி எண்ணை உள்ளிடவும்',
     passwordTooShort: 'கடவுச்சொல் குறைந்தது 6 எழுத்துகள் இருக்க வேண்டும்',
-    
+
     // Status Messages
     operationSuccessful: 'செயல்பாடு வெற்றிகரமாக முடிந்தது',
     operationFailed: 'செயல்பாடு தோல்வியடைந்தது. மீண்டும் முயற்சி செய்யவும்.',
     dataLoaded: 'தரவு வெற்றிகரமாக ஏற்றப்பட்டது',
     dataLoadFailed: 'தரவு ஏற்றுவதில் தோல்வி',
-    
+
     // Navigation
     goBack: 'திரும்பிச் செல்',
     next: 'அடுத்து',
     previous: 'முந்தைய',
     finish: 'முடிக்க',
-    
+
     // File Operations
     selectFile: 'கோப்பு தேர்ந்தெடுக்கவும்',
     fileSelected: 'கோப்பு தேர்ந்தெடுக்கப்பட்டது',
     fileUploadSuccess: 'கோப்பு வெற்றிகரமாக பதிவேற்றப்பட்டது',
     fileUploadFailed: 'கோப்பு பதிவேற்றம் தோல்வியடைந்தது',
-    
+
     // Search & Filter
     searchPlaceholder: 'தேடு...',
     filterBy: 'வடிகட்ட',
     sortBy: 'வரிசைப்படுத்து',
     noResults: 'முடிவுகள் இல்லை',
     clearFilter: 'வடிகட்டியை அழிக்கவும்',
-    
+
     // Months
     january: 'ஜனவரி',
     february: 'பிப்ரவரி',
@@ -1372,7 +1506,7 @@ const translations = {
     october: 'அக்டோபர்',
     november: 'நவம்பர்',
     december: 'டிசம்பர்',
-    
+
     // Dashboard & Member Management
     dashboard: 'டாஷ்போர்டு',
     memberDashboard: 'உறுப்பினர் டாஷ்போர்டு',
@@ -1384,15 +1518,15 @@ const translations = {
     bulkImport: 'மொத்த இறக்குமதி',
     newMemberUpload: 'புதிய உறுப்பினர் பதிவேற்றம்',
     memberForm: 'உறுப்பினர் படிவம்',
-    
+
     // Attendance
     attendanceReport: 'கலந்து கொள்ளுதல் அறிக்கை',
     attendanceUpload: 'கலந்து கொள்ளுதல் பதிவேற்றம்',
     markPresent: 'உள்ளவர் என குறிக்கவும்',
     markAbsent: 'இல்லாதவர் என குறிக்கவும்',
-    selectAll: 'எல்லாம் தேர்வு',
-    deselectAll: 'எல்லாம் நீக்கு',
-    
+    selectAll: 'அனைத்தையும் தேர்ந்தெடு',
+    deselectAll: 'அனைத்தையும் நீக்கு',
+
     // Payments & Fees
     feesManagement: 'கட்டணம் நிர்வாகம்',
     paymentHistory: 'பணம் வரலாறு',
@@ -1407,7 +1541,7 @@ const translations = {
     debitCard: 'டெபிட் கார்டு',
     netBanking: 'நெட் பேங்கிங்',
     online: 'ஆன்லைன்',
-    
+
     // Meetings & Events
     createMeeting: 'கூட்டம் உருவாக்கு',
     meetingDetails: 'கூட்டம் விவரங்கள்',
@@ -1415,14 +1549,43 @@ const translations = {
     meetingLocation: 'கூட்டம் இடம்',
     attendees: 'கலந்துகொள்பவர்கள்',
     agenda: 'நிகழ்ச்சி நிரல்',
-    
+    meetingCode: 'கூட்டக் குறியீடு',
+    meetingCodeOptional: 'கூட்டக் குறியீடு (விருப்பத்தேர்வு)',
+    autoGenerated: 'தானாக உருவாக்கப்பட்டது',
+    meetingTitleLabel: 'கூட்டத் தலைப்பு',
+    enterDescription: 'விளக்கத்தை உள்ளிடவும்',
+    contactPerson: 'தொடர்பு நபர்',
+    selectMemberOrType: 'உறுப்பினரைத் தேர்ந்தெடுக்கவும் அல்லது தட்டச்சு செய்யவும்',
+    noMatchingMembers: 'பொருத்தமான உறுப்பினர்கள் இல்லை',
+    contactNumber: 'தொடர்பு எண்',
+    tenDigits: '10 இலக்கங்கள்',
+    inPerson: 'நேரடியாக',
+    virtual: 'மெய்நிகர்',
+    placeLabel: 'இடம்',
+    enterPlace: 'இடத்தை உள்ளிடவும்',
+    virtualLink: 'மெய்நிகர் இணைப்பு',
+    enterLink: 'இணைப்பை உள்ளிடவும்',
+    invite: 'அழைப்பு',
+    selected: 'தேர்ந்தெடுக்கப்பட்டது',
+    failedToStartVoice: 'குரல் உள்ளீட்டைத் தொடங்க முடியவில்லை',
+    pleaseEnterMeetingTitle: 'கூட்டத்தின் தலைப்பை உள்ளிடவும்',
+    pleaseEnterContactPerson: 'தொடர்பு நபர் பெயரை உள்ளிடவும்',
+    pleaseEnterContactNumber: 'தொடர்பு எண்ணை உள்ளிடவும்',
+    contactNumberLengthError: 'தொடர்பு எண் 10 இலக்கங்களாக இருக்க வேண்டும்',
+    pleaseEnterPlace: 'கூட்டம் நடைபெறும் இடத்தை உள்ளிடவும்',
+    pleaseEnterVirtualLink: 'மெய்நிகர் கூட்ட இணைப்பை உள்ளிடவும்',
+    meetingCreatedSuccess: 'கூட்டம் வெற்றிகரமாக உருவாக்கப்பட்டது! படிவம் அழிக்கப்பட்டது.',
+    failedToCreateMeeting: 'கூட்டத்தை உருவாக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.',
+    loadingMembers: 'உறுப்பினர்களை ஏற்றுகிறது...',
+    failedToLoadMembers: 'உறுப்பினர்களை ஏற்ற முடியவில்லை',
+
     // Notifications
     sendNotification: 'அறிவிப்பு அனுப்பு',
     notificationTitle: 'அறிவிப்பு தலைப்பு',
     notificationMessage: 'அறிவிப்பு செய்தி',
     sendToAll: 'அனைவருக்கும் அனுப்பு',
     sendToSelected: 'தேர்ந்தெடுக்கப்பட்டவர்களுக்கு அனுப்பு',
-    
+
     // Profile & Account
     personalDetails: 'தனிப்பட்ட விவரங்கள்',
     contactDetails: 'தொடர்பு விவரங்கள்',
@@ -1430,7 +1593,7 @@ const translations = {
     dateOfBirth: 'பிறந்த தேதி',
     joiningDate: 'சேர்ந்த தேதி',
     membershipType: 'உறுப்பினர் வகை',
-    
+
     // Forms & Validation
     required: 'தேவை',
     optional: 'விருப்பம்',
@@ -1438,7 +1601,7 @@ const translations = {
     pleaseEnter: 'தயவுசெய்து உள்ளிடவும்',
     invalidFormat: 'தவறான வடிவம்',
     fieldCannotBeEmpty: 'புலம் காலியாக இருக்க முடியாது',
-    
+
     // Actions & Buttons
     add: 'சேர்க்க',
     modify: 'மாற்று',
@@ -1455,7 +1618,7 @@ const translations = {
     given: 'கொடுத்த',
     visited: 'சென்றீர்கள்',
     met: 'சந்தித்தீர்கள்',
-    
+
     // Status & States
     active: 'செயல்பாட்டில்',
     inactive: 'செயலற்ற',
@@ -1465,51 +1628,52 @@ const translations = {
     approved: 'அங்கீகரிக்கப்பட்டது',
     rejected: 'நிராகரிக்கப்பட்டது',
     draft: 'வரைவு',
-    
+
     // File Operations
     uploadFile: 'கோப்பு பதிவேற்றம்',
     downloadFile: 'கோப்பு பதிவிறக்கம்',
     selectImage: 'படம் தேர்ந்தெடுக்கவும்',
     takePhoto: 'புகைப்படம் எடுக்கவும்',
     chooseFromGallery: 'கேலரியில் இருந்து தேர்ந்தெடுக்கவும்',
-    
+
     // Time & Date
     selectTime: 'நேரம் தேர்ந்தெடுக்கவும்',
     fromDate: 'தொடக்க தேதி',
     toDate: 'முடிவு தேதி',
+    selectDateRange: 'தேதி வரம்பைத் தேர்ந்தெடுக்கவும்',
     startDate: 'தொடக்க தேதி',
     endDate: 'முடிவு தேதி',
-    
+
     // Search & Filter
     searchMembers: 'உறுப்பினர்களைத் தேடு',
     filterResults: 'முடிவுகளை வடிகட்ட',
     sortResults: 'முடிவுகளை வரிசைப்படுத்து',
     showAll: 'அனைத்தையும் காட்டு',
-    
+
     // Inventory & Batches
     inventory: 'சரக்கு',
     addBatch: 'தொகுப்பு சேர்க்கவும்',
     batchDetails: 'தொகுப்பு விவரங்கள்',
     quantity: 'அளவு',
     description: 'விளக்கம்',
-    
+
     // Reports & Analytics
     generateReport: 'அறிக்கை உருவாக்கு',
     exportReport: 'அறிக்கை ஏற்றுமதி',
     reportType: 'அறிக்கை வகை',
     dateRange: 'தேதி வரம்பு',
-    
+
     // Slips & Documents
     tyfcbSlip: 'TYFCB சீட்டு',
     referralSlip: 'பரிந்துரை சீட்டு',
     oneToOneSlip: 'ஒன்றுக்கு ஒன்று சீட்டு',
-    
+
     // Visitors
     visitorManagement: 'பார்வையாளர் நிர்வாகம்',
     visitorDetails: 'பார்வையாளர் விவரங்கள்',
     purpose: 'நோக்கம்',
     visitDate: 'வருகை தேதி',
-    
+
     // CEU & Feed
     myCEUs: 'என் CEU',
     myFeed: 'என் செயல்பாடுகள்',
@@ -1543,7 +1707,7 @@ const translations = {
     rejected: 'நிராகரிக்கப்பட்டது',
     cancelled: 'ரத்து செய்யப்பட்டது',
     approved: 'அங்கீகரிக்கப்பட்டது',
-    
+
     // Referral Slip translations
     referral: 'பரிந்துரை',
     referralFor: 'பரிந்துரை',
@@ -1575,7 +1739,7 @@ const translations = {
     pleaseEnterReferralNumber: 'பரிந்துரை எண்ணை உள்ளிடவும்',
     pleaseEnterTelephone: 'தொலைபேசி எண்ணை உள்ளிடவும்',
     pleaseEnterValidPhone: 'சரியான 10 இலக்க தொலைபேசி எண்ணை உள்ளிடவும்',
-    
+
     // Additional ReferralSlip translations
     failedToLoadMembers: 'உறுப்பினர்களை ஏற்ற முடியவில்லை. மீண்டும் முயற்சி செய்யவும்.',
     voiceInput: 'குரல் உள்ளீடு',
@@ -1589,7 +1753,7 @@ const translations = {
     memberIdNotAvailable: 'உங்கள் உறுப்பினர் அடையாளம் கிடைக்கவில்லை. மீண்டும் உள்நுழையவும்.',
     failedToSubmitReferral: 'பரிந்துரையை சமர்ப்பிக்க முடியவில்லை',
     unknown: 'தெரியாத',
-    
+
     // TYFCBSlip translations
     thanksNote: 'நன்றி குறிப்பு',
     toMember: 'உறுப்பினருக்கு',
@@ -1619,17 +1783,17 @@ const translations = {
     couldNotFindMemberId: 'உங்கள் உறுப்பினர் அடையாளத்தைக் கண்டுபிடிக்க முடியவில்லை. மீண்டும் முயற்சி செய்யவும்.',
     failedToSubmitTYFCBSlip: 'TYFCB சீட்டை சமர்ப்பிக்க முடியவில்லை',
     recording: 'பதிவு செய்கிறது...',
-    
+
     // Biometric
     biometricReport: 'உயிரியல் அறிக்கை',
     fingerprint: 'கைரேகை',
     faceRecognition: 'முக அடையாளம்',
-    
+
     // Excel & Data
     excelViewer: 'Excel பார்வையாளர்',
     dataImport: 'தரவு இறக்குமதி',
     dataExport: 'தரவு ஏற்றுமதி',
-    
+
     // Password & Security
     currentPassword: 'தற்போதைய கடவுச்சொல்',
     newPassword: 'புதிய கடவுச்சொல்',
@@ -1637,7 +1801,7 @@ const translations = {
     forgotPassword: 'கடவுச்சொல்லை மறந்துவிட்டீர்களா',
     resetPassword: 'கடவுச்சொல்லை மீட்டமை',
     passwordChanged: 'கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது',
-    
+
     // Common Messages
     operationCompleted: 'செயல்பாடு முடிந்தது',
     dataUpdated: 'தரவு புதுப்பிக்கப்பட்டது',
@@ -1647,7 +1811,7 @@ const translations = {
     loadingData: 'தரவு ஏற்றுகிறது...',
     savingData: 'தரவு சேமிக்கிறது...',
     processingRequest: 'கோரிக்கையை செயல்படுத்துகிறது...',
-    
+
     // Settings Screen Additional
     role: 'பதவி',
     interfaceMode: 'இடைமுக முறை',
@@ -1661,7 +1825,7 @@ const translations = {
     updateProfileInfo: 'உங்கள் சுயவிவர தகவலை புதுப்பிக்கவும்',
     readPrivacyPolicy: 'எங்கள் தனியுரிமைக் கொள்கை மற்றும் விதிமுறைகளைப் படிக்கவும்',
     privacyPolicyContent: 'தனியுரிமைக் கொள்கை மற்றும் சேவை விதிமுறைகள்\n\n• உங்கள் தரவு எங்களுடன் பாதுகாப்பானது\n• நாங்கள் உங்கள் தனியுரிமையை மதிக்கிறோம்\n• விதிமுறைகள் மற்றும் நிபந்தனைகள் பொருந்தும்\n• மேலும் தகவலுக்கு ஆதரவைத் தொடர்பு கொள்ளவும்',
-    
+
     // Additional Common Terms
     administrator: 'நிர்வாகி',
     user: 'பயனர்',
@@ -1670,25 +1834,92 @@ const translations = {
     appInfo: 'பயன்பாட்டு தகவல்',
     version: 'பதிப்பு',
     professionalNetworking: 'தொழில்முறை நெட்வொர்க்கிங் தளம்',
-    
+
     // Thirukkural
     thirukkural: 'திருக்குறள்',
     thirukkuralQuote: '"அறத்துப்பால் உயர்ந்தது அஃதொன்றே; மற்றெல்லாம் தாழ்ந்தது அஃதில்லார்க்கு." — திருக்குறள் 34',
     welcomeToAlaigal: 'அலைகலுக்கு வரவேற்கிறோம்',
     alaigal: 'அலைகள்',
-    
+
     // Time Periods
     daily: 'தினசரி',
     weekly: 'வாராந்திர',
     monthly: 'மாதாந்திர',
     yearly: 'ஆண்டுதோறும்',
-    
+    custom: 'தனிப்பயன்',
+
     // Report Terms
     totalMembers: 'மொத்த உறுப்பினர்கள்',
     presentCount: 'உள்ளவர்கள்',
     absentCount: 'இல்லாதவர்கள்',
     attendancePercentage: 'கலந்து கொள்ளுதல் %',
-    
+    selectPeriod: 'காலத்தைத் தேர்ந்தெடுக்கவும்',
+    reportType: 'அறிக்கை வகை',
+    attendanceDetails: 'கலந்து கொள்ளுதல் விவரங்கள்',
+    all: 'அனைத்தும்',
+    viewAll: 'அனைத்தும்',
+    allMembersFilter: 'அனைத்து உறுப்பினர்கள்',
+    noReportDataAvailable: 'அறிக்கை தரவு கிடைக்கவில்லை',
+    selectPeriodAndReportType: 'தரவைப் பார்க்க காலம் மற்றும் அறிக்கை வகையைத் தேர்ந்தெடுக்கவும்',
+    totalRecords: 'மொத்த பதிவுகள்',
+    totalMeetings: 'மொத்த கூட்டங்கள்',
+    inPerson: 'நேரில்',
+    virtual: 'மெய்நிகர்',
+    filterByMember: 'உறுப்பினர் மூலம் வடிகட்ட',
+    reportGraph: 'அறிக்கை வரைபடம்',
+    noDataAvailableForGraph: 'வரைபடத்திற்கு தரவு கிடைக்கவில்லை',
+    totalAmount: 'மொத்த தொகை',
+    totalReferrals: 'மொத்த பரிந்துரைகள்',
+    confirmed: 'உறுதிப்படுத்தப்பட்டது',
+    rejected: 'நிராகரிக்கப்பட்டது',
+    revenue: 'வருவாய்',
+    totalPayments: 'மொத்த பணம்',
+    completed: 'முடிந்தது',
+    totalVisitors: 'மொத்த பார்வையாளர்கள்',
+    becameMembers: 'உறுப்பினர்களானவர்கள்',
+    stillVisitors: 'இன்னும் பார்வையாளர்கள்',
+    period: 'காலம்',
+    dateRange: 'தேதி வரம்பு',
+    generated: 'உருவாக்கப்பட்டது',
+    member1: 'உறுப்பினர் 1',
+    member2: 'உறுப்பினர் 2',
+    meetingDate: 'கூட்ட தேதி',
+    location: 'இடம்',
+    duration: 'காலம்',
+    topic: 'தலைப்பு',
+    notes: 'குறிப்புகள்',
+    givenBy: 'வழங்கியவர்',
+    receivedBy: 'பெற்றவர்',
+    clientName: 'வாடிக்கையாளர் பெயர்',
+    clientPhone: 'வாடிக்கையாளர் தொலைபேசி',
+    businessType: 'வணிக வகை',
+    paymentDate: 'பணம் தேதி',
+    paymentFor: 'பணம் க்காக',
+    paymentMethod: 'பணம் முறை',
+    receiptNo: 'ரசீது எண்',
+    transactionId: 'பரிவர்த்தனை அடையாளம்',
+    meetingTitle: 'கூட்ட தலைப்பு',
+    meetingCode: 'கூட்ட குறியீடு',
+    time: 'நேரம்',
+    type: 'வகை',
+    place: 'இடம்',
+    contactPerson: 'தொடர்பு நபர்',
+    contactNumber: 'தொடர்பு எண்',
+    visitorName: 'பார்வையாளர் பெயர்',
+    broughtBy: 'கொண்டு வந்தவர்',
+    visitDate: 'வருகை தேதி',
+    unknown: 'தெரியாத',
+    untitled: 'தலைப்பு இல்லாத',
+    alaigalMemberManagementSystem: 'அலைகல் உறுப்பினர் நிர்வாக அமைப்பு',
+    reportGeneratedOn: 'அறிக்கை உருவாக்கப்பட்ட தேதி',
+    sNo: 'வ.எண்',
+    min: 'நிமிடம்',
+    serialNumber: 'வரிசை எண்',
+    checkInTime: 'வருகை நேரம்',
+    checkOutTime: 'வெளியேறும் நேரம்',
+    batch: 'தொகுப்பு',
+    rating: 'மதிப்பீடு',
+
     // Excel Viewer
     excelViewer: 'Excel பார்வையாளர்',
     uploadExcelFile: 'Excel கோப்பு பதிவேற்றவும்',
@@ -1720,7 +1951,7 @@ const translations = {
     dataView: 'தரவு பார்வை',
     showingRowsOf: '{{total}} இல் {{filtered}} வரிசைகள் காட்டப்படுகின்றன',
     andMoreRows: '... மற்றும் {{count}} மேலும் வரிசைகள் (விவரங்களுக்கு மேலே உள்ள வரிசைகளைக் கிளிக் செய்யவும்)',
-    
+
     // Visitor/CEU Form
     country: 'நாடு',
     region: 'பகுதி',
@@ -1741,7 +1972,7 @@ const translations = {
     confirmDetails: 'விவரங்களை உறுதிப்படுத்து',
     englishLanguage: 'ஆங்கில மொழி',
     tamilLanguage: 'தமிழ் மொழி',
-    
+
     // Visitors Screen Specific
     registerVisitor: 'பார்வையாளர் பதிவு',
     visitorRegisteredUnderAccount: 'பார்வையாளர் உங்கள் கணக்கின் கீழ் பதிவு செய்யப்படுவார்',
@@ -1801,7 +2032,7 @@ const translations = {
     enterAmount: 'எ.கா., 5000',
     enterPaymentMethod: 'எ.கா., UPI, Credit Card, Net Banking',
     enterTransactionId: 'எ.கா., TXN123456789',
-    
+
     // MyPayments Screen Specific
     myPayments: 'என் பணம்',
     loadingPayments: 'பணம் ஏற்றுகிறது...',
@@ -1862,7 +2093,7 @@ const translations = {
     paid: 'செலுத்தப்பட்ட',
     unpaid: 'செலுத்தப்படாத',
     additionalNotes: 'கூடுதல் குறிப்புகள்',
-    
+
     // Change Password Screen
     validationError: 'சரிபார்ப்பு பிழை',
     currentPasswordRequired: 'தற்போதைய கடவுச்சொல் தேவை',
@@ -1880,7 +2111,7 @@ const translations = {
     atLeast6Characters: 'குறைந்தது 6 எழுத்துகள்',
     passwordsMatch: 'கடவுச்சொற்கள் பொருந்துகின்றன',
     differentFromCurrentPassword: 'தற்போதைய கடவுச்சொல்லிலிருந்து வேறுபட்டது',
-    
+
     // Profile Screen
     phoneNumberMustBe10Digits: 'தொலைபேசி எண் சரியாக 10 இலக்கங்களாக இருக்க வேண்டும்.',
     contactNumberMustBe10Digits: 'தொடர்பு எண் சரியாக 10 இலக்கங்களாக இருக்க வேண்டும்.',
@@ -1908,10 +2139,10 @@ const translations = {
     joinDate: 'சேர்ந்த தேதி',
     saveChanges: 'மாற்றங்களைச் சேமி',
     setProfilePicture: 'சுயவிவர படத்தை அமைக்கவும்',
-    
+
     // Status values
     completed: 'முடிந்தது',
-    
+
     // UserDashboard specific translations
     welcomeToAlaigal: 'அலைகல்',
     checkingBirthdayWishes: 'பிறந்தநாள் வாழ்த்துகளை சரிபார்க்கிறது...',
@@ -1919,11 +2150,11 @@ const translations = {
     sentYouBirthdayWishes: 'இன்று உங்களுக்கு பிறந்தநாள் வாழ்த்துகள் அனுப்பினார்!',
     loadingYourDashboard: 'உங்கள் டாஷ்போர்டை ஏற்றுகிறது...',
     recentNotifications: 'சமீபத்திய அறிவிப்புகள்',
-    viewAll: 'எல்லாம்',
+    viewAll: 'அனைத்தும்',
     tapToRespond: 'பதிலளிக்க தட்டவும்',
     tapToView: 'பார்க்க தட்டவும்',
     myActivity: 'என் செயல்பாடு',
-    allTime: 'எல்லாம்',
+    allTime: 'அனைத்து காலமும்',
     weekly: 'வாராந்திர',
     monthly: 'மாதாந்திர',
     annual: 'ஆண்டுதோறும்',
@@ -1992,7 +2223,105 @@ const translations = {
     newNotificationReceived: 'புதிய அறிவிப்பு பெறப்பட்டது',
     recent: 'சமீபத்திய',
     notAvailable: 'கிடைக்கவில்லை',
+    notAvailable: 'கிடைக்கவில்லை',
+
+    // PDF & Report Specific
+    serialNumber: 'வ.எண்',
+    memberName: 'உறுப்பினர் பெயர்',
+    checkInTime: 'உள்நுழைவு',
+    checkOutTime: 'வெளியேறு',
+    batch: 'தொகுப்பு',
+    notes: 'குறிப்புகள்',
+    status: 'நிலை',
+    totalRecords: 'மொத்த பதிவுகள்',
+    pdfReportGeneratedSuccessfully: 'PDF அறிக்கை வெற்றிகரமாக உருவாக்கப்பட்டது',
+    pdfSavedTo: 'PDF சேமிக்கப்பட்டது',
+    report: 'அறிக்கை',
+    excelReportGeneratedSuccessfully: 'Excel அறிக்கை வெற்றிகரமாக உருவாக்கப்பட்டது',
+    excelFileSavedTo: 'Excel கோப்பு சேமிக்கப்பட்டது',
+    noDataToDownload: 'பதிவிறக்க தரவு இல்லை',
+    failedToLoadReport: 'அறிக்கையை ஏற்ற முடியவில்லை',
+    period: 'காலம்',
+    generated: 'உருவாக்கப்பட்டது',
+    allRecords: 'அனைத்து பதிவுகள்',
+    recordsCount: 'பதிவுகள்',
+    presentRecords: 'உள்ளவர் பதிவுகள்',
+    absentRecords: 'இல்லாதவர் பதிவுகள்',
+    paidMembers: 'செலுத்திய உறுப்பினர்கள்',
+    allMembers: 'அனைத்து உறுப்பினர்கள்',
+    records: 'பதிவுகள்',
+
+    // Graph Labels
+    present: 'உள்ளவர்',
+    absent: 'இல்லாதவர்',
+    paid: 'செலுத்தப்பட்ட',
+    pending: 'நிலுவையில்',
+    completed: 'முடிந்தது',
+    confirmed: 'உறுதிப்படுத்தப்பட்டது',
+    rejected: 'நிராகரிக்கப்பட்டது',
+    becameMembers: 'உறுப்பினர்களானவர்கள்',
+    stillVisitors: 'இன்னும் பார்வையாளர்கள்',
+    total: 'மொத்தம்',
+
+    // Table Headers
+    givenBy: 'வழங்கியவர்',
+    receivedBy: 'பெற்றவர்',
+    visitDate: 'வருகை தேதி',
+    businessVisited: 'வருகை தந்த வணிகம்',
+    rating: 'மதிப்பீடு',
+    clientName: 'வாடிக்கையாளர் பெயர்',
+    clientPhone: 'வாடிக்கையாளர் தொலைபேசி',
+    businessType: 'வணிக வகை',
+    revenue: 'வருவாய்',
+    meetingTitle: 'கூட்ட தலைப்பு',
+    meetingCode: 'கூட்ட குறியீடு',
+    time: 'நேரம்',
+    place: 'இடம்',
+    contactPerson: 'தொடர்பு நபர்',
+    contactNumber: 'தொடர்பு எண்',
+    visitorName: 'பார்வையாளர் பெயர்',
+    broughtBy: 'கொண்டு வந்தவர்',
+    company: 'நிறுவனம்',
+    birthdayReminder: 'பிறந்தநாள் நினைவூட்டல்',
+    broadcast: 'அறிவிப்பு',
+    memberFeatures: 'உறுப்பினர் அம்சங்கள்',
+    confirmLogout: 'வெளியேறுவதை உறுதிப்படுத்து',
+    failedToLogout: 'வெளியேறுவதில் தோல்வி. மீண்டும் முயற்சிக்கவும்.',
+    tapToRespond: 'பதிலளிக்க தட்டவும்',
+    tapToView: 'பார்க்க தட்டவும்',
+    tomorrow: 'நாளை',
+    birthdayWishes: 'பிறந்தநாள் வாழ்த்துகள்',
+    welcomeWishes: 'வரவேற்பு வாழ்த்துகள்',
+    searchByNameIdPhone: 'பெயர், அடையாளம், தொலைபேசி மூலம் தேடு...',
+    tryDifferentSearch: 'வேறு தேடல் சொல்லை முயற்சி செய்யவும்',
+    payment: 'பணம்',
+    membershipPayment: 'உறுப்பினர் பணம்',
+    noPaymentHistory: 'பணம் வரலாறு இல்லை',
+    noPaymentsFoundFor: 'பணம் கிடைக்கவில்லை',
+    selectMemberToViewHistory: 'பணம் வரலாறு பார்க்க உறுப்பினரைத் தேர்ந்தெடுக்கவும்',
+    tapToChangeMember: 'உறுப்பினரை மாற்ற தட்டவும்',
+    tapToSelectMember: 'உறுப்பினரைத் தேர்ந்தெடுக்க தட்டவும்',
+    paymentSummary: 'பணம் சுருக்கம்',
+    allTimePayments: 'அனைத்து நேர பணம்',
+    nextDue: 'அடுத்த நிலுவை',
+    paymentDeadline: 'பணம் காலக்கெடு',
+    // MembersList Screen Specific
+    membersList: 'உறுப்பினர்கள் பட்டியல்',
+    searchByNameIdPhoneEmail: 'பெயர், அடையாளம், தொலைபேசி அல்லது மின்னஞ்சல் மூலம் தேடு...',
+    loadingMembers: 'உறுப்பினர்களை ஏற்றுகிறது...',
+    membersFound: 'உறுப்பினர்கள் கிடைத்தன',
+    filterComingSoon: 'வடிகட்டி செயல்பாடு விரைவில் வரும்',
+    noResults: 'முடிவுகள் இல்லை',
+    noMembersFoundMessage: 'உங்கள் தேடலுக்கு பொருந்தும் உறுப்பினர்கள் கிடைக்கவில்லை.',
+    searchFailed: 'தேடல் தோல்வியடைந்தது',
+    failedToLoadMembers: 'உறுப்பினர்களை ஏற்ற முடியவில்லை',
+    tryDifferentSearchTerm: 'வேறு தேடல் சொல்லை முயற்சி செய்யவும்',
+    addNewMembersToStart: 'தொடங்க புதிய உறுப்பினர்களைச் சேர்க்கவும்',
+    addNewMember: 'புதிய உறுப்பினர் சேர்க்கவும்',
+    joinDate: 'சேர்ந்தது',
+    inactive: 'செயலற்ற',
   },
+
 };
 
 export const LanguageProvider = ({ children }) => {
@@ -2050,12 +2379,12 @@ export const useLanguage = () => {
   if (!context) {
     throw new Error('useLanguage must be used within LanguageProvider');
   }
-  
+
   // Provide safe defaults if context is not fully initialized
   return {
     language: context.language || 'en',
     currentLanguage: context.language || 'en', // Add currentLanguage for backward compatibility
-    changeLanguage: context.changeLanguage || (() => {}),
+    changeLanguage: context.changeLanguage || (() => { }),
     t: context.t || ((key) => key),
     isLoading: context.isLoading || false
   };
