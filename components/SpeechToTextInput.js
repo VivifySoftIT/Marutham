@@ -34,6 +34,7 @@ const SpeechToTextInput = ({
   editable = true,
   inputStyle,
   fieldType = 'text',
+  onVoiceResults,
   ...textInputProps
 }) => {
   const [isListening, setIsListening] = useState(false);
@@ -61,7 +62,7 @@ const SpeechToTextInput = ({
     };
 
     let result = text.toLowerCase();
-    
+
     // Replace number words with digits
     Object.keys(numberWords).forEach(word => {
       const regex = new RegExp(`\\b${word}\\b`, 'gi');
@@ -89,13 +90,13 @@ const SpeechToTextInput = ({
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
-      
+
       // Enhanced configuration for better accuracy
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-IN'; // Indian English for better recognition
       recognition.maxAlternatives = 1;
-      
+
       // Set listening state
       setIsListening(true);
 
@@ -108,15 +109,15 @@ const SpeechToTextInput = ({
         if (results.length > 0) {
           const spokenText = results[0][0].transcript.trim();
           console.log('Voice input received:', spokenText);
-          
+
           // Process the text based on field type
           let processedText = spokenText;
-          
+
           // Special processing for amount field
           if (fieldType === 'amount') {
             processedText = convertSpokenNumbersToDigits(spokenText);
           }
-          
+
           // Special processing for rating field
           if (fieldType === 'rating') {
             const ratingMatch = spokenText.match(/(\d+)/);
@@ -127,14 +128,17 @@ const SpeechToTextInput = ({
               }
             }
           }
-          
+
           // Append or replace text based on multiline
           if (multiline && value) {
-            onChangeText(`${value} ${processedText}`);
+            const newValue = `${value} ${processedText}`;
+            onChangeText(newValue);
+            if (onVoiceResults) onVoiceResults(processedText, newValue);
           } else {
             onChangeText(processedText);
+            if (onVoiceResults) onVoiceResults(processedText);
           }
-          
+
           setIsListening(false);
         }
       };
@@ -142,9 +146,9 @@ const SpeechToTextInput = ({
       recognition.onerror = (event) => {
         console.error('Voice recognition error:', event.error);
         setIsListening(false);
-        
+
         let errorMessage = 'Voice recognition error. Please try again.';
-        
+
         switch (event.error) {
           case 'not-allowed':
             errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
@@ -164,7 +168,7 @@ const SpeechToTextInput = ({
           default:
             errorMessage = `Voice recognition error: ${event.error}. Please try again.`;
         }
-        
+
         Alert.alert('Voice Input Error', errorMessage);
       };
 
@@ -180,7 +184,7 @@ const SpeechToTextInput = ({
         setIsListening(false);
         Alert.alert('Error', 'Could not start voice recognition. Please try again.');
       }
-    } 
+    }
     // For Mobile Platform - React Native Voice
     else {
       try {
@@ -209,15 +213,15 @@ const SpeechToTextInput = ({
           if (event.value && event.value.length > 0) {
             const spokenText = event.value[0].trim();
             console.log('Mobile voice input received:', spokenText);
-            
+
             // Process the text based on field type
             let processedText = spokenText;
-            
+
             // Special processing for amount field
             if (fieldType === 'amount') {
               processedText = convertSpokenNumbersToDigits(spokenText);
             }
-            
+
             // Special processing for rating field
             if (fieldType === 'rating') {
               const ratingMatch = spokenText.match(/(\d+)/);
@@ -228,12 +232,15 @@ const SpeechToTextInput = ({
                 }
               }
             }
-            
+
             // Append or replace text based on multiline
             if (multiline && value) {
-              onChangeText(`${value} ${processedText}`);
+              const newValue = `${value} ${processedText}`;
+              onChangeText(newValue);
+              if (onVoiceResults) onVoiceResults(processedText, newValue);
             } else {
               onChangeText(processedText);
+              if (onVoiceResults) onVoiceResults(processedText);
             }
           }
         };

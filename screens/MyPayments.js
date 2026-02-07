@@ -25,6 +25,7 @@ import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MemberIdService from '../service/MemberIdService';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const { width } = Dimensions.get('window');
 
@@ -617,7 +618,7 @@ This is an electronically generated receipt.
                 <Text style={styles.formLabel}>Amount (₹) *</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="currency-inr" size={18} color="#4A90E2" style={styles.inputIcon} />
-                  <TextInput
+                  <SpeechToTextInput
                     style={styles.input}
                     placeholder="e.g., 5000"
                     value={paymentForm.amount}
@@ -633,7 +634,7 @@ This is an electronically generated receipt.
                 <Text style={styles.formLabel}>Payment Method *</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="credit-card" size={18} color="#4A90E2" style={styles.inputIcon} />
-                  <TextInput
+                  <SpeechToTextInput
                     style={styles.input}
                     placeholder="e.g., UPI, Credit Card, Net Banking"
                     value={paymentForm.paymentMethod}
@@ -670,7 +671,7 @@ This is an electronically generated receipt.
                 <Text style={styles.formLabel}>Transaction ID *</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="barcode" size={18} color="#4A90E2" style={styles.inputIcon} />
-                  <TextInput
+                  <SpeechToTextInput
                     style={styles.input}
                     placeholder="e.g., TXN123456789"
                     value={paymentForm.transactionId}
@@ -689,7 +690,7 @@ This is an electronically generated receipt.
                 </Text>
                 <View style={styles.inputContainer}>
                   <Icon name="calendar-month" size={18} color="#4A90E2" style={styles.inputIcon} />
-                  <TextInput
+                  <SpeechToTextInput
                     style={styles.input}
                     placeholder="e.g., Jan"
                     value={paymentForm.paymentForMonth}

@@ -23,6 +23,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as XLSX from 'xlsx';
 import Voice from '@react-native-voice/voice';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const MemberAttendanceScreen = () => {
   const navigation = useNavigation();
@@ -564,39 +565,18 @@ const MemberAttendanceScreen = () => {
 
             <View style={styles.searchContainer}>
               <Icon name="magnify" size={20} color="#666" style={styles.searchIcon} />
-              <TextInput
+              <SpeechToTextInput
                 style={styles.searchInput}
+                inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingLeft: 0 }} // Match existing style
                 placeholder={t('searchMember')}
                 value={searchQuery}
                 onChangeText={(text) => {
                   setSearchQuery(text);
                   setShowMemberDropdown(text.length > 0);
                 }}
+                onVoiceResults={findAndMarkMember}
                 placeholderTextColor="#999"
               />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => {
-                  setSearchQuery('');
-                  setShowMemberDropdown(false);
-                }} style={styles.clearButton}>
-                  <Icon name="close-circle" size={20} color="#666" />
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={[
-                  styles.voiceButtonInline,
-                  isListening && styles.voiceButtonActive
-                ]}
-                onPressIn={startVoiceRecording}
-                onPressOut={stopVoiceRecording}
-                delayPressIn={100}
-              >
-                <Icon
-                  name={isListening ? "microphone" : "microphone-outline"}
-                  size={20}
-                  color={isListening ? "#FF6B6B" : "#4A90E2"}
-                />
-              </TouchableOpacity>
             </View>
 
             {isListening ? (

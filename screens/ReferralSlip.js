@@ -21,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../apiConfig';
 import Voice from '@react-native-voice/voice';
 import { useLanguage } from '../service/LanguageContext';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const ReferralSlip = ({ route }) => {
   const navigation = useNavigation();
@@ -221,7 +222,7 @@ const ReferralSlip = ({ route }) => {
       Alert.alert(t('validationError'), t('pleaseSelectReferralCategory'));
       return false;
     }
-    
+
     if (isOutsideReferral) {
       if (!formData.referralNumber.trim()) {
         Alert.alert(t('validationError'), t('pleaseEnterCompanyName'));
@@ -365,13 +366,13 @@ const ReferralSlip = ({ route }) => {
       Voice.onSpeechResults = (e) => {
         if (e.value && e.value[0]) {
           const spokenText = e.value[0];
-          
+
           // Try to find matching member and auto-select
           const matchingMember = allMembers.find(member =>
             member.name.toLowerCase().includes(spokenText.toLowerCase()) ||
             spokenText.toLowerCase().includes(member.name.toLowerCase())
           );
-          
+
           if (matchingMember) {
             // Auto-select the matching member
             handleSelectMember(matchingMember);
@@ -486,7 +487,7 @@ const ReferralSlip = ({ route }) => {
             {/* ALWAYS SHOW Member Search - for both Inside and Outside */}
             <View style={styles.section}>
               <Text style={styles.label}>{t('toMember')} *</Text>
-              
+
               <TouchableOpacity
                 style={styles.memberDropdownButton}
                 onPress={() => setShowMemberDropdown(!showMemberDropdown)}
@@ -503,31 +504,29 @@ const ReferralSlip = ({ route }) => {
                   {/* Search Input */}
                   <View style={styles.searchContainer}>
                     <Icon name="magnify" size={20} color="#4A90E2" />
-                    <TextInput
+                    <SpeechToTextInput
                       style={styles.searchInput}
+                      inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingLeft: 10 }}
                       placeholder={t('searchMembers')}
                       value={memberSearchQuery}
                       onChangeText={setMemberSearchQuery}
+                      onVoiceResults={(spokenText) => {
+                        const matchingMember = allMembers.find(member =>
+                          member.name.toLowerCase().includes(spokenText.toLowerCase()) ||
+                          spokenText.toLowerCase().includes(member.name.toLowerCase())
+                        );
+
+                        if (matchingMember) {
+                          handleSelectMember(matchingMember);
+                          setMemberSearchQuery('');
+                          Alert.alert(t('success'), `${t('memberSelected')}: ${matchingMember.name}`);
+                        } else {
+                          setMemberSearchQuery(spokenText);
+                          setShowMemberDropdown(true);
+                        }
+                      }}
                       placeholderTextColor="#999"
                     />
-                    {memberSearchQuery.length > 0 && (
-                      <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
-                        <Icon name="close-circle" size={20} color="#999" />
-                      </TouchableOpacity>
-                    )}
-                    {/* Voice Search Button */}
-                    <TouchableOpacity
-                      onPressIn={startVoiceSearch}
-                      onPressOut={stopRecording}
-                      style={styles.voiceSearchButton}
-                      delayPressIn={100}
-                    >
-                      <Icon
-                        name={isListening === 'memberSearch' ? "microphone" : "microphone-outline"}
-                        size={20}
-                        color={isListening === 'memberSearch' ? "#FF4444" : "#4A90E2"}
-                      />
-                    </TouchableOpacity>
                   </View>
 
                   <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
@@ -648,28 +647,14 @@ const ReferralSlip = ({ route }) => {
                 <Text style={styles.label}>{t('Company or Client Name')}</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
-                  <TextInput
+                  <SpeechToTextInput
                     style={styles.input}
+                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
                     placeholder={t('enterClientOrCompanyName')}
                     value={formData.referralNumber}
                     onChangeText={(text) => handleInputChange('referralNumber', text)}
                     placeholderTextColor="#999"
                   />
-                  <TouchableOpacity
-                    onPressIn={() => startRecording('referralNumber')}
-                    onPressOut={stopRecording}
-                    style={styles.micButton}
-                    delayPressIn={100}
-                  >
-                    <Icon
-                      name={isListening === 'referralNumber' ? "microphone" : "microphone-outline"}
-                      size={22}
-                      color={isListening === 'referralNumber' ? "#FF4444" : "#4A90E2"}
-                    />
-                    {isListening === 'referralNumber' && (
-                      <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -680,8 +665,9 @@ const ReferralSlip = ({ route }) => {
                 <Text style={styles.label}>{t('mobileNumber')}</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
-                  <TextInput
+                  <SpeechToTextInput
                     style={styles.input}
+                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
                     placeholder={t('enterTelephoneNumber')}
                     value={formData.telephone}
                     onChangeText={handlePhoneChange}
@@ -689,21 +675,6 @@ const ReferralSlip = ({ route }) => {
                     placeholderTextColor="#999"
                     maxLength={12}
                   />
-                  <TouchableOpacity
-                    onPressIn={() => startRecording('telephone')}
-                    onPressOut={stopRecording}
-                    style={styles.micButton}
-                    delayPressIn={100}
-                  >
-                    <Icon
-                      name={isListening === 'telephone' ? "microphone" : "microphone-outline"}
-                      size={22}
-                      color={isListening === 'telephone' ? "#FF4444" : "#4A90E2"}
-                    />
-                    {isListening === 'telephone' && (
-                      <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -714,8 +685,9 @@ const ReferralSlip = ({ route }) => {
                 <Text style={styles.label}>{t('email')}</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
-                  <TextInput
+                  <SpeechToTextInput
                     style={styles.input}
+                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
                     placeholder={t('Enter Email')}
                     value={formData.email}
                     onChangeText={(text) => handleInputChange('email', text)}
@@ -723,21 +695,6 @@ const ReferralSlip = ({ route }) => {
                     autoCapitalize="none"
                     placeholderTextColor="#999"
                   />
-                  <TouchableOpacity
-                    onPressIn={() => startRecording('email')}
-                    onPressOut={stopRecording}
-                    style={styles.micButton}
-                    delayPressIn={100}
-                  >
-                    <Icon
-                      name={isListening === 'email' ? "microphone" : "microphone-outline"}
-                      size={22}
-                      color={isListening === 'email' ? "#FF4444" : "#4A90E2"}
-                    />
-                    {isListening === 'email' && (
-                      <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-                    )}
-                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -747,8 +704,9 @@ const ReferralSlip = ({ route }) => {
               <View style={styles.section}>
                 <Text style={styles.label}>{t('address')}</Text>
                 <View style={[styles.inputContainer, styles.textAreaContainer]}>
-                  <TextInput
+                  <SpeechToTextInput
                     style={[styles.input, styles.textArea]}
+                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 80 }}
                     placeholder={t('enterAddress')}
                     value={formData.address}
                     onChangeText={(text) => handleInputChange('address', text)}
@@ -756,16 +714,6 @@ const ReferralSlip = ({ route }) => {
                     numberOfLines={3}
                     placeholderTextColor="#999"
                   />
-                  <TouchableOpacity
-                    onPress={() => startRecording('address')}
-                    style={[styles.micButton, styles.micButtonTextArea]}
-                  >
-                    <Icon
-                      name={isListening === 'address' ? "microphone" : "microphone-outline"}
-                      size={22}
-                      color={isListening === 'address' ? "#FF4444" : "#4A90E2"}
-                    />
-                  </TouchableOpacity>
                 </View>
               </View>
             )}
@@ -774,8 +722,9 @@ const ReferralSlip = ({ route }) => {
             <View style={styles.section}>
               <Text style={styles.label}>{t('comments')}</Text>
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
-                <TextInput
+                <SpeechToTextInput
                   style={[styles.input, styles.textArea]}
+                  inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 100 }}
                   placeholder={t('enterComments')}
                   value={formData.comments}
                   onChangeText={(text) => handleInputChange('comments', text)}
@@ -783,16 +732,6 @@ const ReferralSlip = ({ route }) => {
                   numberOfLines={4}
                   placeholderTextColor="#999"
                 />
-                <TouchableOpacity
-                  onPress={() => startRecording('comments')}
-                  style={[styles.micButton, styles.micButtonTextArea]}
-                >
-                  <Icon
-                    name={isListening === 'comments' ? "microphone" : "microphone-outline"}
-                    size={22}
-                    color={isListening === 'comments' ? "#FF4444" : "#4A90E2"}
-                  />
-                </TouchableOpacity>
               </View>
             </View>
 
@@ -816,7 +755,7 @@ const ReferralSlip = ({ route }) => {
           </ScrollView>
         </KeyboardAvoidingView>
       </ImageBackground>
-      
+
       {/* Success Screen */}
       {showSuccessScreen && (
         <View style={styles.successOverlay}>

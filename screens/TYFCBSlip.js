@@ -22,6 +22,7 @@ import API_BASE_URL from '../apiConfig';
 import MemberIdService from '../service/MemberIdService';
 import Voice from '@react-native-voice/voice';
 import { useLanguage } from '../service/LanguageContext';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const TYFCBSlip = () => {
   const navigation = useNavigation();
@@ -186,14 +187,14 @@ const TYFCBSlip = () => {
         console.log('Voice Results:', e.value);
         if (e.value && e.value[0]) {
           const spokenText = e.value[0];
-          
+
           // Handle member name field - find and auto-select matching member
           if (fieldName === 'memberName') {
             const matchedMember = allMembers.find(member =>
               member.name.toLowerCase().includes(spokenText.toLowerCase()) ||
               spokenText.toLowerCase().includes(member.name.toLowerCase())
             );
-            
+
             if (matchedMember) {
               handleSelectMember(matchedMember);
               Alert.alert(t('success'), `${t('memberSelected')}: ${matchedMember.name}`);
@@ -298,7 +299,7 @@ const TYFCBSlip = () => {
       {/* Member Selection with Search and Voice Input */}
       <View style={styles.section}>
         <Text style={styles.label}>{t('toMember')} *</Text>
-        
+
         <TouchableOpacity
           style={styles.memberDropdownButton}
           onPress={() => setShowMemberDropdown(!showMemberDropdown)}
@@ -315,31 +316,28 @@ const TYFCBSlip = () => {
             {/* Search Input */}
             <View style={styles.searchContainer}>
               <Icon name="magnify" size={20} color="#4A90E2" />
-              <TextInput
+              <SpeechToTextInput
                 style={styles.searchInput}
+                inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingLeft: 10 }}
                 placeholder={t('searchMembers')}
                 value={memberSearchQuery}
                 onChangeText={setMemberSearchQuery}
+                onVoiceResults={(spokenText) => {
+                  const matchedMember = allMembers.find(member =>
+                    member.name.toLowerCase().includes(spokenText.toLowerCase()) ||
+                    spokenText.toLowerCase().includes(member.name.toLowerCase())
+                  );
+
+                  if (matchedMember) {
+                    handleSelectMember(matchedMember);
+                    Alert.alert(t('success'), `${t('memberSelected')}: ${matchedMember.name}`);
+                  } else {
+                    setMemberSearchQuery(spokenText);
+                    Alert.alert(t('noMatch'), t('noMemberFoundWithThatName'));
+                  }
+                }}
                 placeholderTextColor="#999"
               />
-              {memberSearchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setMemberSearchQuery('')}>
-                  <Icon name="close-circle" size={20} color="#999" />
-                </TouchableOpacity>
-              )}
-              {/* Voice Search Button */}
-              <TouchableOpacity
-                onPressIn={() => startRecording('memberName')}
-                onPressOut={stopRecording}
-                style={styles.voiceSearchButton}
-                delayPressIn={100}
-              >
-                <Icon
-                  name={isListening === 'memberName' ? "microphone" : "microphone-outline"}
-                  size={20}
-                  color={isListening === 'memberName' ? "#FF4444" : "#4A90E2"}
-                />
-              </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
@@ -400,28 +398,14 @@ const TYFCBSlip = () => {
         <Text style={styles.label}>{t('businessVisited')} *</Text>
         <View style={styles.inputContainer}>
           <Icon name="briefcase" size={20} color="#4A90E2" style={styles.icon} />
-          <TextInput
+          <SpeechToTextInput
             style={styles.input}
+            inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
             placeholder={t('enterBusinessName')}
             value={formData.businessVisited}
             onChangeText={(text) => handleInputChange('businessVisited', text)}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity
-            onPressIn={() => startRecording('businessVisited')}
-            onPressOut={stopRecording}
-            style={styles.micButton}
-            delayPressIn={100} // slight delay to prevent accidental touches
-          >
-            <Icon
-              name={isListening === 'businessVisited' ? "microphone" : "microphone-outline"}
-              size={22}
-              color={isListening === 'businessVisited' ? "#FF4444" : "#4A90E2"}
-            />
-            {isListening === 'businessVisited' && (
-              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-            )}
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -430,29 +414,16 @@ const TYFCBSlip = () => {
         <Text style={styles.label}>{t('amount')}</Text>
         <View style={styles.inputContainer}>
           <Icon name="currency-inr" size={20} color="#4A90E2" style={styles.icon} />
-          <TextInput
+          <SpeechToTextInput
             style={styles.input}
+            inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
+            fieldType="amount"
             placeholder={t('enterAmountOptional')}
             value={formData.amount}
             onChangeText={(text) => handleInputChange('amount', text)}
             keyboardType="decimal-pad"
             placeholderTextColor="#999"
           />
-          <TouchableOpacity
-            onPressIn={() => startRecording('amount')}
-            onPressOut={stopRecording}
-            style={styles.micButton}
-            delayPressIn={100}
-          >
-            <Icon
-              name={isListening === 'amount' ? "microphone" : "microphone-outline"}
-              size={22}
-              color={isListening === 'amount' ? "#FF4444" : "#4A90E2"}
-            />
-            {isListening === 'amount' && (
-              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-            )}
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -461,8 +432,10 @@ const TYFCBSlip = () => {
         <Text style={styles.label}>{t('rating')}</Text>
         <View style={styles.inputContainer}>
           <Icon name="star" size={20} color="#4A90E2" style={styles.icon} />
-          <TextInput
+          <SpeechToTextInput
             style={styles.input}
+            inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
+            fieldType="rating"
             placeholder={t('enterRating')}
             value={formData.rating}
             onChangeText={(text) => handleInputChange('rating', text)}
@@ -470,21 +443,6 @@ const TYFCBSlip = () => {
             maxLength={1}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity
-            onPressIn={() => startRecording('rating')}
-            onPressOut={stopRecording}
-            style={styles.micButton}
-            delayPressIn={100}
-          >
-            <Icon
-              name={isListening === 'rating' ? "microphone" : "microphone-outline"}
-              size={22}
-              color={isListening === 'rating' ? "#FF4444" : "#4A90E2"}
-            />
-            {isListening === 'rating' && (
-              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-            )}
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -492,8 +450,9 @@ const TYFCBSlip = () => {
       <View style={styles.section}>
         <Text style={styles.label}>{t('notes')}</Text>
         <View style={[styles.inputContainer, styles.textAreaContainer]}>
-          <TextInput
+          <SpeechToTextInput
             style={[styles.input, styles.textArea]}
+            inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 100 }}
             placeholder={t('enterAnyNotes')}
             value={formData.notes}
             onChangeText={(text) => handleInputChange('notes', text)}
@@ -501,21 +460,6 @@ const TYFCBSlip = () => {
             numberOfLines={4}
             placeholderTextColor="#999"
           />
-          <TouchableOpacity
-            onPressIn={() => startRecording('notes')}
-            onPressOut={stopRecording}
-            style={[styles.micButton, styles.micButtonTextArea]}
-            delayPressIn={100}
-          >
-            <Icon
-              name={isListening === 'notes' ? "microphone" : "microphone-outline"}
-              size={22}
-              color={isListening === 'notes' ? "#FF4444" : "#4A90E2"}
-            />
-            {isListening === 'notes' && (
-              <Text style={{ fontSize: 10, color: '#FF4444', position: 'absolute', top: -15, width: 60, textAlign: 'center' }}>{t('recording')}</Text>
-            )}
-          </TouchableOpacity>
         </View>
       </View>
 

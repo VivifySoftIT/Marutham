@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
 import LanguageSelector from '../components/LanguageSelector';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const { width } = Dimensions.get('window');
 
@@ -29,20 +30,20 @@ const PaymentDetails = () => {
   const route = useRoute();
   const { t } = useLanguage();
   const { memberId } = route.params || {};
-  
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [memberData, setMemberData] = useState(null);
   const [paymentHistory, setPaymentHistory] = useState([]);
   const [paymentSummary, setPaymentSummary] = useState(null);
-  
+
   // Dropdown state
   const [showMemberSearch, setShowMemberSearch] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState(memberId);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
@@ -71,15 +72,15 @@ const PaymentDetails = () => {
   const loadInitialData = async () => {
     try {
       setLoading(true);
-      
+
       // Load all members for search
       const members = await ApiService.getMembers();
       setAllMembers(members || []);
       setFilteredMembers(members || []);
-      
+
       // Load payment data
       await loadPaymentData(memberId);
-      
+
       // If memberId is provided, find and set member data
       if (memberId && members) {
         const member = members.find(m => m.id === memberId);
@@ -99,13 +100,13 @@ const PaymentDetails = () => {
     try {
       const payments = await ApiService.getPayments(targetMemberId);
       setPaymentHistory(payments || []);
-      
+
       // Calculate summary
       if (payments && payments.length > 0) {
         const totalPaid = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
         const lastPayment = payments.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))[0];
         const nextDueDate = calculateNextDueDate(lastPayment.paymentDate);
-        
+
         setPaymentSummary({
           totalPaid: totalPaid,
           totalDue: calculateTotalDue(payments),
@@ -163,7 +164,7 @@ const PaymentDetails = () => {
     setMemberData(member);
     setShowMemberSearch(false);
     setSearchQuery('');
-    
+
     setLoading(true);
     await loadPaymentData(member.id);
     setLoading(false);
@@ -190,7 +191,7 @@ const PaymentDetails = () => {
     const methodLower = method.toLowerCase();
     switch (methodLower) {
       case 'cash': return 'cash';
-      case 'upi': 
+      case 'upi':
       case 'gpay':
       case 'phonepe':
       case 'paytm': return 'cellphone';
@@ -210,11 +211,11 @@ const PaymentDetails = () => {
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     if (date.toDateString() === today.toDateString()) return 'Today';
     if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-    
-    return date.toLocaleDateString('en-IN', { 
+
+    return date.toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
       year: 'numeric'
@@ -260,17 +261,17 @@ const PaymentDetails = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
-      
+
       {/* Enhanced Header */}
       <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('paymentDetails')}</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => setShowMemberSearch(true)}
           style={styles.headerButton}
         >
@@ -278,15 +279,15 @@ const PaymentDetails = () => {
         </TouchableOpacity>
       </LinearGradient>
 
-      <Animated.ScrollView 
+      <Animated.ScrollView
         style={[styles.content, {
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }]
         }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
+          <RefreshControl
+            refreshing={refreshing}
             onRefresh={onRefresh}
             tintColor="#4A90E2"
             colors={['#4A90E2']}
@@ -366,8 +367,8 @@ const PaymentDetails = () => {
         {/* Payment Summary Cards */}
         <View style={styles.summaryContainer}>
           <Text style={styles.sectionTitle}>{t('paymentSummary')}</Text>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.summaryScroll}
           >
@@ -435,17 +436,19 @@ const PaymentDetails = () => {
                       <Text style={styles.paymentMemberName}>{memberData.name}</Text>
                     </View>
                   )}
-                  
+
                   <View style={styles.paymentCardHeader}>
-                    <View style={[styles.paymentIconContainer, 
-                      { backgroundColor: index % 3 === 0 ? 'rgba(16, 185, 129, 0.1)' : 
-                        index % 3 === 1 ? 'rgba(139, 92, 246, 0.1)' : 'rgba(59, 130, 246, 0.1)' }
+                    <View style={[styles.paymentIconContainer,
+                    {
+                      backgroundColor: index % 3 === 0 ? 'rgba(16, 185, 129, 0.1)' :
+                        index % 3 === 1 ? 'rgba(139, 92, 246, 0.1)' : 'rgba(59, 130, 246, 0.1)'
+                    }
                     ]}>
-                      <Icon 
-                        name={getPaymentMethodIcon(payment.paymentMethod)} 
-                        size={20} 
-                        color={index % 3 === 0 ? '#10B981' : 
-                               index % 3 === 1 ? '#8B5CF6' : '#3B82F6'} 
+                      <Icon
+                        name={getPaymentMethodIcon(payment.paymentMethod)}
+                        size={20}
+                        color={index % 3 === 0 ? '#10B981' :
+                          index % 3 === 1 ? '#8B5CF6' : '#3B82F6'}
                       />
                     </View>
                     <View style={styles.paymentInfo}>
@@ -460,8 +463,8 @@ const PaymentDetails = () => {
                       <Text style={styles.paymentAmount}>
                         {formatCurrency(payment.amount)}
                       </Text>
-                      <View style={[styles.statusBadge, 
-                        { backgroundColor: `rgba(${getStatusColor('paid').replace('#', '')}, 0.1)` }
+                      <View style={[styles.statusBadge,
+                      { backgroundColor: `rgba(${getStatusColor('paid').replace('#', '')}, 0.1)` }
                       ]}>
                         <Text style={[styles.statusText, { color: getStatusColor('paid') }]}>
                           {t('paid')}
@@ -469,7 +472,7 @@ const PaymentDetails = () => {
                       </View>
                     </View>
                   </View>
-                  
+
                   <View style={styles.paymentCardFooter}>
                     <View style={styles.paymentMethod}>
                       <Icon name={getPaymentMethodIcon(payment.paymentMethod)} size={12} color="#6B7280" />
@@ -496,8 +499,8 @@ const PaymentDetails = () => {
               </View>
               <Text style={styles.emptyStateTitle}>{t('noPaymentHistory')}</Text>
               <Text style={styles.emptyStateText}>
-                {memberData ? 
-                  `${t('noPaymentsFoundFor')} ${memberData.name}` : 
+                {memberData ?
+                  `${t('noPaymentsFoundFor')} ${memberData.name}` :
                   t('selectMemberToViewHistory')
                 }
               </Text>
@@ -535,10 +538,10 @@ const PaymentDetails = () => {
                 <Icon name="close" size={24} color="#374151" />
               </TouchableOpacity>
             </View>
-            
+
             <View style={styles.searchContainer}>
               <Icon name="magnify" size={20} color="#9CA3AF" style={styles.searchIcon} />
-              <TextInput
+              <SpeechToTextInput
                 style={styles.searchInput}
                 placeholder={t('searchByNameIdPhone')}
                 value={searchQuery}
@@ -546,7 +549,7 @@ const PaymentDetails = () => {
                 autoFocus
               />
             </View>
-            
+
             <ScrollView style={styles.memberList}>
               {filteredMembers.map((member) => (
                 <TouchableOpacity
@@ -571,7 +574,7 @@ const PaymentDetails = () => {
                   )}
                 </TouchableOpacity>
               ))}
-              
+
               {filteredMembers.length === 0 && (
                 <View style={styles.noResults}>
                   <Icon name="account-search" size={48} color="#D1D5DB" />
@@ -592,16 +595,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F9FAFB',
   },
-   header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 15, 
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
     paddingVertical: 15,
   },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     color: '#FFF',
     textAlign: 'center',
     flex: 1,
