@@ -500,22 +500,27 @@ const MyFeed = ({ route }) => {
           
           switch (fieldName) {
             case 'amount':
-              // Extract numbers from spoken text
+              // Extract numbers from spoken text for amount field only
               const amountMatch = spokenText.match(/\d+/g);
               if (amountMatch) {
                 const amount = amountMatch.join('');
                 setPaymentForm(prev => ({ ...prev, amount: amount }));
+              } else {
+                // If no numbers found, show error
+                Alert.alert(t('error'), t('pleaseSpeak NumbersOnly') || 'Please speak numbers only for amount');
               }
               break;
               
             case 'transactionId':
-              // Clean up spoken text for transaction ID
-              const cleanTransactionId = spokenText.replace(/\s+/g, '').toUpperCase();
+              // Keep transaction ID as spoken text (don't extract numbers)
+              // Remove spaces and convert to uppercase for consistency
+              const cleanTransactionId = spokenText.trim().replace(/\s+/g, '');
               setPaymentForm(prev => ({ ...prev, transactionId: cleanTransactionId }));
               break;
               
             case 'paymentForMonth':
-              setPaymentForm(prev => ({ ...prev, paymentForMonth: spokenText }));
+              // Keep month as spoken text
+              setPaymentForm(prev => ({ ...prev, paymentForMonth: spokenText.trim() }));
               setShowMonthDropdown(true);
               break;
               

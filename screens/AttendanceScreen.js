@@ -46,8 +46,8 @@ const MemberAttendanceScreen = () => {
 
 
 
-  // Function to find and mark member as present
-  const findAndMarkMember = (spokenText) => {
+  // Function to find member by voice (without auto-marking)
+  const findMemberByVoice = (spokenText) => {
     console.log('Finding member for voice search:', spokenText);
 
     const cleanedText = spokenText
@@ -91,44 +91,33 @@ const MemberAttendanceScreen = () => {
       Alert.alert(
         t('noMatchFound'),
         `${t('noMemberFoundMessage')} "${spokenText}".\n\n${t('tryDifferentSearchTerm')}`,
-        [
-          { text: t('retry') || 'Try Again', onPress: () => setTimeout(startVoiceRecording, 500) },
-          { text: t('cancel'), style: 'cancel' }
-        ]
+        [{ text: t('ok'), style: 'cancel' }]
       );
       return;
     }
 
     if (matchingMembers.length === 1) {
       const member = matchingMembers[0];
-      setAttendanceData(prev => ({
-        ...prev,
-        [member.id]: true,
-      }));
-
-      Alert.alert(t('markedPresentStatus'), `${t('successfullyMarked')} "${member.name}" ${t('asPresent')}.`);
-
-      setSearchQuery('');
+      // Just set the search query to show the member, don't auto-mark
+      setSearchQuery(member.name);
+      setShowMemberDropdown(false);
       setLastSpokenName(member.name);
+      
+      // Scroll to show the member (they can manually click Present/Late)
+      Alert.alert(
+        t('memberFound') || 'Member Found',
+        `${member.name}\n\n${t('clickPresentOrLate') || 'Click Present or Late to mark attendance'}`,
+        [{ text: t('ok') }]
+      );
     } else {
+      // Multiple matches - show them in search results
+      setSearchQuery(cleanedText);
+      setShowMemberDropdown(true);
+      
       Alert.alert(
         t('multipleMatchesFound') || 'Multiple Matches Found',
-        `${t('found')} ${matchingMembers.length} ${t('membersCount')} "${spokenText}".\n\n${t('selectOneToMark') || 'Select one to mark as present:'}`,
-        [
-          ...matchingMembers.slice(0, 5).map((member, index) => ({
-            text: `${member.name} (${member.business || 'N/A'})`,
-            onPress: () => {
-              setAttendanceData(prev => ({
-                ...prev,
-                [member.id]: 'Present',
-              }));
-              setSearchQuery('');
-              setLastSpokenName(member.name);
-              Alert.alert(t('markedPresentStatus'), `${t('successfullyMarked')} "${member.name}" ${t('asPresent')}.`);
-            }
-          })),
-          { text: t('cancel'), style: 'cancel' }
-        ]
+        `${t('found')} ${matchingMembers.length} ${t('membersCount')} "${spokenText}".\n\n${t('selectFromList') || 'Select from the list below'}`,
+        [{ text: t('ok') }]
       );
     }
   };
@@ -241,15 +230,18 @@ const MemberAttendanceScreen = () => {
   // Display all members by default, or filtered members when searching
   const displayMembers = searchQuery.trim() ? filteredMembers : members;
 
-  // Handle member selection from dropdown
+  // Handle member selection from dropdown (don't auto-mark)
   const handleSelectMember = (member) => {
-    setAttendanceData(prev => ({
-      ...prev,
-      [member.id]: true,
-    }));
     setSelectedMember(member);
     setShowMemberDropdown(false);
-    setSearchQuery('');
+    setSearchQuery(member.name);
+    
+    // Show alert to remind user to mark attendance
+    Alert.alert(
+      t('memberSelected') || 'Member Selected',
+      `${member.name}\n\n${t('clickPresentOrLate') || 'Click Present or Late button to mark attendance'}`,
+      [{ text: t('ok') }]
+    );
   };
 
   // Load members from API
@@ -574,7 +566,7 @@ const MemberAttendanceScreen = () => {
                   setSearchQuery(text);
                   setShowMemberDropdown(text.length > 0);
                 }}
-                onVoiceResults={findAndMarkMember}
+                onVoiceResults={findMemberByVoice}
                 placeholderTextColor="#999"
               />
             </View>
@@ -583,14 +575,14 @@ const MemberAttendanceScreen = () => {
               <View style={styles.listeningIndicator}>
                 <Icon name="microphone" size={16} color="#FF6B6B" />
                 <Text style={styles.listeningText}>
-                  {t('recordingSearch')}
+                  {t('listeningForName') || 'Listening for member name...'}
                 </Text>
               </View>
             ) : (
               <View style={styles.voiceHintContainer}>
                 <Icon name="information" size={14} color="#4A90E2" />
                 <Text style={styles.voiceHint}>
-                  {t('holdToSearch')}
+                  {t('speakMemberName') || 'Speak member name to search'}
                 </Text>
               </View>
             )}
@@ -848,9 +840,9 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
     elevation: 2,
     shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 1 },
@@ -861,17 +853,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#4A90E2',
   },
   searchSaveRow: {
     flexDirection: 'row',
     gap: 10,
-    marginBottom: 15,
+    marginBottom: 12,
   },
   searchCardInRow: {
     flex: 1,
@@ -904,7 +896,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F0F8FF',
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E3F2FD',
@@ -912,15 +904,15 @@ const styles = StyleSheet.create({
   dateText: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 14,
     color: '#4A90E2',
     fontWeight: '500',
   },
   dateNote: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
     fontStyle: 'italic',
-    marginTop: 8,
+    marginTop: 6,
     textAlign: 'center',
   },
   searchTypeContainer: {
@@ -938,7 +930,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     position: 'relative',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   searchIcon: {
     position: 'absolute',
@@ -950,8 +942,8 @@ const styles = StyleSheet.create({
   searchInput: {
     paddingLeft: 40,
     paddingRight: 80,
-    paddingVertical: 12,
-    fontSize: 15,
+    paddingVertical: 10,
+    fontSize: 14,
     color: '#333',
     backgroundColor: '#F8FBFF',
     borderRadius: 8,
@@ -981,17 +973,17 @@ const styles = StyleSheet.create({
   voiceHintContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 6,
     paddingHorizontal: 4,
   },
   voiceHint: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#4A90E2',
     marginLeft: 6,
     fontStyle: 'italic',
   },
   memberDropdown: {
-    marginTop: 12,
+    marginTop: 8,
     backgroundColor: '#F8FBFF',
     borderRadius: 8,
     borderWidth: 1,
@@ -1001,15 +993,15 @@ const styles = StyleSheet.create({
   dropdownItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#E3F2FD',
   },
   dropdownItemAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#4A90E2',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1017,20 +1009,20 @@ const styles = StyleSheet.create({
   },
   dropdownItemAvatarText: {
     color: '#FFF',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
   },
   dropdownItemContent: {
     flex: 1,
   },
   dropdownItemName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#2C3E50',
     marginBottom: 2,
   },
   dropdownItemBusiness: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
   },
   dropdownMoreText: {
@@ -1147,16 +1139,16 @@ const styles = StyleSheet.create({
   listeningIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 6,
     paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingVertical: 5,
     backgroundColor: '#FFE5E5',
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#FF6B6B',
   },
   listeningText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#FF6B6B',
     marginLeft: 6,
     fontWeight: '600',

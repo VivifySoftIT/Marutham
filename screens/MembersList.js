@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -17,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const MemberList = () => {
   const navigation = useNavigation();
@@ -26,6 +26,8 @@ const MemberList = () => {
   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, unpaid: 0 });
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
 
   // Load members from API
   useEffect(() => {
@@ -88,16 +90,16 @@ const MemberList = () => {
     }
   };
 
-  // Handle search
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
+  // Handle search with voice support and dropdown
+  const handleSearch = async (query = searchQuery) => {
+    if (!query.trim()) {
       setFilteredMembers(members);
       return;
     }
 
     setLoading(true);
     try {
-      const results = await ApiService.searchMembers(searchQuery);
+      const results = await ApiService.searchMembers(query);
       setFilteredMembers(results);
       
       if (results.length === 0) {
@@ -114,10 +116,50 @@ const MemberList = () => {
     }
   };
 
+  // Handle search input change with dropdown
+  const handleSearchInputChange = (text) => {
+    setSearchQuery(text);
+    
+    if (text.trim() === '') {
+      // Show all members when search is empty
+      setSearchSuggestions(members);
+    } else {
+      // Filter members based on search query
+      const filtered = members.filter(member =>
+        member.name.toLowerCase().includes(text.toLowerCase()) ||
+        member.memberId?.toLowerCase().includes(text.toLowerCase()) ||
+        member.phone?.includes(text) ||
+        member.email?.toLowerCase().includes(text.toLowerCase())
+      );
+      setSearchSuggestions(filtered);
+    }
+  };
+
+  // Handle search focus - show all members
+  const handleSearchFocus = () => {
+    setSearchSuggestions(members);
+    setShowSearchDropdown(true);
+  };
+
+  // Handle selecting a member from dropdown
+  const handleSelectMember = (member) => {
+    setSearchQuery(member.name);
+    setShowSearchDropdown(false);
+    setFilteredMembers([member]);
+  };
+
+  // Handle voice search results
+  const handleVoiceSearch = (spokenText) => {
+    setSearchQuery(spokenText);
+    handleSearchInputChange(spokenText);
+  };
+
   // Clear search
   const handleClearSearch = () => {
     setSearchQuery('');
     setFilteredMembers(members);
+    setShowSearchDropdown(false);
+    setSearchSuggestions([]);
   };
 
 
@@ -246,24 +288,73 @@ const MemberList = () => {
         </View>
       </LinearGradient>
 
-      {/* Search Section */}
+      {/* Search Section with Voice and Dropdown */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Icon name="magnify" size={20} color="#4A90E2" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('searchByNameIdPhoneEmail')}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={handleClearSearch}>
-              <Icon name="close-circle" size={20} color="#4A90E2" />
-            </TouchableOpacity>
+        <View style={styles.searchInputWrapper}>
+          <View style={styles.searchInputContainer}>
+            <Icon name="magnify" size={20} color="#999" style={styles.searchIcon} />
+            <SpeechToTextInput
+              style={styles.voiceSearchWrapper}
+              inputStyle={styles.searchInput}
+              placeholder={t('searchByNameIdPhoneEmail')}
+              value={searchQuery}
+              onChangeText={handleSearchInputChange}
+              onFocus={handleSearchFocus}
+              onSubmitEditing={() => handleSearch()}
+              onVoiceResults={handleVoiceSearch}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={handleClearSearch} style={styles.clearSearchButton}>
+                <Icon name="close-circle" size={20} color="#999" />
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          {/* Search Dropdown */}
+          {showSearchDropdown && searchSuggestions.length > 0 && (
+            <View style={styles.searchDropdown}>
+              <ScrollView 
+                style={styles.searchDropdownList}
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled={true}
+              >
+                {searchSuggestions.slice(0, 10).map((member) => (
+                  <TouchableOpacity
+                    key={member.id}
+                    style={styles.searchDropdownItem}
+                    onPress={() => handleSelectMember(member)}
+                  >
+                    <View style={styles.searchDropdownItemContent}>
+                      <LinearGradient 
+                        colors={['#4A90E2', '#357ABD']} 
+                        style={styles.searchDropdownAvatar}
+                      >
+                        <Text style={styles.searchDropdownAvatarText}>
+                          {member.name.charAt(0).toUpperCase()}
+                        </Text>
+                      </LinearGradient>
+                      <View style={styles.searchDropdownInfo}>
+                        <Text style={styles.searchDropdownName}>{member.name}</Text>
+                        <Text style={styles.searchDropdownDetails}>
+                          {member.phone} • ID: {member.memberId}
+                        </Text>
+                      </View>
+                    </View>
+                    <Icon name="chevron-right" size={16} color="#4A90E2" />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+              <TouchableOpacity 
+                style={styles.closeDropdownButton}
+                onPress={() => setShowSearchDropdown(false)}
+              >
+                <Text style={styles.closeDropdownText}>{t('close')}</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+        
+        <TouchableOpacity style={styles.searchButton} onPress={() => handleSearch()}>
           <Icon name="magnify" size={22} color="#FFF" />
         </TouchableOpacity>
       </View>
@@ -399,15 +490,28 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderWidth: 1,
     borderColor: '#E9ECEF',
+    position: 'relative',
   },
   searchIcon: {
     marginRight: 8,
+    
+  },
+  voiceSearchWrapper: {
+    flex: 1,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 10,
+    paddingRight: 45,
     fontSize: 15,
     color: '#333',
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+  clearSearchButton: {
+    position: 'absolute',
+    right: 45,
+    padding: 4,
   },
   searchButton: {
     backgroundColor: '#212c62',
@@ -416,6 +520,85 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Search Dropdown
+  searchInputWrapper: {
+    flex: 1,
+    position: 'relative',
+    zIndex: 1000,
+  },
+  searchDropdown: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 10,
+    backgroundColor: '#FFF',
+    borderRadius: 8,
+    marginTop: 4,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    maxHeight: 350,
+    zIndex: 1001,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  searchDropdownList: {
+    maxHeight: 300,
+  },
+  searchDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  searchDropdownItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  searchDropdownAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  searchDropdownAvatarText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  searchDropdownInfo: {
+    flex: 1,
+  },
+  searchDropdownName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#212c62',
+    marginBottom: 2,
+  },
+  searchDropdownDetails: {
+    fontSize: 11,
+    color: '#666',
+  },
+  closeDropdownButton: {
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+    backgroundColor: '#F8F9FA',
+  },
+  closeDropdownText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4A90E2',
   },
   // Stats - Height reduced
   statsContainer: {

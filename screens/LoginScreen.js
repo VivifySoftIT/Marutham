@@ -207,8 +207,40 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
     } catch (error) {
       console.error('Login error:', error);
 
-      // Show user-friendly error message for any login failure
-      setErrorMessage('Invalid username and password');
+      // Determine user-friendly error message
+      let userMessage = t('invalidUsernamePassword') || 'Invalid username or password';
+      
+      // Check for specific error types
+      if (error.message) {
+        const errorMsg = error.message.toLowerCase();
+        
+        // Suppress push notification errors - don't show to user
+        if (errorMsg.includes('push notification') || 
+            errorMsg.includes('expo push token') ||
+            errorMsg.includes('notification')) {
+          console.log('Push notification error suppressed:', error.message);
+          // Don't set error message for push notification issues
+          return;
+        }
+        
+        // Handle authentication errors
+        if (errorMsg.includes('invalid') || 
+            errorMsg.includes('incorrect') || 
+            errorMsg.includes('wrong') ||
+            errorMsg.includes('unauthorized') ||
+            errorMsg.includes('401')) {
+          userMessage = t('invalidPassword') || 'Invalid password';
+        } else if (errorMsg.includes('not found') || 
+                   errorMsg.includes('user does not exist')) {
+          userMessage = t('userNotFound') || 'User not found';
+        } else if (errorMsg.includes('network') || 
+                   errorMsg.includes('connection')) {
+          userMessage = t('networkError') || 'Network error. Please check your connection';
+        }
+      }
+      
+      // Show simplified error message
+      setErrorMessage(userMessage);
     } finally {
       setIsLoading(false);
     }
@@ -384,41 +416,44 @@ const styles = StyleSheet.create({
   },
   loginCard: {
     backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 25,
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
     marginBottom: 20,
+    maxWidth: 400,
+    width: '100%',
+    alignSelf: 'center',
   },
   loginTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '700',
     color: '#4A90E2',
-    marginBottom: 20,
+    marginBottom: 16,
     textAlign: 'center',
   },
   inputWrapper: {
-    marginBottom: 15,
+    marginBottom: 12,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    paddingHorizontal: 15,
-    height: 50,
+    paddingHorizontal: 12,
+    height: 46,
   },
   icon: {
-    marginRight: 12,
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: '#333',
     height: '100%',
   },
@@ -429,19 +464,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
   },
   rememberMeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   checkbox: {
-    width: 18,
-    height: 18,
-    borderRadius: 4,
+    width: 16,
+    height: 16,
+    borderRadius: 3,
     borderWidth: 2,
     borderColor: '#4A90E2',
-    marginRight: 8,
+    marginRight: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -449,11 +484,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#4A90E2',
   },
   rememberMeText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#555',
   },
   forgotPasswordText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#4A90E2',
     fontWeight: '600',
     textDecorationLine: 'underline',
@@ -462,28 +497,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffebee',
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
-    marginBottom: 15,
+    marginBottom: 12,
     borderWidth: 1,
     borderColor: '#ffcdd2',
   },
   errorText: {
     color: '#d32f2f',
-    fontSize: 13,
+    fontSize: 12,
     marginLeft: 8,
     flex: 1,
     fontWeight: '500',
   },
   loginButton: {
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: 'hidden',
-    marginBottom: 15,
+    marginBottom: 12,
     shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
   loginButtonDisabled: {
     opacity: 0.6,
@@ -492,15 +527,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 20,
   },
   loginIcon: {
-    marginRight: 8,
+    marginRight: 6,
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   bottomSection: {

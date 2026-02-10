@@ -19,7 +19,6 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Voice from '@react-native-voice/voice';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
 import SpeechToTextInput from '../components/SpeechToTextInput';
@@ -61,24 +60,17 @@ const CreateMeeting = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredMembers, setFilteredMembers] = useState([]);
 
+  // Contact Person Dropdown
+  const [showContactDropdown, setShowContactDropdown] = useState(false);
+  const [contactSearchResults, setContactSearchResults] = useState([]);
+
   // Loading States
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Voice input states
-  const [isListening, setIsListening] = useState(false);
-  const [activeVoiceField, setActiveVoiceField] = useState(null);
-
-
-
   // Load members
   useEffect(() => {
     loadMembers();
-    setupVoice();
-
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
   }, []);
 
   // Get current user's member ID with fallback logic
@@ -140,86 +132,11 @@ const CreateMeeting = () => {
     }
   };
 
-  const setupVoice = () => {
-    Voice.onSpeechStart = onSpeechStart;
-    Voice.onSpeechEnd = onSpeechEnd;
-    Voice.onSpeechResults = onSpeechResults;
-    Voice.onSpeechError = onSpeechError;
-  };
-
-  const onSpeechStart = () => {
-    setIsListening(true);
-  };
-
-  const onSpeechEnd = () => {
-    setIsListening(false);
-  };
-
-  const onSpeechResults = (event) => {
-    if (event.value && event.value.length > 0) {
-      const spokenText = event.value[0];
-
-      // Update the active field with spoken text
-      switch (activeVoiceField) {
-        case 'meetingCode':
-          setMeetingCode(spokenText);
-          break;
-        case 'meetingTitle':
-          setMeetingTitle(spokenText);
-          break;
-        case 'meetingDescription':
-          setMeetingDescription(spokenText);
-          break;
-        case 'contactPerson':
-        case 'contactPerson':
-          setContactPerson(spokenText);
-          break;
-        case 'contactNumber':
-          // Extract only numbers from spoken text
-          const numbers = spokenText.replace(/\D/g, '').slice(0, 10);
-          setContactNumber(numbers);
-          break;
-        case 'place':
-          setPlace(spokenText);
-          break;
-        case 'virtualLink':
-          setVirtualLink(spokenText);
-          break;
-      }
-    }
-  };
-
-  const onSpeechError = (error) => {
-    console.error('Speech error:', error);
-    setIsListening(false);
-  };
-
-  const startVoiceInput = async (fieldName) => {
-    try {
-      setActiveVoiceField(fieldName);
-      await Voice.start('en-US'); // Consider making this dynamic if multi-language voice is needed
-    } catch (error) {
-      console.error('Error starting voice:', error);
-      Alert.alert(t('error'), t('failedToStartVoice'));
-    }
-  };
-
-  const stopVoiceInput = async () => {
-    try {
-      await Voice.stop();
-      setIsListening(false);
-      setActiveVoiceField(null);
-    } catch (error) {
-      console.error('Error stopping voice:', error);
-    }
-  };
-
   const loadMembers = async () => {
     try {
       setLoadingMembers(true);
       const members = await ApiService.getMembers();
       setAllMembers(members);
-      setFilteredMembers(members);
       setFilteredMembers(members);
     } catch (error) {
       console.error('Error loading members:', error);
@@ -255,6 +172,38 @@ const CreateMeeting = () => {
       );
       setFilteredMembers(filtered);
     }
+  };
+
+  // Handle contact person search (voice and text)
+  const handleContactPersonSearch = (query) => {
+    setContactPerson(query);
+    
+    if (query.trim() === '') {
+      setContactSearchResults([]);
+      setShowContactDropdown(false);
+      return;
+    }
+
+    // Search members by name
+    const filtered = allMembers.filter(member =>
+      member.name.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    setContactSearchResults(filtered);
+    setShowContactDropdown(filtered.length > 0);
+  };
+
+  // Handle voice search for contact person
+  const handleContactPersonVoice = (spokenText) => {
+    handleContactPersonSearch(spokenText);
+  };
+
+  // Select contact person from dropdown
+  const selectContactPerson = (member) => {
+    setContactPerson(member.name);
+    setContactNumber(member.phone || '');
+    setContactSearchResults([]);
+    setShowContactDropdown(false);
   };
 
 
@@ -453,85 +402,103 @@ const CreateMeeting = () => {
           <View style={styles.row}>
             <View style={styles.halfWidth}>
               <Text style={styles.label}>{t('meetingCodeOptional')}</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="barcode" size={16} color={waterBlueColors.primary} />
-                <SpeechToTextInput
-                  style={styles.input}
-                  inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
-                  placeholder={t('autoGenerated')}
-                  value={meetingCode}
-                  onChangeText={setMeetingCode}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                style={styles.voiceInputWrapper}
+                inputStyle={styles.voiceInputField}
+                placeholder={t('autoGenerated')}
+                value={meetingCode}
+                onChangeText={setMeetingCode}
+                placeholderTextColor="#999"
+              />
             </View>
 
             <View style={styles.halfWidth}>
               <Text style={styles.label}>{t('meetingTitleLabel')} *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="text" size={16} color={waterBlueColors.primary} />
-                <SpeechToTextInput
-                  style={styles.input}
-                  inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
-                  placeholder={t('meetingTitleLabel')}
-                  value={meetingTitle}
-                  onChangeText={setMeetingTitle}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                style={styles.voiceInputWrapper}
+                inputStyle={styles.voiceInputField}
+                placeholder={t('meetingTitleLabel')}
+                value={meetingTitle}
+                onChangeText={setMeetingTitle}
+                placeholderTextColor="#999"
+              />
             </View>
           </View>
 
           {/* Description */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>{t('description') || 'Description'}</Text>
-            <View style={[styles.inputContainer, styles.textAreaContainer]}>
-              <Icon name="text-box-outline" size={16} color={waterBlueColors.primary} style={styles.textAreaIcon} />
-              <SpeechToTextInput
-                style={[styles.input, styles.textArea]}
-                inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 60 }}
-                placeholder={t('enterDescription')}
-                value={meetingDescription}
-                onChangeText={setMeetingDescription}
-                placeholderTextColor="#999"
-                multiline
-                numberOfLines={2}
-              />
-            </View>
+            <SpeechToTextInput
+              style={styles.voiceInputWrapper}
+              inputStyle={[styles.voiceInputField, styles.textAreaInput]}
+              placeholder={t('enterDescription')}
+              value={meetingDescription}
+              onChangeText={setMeetingDescription}
+              placeholderTextColor="#999"
+              multiline
+              numberOfLines={3}
+            />
           </View>
 
-          {/* Contact Person and Number */}
+          {/* Contact Person and Number with Voice Search Dropdown */}
           <View style={styles.row}>
-            <View style={styles.halfWidth}>
+            <View style={[styles.halfWidth, styles.dropdownContainer]}>
               <Text style={styles.label}>{t('contactPerson')} *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="account" size={16} color={waterBlueColors.primary} />
-                <SpeechToTextInput
-                  style={styles.input}
-                  inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
-                  placeholder={t('contactPerson') || 'Contact Person'}
-                  value={contactPerson}
-                  onChangeText={setContactPerson}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                style={styles.voiceInputWrapper}
+                inputStyle={styles.voiceInputField}
+                placeholder={t('contactPerson') || 'Contact Person'}
+                value={contactPerson}
+                onChangeText={handleContactPersonSearch}
+                onVoiceResults={handleContactPersonVoice}
+                placeholderTextColor="#999"
+              />
+              
+              {/* Contact Person Dropdown */}
+              {showContactDropdown && contactSearchResults.length > 0 && (
+                <View style={styles.contactPersonDropdown}>
+                  <FlatList
+                    data={contactSearchResults}
+                    keyExtractor={(item) => item.id.toString()}
+                    style={styles.contactPersonList}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={styles.contactPersonItem}
+                        onPress={() => selectContactPerson(item)}
+                      >
+                        <View style={styles.contactPersonInfo}>
+                          <Text style={styles.contactPersonName}>{item.name}</Text>
+                          <Text style={styles.contactPersonPhone}>{item.phone}</Text>
+                        </View>
+                        <Icon name="chevron-right" size={16} color={waterBlueColors.primary} />
+                      </TouchableOpacity>
+                    )}
+                    ListEmptyComponent={
+                      <View style={styles.noContactPersonsContainer}>
+                        <Icon name="account-off" size={32} color="#CCC" />
+                        <Text style={styles.noContactPersonsText}>
+                          {t('noMembersFound')}
+                        </Text>
+                      </View>
+                    }
+                  />
+                </View>
+              )}
             </View>
 
             <View style={styles.halfWidth}>
               <Text style={styles.label}>{t('contactNumber')} *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="phone" size={16} color={waterBlueColors.primary} />
-                <SpeechToTextInput
-                  style={styles.input}
-                  inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
-                  placeholder={t('tenDigits')}
-                  value={contactNumber}
-                  onChangeText={(text) => setContactNumber(text.replace(/\D/g, '').slice(0, 10))}
-                  placeholderTextColor="#999"
-                  keyboardType="phone-pad"
-                  maxLength={10}
-                />
-              </View>
+              <SpeechToTextInput
+                style={styles.voiceInputWrapper}
+                inputStyle={styles.voiceInputField}
+                placeholder={t('tenDigits')}
+                value={contactNumber}
+                onChangeText={(text) => setContactNumber(text.replace(/\D/g, '').slice(0, 10))}
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+                maxLength={10}
+                fieldType="amount"
+              />
             </View>
           </View>
 
@@ -625,33 +592,27 @@ const CreateMeeting = () => {
           {meetingType === 'in-person' ? (
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{t('placeLabel')} *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="map-marker" size={16} color={waterBlueColors.primary} />
-                <SpeechToTextInput
-                  style={styles.input}
-                  inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
-                  placeholder={t('enterPlace')}
-                  value={place}
-                  onChangeText={setPlace}
-                  placeholderTextColor="#999"
-                />
-              </View>
+              <SpeechToTextInput
+                style={styles.voiceInputWrapper}
+                inputStyle={styles.voiceInputField}
+                placeholder={t('enterPlace')}
+                value={place}
+                onChangeText={setPlace}
+                placeholderTextColor="#999"
+              />
             </View>
           ) : (
             <View style={styles.inputGroup}>
               <Text style={styles.label}>{t('virtualLink')} *</Text>
-              <View style={styles.inputContainer}>
-                <Icon name="link" size={16} color={waterBlueColors.primary} />
-                <SpeechToTextInput
-                  style={styles.input}
-                  inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
-                  placeholder={t('enterLink')}
-                  value={virtualLink}
-                  onChangeText={setVirtualLink}
-                  placeholderTextColor="#999"
-                  autoCapitalize="none"
-                />
-              </View>
+              <SpeechToTextInput
+                style={styles.voiceInputWrapper}
+                inputStyle={styles.voiceInputField}
+                placeholder={t('enterLink')}
+                value={virtualLink}
+                onChangeText={setVirtualLink}
+                placeholderTextColor="#999"
+                autoCapitalize="none"
+              />
             </View>
           )}
 
@@ -843,17 +804,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#333',
   },
-  textAreaContainer: {
-    alignItems: 'flex-start',
-    paddingVertical: 6,
+  voiceInputWrapper: {
+    width: '100%',
   },
-  textAreaIcon: {
-    marginTop: 2,
+  voiceInputField: {
+    fontSize: 13,
+    color: '#333',
+    backgroundColor: '#FFF',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: waterBlueColors.secondary,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    paddingRight: 45,
+    minHeight: 45,
   },
-  textArea: {
-    height: 50,
+  textAreaInput: {
+    minHeight: 70,
     textAlignVertical: 'top',
-    paddingTop: 0,
+    paddingTop: 12,
   },
   row: {
     flexDirection: 'row',

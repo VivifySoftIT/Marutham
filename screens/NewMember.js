@@ -21,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
 import MemberIdService from '../service/MemberIdService';
 import { useLanguage } from '../service/LanguageContext';
+import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const NewMember = () => {
   const navigation = useNavigation();
@@ -442,53 +443,44 @@ const NewMember = () => {
         {/* Member Name */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{t('memberName')} *</Text>
-          <View style={styles.inputContainer}>
-            <Icon name="account" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder={t('enterMemberName')}
-              value={formData.memberName}
-              onChangeText={(text) => handleInputChange("memberName", text)}
-              placeholderTextColor="#999"
-              editable={!loading}
-            />
-          </View>
+          <SpeechToTextInput
+            value={formData.memberName}
+            onChangeText={(text) => handleInputChange("memberName", text)}
+            placeholder={t('enterMemberName')}
+            inputStyle={styles.voiceInput}
+            editable={!loading}
+            fieldType="text"
+          />
         </View>
 
         {/* Mobile Number */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{t('mobileNumber')} *</Text>
-          <View style={styles.inputContainer}>
-            <Icon name="phone" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder={t('tenDigitMobile')}
-              value={formData.mobileNum}
-              onChangeText={(text) => handleInputChange("mobileNum", text)}
-              keyboardType="phone-pad"
-              maxLength={10}
-              placeholderTextColor="#999"
-              editable={!loading}
-            />
-          </View>
+          <SpeechToTextInput
+            value={formData.mobileNum}
+            onChangeText={(text) => handleInputChange("mobileNum", text)}
+            placeholder={t('tenDigitMobile')}
+            inputStyle={styles.voiceInput}
+            keyboardType="phone-pad"
+            maxLength={10}
+            editable={!loading}
+            fieldType="text"
+          />
         </View>
 
         {/* Email */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{t('email')}</Text>
-          <View style={styles.inputContainer}>
-            <Icon name="email" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder={t('enterEmail')}
-              value={formData.email}
-              onChangeText={(text) => handleInputChange("email", text)}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor="#999"
-              editable={!loading}
-            />
-          </View>
+          <SpeechToTextInput
+            value={formData.email}
+            onChangeText={(text) => handleInputChange("email", text)}
+            placeholder={t('enterEmail')}
+            inputStyle={styles.voiceInput}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!loading}
+            fieldType="text"
+          />
         </View>
 
         {/* Gender Radio Buttons */}
@@ -592,35 +584,29 @@ const NewMember = () => {
         {/* Address */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{t('address')}</Text>
-          <View style={styles.inputContainer}>
-            <Icon name="map-marker" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder={t('enterAddress')}
-              value={formData.address}
-              onChangeText={(text) => handleInputChange("address", text)}
-              placeholderTextColor="#999"
-              editable={!loading}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
+          <SpeechToTextInput
+            value={formData.address}
+            onChangeText={(text) => handleInputChange("address", text)}
+            placeholder={t('enterAddress')}
+            inputStyle={styles.voiceInput}
+            editable={!loading}
+            multiline
+            numberOfLines={3}
+            fieldType="text"
+          />
         </View>
 
         {/* Business */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>{t('businessOccupation')}</Text>
-          <View style={styles.inputContainer}>
-            <Icon name="briefcase" size={18} color="#4A90E2" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder={t('enterBusiness')}
-              value={formData.business}
-              onChangeText={(text) => handleInputChange("business", text)}
-              placeholderTextColor="#999"
-              editable={!loading}
-            />
-          </View>
+          <SpeechToTextInput
+            value={formData.business}
+            onChangeText={(text) => handleInputChange("business", text)}
+            placeholder={t('enterBusiness')}
+            inputStyle={styles.voiceInput}
+            editable={!loading}
+            fieldType="text"
+          />
         </View>
 
         {/* Main Company Dropdown */}
@@ -730,6 +716,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     paddingVertical: 10,
+  },
+  voiceInput: {
+    fontSize: 14,
+    color: '#333',
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#87CEEB',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 45,
   },
 
   calendarIconInside: {
