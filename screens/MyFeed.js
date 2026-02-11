@@ -494,37 +494,45 @@ const MyFeed = ({ route }) => {
 
       Voice.onSpeechResults = (event) => {
         console.log('Voice results:', event.value);
+        console.log('Active voice field:', activeVoiceField);
+        
         if (event.value && event.value.length > 0) {
           const spokenText = event.value[0];
-          console.log('Spoken text for', fieldName, ':', spokenText);
+          console.log('Spoken text for', activeVoiceField, ':', spokenText);
           
-          switch (fieldName) {
+          // Use activeVoiceField state instead of fieldName parameter
+          switch (activeVoiceField) {
             case 'amount':
               // Extract numbers from spoken text for amount field only
               const amountMatch = spokenText.match(/\d+/g);
               if (amountMatch) {
                 const amount = amountMatch.join('');
+                console.log('Setting amount:', amount);
                 setPaymentForm(prev => ({ ...prev, amount: amount }));
               } else {
                 // If no numbers found, show error
-                Alert.alert(t('error'), t('pleaseSpeak NumbersOnly') || 'Please speak numbers only for amount');
+                Alert.alert(t('error'), t('pleaseSpeakNumbersOnly') || 'Please speak numbers only for amount');
               }
               break;
               
             case 'transactionId':
               // Keep transaction ID as spoken text (don't extract numbers)
-              // Remove spaces and convert to uppercase for consistency
+              // Remove spaces for consistency
               const cleanTransactionId = spokenText.trim().replace(/\s+/g, '');
+              console.log('Setting transaction ID:', cleanTransactionId);
               setPaymentForm(prev => ({ ...prev, transactionId: cleanTransactionId }));
               break;
               
             case 'paymentForMonth':
               // Keep month as spoken text
-              setPaymentForm(prev => ({ ...prev, paymentForMonth: spokenText.trim() }));
+              const cleanMonth = spokenText.trim();
+              console.log('Setting payment month:', cleanMonth);
+              setPaymentForm(prev => ({ ...prev, paymentForMonth: cleanMonth }));
               setShowMonthDropdown(true);
               break;
               
             default:
+              console.warn('Unknown voice field:', activeVoiceField);
               break;
           }
         }

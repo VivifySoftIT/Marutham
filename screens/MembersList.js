@@ -1,22 +1,28 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  TextInput,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
   FlatList,
   SafeAreaView,
   StatusBar,
+  PermissionsAndroid,
+  Platform,
+  Animated,
+  Keyboard,
+  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Voice from '@react-native-voice/voice';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
-import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const MemberList = () => {
   const navigation = useNavigation();
@@ -26,28 +32,93 @@ const MemberList = () => {
   const [members, setMembers] = useState([]);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [stats, setStats] = useState({ total: 0, active: 0, pending: 0, unpaid: 0 });
-  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
-  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  
+  // Voice search states
+  const [isListening, setIsListening] = useState(false);
+  const [voiceResults, setVoiceResults] = useState([]);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [partialResult, setPartialResult] = useState('');
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Load members from API
   useEffect(() => {
     loadMembers();
+    initVoice();
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+    };
   }, []);
+
+  const initVoice = async () => {
+    Voice.onSpeechStart = () => {
+      console.log('Voice: Speech started');
+      setIsListening(true);
+      startPulseAnimation();
+    };
+    
+    Voice.onSpeechEnd = () => {
+      console.log('Voice: Speech ended');
+      setIsListening(false);
+      stopPulseAnimation();
+    };
+    
+    Voice.onSpeechResults = (event) => {
+      console.log('Voice: Results', event.value);
+      if (event.value && event.value.length > 0) {
+        const result = event.value[0];
+        setSearchQuery(result);
+        handleVoiceSearch(result);
+        setVoiceResults(event.value);
+      }
+      setShowVoiceModal(false);
+    };
+    
+    Voice.onSpeechPartialResults = (event) => {
+      console.log('Voice: Partial', event.value);
+      if (event.value && event.value.length > 0) {
+        setPartialResult(event.value[0]);
+      }
+    };
+    
+    Voice.onSpeechError = (event) => {
+      console.log('Voice: Error', event);
+      setIsListening(false);
+      stopPulseAnimation();
+      Alert.alert(t('voiceError'), event.error?.message || t('voiceRecognitionFailed'));
+    };
+  };
+
+  const startPulseAnimation = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
+  const stopPulseAnimation = () => {
+    pulseAnim.stopAnimation();
+    pulseAnim.setValue(1);
+  };
 
   const loadMembers = async () => {
     setLoading(true);
     try {
-      // Call the GetMembersWithPayment endpoint
       const response = await fetch('https://www.vivifysoft.in/AlaigalBE/api/Inventory/members-with-payment');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
       
-      console.log('MembersList - API Response:', data);
-      
-      // Map the API response to match the component's expected format
-      // Handle both uppercase and lowercase keys from API
       const membersArray = data.Members || data.members || [];
       const mappedMembers = membersArray.map(member => ({
         id: member.Id || member.id,
@@ -63,20 +134,10 @@ const MemberList = () => {
         address: 'N/A',
       }));
       
-      console.log('MembersList - Mapped Members:', mappedMembers);
-      
       setMembers(mappedMembers);
       setFilteredMembers(mappedMembers);
       
-      // Update stats from API response (handle both cases)
       setStats({
-        total: data.TotalMembers || data.totalMembers,
-        active: data.ActiveMembers || data.activeMembers,
-        pending: data.PendingPayments || data.pendingPayments,
-        unpaid: data.UnpaidPayments || data.unpaidPayments,
-      });
-      
-      console.log('MembersList - Stats Updated:', {
         total: data.TotalMembers || data.totalMembers,
         active: data.ActiveMembers || data.activeMembers,
         pending: data.PendingPayments || data.pendingPayments,
@@ -90,78 +151,137 @@ const MemberList = () => {
     }
   };
 
-  // Handle search with voice support and dropdown
-  const handleSearch = async (query = searchQuery) => {
-    if (!query.trim()) {
+  // Handle search as user types (real-time filtering)
+  useEffect(() => {
+    if (!searchQuery.trim()) {
       setFilteredMembers(members);
       return;
     }
 
-    setLoading(true);
-    try {
-      const results = await ApiService.searchMembers(query);
-      setFilteredMembers(results);
-      
-      if (results.length === 0) {
-        Alert.alert(
-          t('noResults'),
-          t('noMembersFoundMessage'),
-          [{ text: t('ok'), onPress: () => setSearchQuery('') }]
-        );
-      }
-    } catch (error) {
-      Alert.alert(t('error'), t('searchFailed') + ': ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const timer = setTimeout(() => {
+      performLocalSearch();
+    }, 300);
 
-  // Handle search input change with dropdown
-  const handleSearchInputChange = (text) => {
-    setSearchQuery(text);
+    return () => clearTimeout(timer);
+  }, [searchQuery, members]);
+
+  // Local search function
+  const performLocalSearch = () => {
+    const query = searchQuery.toLowerCase().trim();
     
-    if (text.trim() === '') {
-      // Show all members when search is empty
-      setSearchSuggestions(members);
-    } else {
-      // Filter members based on search query
-      const filtered = members.filter(member =>
-        member.name.toLowerCase().includes(text.toLowerCase()) ||
-        member.memberId?.toLowerCase().includes(text.toLowerCase()) ||
-        member.phone?.includes(text) ||
-        member.email?.toLowerCase().includes(text.toLowerCase())
+    if (!query) {
+      setFilteredMembers(members);
+      return;
+    }
+
+    const filtered = members.filter(member => {
+      return (
+        member.name?.toLowerCase().includes(query) ||
+        member.memberId?.toLowerCase().includes(query) ||
+        member.phone?.includes(query) ||
+        member.email?.toLowerCase().includes(query) ||
+        member.feesStatus?.toLowerCase().includes(query) ||
+        member.status?.toLowerCase().includes(query)
       );
-      setSearchSuggestions(filtered);
+    });
+
+    setFilteredMembers(filtered);
+  };
+
+  // Handle search button press (for API search if needed)
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setFilteredMembers(members);
+      return;
+    }
+
+    // First try local search
+    performLocalSearch();
+    
+    // If no results locally, try API search (optional)
+    if (filteredMembers.length === 0) {
+      try {
+        setLoading(true);
+        // Call your API search endpoint if available
+        const results = await ApiService.searchMembers(searchQuery);
+        if (results && results.length > 0) {
+          setFilteredMembers(results);
+        } else {
+          Alert.alert(
+            t('noResults'),
+            t('noMembersFoundMessage'),
+            [{ text: t('ok'), onPress: () => setSearchQuery('') }]
+          );
+        }
+      } catch (error) {
+        console.error('API search failed:', error);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  // Handle search focus - show all members
-  const handleSearchFocus = () => {
-    setSearchSuggestions(members);
-    setShowSearchDropdown(true);
-  };
-
-  // Handle selecting a member from dropdown
-  const handleSelectMember = (member) => {
-    setSearchQuery(member.name);
-    setShowSearchDropdown(false);
-    setFilteredMembers([member]);
-  };
-
-  // Handle voice search results
-  const handleVoiceSearch = (spokenText) => {
-    setSearchQuery(spokenText);
-    handleSearchInputChange(spokenText);
+  // Handle voice search
+  const handleVoiceSearch = (voiceText) => {
+    setSearchQuery(voiceText);
+    // Auto-search after voice input
+    setTimeout(() => {
+      performLocalSearch();
+    }, 500);
   };
 
   // Clear search
   const handleClearSearch = () => {
     setSearchQuery('');
     setFilteredMembers(members);
-    setShowSearchDropdown(false);
-    setSearchSuggestions([]);
+    Keyboard.dismiss();
   };
 
+  // Start voice recognition
+  const startVoiceRecognition = async () => {
+    try {
+      // Request microphone permission on Android
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+          {
+            title: t('microphonePermissionTitle'),
+            message: t('microphonePermissionMessage'),
+            buttonNeutral: t('askMeLater'),
+            buttonNegative: t('cancel'),
+            buttonPositive: t('ok'),
+          }
+        );
+        
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert(t('permissionDenied'), t('microphonePermissionDenied'));
+          return;
+        }
+      }
+
+      setVoiceResults([]);
+      setPartialResult('');
+      setShowVoiceModal(true);
+      
+      const result = await Voice.start('en-US');
+      console.log('Voice started:', result);
+    } catch (error) {
+      console.error('Voice start error:', error);
+      Alert.alert(t('error'), t('voiceStartFailed'));
+    }
+  };
+
+  // Stop voice recognition
+  const stopVoiceRecognition = async () => {
+    try {
+      await Voice.stop();
+      setIsListening(false);
+      stopPulseAnimation();
+      setShowVoiceModal(false);
+    } catch (error) {
+      console.error('Voice stop error:', error);
+    }
+  };
 
   // Render member card
   const renderMemberCard = ({ item }) => (
@@ -257,14 +377,6 @@ const MemberList = () => {
           <Icon name="pencil" size={16} color="#FF9800" />
           <Text style={[styles.actionButtonText, { color: '#FF9800' }]}>{t('edit')}</Text>
         </TouchableOpacity>
-        
-        {/* <TouchableOpacity 
-          style={[styles.actionButton, styles.paymentButton]}
-          onPress={() => navigation.navigate('PaymentDetails', { memberId: item.id })}
-        >
-          <Icon name="cash-plus" size={16} color="#4CAF50" />
-          <Text style={[styles.actionButtonText, { color: '#4CAF50' }]}>{t('payment')}</Text>
-        </TouchableOpacity> */}
       </View>
     </View>
   );
@@ -288,78 +400,34 @@ const MemberList = () => {
         </View>
       </LinearGradient>
 
-      {/* Search Section with Voice and Dropdown */}
+      {/* Search Section with Voice */}
       <View style={styles.searchContainer}>
-        <View style={styles.searchInputWrapper}>
-          <View style={styles.searchInputContainer}>
-            <Icon name="magnify" size={20} color="#999" style={styles.searchIcon} />
-            <SpeechToTextInput
-              style={styles.voiceSearchWrapper}
-              inputStyle={styles.searchInput}
-              placeholder={t('searchByNameIdPhoneEmail')}
-              value={searchQuery}
-              onChangeText={handleSearchInputChange}
-              onFocus={handleSearchFocus}
-              onSubmitEditing={() => handleSearch()}
-              onVoiceResults={handleVoiceSearch}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={handleClearSearch} style={styles.clearSearchButton}>
-                <Icon name="close-circle" size={20} color="#999" />
-              </TouchableOpacity>
-            )}
-          </View>
-          
-          {/* Search Dropdown */}
-          {showSearchDropdown && searchSuggestions.length > 0 && (
-            <View style={styles.searchDropdown}>
-              <ScrollView 
-                style={styles.searchDropdownList}
-                keyboardShouldPersistTaps="handled"
-                nestedScrollEnabled={true}
-              >
-                {searchSuggestions.slice(0, 10).map((member) => (
-                  <TouchableOpacity
-                    key={member.id}
-                    style={styles.searchDropdownItem}
-                    onPress={() => handleSelectMember(member)}
-                  >
-                    <View style={styles.searchDropdownItemContent}>
-                      <LinearGradient 
-                        colors={['#4A90E2', '#357ABD']} 
-                        style={styles.searchDropdownAvatar}
-                      >
-                        <Text style={styles.searchDropdownAvatarText}>
-                          {member.name.charAt(0).toUpperCase()}
-                        </Text>
-                      </LinearGradient>
-                      <View style={styles.searchDropdownInfo}>
-                        <Text style={styles.searchDropdownName}>{member.name}</Text>
-                        <Text style={styles.searchDropdownDetails}>
-                          {member.phone} • ID: {member.memberId}
-                        </Text>
-                      </View>
-                    </View>
-                    <Icon name="chevron-right" size={16} color="#4A90E2" />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              <TouchableOpacity 
-                style={styles.closeDropdownButton}
-                onPress={() => setShowSearchDropdown(false)}
-              >
-                <Text style={styles.closeDropdownText}>{t('close')}</Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.searchInputContainer}>
+          <Icon name="magnify" size={20} color="#4A90E2" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('searchByNameIdPhoneEmail')}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 ? (
+            <TouchableOpacity onPress={handleClearSearch}>
+              <Icon name="close-circle" size={20} color="#4A90E2" />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={startVoiceRecognition}>
+              <Icon name="microphone" size={20} color="#212c62" />
+            </TouchableOpacity>
           )}
         </View>
-        
-        <TouchableOpacity style={styles.searchButton} onPress={() => handleSearch()}>
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
           <Icon name="magnify" size={22} color="#FFF" />
         </TouchableOpacity>
       </View>
 
-      {/* Stats Cards - Height reduced */}
+      {/* Stats Cards */}
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false} 
@@ -391,6 +459,57 @@ const MemberList = () => {
         </View>
       </ScrollView>
 
+      {/* Voice Recognition Modal */}
+      <Modal
+        visible={showVoiceModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={stopVoiceRecognition}
+      >
+        <View style={styles.voiceModalOverlay}>
+          <View style={styles.voiceModalContent}>
+            <Animated.View style={[
+              styles.voiceCircle,
+              { transform: [{ scale: pulseAnim }] }
+            ]}>
+              <Icon 
+                name={isListening ? "microphone" : "microphone-off"} 
+                size={60} 
+                color="#FFF" 
+              />
+            </Animated.View>
+            
+            <Text style={styles.voiceModalTitle}>
+              {isListening ? t('speakNow') : t('listening')}
+            </Text>
+            
+            {partialResult ? (
+              <Text style={styles.partialResultText}>"{partialResult}"</Text>
+            ) : (
+              <Text style={styles.voiceModalSubtitle}>
+                {t('speakMemberNameOrID')}
+              </Text>
+            )}
+            
+            <View style={styles.voiceResultsContainer}>
+              {voiceResults.map((result, index) => (
+                <Text key={index} style={styles.voiceResultItem}>
+                  {result}
+                </Text>
+              ))}
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.voiceButton, styles.stopVoiceButton]}
+              onPress={stopVoiceRecognition}
+            >
+              <Icon name="stop" size={20} color="#FFF" />
+              <Text style={styles.voiceButtonText}>{t('stop')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Members List */}
       <View style={styles.membersListContainer}>
         {loading ? (
@@ -402,31 +521,37 @@ const MemberList = () => {
           <>
             <View style={styles.listHeader}>
               <Text style={styles.listTitle}>
-                {filteredMembers.length} {t('membersFound')}
+                {searchQuery ? `${filteredMembers.length} ${t('matchesFound')}` : `${filteredMembers.length} ${t('totalMembers')}`}
               </Text>
-              <TouchableOpacity 
-                style={styles.filterButton}
-                onPress={() => Alert.alert(t('filter'), t('filterComingSoon'))}
-              >
-                <Icon name="filter-variant" size={20} color="#212c62" />
-                <Text style={styles.filterButtonText}>{t('filter')}</Text>
-              </TouchableOpacity>
+              {searchQuery && (
+                <TouchableOpacity 
+                  style={styles.clearSearchButton}
+                  onPress={handleClearSearch}
+                >
+                  <Icon name="close" size={16} color="#666" />
+                  <Text style={styles.clearSearchText}>{t('clear')}</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             {filteredMembers.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Icon name="account-off" size={60} color="#CCC" />
-                <Text style={styles.emptyText}>{t('noMembersFound')}</Text>
+                <Text style={styles.emptyText}>
+                  {searchQuery ? t('noMatchingMembers') : t('noMembersFound')}
+                </Text>
                 <Text style={styles.emptySubtext}>
                   {searchQuery ? t('tryDifferentSearchTerm') : t('addNewMembersToStart')}
                 </Text>
-                <TouchableOpacity 
-                  style={styles.addMemberButton}
-                  onPress={() => navigation.navigate('NewMember')}
-                >
-                  <Icon name="account-plus" size={20} color="#FFF" />
-                  <Text style={styles.addMemberButtonText}>{t('addNewMember')}</Text>
-                </TouchableOpacity>
+                {searchQuery && (
+                  <TouchableOpacity 
+                    style={styles.voiceSearchButton}
+                    onPress={startVoiceRecognition}
+                  >
+                    <Icon name="microphone" size={18} color="#FFF" />
+                    <Text style={styles.voiceSearchButtonText}>{t('tryVoiceSearch')}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             ) : (
               <FlatList
@@ -449,7 +574,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
-  // Header - MembersDirectory Style
+  // Header
   header: { 
     flexDirection: 'row', 
     alignItems: 'center', 
@@ -468,7 +593,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  // Search
+  // Search Section
   searchContainer: {
     flexDirection: 'row',
     padding: 12,
@@ -490,28 +615,15 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderWidth: 1,
     borderColor: '#E9ECEF',
-    position: 'relative',
   },
   searchIcon: {
     marginRight: 8,
-    
-  },
-  voiceSearchWrapper: {
-    flex: 1,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 10,
-    paddingRight: 45,
     fontSize: 15,
     color: '#333',
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
-  clearSearchButton: {
-    position: 'absolute',
-    right: 45,
-    padding: 4,
   },
   searchButton: {
     backgroundColor: '#212c62',
@@ -521,86 +633,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // Search Dropdown
-  searchInputWrapper: {
-    flex: 1,
-    position: 'relative',
-    zIndex: 1000,
-  },
-  searchDropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 10,
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    marginTop: 4,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    maxHeight: 350,
-    zIndex: 1001,
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-  },
-  searchDropdownList: {
-    maxHeight: 300,
-  },
-  searchDropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  searchDropdownItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  searchDropdownAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  searchDropdownAvatarText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  searchDropdownInfo: {
-    flex: 1,
-  },
-  searchDropdownName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#212c62',
-    marginBottom: 2,
-  },
-  searchDropdownDetails: {
-    fontSize: 11,
-    color: '#666',
-  },
-  closeDropdownButton: {
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-    backgroundColor: '#F8F9FA',
-  },
-  closeDropdownText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4A90E2',
-  },
-  // Stats - Height reduced
+  // Stats
   statsContainer: {
     paddingHorizontal: 12,
     marginTop: 8,
@@ -685,24 +718,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#212c62',
   },
-  filterButton: {
+  clearSearchButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F0F4FF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    gap: 4,
   },
-  filterButtonText: {
-    fontSize: 13,
-    color: '#212c62',
+  clearSearchText: {
+    fontSize: 12,
+    color: '#666',
     fontWeight: '500',
-    marginLeft: 5,
   },
   listContent: {
     paddingBottom: 10,
   },
-  // Member Card - Improved styling
+  // Member Card
   memberCard: {
     backgroundColor: '#FFF',
     borderRadius: 12,
@@ -849,11 +882,81 @@ const styles = StyleSheet.create({
   editButton: {
     backgroundColor: '#FFF3E0',
   },
-  paymentButton: {
-    backgroundColor: '#E8F5E9',
+  // Voice Modal
+  voiceModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  actionButtonText: {
-    fontSize: 12,
+  voiceModalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 25,
+    width: '85%',
+    alignItems: 'center',
+    elevation: 10,
+  },
+  voiceCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#4A90E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    elevation: 5,
+  },
+  voiceModalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#212c62',
+    marginBottom: 10,
+  },
+  voiceModalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  partialResultText: {
+    fontSize: 16,
+    color: '#4A90E2',
+    fontWeight: '600',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  voiceResultsContainer: {
+    maxHeight: 100,
+    width: '100%',
+    marginBottom: 15,
+  },
+  voiceResultItem: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+    marginVertical: 2,
+    backgroundColor: '#F5F5F5',
+    padding: 5,
+    borderRadius: 5,
+  },
+  voiceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 10,
+    gap: 8,
+    minWidth: 120,
+  },
+  stopVoiceButton: {
+    backgroundColor: '#FF5252',
+  },
+  voiceButtonText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: '600',
   },
   // Empty State
@@ -879,7 +982,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
-  addMemberButton: {
+  voiceSearchButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#212c62',
@@ -887,12 +990,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 6,
     marginTop: 15,
+    gap: 8,
   },
-  addMemberButtonText: {
+  voiceSearchButtonText: {
     color: '#FFF',
     fontSize: 14,
     fontWeight: '600',
-    marginLeft: 6,
   },
 });
 

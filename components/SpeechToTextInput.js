@@ -34,7 +34,6 @@ const SpeechToTextInput = ({
   editable = true,
   inputStyle,
   fieldType = 'text',
-  onVoiceResults,
   ...textInputProps
 }) => {
   const [isListening, setIsListening] = useState(false);
@@ -62,7 +61,7 @@ const SpeechToTextInput = ({
     };
 
     let result = text.toLowerCase();
-
+    
     // Replace number words with digits
     Object.keys(numberWords).forEach(word => {
       const regex = new RegExp(`\\b${word}\\b`, 'gi');
@@ -74,9 +73,9 @@ const SpeechToTextInput = ({
     return numberMatch ? numberMatch[0] : text;
   };
 
-  // Enhanced voice input for both web and mobile with multi-language support
+  // Enhanced voice input for both web and mobile
   const startListening = async () => {
-    // For Web Platform - Enhanced Google Web Speech API with multi-language
+    // For Web Platform - Enhanced Google Web Speech API
     if (Platform.OS === 'web') {
       // Check for Web Speech API support
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
@@ -90,105 +89,62 @@ const SpeechToTextInput = ({
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
-
-      // Enhanced configuration for multi-language support (Tamil & English)
+      
+      // Enhanced configuration for better accuracy
       recognition.continuous = false;
-      recognition.interimResults = true; // Enable interim results for better UX
-      recognition.lang = 'ta-IN'; // Start with Tamil, will auto-detect English too
-      recognition.maxAlternatives = 5; // Get more alternatives for better language detection
-
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN'; // Indian English for better recognition
+      recognition.maxAlternatives = 1;
+      
       // Set listening state
       setIsListening(true);
 
       recognition.onstart = () => {
-        console.log('Voice recognition started - Tamil & English supported');
+        console.log('Voice recognition started');
       };
 
       recognition.onresult = (event) => {
         const results = event.results;
         if (results.length > 0) {
-          // Get the final result
-          const finalResult = results[results.length - 1];
+          const spokenText = results[0][0].transcript.trim();
+          console.log('Voice input received:', spokenText);
           
-          if (finalResult.isFinal) {
-            // Try to get the best result from alternatives
-            let spokenText = finalResult[0].transcript.trim();
-            let bestConfidence = finalResult[0].confidence;
-            
-            // Check all alternatives and pick the best one
-            if (finalResult.length > 1) {
-              const alternatives = [];
-              for (let i = 0; i < finalResult.length; i++) {
-                alternatives.push({
-                  text: finalResult[i].transcript.trim(),
-                  confidence: finalResult[i].confidence
-                });
-              }
-              
-              // Sort by confidence and pick the best
-              alternatives.sort((a, b) => b.confidence - a.confidence);
-              spokenText = alternatives[0].text;
-              bestConfidence = alternatives[0].confidence;
-              
-              console.log('Voice alternatives:', alternatives);
-              console.log('Best match:', spokenText, 'Confidence:', bestConfidence);
-            }
-            
-            console.log('Voice input received:', spokenText);
-
-            // Process the text based on field type
-            let processedText = spokenText;
-
-            // Special processing for amount field
-            if (fieldType === 'amount') {
-              processedText = convertSpokenNumbersToDigits(spokenText);
-            }
-
-            // Special processing for rating field
-            if (fieldType === 'rating') {
-              const ratingMatch = spokenText.match(/(\d+)/);
-              if (ratingMatch) {
-                const rating = parseInt(ratingMatch[1]);
-                if (rating >= 1 && rating <= 5) {
-                  processedText = rating.toString();
-                }
-              }
-            }
-
-            // Append or replace text based on multiline
-            if (multiline && value) {
-              const newValue = `${value} ${processedText}`;
-              onChangeText(newValue);
-              if (onVoiceResults) onVoiceResults(processedText, newValue);
-            } else {
-              onChangeText(processedText);
-              if (onVoiceResults) onVoiceResults(processedText);
-            }
-
-            setIsListening(false);
+          // Process the text based on field type
+          let processedText = spokenText;
+          
+          // Special processing for amount field
+          if (fieldType === 'amount') {
+            processedText = convertSpokenNumbersToDigits(spokenText);
           }
+          
+          // Special processing for rating field
+          if (fieldType === 'rating') {
+            const ratingMatch = spokenText.match(/(\d+)/);
+            if (ratingMatch) {
+              const rating = parseInt(ratingMatch[1]);
+              if (rating >= 1 && rating <= 5) {
+                processedText = rating.toString();
+              }
+            }
+          }
+          
+          // Append or replace text based on multiline
+          if (multiline && value) {
+            onChangeText(`${value} ${processedText}`);
+          } else {
+            onChangeText(processedText);
+          }
+          
+          setIsListening(false);
         }
       };
 
       recognition.onerror = (event) => {
         console.error('Voice recognition error:', event.error);
-        
-        // If Tamil not supported, try with English
-        if (event.error === 'language-not-supported') {
-          console.log('Tamil not supported, retrying with English');
-          recognition.lang = 'en-IN';
-          try {
-            recognition.start();
-            return;
-          } catch (e) {
-            console.error('Retry failed:', e);
-          }
-        }
-        
         setIsListening(false);
-
+        
         let errorMessage = 'Voice recognition error. Please try again.';
-
+        
         switch (event.error) {
           case 'not-allowed':
             errorMessage = 'Microphone access denied. Please allow microphone access in your browser settings.';
@@ -208,7 +164,7 @@ const SpeechToTextInput = ({
           default:
             errorMessage = `Voice recognition error: ${event.error}. Please try again.`;
         }
-
+        
         Alert.alert('Voice Input Error', errorMessage);
       };
 
@@ -224,8 +180,8 @@ const SpeechToTextInput = ({
         setIsListening(false);
         Alert.alert('Error', 'Could not start voice recognition. Please try again.');
       }
-    }
-    // For Mobile Platform - React Native Voice with multi-language
+    } 
+    // For Mobile Platform - React Native Voice
     else {
       try {
         await Voice.destroy();
@@ -234,7 +190,7 @@ const SpeechToTextInput = ({
         setIsListening(true);
 
         Voice.onSpeechStart = () => {
-          console.log('Mobile voice recognition started - Tamil & English supported');
+          console.log('Mobile voice recognition started');
         };
 
         Voice.onSpeechEnd = () => {
@@ -245,11 +201,7 @@ const SpeechToTextInput = ({
         Voice.onSpeechError = (error) => {
           console.error('Mobile voice recognition error:', error);
           setIsListening(false);
-          
-          // Don't show error for common issues, just log them
-          if (error.error?.code !== 'no-speech') {
-            Alert.alert('Voice Input Error', 'Voice recognition failed. Please try again.');
-          }
+          Alert.alert('Voice Input Error', 'Voice recognition failed. Please try again.');
         };
 
         Voice.onSpeechResults = (event) => {
@@ -257,15 +209,15 @@ const SpeechToTextInput = ({
           if (event.value && event.value.length > 0) {
             const spokenText = event.value[0].trim();
             console.log('Mobile voice input received:', spokenText);
-
+            
             // Process the text based on field type
             let processedText = spokenText;
-
+            
             // Special processing for amount field
             if (fieldType === 'amount') {
               processedText = convertSpokenNumbersToDigits(spokenText);
             }
-
+            
             // Special processing for rating field
             if (fieldType === 'rating') {
               const ratingMatch = spokenText.match(/(\d+)/);
@@ -276,21 +228,17 @@ const SpeechToTextInput = ({
                 }
               }
             }
-
+            
             // Append or replace text based on multiline
             if (multiline && value) {
-              const newValue = `${value} ${processedText}`;
-              onChangeText(newValue);
-              if (onVoiceResults) onVoiceResults(processedText, newValue);
+              onChangeText(`${value} ${processedText}`);
             } else {
               onChangeText(processedText);
-              if (onVoiceResults) onVoiceResults(processedText);
             }
           }
         };
 
-        // Start with Tamil, the API will auto-detect English too
-        await Voice.start('ta-IN');
+        await Voice.start('en-IN');
       } catch (error) {
         console.error('Error starting mobile voice recognition:', error);
         setIsListening(false);
