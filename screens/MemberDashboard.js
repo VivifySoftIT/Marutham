@@ -382,7 +382,7 @@ const MemberDashboard = () => {
     }
   };
 
-  // Handle payment response
+  // Handle payment response — navigate directly to PaymentDetails without memberId lookup
   const handlePaymentResponse = (notification) => {
     Alert.alert(
       t('paymentNotification'),
@@ -393,7 +393,14 @@ const MemberDashboard = () => {
           text: t('viewDetails'),
           onPress: () => {
             markNotificationAsRead(notification.id);
-            // Navigate to payments or show details
+            try {
+              navigation.navigate('PaymentDetails', { notification, paymentId: notification.paymentId || null });
+            } catch (err) {
+              console.error('Error navigating to PaymentDetails:', err);
+              navigation.navigate('PaymentDetails', { notification, paymentId: notification.paymentId || null });
+            }
+            // Close notifications modal
+            setShowNotifications(false);
           },
         },
       ]
@@ -790,25 +797,7 @@ const MemberDashboard = () => {
           recipientMemberId: null,
         });
 
-        // Add test payment notification (doesn't need specific member ID)
-        newNotifications.push({
-          id: `test-payment-${Date.now()}`,
-          type: 'message',
-          messageType: 'Payment',
-          title: `💳 Payment Notification`,
-          message: `Payment of ₹500 received successfully.`,
-          time: 'Today',
-          icon: 'credit-card-check',
-          color: '#FFA726',
-          backgroundColor: '#FFF3E0',
-          isRead: false,
-          canRespond: true,
-          attachmentUrl: null,
-          eventDate: new Date(),
-          createdBy: null,
-          recipientName: null,
-          recipientMemberId: null,
-        });
+        // (Removed test payment notification)
       }
 
       // ✅ Only process message notifications (no reminders!)
