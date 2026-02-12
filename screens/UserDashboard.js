@@ -536,16 +536,25 @@ const loadDashboardReminders = async () => {
 
     // Add birthday wish received as a notification with different color
     if (birthdayWishReceived) {
+      // Validate and format the birthday wish time
+      let wishTime = '';
+      if (birthdayWishReceived.sentDate) {
+        const wishDate = new Date(birthdayWishReceived.sentDate);
+        if (!isNaN(wishDate.getTime())) {
+          wishTime = wishDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+      }
+
       newNotifications.push({
         id: `birthday-wish-${birthdayWishReceived.id || Date.now()}`,
         type: 'birthday-wish-received',
         messageType: 'BirthdayWishReceived',
         title: `🎉 ${t('birthdayWishReceived')}`,
         message: `${birthdayWishReceived.senderName || t('member')} ${t('sentYouBirthdayWishes')}`,
-        time: new Date(birthdayWishReceived.sentDate).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
+        time: wishTime,
         icon: 'cake-variant',
         color: '#E91E63', // Pink color for received wishes
         backgroundColor: '#FCE4EC', // Light pink background
@@ -586,21 +595,34 @@ const loadDashboardReminders = async () => {
           { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
 
         let notificationMessage = msg.content || t('newNotificationReceived');
-        let displayTime = t('recent');
+        let displayTime = '';
+        
+        // Helper function to validate and format date
+        const formatDateSafely = (dateString) => {
+          if (!dateString) return null;
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return null; // Invalid date
+          return date;
+        };
         
         if ((msg.messageType === 'Event' || msg.messageType === 'Meeting') && msg.date) {
-          const eventDate = new Date(msg.date);
-          const formattedDate = eventDate.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-          });
-          notificationMessage = `${notificationMessage}\n📅 ${formattedDate}`;
-          // For meeting notifications, display the meeting date instead of created date
-          displayTime = formattedDate;
+          const eventDate = formatDateSafely(msg.date);
+          if (eventDate) {
+            const formattedDate = eventDate.toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric'
+            });
+            notificationMessage = `${notificationMessage}\n📅 ${formattedDate}`;
+            // For meeting notifications, display the meeting date instead of created date
+            displayTime = formattedDate;
+          }
         } else if (msg.createdDate) {
           // For non-meeting notifications, display created date
-          displayTime = new Date(msg.createdDate).toLocaleDateString();
+          const createdDate = formatDateSafely(msg.createdDate);
+          if (createdDate) {
+            displayTime = createdDate.toLocaleDateString();
+          }
         }
 
         // Extract recipient information from the message content or other fields
@@ -906,6 +928,14 @@ const handleMeetingResponse = async (notification) => {
       return;
     }
 
+    // Convert memberId to integer
+    const memberIdInt = parseInt(memberId, 10);
+    
+    if (isNaN(memberIdInt)) {
+      Alert.alert(t('error'), 'Invalid member ID format');
+      return;
+    }
+
     Alert.alert(
       t('meetingResponse'),
       t('respondToMeetingNotification'),
@@ -917,17 +947,22 @@ const handleMeetingResponse = async (notification) => {
             try {
               setLoading(true);
               
-              console.log('Sending attendance response for member:', memberId, 'status: 1 (Attend)');
+              console.log('Sending attendance response for member:', memberIdInt, 'status: 1 (Attend)');
               
-              // Call the birthday wish API with status=1 for "Attend"
+              // Call the meeting attendance API with status=1 for "Attend"
+              const attendRequestData = {
+                memberId: memberIdInt,
+                status: 1
+              };
               const response = await fetch(
-                `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberId}?status=1`,
+                `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberIdInt}`,
                 {
-                  method: 'GET',
+                  method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                  }
+                  },
+                  body: JSON.stringify(attendRequestData)
                 }
               );
 
@@ -963,8 +998,19 @@ const handleMeetingResponse = async (notification) => {
                 markNotificationAsRead(notification.id);
               } else {
                 const errorText = await response.text();
-                console.error('Attendance API error:', errorText);
-                Alert.alert('Success', 'Your attendance intention has been noted!');
+                console.error('Attendance API error status:', response.status);
+                console.error('Attendance API error response:', errorText);
+                
+                // Try to parse error details
+                let errorMessage = 'Failed to record attendance';
+                try {
+                  const errorJson = JSON.parse(errorText);
+                  errorMessage = errorJson.message || errorJson.error || errorMessage;
+                } catch (e) {
+                  errorMessage = errorText || errorMessage;
+                }
+                
+                Alert.alert('Attendance Status', `Recording attendance: ${errorMessage}\n\nYour response has been noted.`);
                 markNotificationAsRead(notification.id);
               }
             } catch (error) {
@@ -983,17 +1029,22 @@ const handleMeetingResponse = async (notification) => {
             try {
               setLoading(true);
               
-              console.log('Sending not-attend response for member:', memberId, 'status: 2 (Not Attend)');
+              console.log('Sending not-attend response for member:', memberIdInt, 'status: 2 (Not Attend)');
               
-              // Call the birthday wish API with status=2 for "Not Attend"
+              // Call the meeting attendance API with status=2 for "Not Attend"
+              const notAttendRequestData = {
+                memberId: memberIdInt,
+                status: 2
+              };
               const response = await fetch(
-                `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberId}?status=2`,
+                `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberIdInt}`,
                 {
-                  method: 'GET',
+                  method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                  }
+                  },
+                  body: JSON.stringify(notAttendRequestData)
                 }
               );
 
@@ -1025,8 +1076,19 @@ const handleMeetingResponse = async (notification) => {
                 markNotificationAsRead(notification.id);
               } else {
                 const errorText = await response.text();
-                console.error('Not-attend API error:', errorText);
-                Alert.alert('Success', 'Your response has been recorded!');
+                console.error('Not-attend API error status:', response.status);
+                console.error('Not-attend API error response:', errorText);
+                
+                // Try to parse error details
+                let errorMessage = 'Failed to record response';
+                try {
+                  const errorJson = JSON.parse(errorText);
+                  errorMessage = errorJson.message || errorJson.error || errorMessage;
+                } catch (e) {
+                  errorMessage = errorText || errorMessage;
+                }
+                
+                Alert.alert('Response Status', `Recording response: ${errorMessage}\n\nYour response has been noted.`);
                 markNotificationAsRead(notification.id);
               }
             } catch (error) {
@@ -1439,9 +1501,11 @@ const handleMeetingResponse = async (notification) => {
                     ]} numberOfLines={2}>
                       {notification.message}
                     </Text>
-                    <Text style={styles.notificationSwipeTime}>
-                      {notification.time}
-                    </Text>
+                    {notification.time && (
+                      <Text style={styles.notificationSwipeTime}>
+                        {notification.time}
+                      </Text>
+                    )}
                     {(notification.canRespond && (notification.messageType === 'Birthday' || notification.messageType === 'NewMember' || notification.messageType === 'Meeting' || notification.messageType === 'Payment')) && (
                       <View style={styles.respondBadge}>
                         <Text style={styles.respondBadgeText}>
@@ -1877,9 +1941,11 @@ const handleMeetingResponse = async (notification) => {
                       <Text style={styles.notificationItemMessage}>
                         {notification.message}
                       </Text>
-                      <Text style={styles.notificationItemTime}>
-                        {notification.time}
-                      </Text>
+                      {notification.time && (
+                        <Text style={styles.notificationItemTime}>
+                          {notification.time}
+                        </Text>
+                      )}
                       {notification.canRespond && (
                         <View style={styles.respondButton}>
                           <Icon name="reply" size={14} color={waterBlueColors.primary} />
