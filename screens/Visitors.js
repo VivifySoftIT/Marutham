@@ -569,7 +569,7 @@ const testMinimalSubmission = async () => {
               <View style={styles.memberInfo}>
                 <Icon name="check-circle" size={16} color="#4CAF50" />
                 <Text style={styles.memberInfoText}>
-                  {t('visitorRegisteredUnderAccount').replace('{{memberId}}', memberId)}
+                  {'Visitor will be registered under your reference'}
                 </Text>
               </View>
             )}
@@ -1012,11 +1012,14 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderLeftWidth: 4,
     borderLeftColor: '#4A90E2',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   memberInfoText: {
     fontSize: 13,
     color: '#2C5AA0',
     fontWeight: '500',
+    marginLeft: 8,
   },
   // COMPACT Tab Bar
   tabBarContainer: {
