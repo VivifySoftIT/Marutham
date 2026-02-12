@@ -480,59 +480,69 @@ const MyFeed = ({ route }) => {
     try {
       setIsListening(true);
       setActiveVoiceField(fieldName);
-      
-      // Set up voice recognition event handlers
+
+      // Capture the intended field in a local variable so async handlers use the correct target
+      const targetField = fieldName;
+
+      // Remove previous listeners to avoid duplicate callbacks
+      try {
+        if (Voice && Voice.removeAllListeners) Voice.removeAllListeners();
+      } catch (e) {
+        // ignore
+      }
+
+      // Set up voice recognition event handlers (use captured targetField)
       Voice.onSpeechStart = () => {
-        console.log('Voice recognition started for:', fieldName);
+        console.log('Voice recognition started for:', targetField);
       };
 
       Voice.onSpeechEnd = () => {
-        console.log('Voice recognition ended');
+        console.log('Voice recognition ended for:', targetField);
         setIsListening(false);
         setActiveVoiceField(null);
       };
 
       Voice.onSpeechResults = (event) => {
         console.log('Voice results:', event.value);
-        console.log('Active voice field:', activeVoiceField);
-        
+        console.log('Captured voice target field:', targetField);
+
         if (event.value && event.value.length > 0) {
           const spokenText = event.value[0];
-          console.log('Spoken text for', activeVoiceField, ':', spokenText);
-          
-          // Use activeVoiceField state instead of fieldName parameter
-          switch (activeVoiceField) {
-            case 'amount':
-              // Extract numbers from spoken text for amount field only
-              const amountMatch = spokenText.match(/\d+/g);
+          console.log('Spoken text for', targetField, ':', spokenText);
+
+          switch (targetField) {
+            case 'amount': {
+              const amountMatch = spokenText.match(/\d+(?:[\.\,]\d+)?/g);
               if (amountMatch) {
-                const amount = amountMatch.join('');
+                // join and normalize decimals (replace comma with dot)
+                const raw = amountMatch.join('');
+                const normalized = raw.replace(',', '.');
+                const amount = normalized;
                 console.log('Setting amount:', amount);
                 setPaymentForm(prev => ({ ...prev, amount: amount }));
               } else {
-                // If no numbers found, show error
                 Alert.alert(t('error'), t('pleaseSpeakNumbersOnly') || 'Please speak numbers only for amount');
               }
               break;
-              
-            case 'transactionId':
-              // Keep transaction ID as spoken text (don't extract numbers)
-              // Remove spaces for consistency
+            }
+
+            case 'transactionId': {
               const cleanTransactionId = spokenText.trim().replace(/\s+/g, '');
               console.log('Setting transaction ID:', cleanTransactionId);
               setPaymentForm(prev => ({ ...prev, transactionId: cleanTransactionId }));
               break;
-              
-            case 'paymentForMonth':
-              // Keep month as spoken text
+            }
+
+            case 'paymentForMonth': {
               const cleanMonth = spokenText.trim();
               console.log('Setting payment month:', cleanMonth);
               setPaymentForm(prev => ({ ...prev, paymentForMonth: cleanMonth }));
               setShowMonthDropdown(true);
               break;
-              
+            }
+
             default:
-              console.warn('Unknown voice field:', activeVoiceField);
+              console.warn('Unknown voice field:', targetField);
               break;
           }
         }
