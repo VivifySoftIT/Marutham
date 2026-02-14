@@ -1,25 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, BackHandler } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, BackHandler, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../apiConfig';
+import { FontAwesome } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ForgotPassword = ({ navigation }) => {
+  const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
   const [email, setEmail] = useState('');
-  const [empNo, setEmpNo] = useState(''); // EmpNo field
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resetToken, setResetToken] = useState('');
 
-  // Fetch employee number from AsyncStorage (optional if needed)
-  const getEmpNoFromStorage = async () => {
-    const empNoFromStorage = await AsyncStorage.getItem('emp_no');
-    if (empNoFromStorage) {
-      setEmpNo(empNoFromStorage); // Optionally set it from AsyncStorage if you store EmpNo
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email || !empNo) {
-      Alert.alert('Error', 'Please enter both your email and employee number.');
+  const handleSendOTP = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address.');
       return;
     }
 
@@ -30,164 +30,632 @@ const ForgotPassword = ({ navigation }) => {
       return;
     }
 
-    // Employee number validation (check if it's a number)
-    if (isNaN(empNo)) {
-      Alert.alert('Error', 'Employee number must be a valid number.');
+    setIsLoading(true);
+
+    try {
+      // Send POST request to the C# backend forgot-password endpoint
+      const url = `${API_BASE_URL}/api/Auth/forgot-password`;
+      
+      const response = await axios.post(url, {
+        email: email
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('API Response:', response.data);
+
+      if (response.status === 200) {
+        const successMessage = 'A verification code has been sent to your email.';
+        Alert.alert('Success', successMessage);
+        setStep(2); // Move to OTP verification step
+      }
+    } catch (error) {
+      console.error('Error sending OTP:', error);
+      
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 'Unable to send verification code. Please try again later.';
+        Alert.alert('Error', errorMessage);
+      } else if (error.request) {
+        Alert.alert('Error', 'Network error. Please check your connection and try again.');
+      } else {
+        Alert.alert('Error', 'Unable to send verification code. Please try again later.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (!otp) {
+      Alert.alert('Error', 'Please enter the verification code.');
+      return;
+    }
+
+    if (otp.length !== 6) {
+      Alert.alert('Error', 'Verification code must be 6 digits.');
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Construct the full API URL with query parameters
-      const url = `${API_BASE_URL}/api/Security/ForgotPassword?EmailId=${email}&EmpNo=${empNo}`;
+      // Verify OTP with backend
+      const url = `${API_BASE_URL}/api/Auth/verify-otp`;
+      
+      const response = await axios.post(url, {
+        email: email,
+        otp: otp
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-      // Send the GET request to the API
-      const response = await axios.get(url);
+      console.log('OTP Verification Response:', response.data);
 
-      // Log the response for debugging
-      console.log('API Response:', response.data);
-
-      // Check if the API response is successful
-      if (response.status === 200 && response.data.result) {
-        // Assuming the API response includes a 'result' field and 'statusDesc' field
-        const successMessage = response.data.statusDesc || 'Password reset link has been sent to your email!';
-        Alert.alert('Success', successMessage);
-        // Navigate to the login screen only on success (status code 200)
-        navigation.replace('Login');
-      } else {
-        // Handle failure response (invalid email or employee number)
-        Alert.alert('Error', response.data.statusDesc || 'Invalid email or employee number. Please check and try again.');
-        // Do NOT navigate, stay on the same screen
+      if (response.status === 200 && response.data.token) {
+        setResetToken(response.data.token);
+        Alert.alert('Success', 'Code verified! Please enter your new password.');
+        setStep(3); // Move to password reset step
       }
     } catch (error) {
-      console.error('Error sending reset link:', error);
-      Alert.alert('Error', 'Unable to send reset link. Please try again later.');
-      // Do NOT navigate, stay on the same screen
+      console.error('Error verifying OTP:', error);
+      
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 'Invalid or expired verification code.';
+        Alert.alert('Error', errorMessage);
+      } else {
+        Alert.alert('Error', 'Unable to verify code. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Optionally load the employee number on component mount
-  React.useEffect(() => {
-    getEmpNoFromStorage();
+  const validatePassword = (password) => {
+    const minLength = password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-    // Prevent back button press on Android
+    return {
+      isValid: minLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar,
+      minLength,
+      hasUpperCase,
+      hasLowerCase,
+      hasNumber,
+      hasSpecialChar
+    };
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      Alert.alert('Error', 'Please fill in all fields.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const url = `${API_BASE_URL}/api/Auth/reset-password`;
+      
+      const response = await axios.post(url, {
+        token: resetToken,
+        newPassword: newPassword
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Reset Password Response:', response.data);
+
+      if (response.status === 200) {
+        const successMessage = response.data.message || 'Password has been reset successfully!';
+        Alert.alert('Success', successMessage, [
+          {
+            text: 'OK',
+            onPress: () => navigation.replace('Login')
+          }
+        ]);
+      }
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 'Unable to reset password. Please try again.';
+        Alert.alert('Error', errorMessage);
+      } else {
+        Alert.alert('Error', 'Unable to reset password. Please try again later.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getPasswordStrength = () => {
+    if (!newPassword) return null;
+    
+    const validation = validatePassword(newPassword);
+    const score = [
+      validation.minLength,
+      validation.hasUpperCase,
+      validation.hasLowerCase,
+      validation.hasNumber,
+      validation.hasSpecialChar
+    ].filter(Boolean).length;
+
+    if (score <= 2) return { text: 'Weak', color: '#d32f2f' };
+    if (score <= 4) return { text: 'Medium', color: '#f57c00' };
+    return { text: 'Strong', color: '#388e3c' };
+  };
+
+  const passwordStrength = getPasswordStrength();
+
+  // Handle back button press on Android
+  React.useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      navigation.replace('Login');  // Navigate to Login screen when back is pressed
-      return true;  // Prevent the default back action
+      if (step > 1) {
+        setStep(step - 1);
+        return true;
+      }
+      navigation.replace('Login');
+      return true;
     });
 
-    // Cleanup listener on unmount
     return () => backHandler.remove();
-  }, []);
+  }, [step]);
+
+  // Render different steps
+  const renderStepContent = () => {
+    switch (step) {
+      case 1:
+        return (
+          <>
+            <View style={styles.headerSection}>
+              <FontAwesome name="lock" size={50} color="#4A90E2" />
+              <Text style={styles.title}>Forgot Password?</Text>
+              <Text style={styles.subtitle}>
+                Enter your email address and we'll send you a verification code.
+              </Text>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="envelope" size={18} color="#4A90E2" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your email address"
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  autoComplete="email"
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleSendOTP}
+              disabled={isLoading}
+            >
+              <LinearGradient
+                colors={['#4A90E2', '#357ABD']}
+                style={styles.buttonGradient}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <FontAwesome name="paper-plane" size={18} color="#fff" style={styles.buttonIcon} />
+                    <Text style={styles.buttonText}>Send Verification Code</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.replace('Login')}
+            >
+              <FontAwesome name="arrow-left" size={16} color="#4A90E2" style={styles.backIcon} />
+              <Text style={styles.backButtonText}>Back to Login</Text>
+            </TouchableOpacity>
+          </>
+        );
+
+      case 2:
+        return (
+          <>
+            <View style={styles.headerSection}>
+              <FontAwesome name="shield" size={50} color="#4A90E2" />
+              <Text style={styles.title}>Enter Verification Code</Text>
+              <Text style={styles.subtitle}>
+                We've sent a 6-digit code to {email}
+              </Text>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="key" size={18} color="#4A90E2" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter 6-digit code"
+                  placeholderTextColor="#999"
+                  keyboardType="number-pad"
+                  value={otp}
+                  onChangeText={setOtp}
+                  maxLength={6}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleVerifyOTP}
+              disabled={isLoading}
+            >
+              <LinearGradient
+                colors={['#4A90E2', '#357ABD']}
+                style={styles.buttonGradient}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <FontAwesome name="check" size={18} color="#fff" style={styles.buttonIcon} />
+                    <Text style={styles.buttonText}>Verify Code</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => setStep(1)}
+            >
+              <FontAwesome name="arrow-left" size={16} color="#4A90E2" style={styles.backIcon} />
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.resendButton}
+              onPress={handleSendOTP}
+              disabled={isLoading}
+            >
+              <Text style={styles.resendText}>Didn't receive code? Resend</Text>
+            </TouchableOpacity>
+          </>
+        );
+
+      case 3:
+        return (
+          <>
+            <View style={styles.headerSection}>
+              <FontAwesome name="key" size={40} color="#4A90E2" />
+              <Text style={styles.title}>Reset Password</Text>
+              <Text style={styles.subtitle}>
+                Enter your new password below.
+              </Text>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="lock" size={16} color="#4A90E2" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="New Password"
+                  placeholderTextColor="#999"
+                  secureTextEntry={!showNewPassword}
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  maxLength={50}
+                />
+                <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)} style={styles.eyeIcon}>
+                  <FontAwesome
+                    name={showNewPassword ? "eye" : "eye-slash"}
+                    size={16}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.inputWrapper}>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="lock" size={16} color="#4A90E2" style={styles.icon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Confirm Password"
+                  placeholderTextColor="#999"
+                  secureTextEntry={!showConfirmPassword}
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  maxLength={50}
+                />
+                <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={styles.eyeIcon}>
+                  <FontAwesome
+                    name={showConfirmPassword ? "eye" : "eye-slash"}
+                    size={16}
+                    color="#666"
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, isLoading && styles.buttonDisabled]}
+              onPress={handleResetPassword}
+              disabled={isLoading}
+            >
+              <LinearGradient
+                colors={['#4A90E2', '#357ABD']}
+                style={styles.buttonGradient}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <FontAwesome name="check" size={16} color="#fff" style={styles.buttonIcon} />
+                    <Text style={styles.buttonText}>Reset Password</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <Image
-        source={require('../assets/logoicon.png')}
-        style={styles.logo}
-      />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <LinearGradient
+        colors={['#4A90E2', '#87CEEB', '#B0E0E6']}
+        style={styles.background}
+      >
+        <View style={styles.content}>
+          {/* Logo Section */}
+          <View style={styles.logoSection}>
+            <View style={styles.logoContainer}>
+              <Image
+                source={require('../assets/logoicon.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
 
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>Forgot Password</Text>
+          {/* Step Indicator */}
+          <View style={styles.stepIndicator}>
+            <View style={[styles.stepDot, step >= 1 && styles.stepDotActive]} />
+            <View style={[styles.stepLine, step >= 2 && styles.stepLineActive]} />
+            <View style={[styles.stepDot, step >= 2 && styles.stepDotActive]} />
+            <View style={[styles.stepLine, step >= 3 && styles.stepLineActive]} />
+            <View style={[styles.stepDot, step >= 3 && styles.stepDotActive]} />
+          </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Official Email"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Employee Number"
-          keyboardType="numeric"
-          value={empNo}
-          onChangeText={setEmpNo}
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleForgotPassword}
-          disabled={isLoading}
-        >
-          <Text style={styles.buttonText}>
-            {isLoading ? 'Sending...' : 'Send Reset Link'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Image below the formContainer */}
-      <Image
-        source={require('../assets/ForgotPwd2.jpg')}
-        style={styles.forgotPwdImage}
-      />
-    </View>
+          {/* Form Container */}
+          <View style={styles.formContainer}>
+            {renderStepContent()}
+          </View>
+        </View>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  background: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#ffff',
+    paddingHorizontal: 25,
+    paddingTop: 40,
+    paddingBottom: 20,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: -80,
+  },
+  logoContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 100,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
   },
   logo: {
-    width: 150,
-    height: 150,
-    alignSelf: 'center',
-    marginBottom: 30,
-    marginTop: -100,
+    width: 100,
+    height: 100,
   },
   formContainer: {
-    marginTop: -10,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#212c62',
-    borderRadius: 10,
-    backgroundColor: 'rgb(255, 255, 255)',
-    elevation: 5,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 18,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+    marginBottom: 20,
+  },
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: 16,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    marginTop: 10,
+    marginBottom: 6,
     textAlign: 'center',
-    marginBottom: 20,
-    color: 'darkblue',
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 10,
+  },
+  inputWrapper: {
+    marginBottom: 12,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    paddingHorizontal: 12,
+    height: 46,
+  },
+  icon: {
+    marginRight: 10,
   },
   input: {
-    borderWidth: 1,
-    borderColor: 'darkblue',
-    padding: 10,
-    marginVertical: 10,
-    borderRadius: 5,
-    backgroundColor: '#fff',
+    flex: 1,
+    fontSize: 14,
+    color: '#333',
+    height: '100%',
   },
   button: {
-    backgroundColor: 'rgba(230, 34, 41, 0.84)',
-    padding: 10,
-    borderRadius: 5,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  buttonIcon: {
+    marginRight: 6,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+  },
+  backIcon: {
+    marginRight: 8,
+  },
+  backButtonText: {
+    color: '#4A90E2',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  stepIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  stepDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#fff',
+    opacity: 0.5,
+  },
+  stepDotActive: {
+    backgroundColor: '#fff',
+    opacity: 1,
+  },
+  stepLine: {
+    width: 40,
+    height: 2,
+    backgroundColor: '#fff',
+    opacity: 0.5,
+    marginHorizontal: 5,
+  },
+  stepLineActive: {
+    backgroundColor: '#fff',
+    opacity: 1,
+  },
+  resendButton: {
     alignItems: 'center',
     marginTop: 10,
   },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  resendText: {
+    color: '#4A90E2',
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
-  forgotPwdImage: {
-    width: '100%',
-    height: 250, // Adjust the height as necessary
-    marginBottom: -120,
-    resizeMode: 'contain', // Adjust image scaling
-    marginTop:10,
+  strengthContainer: {
+    marginTop: 5,
+    marginLeft: 5,
+  },
+  strengthText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  requirementsContainer: {
+    backgroundColor: '#f8f9fa',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  requirementsTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  requirementText: {
+    fontSize: 11,
+    color: '#666',
+    marginVertical: 1,
+  },
+  eyeIcon: {
+    padding: 5,
   },
 });
 
