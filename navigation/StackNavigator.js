@@ -29,6 +29,8 @@ import Visitors from '../screens/Visitors';
 import SettingsScreen from '../screens/SettingsScreen';
 import CreateMeeting from '../screens/CreateMeeting';
 import TakePayment from '../screens/TakePayment';
+import ForgotPassword from '../screens/ForgotPassword';
+import ResetPassword from '../screens/ResetPassword';
 
 const Stack = createNativeStackNavigator();
 
@@ -156,7 +158,14 @@ const StackNavigator = () => {
         name="MyCEUs"
         component={MyCEUs}
       />
-      {/* <Stack.Screen name="ForgotPassword" component={ForgotPassword} /> */}
+      <Stack.Screen 
+        name="ForgotPassword" 
+        component={ForgotPassword} 
+      />
+      <Stack.Screen 
+        name="ResetPassword" 
+        component={ResetPassword} 
+      />
       <Stack.Screen
         name="BulkMemberImport"
         component={BulkMemberImport}
