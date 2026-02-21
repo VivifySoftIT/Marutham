@@ -135,7 +135,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
 
         // Store all user data
         await AsyncStorage.setItem('token', response.token);
-        await AsyncStorage.setItem('jwt_token', response.token); // Also store as jwt_token for compatibility
+        await AsyncStorage.setItem('jwt_token', response.token);
         await AsyncStorage.setItem('userData', JSON.stringify(response.user));
         await AsyncStorage.setItem('fullName', response.user.fullName || '');
         await AsyncStorage.setItem('email', response.user.email || '');
@@ -150,11 +150,9 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
           console.log('Member ID saved from response:', response.user.memberId);
         } else {
           console.log('No memberId in response. Resolving immediately...');
-          // Force resolution now using the just-saved userId/fullName
           const resolvedId = await MemberIdService.getCurrentUserMemberId();
           if (resolvedId) {
             console.log('Member ID resolved and saved:', resolvedId);
-            // Verify it matches what we expect? No, just trust the service logic which uses userId
           } else {
             console.warn('Could not resolve Member ID during login.');
           }
@@ -168,7 +166,6 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
 
         // Navigate based on role and saved mode
         setTimeout(async () => {
-          // Check if admin has a saved mode preference
           const savedMode = await AsyncStorage.getItem('userMode');
           
           if (response.user.role === 'User') {
@@ -178,7 +175,6 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
               routes: [{ name: 'UserDashboard' }],
             });
           } else if (response.user.role === 'Admin' || response.user.role === 'admin') {
-            // Admin user - check saved mode preference
             if (savedMode === 'user') {
               console.log('Admin navigating to UserDashboard (User Mode)');
               navigation.reset({
@@ -207,23 +203,18 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
     } catch (error) {
       console.error('Login error:', error);
 
-      // Determine user-friendly error message
       let userMessage = t('invalidUsernamePassword') || 'Invalid username or password';
       
-      // Check for specific error types
       if (error.message) {
         const errorMsg = error.message.toLowerCase();
         
-        // Suppress push notification errors - don't show to user
         if (errorMsg.includes('push notification') || 
             errorMsg.includes('expo push token') ||
             errorMsg.includes('notification')) {
           console.log('Push notification error suppressed:', error.message);
-          // Don't set error message for push notification issues
           return;
         }
         
-        // Handle authentication errors
         if (errorMsg.includes('invalid') || 
             errorMsg.includes('incorrect') || 
             errorMsg.includes('wrong') ||
@@ -239,12 +230,12 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
         }
       }
       
-      // Show simplified error message
       setErrorMessage(userMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -255,9 +246,10 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
         style={styles.background}
       >
         <View style={styles.content}>
-          {/* Logo Section with White Background */}
+          {/* Logo Section */}
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
+              <View style={styles.whiteCircle} />
               <Image
                 source={require('../assets/logoicon.png')}
                 style={styles.logo}
@@ -268,6 +260,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
 
           {/* Compact Login Form */}
           <View style={styles.loginCard}>
+            <Text style={styles.welcomeText}>Welcome to</Text>
             <Text style={styles.loginTitle}>Alaigal Members Sign In</Text>
 
             <View style={styles.inputWrapper}>
@@ -361,7 +354,6 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
                 <Text
                   style={styles.contactSupportText}
                   onPress={() => {
-                    // You can add contact support functionality here
                     Alert.alert('Contact Support', 'Please email support@alaigal.com');
                   }}
                 >
@@ -390,93 +382,117 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 25,
-    paddingTop: 40,
+    justifyContent: 'space-evenly',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingBottom: 20,
   },
+  // Logo Section
   logoSection: {
     alignItems: 'center',
-    marginBottom: 0,
+    marginBottom: 20,
+    marginTop: 10,
   },
   logoContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  whiteCircle: {
     backgroundColor: '#fff',
-    borderRadius: 100,
-    padding: 10,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    marginBottom: 2,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    elevation: 12,
+    position: 'absolute',
+    zIndex: 1,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 220,
+    height: 220,
+    zIndex: 2,
   },
+  welcomeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#7a8a99',
+    textAlign: 'center',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  // Login Card
   loginCard: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 28,
+    padding: 32,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-    marginBottom: 20,
-    maxWidth: 400,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+    marginBottom: 10,
+    maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
   },
   loginTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#4A90E2',
-    marginBottom: 16,
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#2c3e50',
+    marginBottom: 28,
     textAlign: 'center',
+    letterSpacing: 0.8,
   },
   inputWrapper: {
-    marginBottom: 12,
+    marginBottom: 18,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    paddingHorizontal: 12,
-    height: 46,
+    backgroundColor: '#f5f7fa',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#e8ecf1',
+    paddingHorizontal: 18,
+    height: 56,
   },
   icon: {
-    marginRight: 10,
+    marginRight: 14,
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    color: '#333',
+    fontSize: 16,
+    color: '#2c3e50',
     height: '100%',
+    fontWeight: '500',
   },
   eyeIcon: {
-    padding: 5,
+    padding: 8,
   },
   rememberForgotContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 24,
+    marginTop: 6,
   },
   rememberMeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   checkbox: {
-    width: 16,
-    height: 16,
-    borderRadius: 3,
+    width: 20,
+    height: 20,
+    borderRadius: 5,
     borderWidth: 2,
     borderColor: '#4A90E2',
-    marginRight: 6,
+    marginRight: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -484,41 +500,42 @@ const styles = StyleSheet.create({
     backgroundColor: '#4A90E2',
   },
   rememberMeText: {
-    fontSize: 12,
-    color: '#555',
+    fontSize: 14,
+    color: '#5a6c7d',
+    fontWeight: '600',
   },
   forgotPasswordText: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#4A90E2',
-    fontWeight: '600',
+    fontWeight: '700',
     textDecorationLine: 'underline',
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffebee',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#ffcdd2',
+    padding: 14,
+    borderRadius: 14,
+    marginBottom: 24,
+    borderWidth: 1.5,
+    borderColor: '#ef5350',
   },
   errorText: {
-    color: '#d32f2f',
-    fontSize: 12,
-    marginLeft: 8,
+    color: '#c62828',
+    fontSize: 14,
+    marginLeft: 12,
     flex: 1,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   loginButton: {
-    borderRadius: 10,
+    borderRadius: 16,
     overflow: 'hidden',
-    marginBottom: 12,
+    marginBottom: 0,
     shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   loginButtonDisabled: {
     opacity: 0.6,
@@ -527,45 +544,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: 18,
+    paddingHorizontal: 28,
   },
   loginIcon: {
-    marginRight: 6,
+    marginRight: 10,
   },
   loginButtonText: {
     color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   bottomSection: {
     alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 20,
   },
   footerNote: {
-    marginBottom: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 10,
-    borderRadius: 8,
+    marginBottom: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 24,
   },
   footerText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.98)',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   contactSupportText: {
     color: '#fff',
-    fontWeight: '700',
+    fontWeight: '800',
     textDecorationLine: 'underline',
   },
   versionText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.7)',
-    marginBottom: 5,
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 8,
+    fontWeight: '600',
   },
   copyrightText: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '600',
   },
 });
 

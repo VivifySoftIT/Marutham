@@ -176,6 +176,16 @@ const SettingsScreen = () => {
       },
     },
     {
+      id: 'edit-profile',
+      title: t('editProfile') || 'Edit Profile',
+      subtitle: t('updateProfileInfo') || 'Update your profile information',
+      icon: 'account-edit',
+      color: '#4CAF50',
+      onPress: () => {
+        navigation.navigate('Profile');
+      },
+    },
+    {
       id: 'language',
       title: t('language'),
       subtitle: `${t('currentLanguage')}: ${selectedLanguage === 'en' ? t('english') : t('tamil')}`,
@@ -215,16 +225,8 @@ const SettingsScreen = () => {
       title: t('changePassword'),
       subtitle: t('updatePassword'),
       icon: 'lock-reset',
-      color: '#4CAF50',
-      onPress: () => navigation.navigate('ChangePassword'),
-    },
-    {
-      id: 'edit-profile',
-      title: t('editProfile'),
-      subtitle: t('updateProfileInfo'),
-      icon: 'account-edit',
       color: '#9C27B0',
-      onPress: () => navigation.navigate('Profile'),
+      onPress: () => navigation.navigate('ChangePassword'),
     },
     {
       id: 'privacy-policy',

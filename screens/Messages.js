@@ -171,7 +171,7 @@ const Messages = ({ navigation }) => {
     {
       id: 2,
       title: t('paymentReminder'),
-      icon: 'cash-clock',
+      icon: 'cash-multiple',
       color: '#FF9800',
       description: t('sendPaymentReminderDesc') || 'Send payment reminder (validates payment status)',
       defaultSubject: t('paymentReminderSubject') || 'Payment Reminder - Alaigal Membership',
@@ -356,6 +356,11 @@ const Messages = ({ navigation }) => {
       let memberIds = null;
       if (formData.recipientType === 'member' && selectedMembers.length > 0) {
         memberIds = selectedMembers.map(m => m.id).join(',');
+      } else if (formData.recipientType === 'all') {
+        // For 'all' recipients, send all active member IDs
+        // This is especially important for Payment type which doesn't auto-populate on backend
+        const allMemberIds = allMembers.filter(m => m.isActive !== false).map(m => m.id).join(',');
+        memberIds = allMemberIds;
       }
 
       // Prepare notification data

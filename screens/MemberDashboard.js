@@ -731,75 +731,6 @@ const MemberDashboard = () => {
         });
       }
 
-      // Add some test notifications to ensure tap-to-respond is visible
-      if (newNotifications.length === 0) {
-        // Try to get real member IDs for test notifications
-        let testMemberId = null; // Don't use fallback ID that doesn't exist
-        let testMemberName = 'Test Member'; // fallback name
-
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/Members`);
-          if (response.ok) {
-            const members = await response.json();
-            if (members && members.length > 0) {
-              // Use the first member for test notifications
-              const firstMember = members[0];
-              testMemberId = firstMember.id;
-              testMemberName = firstMember.name || 'Test Member';
-            }
-          }
-        } catch (error) {
-          console.log('Could not fetch members for test notifications, using fallback');
-        }
-
-        // Only add birthday test notification if we have a real member ID
-        if (testMemberId) {
-          console.log('Adding test birthday notification with real member ID:', testMemberId);
-          newNotifications.push({
-            id: `test-birthday-${Date.now()}`,
-            type: 'birthday',
-            messageType: 'Birthday',
-            title: `🎂 Birthday Reminder`,
-            message: `Today is ${testMemberName}'s Birthday. Send them wishes!`,
-            time: 'Today',
-            icon: 'cake-variant',
-            color: '#9C27B0',
-            backgroundColor: '#F3E5F5',
-            isRead: false,
-            canRespond: true,
-            attachmentUrl: null,
-            eventDate: new Date(),
-            createdBy: null,
-            recipientName: testMemberName,
-            recipientMemberId: testMemberId,
-          });
-        } else {
-          console.log('No real member ID found, skipping birthday test notification');
-        }
-
-        // Add test meeting notification (doesn't need specific member ID)
-        newNotifications.push({
-          id: `test-meeting-${Date.now()}`,
-          type: 'message',
-          messageType: 'Meeting',
-          title: `📅 Meeting Notification`,
-          message: 'Monthly meeting scheduled',
-          time: 'Tomorrow',
-          icon: 'calendar-clock',
-          color: '#4ECDC4',
-          backgroundColor: '#E8F8F7',
-          isRead: false,
-          canRespond: true,
-          attachmentUrl: null,
-          eventDate: new Date(),
-          createdBy: null,
-          recipientName: null,
-          recipientMemberId: null,
-        });
-
-        // (Removed test payment notification)
-      }
-
       // ✅ Only process message notifications (no reminders!)
       if (messageNotifications && messageNotifications.length > 0) {
         messageNotifications.forEach((msg) => {
@@ -1278,12 +1209,9 @@ const MemberDashboard = () => {
                 >
                   <View style={styles.moduleCardContent}>
                     <View style={[styles.moduleIconContainer, { backgroundColor: `${waterBlueColors.primary}15` }]}>
-                      <Icon name={module.icon} size={22} color={waterBlueColors.primary} />
+                      <Icon name={module.icon} size={24} color={waterBlueColors.primary} />
                     </View>
                     <Text style={styles.moduleTitle} numberOfLines={2}>{module.title}</Text>
-                  </View>
-                  <View style={styles.moduleArrow}>
-                    <Icon name="chevron-right" size={16} color={waterBlueColors.primary} />
                   </View>
                 </TouchableOpacity>
               </Animatable.View>
@@ -1984,9 +1912,10 @@ const styles = StyleSheet.create({
   moduleCard: {
     backgroundColor: '#FFF',
     borderRadius: 16,
-    padding: 12,
-    flexDirection: 'row',
+    padding: 16,
+    flexDirection: 'column',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#E8F0FE',
     elevation: 3,
@@ -1994,18 +1923,20 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
-    minHeight: 85,
+    minHeight: 110,
   },
   moduleCardContent: {
     flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   moduleIconContainer: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
     position: 'relative',
   },
   badge: {
@@ -2038,7 +1969,8 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 2,
     lineHeight: 16,
-    height: 32, // Fixed height for 2 lines to ensure alignment
+    textAlign: 'center',
+    height: 32,
     textAlignVertical: 'center',
   },
   moduleDescription: {
