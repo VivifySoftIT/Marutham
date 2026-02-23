@@ -1603,12 +1603,12 @@ const handleMeetingResponse = async (notification) => {
                 style={styles.quickAccessGradient}
               >
                 <View style={styles.quickAccessIconContainer}>
-                  <Icon name="account-group" size={32} color="#FFF" />
+                  <Icon name="account-group" size={28} color="#FFF" />
                 </View>
                 <Text style={styles.quickAccessTitle}>{t('memberList') || 'Member List'}</Text>
                 <Text style={styles.quickAccessSubtitle}>{t('viewAllMembers') || 'View all members'}</Text>
                 <View style={styles.quickAccessArrow}>
-                  <Icon name="arrow-right" size={20} color="#FFF" />
+                  <Icon name="arrow-right" size={18} color="#FFF" />
                 </View>
               </LinearGradient>
             </TouchableOpacity>
@@ -1624,25 +1624,15 @@ const handleMeetingResponse = async (notification) => {
                 style={styles.quickAccessGradient}
               >
                 <View style={styles.quickAccessIconContainer}>
-                  <Icon name="calendar-account" size={32} color="#FFF" />
+                  <Icon name="calendar-account" size={28} color="#FFF" />
                 </View>
                 <Text style={styles.quickAccessTitle}>{t('oneToOneMeeting') || 'One-to-One Meeting'}</Text>
                 <Text style={styles.quickAccessSubtitle}>{t('scheduleNewMeeting') || 'Schedule new meeting'}</Text>
                 <View style={styles.quickAccessArrow}>
-                  <Icon name="arrow-right" size={20} color="#FFF" />
+                  <Icon name="arrow-right" size={18} color="#FFF" />
                 </View>
               </LinearGradient>
             </TouchableOpacity>
-          </View>
-
-          {/* Period Indicator */}
-          <View style={styles.periodIndicator}>
-            <Text style={[
-              styles.periodIndicatorText,
-              language === 'ta' && styles.tamilPeriodIndicatorText
-            ]}>
-              {t('showingDataFor')} <Text style={styles.periodIndicatorValue}>{getPeriodLabel()}</Text>
-            </Text>
           </View>
 
           {/* Activity Cards with Water Theme */}
@@ -3418,6 +3408,7 @@ quickAccessGrid: {
   flexDirection: 'row',
   gap: 12,
   marginTop: 8,
+  marginBottom: 20,
 },
 quickAccessCard: {
   flex: 1,
@@ -3428,39 +3419,44 @@ quickAccessCard: {
   shadowOffset: { width: 0, height: 2 },
   shadowOpacity: 0.1,
   shadowRadius: 8,
+  minHeight: 110,
 },
 quickAccessGradient: {
-  padding: 20,
-  minHeight: 140,
-  justifyContent: 'space-between',
+  flex: 1,
+  padding: 16,
+  minHeight: 110,
+  justifyContent: 'flex-start',
 },
 quickAccessIconContainer: {
-  width: 56,
-  height: 56,
-  borderRadius: 28,
+  width: 48,
+  height: 48,
+  borderRadius: 24,
   backgroundColor: 'rgba(255, 255, 255, 0.2)',
   justifyContent: 'center',
   alignItems: 'center',
-  marginBottom: 12,
+  marginBottom: 8,
 },
 quickAccessTitle: {
-  fontSize: 16,
+  fontSize: 15,
   fontWeight: '700',
   color: '#FFF',
   marginBottom: 4,
+  marginTop: 4,
 },
 quickAccessSubtitle: {
-  fontSize: 13,
-  color: 'rgba(255, 255, 255, 0.9)',
+  fontSize: 12,
+  color: 'rgba(255, 255, 255, 0.95)',
   fontWeight: '500',
+  marginBottom: 4,
+  lineHeight: 16,
 },
 quickAccessArrow: {
   position: 'absolute',
-  bottom: 16,
-  right: 16,
-  width: 32,
-  height: 32,
-  borderRadius: 16,
+  bottom: 12,
+  right: 12,
+  width: 28,
+  height: 28,
+  borderRadius: 14,
   backgroundColor: 'rgba(255, 255, 255, 0.2)',
   justifyContent: 'center',
   alignItems: 'center',
