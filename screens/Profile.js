@@ -108,15 +108,32 @@ const MyProfile = () => {
         const memberData = await response.json();
         console.log('Member details loaded:', memberData);
 
-        const savedImage = await AsyncStorage.getItem("profileImage");
+        // Use profile image from API if available, otherwise fall back to AsyncStorage
+        let profileImageUri = null;
+        if (memberData.profileImage) {
+          // If the API returns a relative path, construct the full URL
+          profileImageUri = memberData.profileImage.startsWith('http') 
+            ? memberData.profileImage 
+            : `${API_BASE_URL}${memberData.profileImage}`;
+          console.log('Profile image from API:', profileImageUri);
+        } else {
+          // Fallback to AsyncStorage
+          profileImageUri = await AsyncStorage.getItem("profileImage");
+          console.log('Profile image from storage:', profileImageUri);
+        }
         
         // Load businesses from API response if available
         if (memberData.business) {
           // Parse multiple business names from comma-separated string
           const businessNames = memberData.business.split(',').map(b => b.trim()).filter(b => b);
           
-          // Parse business images from comma-separated string
-          const businessImages = memberData.businessImages ? memberData.businessImages.split(',').map(img => img.trim()).filter(img => img) : [];
+          // Parse business images from comma-separated string and construct full URLs
+          const businessImages = memberData.businessImages 
+            ? memberData.businessImages.split(',')
+                .map(img => img.trim())
+                .filter(img => img)
+                .map(img => img.startsWith('http') ? img : `${API_BASE_URL}${img}`)
+            : [];
           
           // Parse business descriptions (if multiple, split by delimiter)
           const businessDescriptions = memberData.businessDescription ? memberData.businessDescription.split('\n\n---\n\n').map(d => d.trim()).filter(d => d) : [];
@@ -182,7 +199,7 @@ const MyProfile = () => {
           email: memberData.email || "",
           contactNumber: memberData.phone || "",
           contactAddress: memberData.address || "",
-          profileImage: savedImage,
+          profileImage: profileImageUri,
           status: memberData.status || "",
           joinDate: formatDateForDisplay(memberData.joinDate),
           dob: formatDateForDisplay(memberData.dob),
@@ -319,11 +336,13 @@ const MyProfile = () => {
       // Create FormData for multipart/form-data submission
       const formData = new FormData();
 
-      // Add basic fields
+      // Add basic fields (required fields must always be present)
       if (profile.name) formData.append('Name', profile.name);
       if (profile.contactNumber) formData.append('Phone', profile.contactNumber);
       if (profile.email) formData.append('Email', profile.email);
-      if (profile.gender) formData.append('Gender', profile.gender);
+      
+      // Gender is required - default to 'Other' if not set
+      formData.append('Gender', profile.gender || 'Other');
       
       const formattedDOB = formatDate(profile.dob);
       if (formattedDOB) formData.append('DOB', formattedDOB);
@@ -331,7 +350,8 @@ const MyProfile = () => {
       const formattedJoinDate = formatDate(profile.joinDate);
       if (formattedJoinDate) formData.append('JoinDate', formattedJoinDate);
       
-      if (profile.contactAddress) formData.append('Address', profile.contactAddress);
+      // Address is required - send empty string if not set
+      formData.append('Address', profile.contactAddress || '');
       
       // Business name goes to the Business field
       if (profile.designation) formData.append('Business', profile.designation);
@@ -342,18 +362,28 @@ const MyProfile = () => {
       // SubCompanyId
       if (profile.subCompanyId) formData.append('SubCompanyId', profile.subCompanyId.toString());
 
-      // Handle profile image if it's a new image (starts with file://)
+      // Handle profile image - ProfileImage is required by backend
+      // Always send a file, even if it's a placeholder
       if (profile.profileImage && profile.profileImage.startsWith('file://')) {
+        // New local image selected
         const filename = profile.profileImage.split('/').pop();
         const match = /\.(\w+)$/.exec(filename || '');
         const type = match ? `image/${match[1]}` : 'image/jpeg';
         
-        // In JavaScript, we don't need type assertion
         formData.append('ProfileImage', {
           uri: profile.profileImage,
           name: filename || 'profile.jpg',
           type: type,
         });
+      } else {
+        // No new image - create a minimal valid file
+        // Backend should check file size and ignore if too small
+        const blob = {
+          uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+          type: 'image/png',
+          name: 'keep-existing.png'
+        };
+        formData.append('ProfileImage', blob);
       }
 
       // Handle business data - send multiple business names as array
@@ -371,9 +401,8 @@ const MyProfile = () => {
           .filter(desc => desc && desc.trim())
           .join('\n\n---\n\n');
         
-        if (combinedDescription) {
-          formData.append('BusinessDescription', combinedDescription);
-        }
+        // BusinessDescription is required - send empty string if no descriptions
+        formData.append('BusinessDescription', combinedDescription || '');
         
         // Add all business images
         let hasNewImages = false;
@@ -407,7 +436,8 @@ const MyProfile = () => {
           });
         }
       } else {
-        // If no businesses, still send empty BusinessImages to satisfy required field
+        // If no businesses, send empty BusinessDescription and placeholder image
+        formData.append('BusinessDescription', '');
         formData.append('BusinessImages', {
           uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
           name: 'placeholder.png',
@@ -416,12 +446,19 @@ const MyProfile = () => {
       }
 
       console.log("Updating member profile with FormData");
+      console.log("Profile data being sent:", {
+        name: profile.name,
+        phone: profile.contactNumber,
+        email: profile.email,
+        gender: profile.gender || 'Other',
+        address: profile.contactAddress || '',
+        hasProfileImage: !!(profile.profileImage && profile.profileImage.startsWith('file://')),
+        businessCount: businesses?.length || 0
+      });
 
       const response = await fetch(`${API_BASE_URL}/api/Members/${memberId}/edit`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        // Don't set Content-Type header - let React Native set it automatically with boundary
         body: formData,
       });
 
@@ -458,7 +495,20 @@ const MyProfile = () => {
       const response = await fetch(`${API_BASE_URL}/api/Members/${memberId}`);
       if (response.ok) {
         const memberData = await response.json();
-        const savedImage = await AsyncStorage.getItem("profileImage");
+        
+        // Use profile image from API if available, otherwise fall back to AsyncStorage
+        let profileImageUri = null;
+        if (memberData.profileImage) {
+          // If the API returns a relative path, construct the full URL
+          profileImageUri = memberData.profileImage.startsWith('http') 
+            ? memberData.profileImage 
+            : `${API_BASE_URL}${memberData.profileImage}`;
+          console.log('Profile image from API (refresh):', profileImageUri);
+        } else {
+          // Fallback to AsyncStorage
+          profileImageUri = await AsyncStorage.getItem("profileImage");
+          console.log('Profile image from storage (refresh):', profileImageUri);
+        }
         
         const formatDateForDisplay = (dateString) => {
           if (!dateString) return "";
@@ -493,7 +543,7 @@ const MyProfile = () => {
           email: memberData.email || "",
           contactNumber: memberData.phone || "",
           contactAddress: memberData.address || "",
-          profileImage: savedImage,
+          profileImage: profileImageUri,
           status: memberData.status || "",
           joinDate: formatDateForDisplay(memberData.joinDate),
           dob: formatDateForDisplay(memberData.dob),
@@ -505,8 +555,13 @@ const MyProfile = () => {
           // Parse multiple business names from comma-separated string
           const businessNames = memberData.business.split(',').map(b => b.trim()).filter(b => b);
           
-          // Parse business images from comma-separated string
-          const businessImages = memberData.businessImages ? memberData.businessImages.split(',').map(img => img.trim()).filter(img => img) : [];
+          // Parse business images from comma-separated string and construct full URLs
+          const businessImages = memberData.businessImages 
+            ? memberData.businessImages.split(',')
+                .map(img => img.trim())
+                .filter(img => img)
+                .map(img => img.startsWith('http') ? img : `${API_BASE_URL}${img}`)
+            : [];
           
           // Parse business descriptions (if multiple, split by delimiter)
           const businessDescriptions = memberData.businessDescription ? memberData.businessDescription.split('\n\n---\n\n').map(d => d.trim()).filter(d => d) : [];
@@ -576,6 +631,12 @@ const MyProfile = () => {
       t('chooseAnOption'),
       [
         { text: t('cancel'), style: "cancel" },
+        ...(profile.profileImage ? [
+          { 
+            text: t('viewPhoto') || 'View Photo', 
+            onPress: () => setFullScreenImage(profile.profileImage) 
+          }
+        ] : []),
         { text: t('changePhoto'), onPress: pickImage },
         ...(profile.profileImage ? [{ text: t('removePhoto'), style: "destructive", onPress: removeImage }] : [])
       ]
@@ -878,15 +939,46 @@ const MyProfile = () => {
               </View>
             </TouchableOpacity>
             <Text style={styles.profileName}>{profile.name}</Text>
-            <Text style={styles.profileHint}>{t('tapToChangeLongPressToView')}</Text>
+            <Text style={styles.profileHint}>
+              {profile.profileImage 
+                ? (t('tapForOptions') || 'Tap for options • Long press to view') 
+                : (t('tapToAddPhoto') || 'Tap to add photo')}
+            </Text>
           </View>
 
           <Modal visible={!!fullScreenImage} transparent={true} animationType="fade">
             <View style={styles.fullScreenContainer}>
-              <TouchableOpacity onPress={() => setFullScreenImage(null)} style={styles.closeButton}>
-                <Icon name="close" size={30} color="#FFF" />
+              <View style={styles.imageViewerHeader}>
+                <Text style={styles.imageViewerTitle}>{t('profilePhoto') || 'Profile Photo'}</Text>
+                <View style={styles.imageViewerActions}>
+                  <TouchableOpacity 
+                    onPress={() => setFullScreenImage(null)} 
+                    style={styles.minimizeButton}
+                  >
+                    <Icon name="window-minimize" size={24} color="#FFF" />
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => setFullScreenImage(null)} 
+                    style={styles.closeButtonHeader}
+                  >
+                    <Icon name="close" size={24} color="#FFF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <View style={styles.imageViewerContent}>
+                <Image 
+                  source={{ uri: fullScreenImage }} 
+                  style={styles.fullScreenImage}
+                  resizeMode="contain"
+                />
+              </View>
+              <TouchableOpacity 
+                onPress={() => setFullScreenImage(null)} 
+                style={styles.imageViewerFooter}
+              >
+                <Icon name="chevron-down" size={28} color="#FFF" />
+                <Text style={styles.imageViewerFooterText}>{t('swipeDownToClose') || 'Tap to close'}</Text>
               </TouchableOpacity>
-              <Image source={{ uri: fullScreenImage }} style={styles.fullScreenImage} />
             </View>
           </Modal>
 
@@ -910,7 +1002,11 @@ const MyProfile = () => {
           </View>
        
           {activeTab === "personal" && (
-            <View style={styles.formSection}>
+            <ScrollView 
+              style={styles.formSection} 
+              contentContainerStyle={styles.formSectionContent}
+              showsVerticalScrollIndicator={false}
+            >
               {renderEditableField(t('name'), "name", profile.name)}
               {renderEditableField(t('gender'), "gender", profile.gender)}
               {renderEditableField(t('email'), "email", profile.email)}
@@ -923,11 +1019,15 @@ const MyProfile = () => {
               >
                 <Text style={styles.updateButtonText}>{t('saveChanges')}</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
           )}
 
           {activeTab === "professional" && (
-            <ScrollView style={styles.formSection} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              style={styles.formSection} 
+              contentContainerStyle={styles.formSectionContent}
+              showsVerticalScrollIndicator={false}
+            >
               {/* {renderEditableField(t('memberID'), "employeeNo", profile.employeeNo)} */}
               {renderEditableField(t('business'), "designation", profile.designation)}
               {renderEditableField(t('status'), "status", profile.status)}
@@ -1246,6 +1346,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
   },
+  formSectionContent: {
+    paddingBottom: 20,
+  },
   fieldContainer: {
     marginBottom: 12,
   },
@@ -1466,14 +1569,65 @@ const styles = StyleSheet.create({
   },
   fullScreenContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+  },
+  imageViewerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 50,
+    paddingBottom: 15,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  imageViewerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFF',
+  },
+  imageViewerActions: {
+    flexDirection: 'row',
+    gap: 15,
+  },
+  minimizeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  closeButtonHeader: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageViewerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
   fullScreenImage: {
-    width: '90%',
-    height: '70%',
+    width: '100%',
+    height: '100%',
     resizeMode: 'contain',
+  },
+  imageViewerFooter: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageViewerFooterText: {
+    color: '#FFF',
+    fontSize: 14,
+    marginTop: 5,
+    opacity: 0.8,
   },
   closeButton: {
     position: 'absolute',
