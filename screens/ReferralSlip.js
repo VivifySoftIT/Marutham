@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,8 @@ const ReferralSlip = ({ route }) => {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const selectedMember = route?.params?.selectedMember;
+  const scrollViewRef = useRef(null);
+  
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showMemberDropdown, setShowMemberDropdown] = useState(false);
@@ -188,9 +190,6 @@ const ReferralSlip = ({ route }) => {
       ...prev,
       memberName: member.name,
       memberId: member.id,
-      // Remove auto-filling of email and telephone
-      // email: member.email || '',
-      // telephone: member.phone || '',
     }));
     setShowMemberDropdown(false);
     setMemberSearchQuery('');
@@ -343,7 +342,6 @@ const ReferralSlip = ({ route }) => {
     setMemberSearchQuery('');
   };
 
-  // Voice input for member search
   const startVoiceSearch = async () => {
     if (Platform.OS === 'web') {
       Alert.alert(t('voiceInput'), t('pleaseUseMobileApp'));
@@ -367,18 +365,15 @@ const ReferralSlip = ({ route }) => {
         if (e.value && e.value[0]) {
           const spokenText = e.value[0];
 
-          // Try to find matching member and auto-select
           const matchingMember = allMembers.find(member =>
             member.name.toLowerCase().includes(spokenText.toLowerCase()) ||
             spokenText.toLowerCase().includes(member.name.toLowerCase())
           );
 
           if (matchingMember) {
-            // Auto-select the matching member
             handleSelectMember(matchingMember);
             Alert.alert(t('success'), `${t('memberSelected')}: ${matchingMember.name}`);
           } else {
-            // If no exact match, set search query to show filtered results
             setMemberSearchQuery(spokenText);
             setShowMemberDropdown(true);
           }
@@ -405,7 +400,6 @@ const ReferralSlip = ({ route }) => {
     }
   };
 
-  // Voice input for other fields
   const startRecording = async (fieldName) => {
     if (Platform.OS === 'web') {
       Alert.alert(t('voiceInput'), t('pleaseUseMobileApp'));
@@ -446,6 +440,13 @@ const ReferralSlip = ({ route }) => {
     }
   };
 
+  // Scroll to field when focused (for keyboard handling)
+  const scrollToField = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 300);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
@@ -466,13 +467,15 @@ const ReferralSlip = ({ route }) => {
         <KeyboardAvoidingView
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 20}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 120 : 90}
         >
           <ScrollView
+            ref={scrollViewRef}
             style={styles.content}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
+            keyboardDismissMode="interactive"
+            contentContainerStyle={{ paddingBottom: 150 }}
           >
 
             {selectedMember && (
@@ -484,7 +487,7 @@ const ReferralSlip = ({ route }) => {
               </View>
             )}
 
-            {/* ALWAYS SHOW Member Search - for both Inside and Outside */}
+            {/* Member Search */}
             <View style={styles.section}>
               <Text style={styles.label}>{t('toMember')} *</Text>
 
@@ -501,12 +504,11 @@ const ReferralSlip = ({ route }) => {
 
               {showMemberDropdown && (
                 <View style={styles.memberDropdownList}>
-                  {/* Search Input */}
                   <View style={styles.searchContainer}>
                     <Icon name="magnify" size={20} color="#4A90E2" />
                     <SpeechToTextInput
                       style={styles.searchInput}
-                      inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingLeft: 10 }}
+                      inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingLeft: 10, paddingVertical: 4 }}
                       placeholder={t('searchMembers')}
                       value={memberSearchQuery}
                       onChangeText={setMemberSearchQuery}
@@ -641,7 +643,7 @@ const ReferralSlip = ({ route }) => {
               </View>
             </View>
 
-            {/* Only show Company Name field for Outside referrals */}
+            {/* Company or Client Name field for Outside referrals */}
             {isOutsideReferral && (
               <View style={styles.section}>
                 <Text style={styles.label}>{t('Company or Client Name')}</Text>
@@ -649,7 +651,7 @@ const ReferralSlip = ({ route }) => {
                   <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
                   <SpeechToTextInput
                     style={styles.input}
-                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
+                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingVertical: 4 }}
                     placeholder={t('enterClientOrCompanyName')}
                     value={formData.referralNumber}
                     onChangeText={(text) => handleInputChange('referralNumber', text)}
@@ -659,7 +661,7 @@ const ReferralSlip = ({ route }) => {
               </View>
             )}
 
-            {/* Only show Telephone Number field for Outside referrals */}
+            {/* Telephone Number field for Outside referrals */}
             {isOutsideReferral && (
               <View style={styles.section}>
                 <Text style={styles.label}>{t('mobileNumber')}</Text>
@@ -667,7 +669,7 @@ const ReferralSlip = ({ route }) => {
                   <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
                   <SpeechToTextInput
                     style={styles.input}
-                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
+                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingVertical: 4 }}
                     placeholder={t('enterTelephoneNumber')}
                     value={formData.telephone}
                     onChangeText={handlePhoneChange}
@@ -679,7 +681,7 @@ const ReferralSlip = ({ route }) => {
               </View>
             )}
 
-            {/* Only show Email field for Outside referrals */}
+            {/* Email field for Outside referrals */}
             {isOutsideReferral && (
               <View style={styles.section}>
                 <Text style={styles.label}>{t('email')}</Text>
@@ -687,7 +689,7 @@ const ReferralSlip = ({ route }) => {
                   <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
                   <SpeechToTextInput
                     style={styles.input}
-                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }}
+                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingVertical: 4 }}
                     placeholder={t('Enter Email')}
                     value={formData.email}
                     onChangeText={(text) => handleInputChange('email', text)}
@@ -699,19 +701,19 @@ const ReferralSlip = ({ route }) => {
               </View>
             )}
 
-            {/* Only show Address field for Outside referrals */}
+            {/* Address field for Outside referrals */}
             {isOutsideReferral && (
               <View style={styles.section}>
                 <Text style={styles.label}>{t('address')}</Text>
                 <View style={[styles.inputContainer, styles.textAreaContainer]}>
                   <SpeechToTextInput
                     style={[styles.input, styles.textArea]}
-                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 80 }}
+                    inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 45, paddingVertical: 4 }}
                     placeholder={t('enterAddress')}
                     value={formData.address}
                     onChangeText={(text) => handleInputChange('address', text)}
                     multiline
-                    numberOfLines={3}
+                    numberOfLines={2}
                     placeholderTextColor="#999"
                   />
                 </View>
@@ -724,12 +726,20 @@ const ReferralSlip = ({ route }) => {
               <View style={[styles.inputContainer, styles.textAreaContainer]}>
                 <SpeechToTextInput
                   style={[styles.input, styles.textArea]}
-                  inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 100 }}
+                  inputStyle={{ 
+                    borderBottomWidth: 0, 
+                    borderWidth: 0, 
+                    minHeight: 60,
+                    paddingVertical: 8,
+                    fontSize: 14,
+                    color: '#333'
+                  }}
                   placeholder={t('enterComments')}
                   value={formData.comments}
                   onChangeText={(text) => handleInputChange('comments', text)}
+                  onFocus={scrollToField}
                   multiline
-                  numberOfLines={4}
+                  numberOfLines={3}
                   placeholderTextColor="#999"
                 />
               </View>
@@ -865,13 +875,13 @@ const styles = StyleSheet.create({
     color: '#2C5F8D',
   },
   section: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   label: {
     fontSize: 12,
     fontWeight: '600',
     color: '#4A90E2',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -881,7 +891,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     paddingHorizontal: 12,
-    minHeight: 45,
+    minHeight: 32,
   },
   icon: {
     marginRight: 10,
@@ -890,7 +900,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: '#333',
-    paddingVertical: 12,
+    paddingVertical: 4,
   },
   micButton: {
     padding: 8,
@@ -904,16 +914,20 @@ const styles = StyleSheet.create({
   textAreaContainer: {
     alignItems: 'flex-start',
     paddingVertical: 8,
+    minHeight: 70,
   },
   textArea: {
     textAlignVertical: 'top',
-    paddingTop: 12,
+    paddingTop: 8,
+    minHeight: 60,
+    fontSize: 14,
+    color: '#333',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
     backgroundColor: '#F8F9FA',
@@ -1056,10 +1070,6 @@ const styles = StyleSheet.create({
     padding: 8,
     marginLeft: 4,
   },
-  voiceSearchButton: {
-    padding: 8,
-    marginLeft: 4,
-  },
   memberScrollView: {
     maxHeight: 250,
   },
@@ -1067,7 +1077,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E8E8E8',
     backgroundColor: '#FFFFFF',
