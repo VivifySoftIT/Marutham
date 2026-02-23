@@ -1446,7 +1446,8 @@ ${t('electronicReceipt')}
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalContent}>
+            <ScrollView style={styles.modalContent}
+              contentContainerStyle={styles.modalContentContainer} >
               {selectedItem && (
                 <>
                   {/* Icon and Title */}
@@ -1986,6 +1987,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#FFF'
   },
+  modalContentContainer: {
+  paddingBottom: 40,  // ← Extra space at bottom so buttons are visible
+},
   tabBarContainer: {
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
@@ -2233,7 +2237,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     maxWidth: 500,
-    maxHeight: '75%',
+    maxHeight: '80%',
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
