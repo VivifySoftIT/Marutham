@@ -111,17 +111,26 @@ const MyProfile = () => {
         const savedImage = await AsyncStorage.getItem("profileImage");
         
         // Load businesses from API response if available
-        if (memberData.businessImages || memberData.businessDescription) {
-          // Parse business images from comma-separated string
-          const businessImages = memberData.businessImages ? memberData.businessImages.split(',') : [];
+        if (memberData.business) {
+          // Parse multiple business names from comma-separated string
+          const businessNames = memberData.business.split(',').map(b => b.trim()).filter(b => b);
           
-          const apiBusinesses = [{
-            name: memberData.business || '',
-            description: memberData.businessDescription || '',
-            images: businessImages.filter(img => img && img.trim() !== '')
-          }];
+          // Parse business images from comma-separated string
+          const businessImages = memberData.businessImages ? memberData.businessImages.split(',').map(img => img.trim()).filter(img => img) : [];
+          
+          // Parse business descriptions (if multiple, split by delimiter)
+          const businessDescriptions = memberData.businessDescription ? memberData.businessDescription.split('\n\n---\n\n').map(d => d.trim()).filter(d => d) : [];
+          
+          // Create business cards - one for each business name
+          const apiBusinesses = businessNames.map((name, index) => ({
+            name: name,
+            description: businessDescriptions[index] || '',
+            images: index === 0 ? businessImages : [] // For now, assign all images to first business
+          }));
+          
           setBusinesses(apiBusinesses);
           await AsyncStorage.setItem('memberBusinesses', JSON.stringify(apiBusinesses));
+          console.log('Businesses loaded from API:', apiBusinesses);
         } else {
           // Fallback to AsyncStorage
           const savedBusinesses = await AsyncStorage.getItem('memberBusinesses');
@@ -347,14 +356,16 @@ const MyProfile = () => {
         });
       }
 
-      // Handle business data
+      // Handle business data - send multiple business names as array
       if (businesses && businesses.length > 0) {
-        // Use the first business name for the Business field if not already set
-        if (businesses[0]?.name && !profile.designation) {
-          formData.append('Business', businesses[0].name);
-        }
+        // Send all business names as separate Business[] array items
+        businesses.forEach(business => {
+          if (business.name && business.name.trim()) {
+            formData.append('Business', business.name.trim());
+          }
+        });
         
-        // Combine all business descriptions into one
+        // Combine all business descriptions into one with delimiter
         const combinedDescription = businesses
           .map(b => b.description)
           .filter(desc => desc && desc.trim())
@@ -365,11 +376,13 @@ const MyProfile = () => {
         }
         
         // Add all business images
+        let hasNewImages = false;
         businesses.forEach((business, bizIndex) => {
           if (business.images && business.images.length > 0) {
             business.images.forEach((imageUri, imgIndex) => {
               // Only append if it's a local file (not a remote URL)
               if (imageUri.startsWith('file://')) {
+                hasNewImages = true;
                 const filename = imageUri.split('/').pop() || `business_${bizIndex}_${imgIndex}.jpg`;
                 const match = /\.(\w+)$/.exec(filename);
                 const type = match ? `image/${match[1]}` : 'image/jpeg';
@@ -382,6 +395,23 @@ const MyProfile = () => {
               }
             });
           }
+        });
+        
+        // If no new images were added, send an empty file to satisfy the required field
+        if (!hasNewImages) {
+          // Create a minimal empty file placeholder
+          formData.append('BusinessImages', {
+            uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+            name: 'placeholder.png',
+            type: 'image/png',
+          });
+        }
+      } else {
+        // If no businesses, still send empty BusinessImages to satisfy required field
+        formData.append('BusinessImages', {
+          uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+          name: 'placeholder.png',
+          type: 'image/png',
         });
       }
 
@@ -471,13 +501,23 @@ const MyProfile = () => {
         });
 
         // Update businesses from API response
-        if (memberData.businessImages || memberData.businessDescription) {
-          const businessImages = memberData.businessImages ? memberData.businessImages.split(',') : [];
-          const apiBusinesses = [{
-            name: memberData.business || '',
-            description: memberData.businessDescription || '',
-            images: businessImages.filter(img => img && img.trim() !== '')
-          }];
+        if (memberData.business) {
+          // Parse multiple business names from comma-separated string
+          const businessNames = memberData.business.split(',').map(b => b.trim()).filter(b => b);
+          
+          // Parse business images from comma-separated string
+          const businessImages = memberData.businessImages ? memberData.businessImages.split(',').map(img => img.trim()).filter(img => img) : [];
+          
+          // Parse business descriptions (if multiple, split by delimiter)
+          const businessDescriptions = memberData.businessDescription ? memberData.businessDescription.split('\n\n---\n\n').map(d => d.trim()).filter(d => d) : [];
+          
+          // Create business cards - one for each business name
+          const apiBusinesses = businessNames.map((name, index) => ({
+            name: name,
+            description: businessDescriptions[index] || '',
+            images: index === 0 ? businessImages : [] // For now, assign all images to first business
+          }));
+          
           setBusinesses(apiBusinesses);
           await AsyncStorage.setItem('memberBusinesses', JSON.stringify(apiBusinesses));
         }
@@ -896,7 +936,7 @@ const MyProfile = () => {
               {/* My Businesses Section */}
               <View style={styles.businessesSection}>
                 <View style={styles.businessesHeader}>
-                  <Text style={styles.businessesSectionTitle}>{t('myBusinesses') || 'My Businesses'}</Text>
+                  <Text style={styles.businessesSectionTitle}>{t('MyBusinesses') || 'My Businesses'}</Text>
                   <TouchableOpacity style={styles.addBusinessButton} onPress={addBusiness}>
                     <Icon name="plus-circle" size={24} color="#4A90E2" />
                   </TouchableOpacity>
@@ -1028,7 +1068,7 @@ const MyProfile = () => {
             >
               <View style={styles.businessFormField}>
                 <Text style={styles.businessFormLabel}>
-                  {t('businessName') || 'Business Name'} *
+                  {t('BusinessName') || 'Business Name'} *
                 </Text>
                 <TextInput
                   style={styles.businessFormInput}
