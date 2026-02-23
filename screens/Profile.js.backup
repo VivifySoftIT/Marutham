@@ -52,7 +52,7 @@ const MyProfile = () => {
 
   const [profile, setProfile] = useState({
     name: "",
-    employeeNo: "",
+    employeeNumber: "",
     designation: "",
     gender: "",
     email: "",
@@ -110,38 +110,15 @@ const MyProfile = () => {
 
         const savedImage = await AsyncStorage.getItem("profileImage");
         
-        // Load businesses from API response if available
-        if (memberData.business) {
-          // Parse multiple business names from comma-separated string
-          const businessNames = memberData.business.split(',').map(b => b.trim()).filter(b => b);
-          
-          // Parse business images from comma-separated string
-          const businessImages = memberData.businessImages ? memberData.businessImages.split(',').map(img => img.trim()).filter(img => img) : [];
-          
-          // Parse business descriptions (if multiple, split by delimiter)
-          const businessDescriptions = memberData.businessDescription ? memberData.businessDescription.split('\n\n---\n\n').map(d => d.trim()).filter(d => d) : [];
-          
-          // Create business cards - one for each business name
-          const apiBusinesses = businessNames.map((name, index) => ({
-            name: name,
-            description: businessDescriptions[index] || '',
-            images: index === 0 ? businessImages : [] // For now, assign all images to first business
-          }));
-          
-          setBusinesses(apiBusinesses);
-          await AsyncStorage.setItem('memberBusinesses', JSON.stringify(apiBusinesses));
-          console.log('Businesses loaded from API:', apiBusinesses);
-        } else {
-          // Fallback to AsyncStorage
-          const savedBusinesses = await AsyncStorage.getItem('memberBusinesses');
-          if (savedBusinesses) {
-            try {
-              const parsedBusinesses = JSON.parse(savedBusinesses);
-              setBusinesses(parsedBusinesses);
-              console.log('Businesses loaded from storage:', parsedBusinesses);
-            } catch (error) {
-              console.error('Error parsing saved businesses:', error);
-            }
+        // Load businesses from AsyncStorage
+        const savedBusinesses = await AsyncStorage.getItem('memberBusinesses');
+        if (savedBusinesses) {
+          try {
+            const parsedBusinesses = JSON.parse(savedBusinesses);
+            setBusinesses(parsedBusinesses);
+            console.log('Businesses loaded:', parsedBusinesses);
+          } catch (error) {
+            console.error('Error parsing saved businesses:', error);
           }
         }
 
@@ -176,7 +153,7 @@ const MyProfile = () => {
 
         setProfile({
           name: memberData.name || "",
-          employeeNo: memberData.memberId || (memberData.id ? memberData.id.toString() : ""),
+          employeeNo: memberData.memberId || memberData.id?.toString() || "",
           designation: memberData.business || "",
           gender: memberData.gender || "",
           email: memberData.email || "",
@@ -257,47 +234,11 @@ const MyProfile = () => {
   };
 
   const handleSave = (field) => {
-    if (field === "contactNumber" && profile[field] && profile[field].length < 10) {
+    if (field === "contactNumber" && profile[field].length < 10) {
       alert(t('phoneNumberMustBe10Digits'));
       return;
     }
     setEditingField(null);
-  };
-
-  const formatDate = (dateString) => {
-    console.log('Formatting date for API:', dateString);
-    if (!dateString || dateString.trim() === "") return null;
-    
-    try {
-      // Handle YYYY/MM/DD format
-      if (dateString.includes('/')) {
-        const parts = dateString.split('/');
-        if (parts.length === 3) {
-          const [year, month, day] = parts;
-          // Create date in local timezone and format as YYYY-MM-DD for API
-          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-          if (!isNaN(date.getTime())) {
-            // Format as YYYY-MM-DD without timezone conversion
-            const formattedDate = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-            console.log('Date formatted for API:', formattedDate);
-            return formattedDate;
-          }
-        }
-      }
-      
-      // Try to parse the date normally and format as YYYY-MM-DD
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return null;
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const formattedDate = `${year}-${month}-${day}`;
-      console.log('Date formatted for API (fallback):', formattedDate);
-      return formattedDate;
-    } catch (error) {
-      console.log("Error formatting date:", dateString, error);
-      return null;
-    }
   };
 
   const handleUpdate = async () => {
@@ -316,133 +257,131 @@ const MyProfile = () => {
         return;
       }
 
-      // Create FormData for multipart/form-data submission
-      const formData = new FormData();
-
-      // Add basic fields
-      if (profile.name) formData.append('Name', profile.name);
-      if (profile.contactNumber) formData.append('Phone', profile.contactNumber);
-      if (profile.email) formData.append('Email', profile.email);
-      if (profile.gender) formData.append('Gender', profile.gender);
-      
-      const formattedDOB = formatDate(profile.dob);
-      if (formattedDOB) formData.append('DOB', formattedDOB);
-      
-      const formattedJoinDate = formatDate(profile.joinDate);
-      if (formattedJoinDate) formData.append('JoinDate', formattedJoinDate);
-      
-      if (profile.contactAddress) formData.append('Address', profile.contactAddress);
-      
-      // Business name goes to the Business field
-      if (profile.designation) formData.append('Business', profile.designation);
-      
-      // Status field
-      if (profile.status) formData.append('Status', profile.status);
-      
-      // SubCompanyId
-      if (profile.subCompanyId) formData.append('SubCompanyId', profile.subCompanyId.toString());
-
-      // Handle profile image if it's a new image (starts with file://)
-      if (profile.profileImage && profile.profileImage.startsWith('file://')) {
-        const filename = profile.profileImage.split('/').pop();
-        const match = /\.(\w+)$/.exec(filename || '');
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
+      // Helper function to format date to ISO string or null
+      const formatDate = (dateString) => {
+        console.log('Formatting date for API:', dateString);
+        if (!dateString || dateString.trim() === "") return null;
         
-        // In JavaScript, we don't need type assertion
-        formData.append('ProfileImage', {
-          uri: profile.profileImage,
-          name: filename || 'profile.jpg',
-          type: type,
-        });
-      }
-
-      // Handle business data - send multiple business names as array
-      if (businesses && businesses.length > 0) {
-        // Send all business names as separate Business[] array items
-        businesses.forEach(business => {
-          if (business.name && business.name.trim()) {
-            formData.append('Business', business.name.trim());
-          }
-        });
-        
-        // Combine all business descriptions into one with delimiter
-        const combinedDescription = businesses
-          .map(b => b.description)
-          .filter(desc => desc && desc.trim())
-          .join('\n\n---\n\n');
-        
-        if (combinedDescription) {
-          formData.append('BusinessDescription', combinedDescription);
-        }
-        
-        // Add all business images
-        let hasNewImages = false;
-        businesses.forEach((business, bizIndex) => {
-          if (business.images && business.images.length > 0) {
-            business.images.forEach((imageUri, imgIndex) => {
-              // Only append if it's a local file (not a remote URL)
-              if (imageUri.startsWith('file://')) {
-                hasNewImages = true;
-                const filename = imageUri.split('/').pop() || `business_${bizIndex}_${imgIndex}.jpg`;
-                const match = /\.(\w+)$/.exec(filename);
-                const type = match ? `image/${match[1]}` : 'image/jpeg';
-                
-                formData.append('BusinessImages', {
-                  uri: imageUri,
-                  name: filename,
-                  type: type,
-                });
+        try {
+          // Handle YYYY/MM/DD format
+          if (dateString.includes('/')) {
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+              const [year, month, day] = parts;
+              // Create date in local timezone and format as YYYY-MM-DD for API
+              const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              if (!isNaN(date.getTime())) {
+                // Format as YYYY-MM-DD without timezone conversion
+                const formattedDate = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                console.log('Date formatted for API:', formattedDate);
+                return formattedDate;
               }
-            });
+            }
           }
-        });
-        
-        // If no new images were added, send an empty file to satisfy the required field
-        if (!hasNewImages) {
-          // Create a minimal empty file placeholder
-          formData.append('BusinessImages', {
-            uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-            name: 'placeholder.png',
-            type: 'image/png',
-          });
+          
+          // Try to parse the date normally and format as YYYY-MM-DD
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return null;
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          const formattedDate = `${year}-${month}-${day}`;
+          console.log('Date formatted for API (fallback):', formattedDate);
+          return formattedDate;
+        } catch (error) {
+          console.log("Error formatting date:", dateString, error);
+          return null;
         }
-      } else {
-        // If no businesses, still send empty BusinessImages to satisfy required field
-        formData.append('BusinessImages', {
-          uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-          name: 'placeholder.png',
-          type: 'image/png',
-        });
-      }
+      };
 
-      console.log("Updating member profile with FormData");
+      // Prepare update data matching UpdateMemberDto
+      // Only send fields that the API accepts
+      const updateData = {
+        Name: profile.name || null,
+        Phone: profile.contactNumber || null,
+        Email: profile.email || null,
+        Gender: profile.gender || null,
+        DOB: formatDate(profile.dob),
+        JoinDate: formatDate(profile.joinDate),
+        Address: profile.contactAddress || null,
+        Business: profile.designation || null,
+        Status: profile.status || null,
+        ProfileImage: profile.profileImage || null,
+        SubCompanyId: profile.subCompanyId || null,
+      };
+
+      console.log("Updating member profile:", JSON.stringify(updateData, null, 2));
 
       const response = await fetch(`${API_BASE_URL}/api/Members/${memberId}/edit`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
-        body: formData,
+        body: JSON.stringify(updateData),
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log('Profile updated successfully:', result);
-        
-        // After successful update, save businesses to AsyncStorage as backup
-        await AsyncStorage.setItem('memberBusinesses', JSON.stringify(businesses));
-        
         alert(t('profileUpdatedSuccessfully'));
         
-        // Refresh profile data
-        await refreshProfileData(memberId);
+        // Refresh profile data using correct endpoint
+        const updatedResponse = await fetch(`${API_BASE_URL}/api/Members/${memberId}`);
+        if (updatedResponse.ok) {
+          const memberData = await updatedResponse.json();
+          const savedImage = await AsyncStorage.getItem("profileImage");
+          
+          // Helper to format date for display (keep YYYY/MM/DD format)
+          const formatDateForDisplay = (dateString) => {
+            if (!dateString) return "";
+            try {
+              // Handle both ISO format and YYYY-MM-DD format from API
+              let date;
+              if (dateString.includes('T')) {
+                // ISO format - extract just the date part to avoid timezone issues
+                const datePart = dateString.split('T')[0];
+                const [year, month, day] = datePart.split('-');
+                date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              } else if (dateString.includes('-')) {
+                // YYYY-MM-DD format
+                const [year, month, day] = dateString.split('-');
+                date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+              } else {
+                date = new Date(dateString);
+              }
+              
+              if (isNaN(date.getTime())) return "";
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              return `${year}/${month}/${day}`;
+            } catch (error) {
+              return dateString;
+            }
+          };
+          
+          setProfile({
+            name: memberData.name || "",
+            employeeNo: memberData.memberId || memberData.id?.toString() || "",
+            designation: memberData.business || "",
+            gender: memberData.gender || "",
+            email: memberData.email || "",
+            contactNumber: memberData.phone || "",
+            contactAddress: memberData.address || "",
+            profileImage: savedImage,
+            status: memberData.status || "",
+            joinDate: formatDateForDisplay(memberData.joinDate),
+            dob: formatDateForDisplay(memberData.dob),
+            subCompanyId: memberData.subCompanyId || null,
+          });
+        }
       } else {
         const errorText = await response.text();
         console.error('Update failed:', errorText);
         
         try {
           const errorJson = JSON.parse(errorText);
-          alert(`${t('failedToUpdateProfile')}: ${errorJson.title || errorJson.message || t('unknownError')}`);
+          alert(`${t('failedToUpdateProfile')}: ${errorJson.title || t('unknownError')}`);
         } catch (e) {
           alert(t('failedToUpdateProfileTryAgain'));
         }
@@ -450,80 +389,6 @@ const MyProfile = () => {
     } catch (error) {
       console.error("Error updating profile:", error);
       alert(t('errorOccurredUpdatingProfile'));
-    }
-  };
-
-  const refreshProfileData = async (memberId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/Members/${memberId}`);
-      if (response.ok) {
-        const memberData = await response.json();
-        const savedImage = await AsyncStorage.getItem("profileImage");
-        
-        const formatDateForDisplay = (dateString) => {
-          if (!dateString) return "";
-          try {
-            let date;
-            if (dateString.includes('T')) {
-              const datePart = dateString.split('T')[0];
-              const [year, month, day] = datePart.split('-');
-              date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            } else if (dateString.includes('-')) {
-              const [year, month, day] = dateString.split('-');
-              date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-            } else {
-              date = new Date(dateString);
-            }
-            
-            if (isNaN(date.getTime())) return "";
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}/${month}/${day}`;
-          } catch (error) {
-            return dateString;
-          }
-        };
-        
-        setProfile({
-          name: memberData.name || "",
-          employeeNo: memberData.memberId || (memberData.id ? memberData.id.toString() : ""),
-          designation: memberData.business || "",
-          gender: memberData.gender || "",
-          email: memberData.email || "",
-          contactNumber: memberData.phone || "",
-          contactAddress: memberData.address || "",
-          profileImage: savedImage,
-          status: memberData.status || "",
-          joinDate: formatDateForDisplay(memberData.joinDate),
-          dob: formatDateForDisplay(memberData.dob),
-          subCompanyId: memberData.subCompanyId || null,
-        });
-
-        // Update businesses from API response
-        if (memberData.business) {
-          // Parse multiple business names from comma-separated string
-          const businessNames = memberData.business.split(',').map(b => b.trim()).filter(b => b);
-          
-          // Parse business images from comma-separated string
-          const businessImages = memberData.businessImages ? memberData.businessImages.split(',').map(img => img.trim()).filter(img => img) : [];
-          
-          // Parse business descriptions (if multiple, split by delimiter)
-          const businessDescriptions = memberData.businessDescription ? memberData.businessDescription.split('\n\n---\n\n').map(d => d.trim()).filter(d => d) : [];
-          
-          // Create business cards - one for each business name
-          const apiBusinesses = businessNames.map((name, index) => ({
-            name: name,
-            description: businessDescriptions[index] || '',
-            images: index === 0 ? businessImages : [] // For now, assign all images to first business
-          }));
-          
-          setBusinesses(apiBusinesses);
-          await AsyncStorage.setItem('memberBusinesses', JSON.stringify(apiBusinesses));
-        }
-      }
-    } catch (error) {
-      console.error("Error refreshing profile data:", error);
     }
   };
 
@@ -580,6 +445,34 @@ const MyProfile = () => {
         ...(profile.profileImage ? [{ text: t('removePhoto'), style: "destructive", onPress: removeImage }] : [])
       ]
     );
+  };
+
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return "";
+    try {
+      // Handle both ISO format and YYYY-MM-DD format from API
+      let date;
+      if (dateString.includes('T')) {
+        // ISO format - extract just the date part to avoid timezone issues
+        const datePart = dateString.split('T')[0];
+        const [year, month, day] = datePart.split('-');
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else if (dateString.includes('-')) {
+        // YYYY-MM-DD format
+        const [year, month, day] = dateString.split('-');
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+      } else {
+        date = new Date(dateString);
+      }
+      
+      if (isNaN(date.getTime())) return "";
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}/${month}/${day}`;
+    } catch (error) {
+      return dateString;
+    }
   };
 
   const handleDateChange = (event, selectedDate) => {
@@ -702,8 +595,8 @@ const MyProfile = () => {
   };
 
   const handleLongPress = () => {
-    if (profile.profileImage) {
-      setFullScreenImage(profile.profileImage);
+    if (profile.profileImage || profile.photoPath) {
+      setFullScreenImage(profile.profileImage || profile.photoPath);
     }
   };
 
@@ -863,9 +756,9 @@ const MyProfile = () => {
         <View style={styles.content}>
           <View style={styles.profileSection}>
             <TouchableOpacity onPress={showImageOptions} onLongPress={handleLongPress}>
-              {profile.profileImage ? (
+              {profile.profileImage || profile.photoPath ? (
                 <Image
-                  source={{ uri: profile.profileImage }}
+                  source={{ uri: profile.profileImage || profile.photoPath }}
                   style={styles.profileImage}
                 />
               ) : (
@@ -928,7 +821,7 @@ const MyProfile = () => {
 
           {activeTab === "professional" && (
             <ScrollView style={styles.formSection} showsVerticalScrollIndicator={false}>
-              {/* {renderEditableField(t('memberID'), "employeeNo", profile.employeeNo)} */}
+              {renderEditableField(t('memberID'), "employeeNo", profile.employeeNo)}
               {renderEditableField(t('business'), "designation", profile.designation)}
               {renderEditableField(t('status'), "status", profile.status)}
               {renderEditableField(t('joinDate'), "joinDate", profile.joinDate)}
@@ -936,7 +829,7 @@ const MyProfile = () => {
               {/* My Businesses Section */}
               <View style={styles.businessesSection}>
                 <View style={styles.businessesHeader}>
-                  <Text style={styles.businessesSectionTitle}>{t('MyBusinesses') || 'My Businesses'}</Text>
+                  <Text style={styles.businessesSectionTitle}>{t('myBusinesses') || 'My Businesses'}</Text>
                   <TouchableOpacity style={styles.addBusinessButton} onPress={addBusiness}>
                     <Icon name="plus-circle" size={24} color="#4A90E2" />
                   </TouchableOpacity>
@@ -968,10 +861,7 @@ const MyProfile = () => {
                       {business.images && business.images.length > 0 && (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.businessImagesScroll}>
                           {business.images.map((image, imgIndex) => (
-                            <TouchableOpacity 
-                              key={`business-${index}-image-${imgIndex}-${image.substring(Math.max(0, image.length - 15))}`} 
-                              onPress={() => setFullScreenImage(image)}
-                            >
+                            <TouchableOpacity key={`business-${index}-image-${imgIndex}-${image.substring(Math.max(0, image.length - 15))}`} onPress={() => setFullScreenImage(image)}>
                               <Image source={{ uri: image }} style={styles.businessImage} />
                             </TouchableOpacity>
                           ))}
@@ -1047,11 +937,8 @@ const MyProfile = () => {
 
       {/* Add/Edit Business Modal */}
       <Modal visible={showAddBusinessModal} transparent={true} animationType="fade">
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"} 
-          style={styles.modalContainer}
-        >
-          <View style={styles.businessModalContent}>
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { maxHeight: '80%', maxWidth: 500, width: '90%', alignSelf: 'center', marginVertical: 'auto' }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 {editingBusinessIndex !== null ? (t('editBusiness') || 'Edit Business') : (t('addBusiness') || 'Add Business')}
@@ -1061,29 +948,39 @@ const MyProfile = () => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView 
-              style={styles.businessModalScroll} 
-              contentContainerStyle={styles.businessModalScrollContent}
-              showsVerticalScrollIndicator={false}
-            >
-              <View style={styles.businessFormField}>
-                <Text style={styles.businessFormLabel}>
-                  {t('BusinessName') || 'Business Name'} *
+            <ScrollView style={{ flex: 1, padding: 16 }}>
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 }}>
+                  {t('businessName') || 'Business Name'} *
                 </Text>
                 <TextInput
-                  style={styles.businessFormInput}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#ddd',
+                    borderRadius: 8,
+                    padding: 12,
+                    fontSize: 14
+                  }}
                   placeholder={t('enterBusinessName') || 'Enter business name'}
                   value={currentBusiness.name}
                   onChangeText={(text) => setCurrentBusiness(prev => ({ ...prev, name: text }))}
                 />
               </View>
 
-              <View style={styles.businessFormField}>
-                <Text style={styles.businessFormLabel}>
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 }}>
                   {t('description') || 'Description'}
                 </Text>
                 <TextInput
-                  style={[styles.businessFormInput, styles.businessFormTextArea]}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: '#ddd',
+                    borderRadius: 8,
+                    padding: 12,
+                    fontSize: 14,
+                    minHeight: 80,
+                    textAlignVertical: 'top'
+                  }}
                   placeholder={t('enterBusinessDescription') || 'Enter business description'}
                   value={currentBusiness.description}
                   onChangeText={(text) => setCurrentBusiness(prev => ({ ...prev, description: text }))}
@@ -1092,29 +989,42 @@ const MyProfile = () => {
                 />
               </View>
 
-              <View style={styles.businessFormField}>
-                <View style={styles.businessImagesHeader}>
-                  <Text style={styles.businessFormLabel}>
+              <View style={{ marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: '#333' }}>
                     {t('productsServices') || 'Products/Services Images'}
                   </Text>
                   <TouchableOpacity
-                    style={styles.addImagesButton}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: '#E3F2FD',
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 8
+                    }}
                     onPress={pickBusinessImage}
                   >
                     <Icon name="camera-plus" size={18} color="#4A90E2" />
-                    <Text style={styles.addImagesButtonText}>
+                    <Text style={{ marginLeft: 6, color: '#4A90E2', fontSize: 13, fontWeight: '600' }}>
                       {t('addImages') || 'Add Images'}
                     </Text>
                   </TouchableOpacity>
                 </View>
 
                 {currentBusiness.images && currentBusiness.images.length > 0 && (
-                  <View style={styles.businessImagesGrid}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                     {currentBusiness.images.map((image, index) => (
-                      <View key={`modal-image-${Date.now()}-${index}-${image.substring(Math.max(0, image.length - 15))}`} style={styles.businessImageWrapper}>
-                        <Image source={{ uri: image }} style={styles.businessImagePreview} />
+                      <View key={`modal-image-${Date.now()}-${index}-${image.substring(Math.max(0, image.length - 15))}`} style={{ position: 'relative', width: 100, height: 100 }}>
+                        <Image source={{ uri: image }} style={{ width: '100%', height: '100%', borderRadius: 8 }} />
                         <TouchableOpacity
-                          style={styles.removeImageButton}
+                          style={{
+                            position: 'absolute',
+                            top: -8,
+                            right: -8,
+                            backgroundColor: '#FFF',
+                            borderRadius: 12
+                          }}
                           onPress={() => removeBusinessImage(index)}
                         >
                           <Icon name="close-circle" size={24} color="#F44336" />
@@ -1137,7 +1047,7 @@ const MyProfile = () => {
               </TouchableOpacity>
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     </KeyboardAvoidingView>
   );
@@ -1150,13 +1060,13 @@ const styles = StyleSheet.create({
   },
   headerGradient: {
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingVertical: 12, // Reduced from paddingTop with StatusBar.currentHeight
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 40,
+    height: 40, // Fixed height for consistent header
   },
   headerTitle: {
     fontSize: 18,
@@ -1407,9 +1317,9 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#FFF',
     borderRadius: 20,
-    padding: 20,
-    width: '90%',
-    maxWidth: 400,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingBottom: 30,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1518,89 +1428,6 @@ const styles = StyleSheet.create({
   genderOptionTextSelected: {
     color: '#4A90E2',
     fontWeight: '600',
-  },
-  // Business Modal Styles
-  businessModalContent: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    width: '90%',
-    maxWidth: 500,
-    maxHeight: '85%',
-    padding: 20,
-  },
-  businessModalScroll: {
-    maxHeight: '70%',
-  },
-  businessModalScrollContent: {
-    paddingBottom: 10,
-  },
-  businessFormField: {
-    marginBottom: 20,
-  },
-  businessFormLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  businessFormInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    backgroundColor: '#FFF',
-  },
-  businessFormTextArea: {
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  businessImagesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  addImagesButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addImagesButtonText: {
-    marginLeft: 6,
-    color: '#4A90E2',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  businessImagesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  businessImageWrapper: {
-    position: 'relative',
-    width: 100,
-    height: 100,
-  },
-  businessImagePreview: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 8,
-  },
-  removeImageButton: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
   },
 });
 

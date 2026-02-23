@@ -1590,6 +1590,51 @@ const handleMeetingResponse = async (notification) => {
             </View>
           </View>
 
+          {/* Quick Access Cards - Member List & One-to-One Meeting */}
+          <View style={styles.quickAccessGrid}>
+            {/* Member List Card */}
+            <TouchableOpacity
+              style={styles.quickAccessCard}
+              onPress={() => navigation.navigate('MembersDirectory')}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['#4A90E2', '#357ABD']}
+                style={styles.quickAccessGradient}
+              >
+                <View style={styles.quickAccessIconContainer}>
+                  <Icon name="account-group" size={32} color="#FFF" />
+                </View>
+                <Text style={styles.quickAccessTitle}>{t('memberList') || 'Member List'}</Text>
+                <Text style={styles.quickAccessSubtitle}>{t('viewAllMembers') || 'View all members'}</Text>
+                <View style={styles.quickAccessArrow}>
+                  <Icon name="arrow-right" size={20} color="#FFF" />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* One-to-One Meeting Card */}
+            <TouchableOpacity
+              style={styles.quickAccessCard}
+              onPress={() => navigation.navigate('TYFCBSlip')}
+              activeOpacity={0.7}
+            >
+              <LinearGradient
+                colors={['#87CEEB', '#4A90E2']}
+                style={styles.quickAccessGradient}
+              >
+                <View style={styles.quickAccessIconContainer}>
+                  <Icon name="calendar-account" size={32} color="#FFF" />
+                </View>
+                <Text style={styles.quickAccessTitle}>{t('oneToOneMeeting') || 'One-to-One Meeting'}</Text>
+                <Text style={styles.quickAccessSubtitle}>{t('scheduleNewMeeting') || 'Schedule new meeting'}</Text>
+                <View style={styles.quickAccessArrow}>
+                  <Icon name="arrow-right" size={20} color="#FFF" />
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
           {/* Period Indicator */}
           <View style={styles.periodIndicator}>
             <Text style={[
@@ -3367,6 +3412,58 @@ headerLogo: {
   width: 42,
   height: 42,
   // Removed tintColor to show original blue logo colors
+},
+// Quick Access Cards
+quickAccessGrid: {
+  flexDirection: 'row',
+  gap: 12,
+  marginTop: 8,
+},
+quickAccessCard: {
+  flex: 1,
+  borderRadius: 16,
+  overflow: 'hidden',
+  elevation: 4,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 8,
+},
+quickAccessGradient: {
+  padding: 20,
+  minHeight: 140,
+  justifyContent: 'space-between',
+},
+quickAccessIconContainer: {
+  width: 56,
+  height: 56,
+  borderRadius: 28,
+  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginBottom: 12,
+},
+quickAccessTitle: {
+  fontSize: 16,
+  fontWeight: '700',
+  color: '#FFF',
+  marginBottom: 4,
+},
+quickAccessSubtitle: {
+  fontSize: 13,
+  color: 'rgba(255, 255, 255, 0.9)',
+  fontWeight: '500',
+},
+quickAccessArrow: {
+  position: 'absolute',
+  bottom: 16,
+  right: 16,
+  width: 32,
+  height: 32,
+  borderRadius: 16,
+  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  justifyContent: 'center',
+  alignItems: 'center',
 },
 });
 

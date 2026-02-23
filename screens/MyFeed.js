@@ -1640,7 +1640,6 @@ ${t('electronicReceipt')}
                     keyboardType="numeric"
                     placeholderTextColor="#999"
                   />
-                  {/* Voice Input Button */}
                   <TouchableOpacity
                     onPress={() => startVoiceInput('amount')}
                     style={[styles.voiceButton, isListening && activeVoiceField === 'amount' && { backgroundColor: '#FFE5E5' }]}
@@ -1745,7 +1744,6 @@ ${t('electronicReceipt')}
                     onChangeText={(text) => setPaymentForm(prev => ({ ...prev, transactionId: text }))}
                     placeholderTextColor="#999"
                   />
-                  {/* Voice Input Button */}
                   <TouchableOpacity
                     onPress={() => startVoiceInput('transactionId')}
                     style={[styles.voiceButton, isListening && activeVoiceField === 'transactionId' && { backgroundColor: '#FFE5E5' }]}
@@ -1797,7 +1795,6 @@ ${t('electronicReceipt')}
                       <Icon name="close-circle" size={18} color="#999" />
                     </TouchableOpacity>
                   )}
-                  {/* Voice Input Button */}
                   <TouchableOpacity
                     onPress={() => startVoiceInput('paymentForMonth')}
                     style={[styles.voiceButton, isListening && activeVoiceField === 'paymentForMonth' && { backgroundColor: '#FFE5E5' }]}
