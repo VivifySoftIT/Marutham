@@ -1616,7 +1616,7 @@ const handleMeetingResponse = async (notification) => {
             {/* One-to-One Meeting Card */}
             <TouchableOpacity
               style={styles.quickAccessCard}
-              onPress={() => navigation.navigate('TYFCBSlip')}
+              onPress={() => navigation.navigate('OneToOneSlip')}
               activeOpacity={0.7}
             >
               <LinearGradient
