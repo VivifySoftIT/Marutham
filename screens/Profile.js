@@ -122,12 +122,25 @@ const MyProfile = () => {
           console.log('Profile image from storage:', profileImageUri);
         }
         
-        // Load businesses from API response if available
-        if (memberData.business) {
-          // Parse multiple business names from comma-separated string
+        // ✅ NEW: Load businesses from MemberBusinesses table (if available in response)
+        if (memberData.businesses && Array.isArray(memberData.businesses)) {
+          // New format: businesses from MemberBusinesses table
+          const apiBusinesses = memberData.businesses.map(business => ({
+            id: business.id, // Store the business ID for updates
+            name: business.businessName,
+            description: business.businessDescription || '',
+            images: business.imagePaths ? business.imagePaths.map(img => 
+              img.startsWith('http') ? img : `${API_BASE_URL}${img}`
+            ) : []
+          }));
+          
+          setBusinesses(apiBusinesses);
+          await AsyncStorage.setItem('memberBusinesses', JSON.stringify(apiBusinesses));
+          console.log('Businesses loaded from MemberBusinesses table:', apiBusinesses);
+        } else if (memberData.business) {
+          // Old format: fallback to comma-separated business field
           const businessNames = memberData.business.split(',').map(b => b.trim()).filter(b => b);
           
-          // Parse business images from comma-separated string and construct full URLs
           const businessImages = memberData.businessImages 
             ? memberData.businessImages.split(',')
                 .map(img => img.trim())
@@ -135,19 +148,17 @@ const MyProfile = () => {
                 .map(img => img.startsWith('http') ? img : `${API_BASE_URL}${img}`)
             : [];
           
-          // Parse business descriptions (if multiple, split by delimiter)
           const businessDescriptions = memberData.businessDescription ? memberData.businessDescription.split('\n\n---\n\n').map(d => d.trim()).filter(d => d) : [];
           
-          // Create business cards - one for each business name
           const apiBusinesses = businessNames.map((name, index) => ({
             name: name,
             description: businessDescriptions[index] || '',
-            images: index === 0 ? businessImages : [] // For now, assign all images to first business
+            images: index === 0 ? businessImages : []
           }));
           
           setBusinesses(apiBusinesses);
           await AsyncStorage.setItem('memberBusinesses', JSON.stringify(apiBusinesses));
-          console.log('Businesses loaded from API:', apiBusinesses);
+          console.log('Businesses loaded from old format:', apiBusinesses);
         } else {
           // Fallback to AsyncStorage
           const savedBusinesses = await AsyncStorage.getItem('memberBusinesses');
@@ -336,7 +347,7 @@ const MyProfile = () => {
       // Create FormData for multipart/form-data submission
       const formData = new FormData();
 
-      // Add basic fields (required fields must always be present)
+      // Add basic fields
       if (profile.name) formData.append('Name', profile.name);
       if (profile.contactNumber) formData.append('Phone', profile.contactNumber);
       if (profile.email) formData.append('Email', profile.email);
@@ -350,20 +361,16 @@ const MyProfile = () => {
       const formattedJoinDate = formatDate(profile.joinDate);
       if (formattedJoinDate) formData.append('JoinDate', formattedJoinDate);
       
-      // Address is required - send empty string if not set
+      // Address - send empty string if not set
       formData.append('Address', profile.contactAddress || '');
       
-      // Business name goes to the Business field
-      if (profile.designation) formData.append('Business', profile.designation);
-      
-      // Status field
-      if (profile.status) formData.append('Status', profile.status);
+      // Status field - send empty string if not set (backend requires it)
+      formData.append('Status', profile.status || '');
       
       // SubCompanyId
       if (profile.subCompanyId) formData.append('SubCompanyId', profile.subCompanyId.toString());
 
-      // Handle profile image - ProfileImage is required by backend
-      // Always send a file, even if it's a placeholder
+      // Handle profile image
       if (profile.profileImage && profile.profileImage.startsWith('file://')) {
         // New local image selected
         const filename = profile.profileImage.split('/').pop();
@@ -375,75 +382,77 @@ const MyProfile = () => {
           name: filename || 'profile.jpg',
           type: type,
         });
-      } else {
-        // No new image - create a minimal valid file
-        // Backend should check file size and ignore if too small
-        const blob = {
-          uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-          type: 'image/png',
-          name: 'keep-existing.png'
-        };
-        formData.append('ProfileImage', blob);
       }
 
-      // Handle business data - send multiple business names as array
+      // ✅ NEW: Handle businesses for MemberBusinesses table
       if (businesses && businesses.length > 0) {
-        // Send all business names as separate Business[] array items
-        businesses.forEach(business => {
-          if (business.name && business.name.trim()) {
-            formData.append('Business', business.name.trim());
+        console.log("Processing businesses for FormData:", businesses.length);
+        businesses.forEach((business, index) => {
+          if (!business.name || !business.name.trim()) {
+            console.log(`Skipping business at index ${index} - no name`);
+            return;
           }
-        });
-        
-        // Combine all business descriptions into one with delimiter
-        const combinedDescription = businesses
-          .map(b => b.description)
-          .filter(desc => desc && desc.trim())
-          .join('\n\n---\n\n');
-        
-        // BusinessDescription is required - send empty string if no descriptions
-        formData.append('BusinessDescription', combinedDescription || '');
-        
-        // Add all business images
-        let hasNewImages = false;
-        businesses.forEach((business, bizIndex) => {
+
+          console.log(`Adding business ${index}:`, {
+            id: business.id,
+            name: business.name,
+            description: business.description,
+            imageCount: business.images?.length || 0
+          });
+
+          // Business ID (if exists, for update)
+          if (business.id) {
+            formData.append(`Businesses[${index}].Id`, business.id.toString());
+            console.log(`  - Added Businesses[${index}].Id = ${business.id}`);
+          }
+
+          // Business Name (required)
+          formData.append(`Businesses[${index}].BusinessName`, business.name.trim());
+          console.log(`  - Added Businesses[${index}].BusinessName = ${business.name.trim()}`);
+
+          // Business Description (optional)
+          if (business.description && business.description.trim()) {
+            formData.append(`Businesses[${index}].BusinessDescription`, business.description.trim());
+            console.log(`  - Added Businesses[${index}].BusinessDescription`);
+          }
+
+          // Existing Images (URLs to keep)
           if (business.images && business.images.length > 0) {
-            business.images.forEach((imageUri, imgIndex) => {
-              // Only append if it's a local file (not a remote URL)
-              if (imageUri.startsWith('file://')) {
-                hasNewImages = true;
-                const filename = imageUri.split('/').pop() || `business_${bizIndex}_${imgIndex}.jpg`;
-                const match = /\.(\w+)$/.exec(filename);
-                const type = match ? `image/${match[1]}` : 'image/jpeg';
-                
-                formData.append('BusinessImages', {
-                  uri: imageUri,
-                  name: filename,
-                  type: type,
-                });
-              }
+            const existingImages = business.images.filter(img => !img.startsWith('file://'));
+            console.log(`  - Existing images: ${existingImages.length}`);
+            existingImages.forEach((imgUrl, imgIndex) => {
+              formData.append(`Businesses[${index}].ExistingImagePaths[${imgIndex}]`, imgUrl);
+              console.log(`    - Added Businesses[${index}].ExistingImagePaths[${imgIndex}]`);
+            });
+
+            // New Images (local files to upload)
+            const newImages = business.images.filter(img => img.startsWith('file://'));
+            console.log(`  - New images to upload: ${newImages.length}`);
+            newImages.forEach((imageUri, imgIndex) => {
+              const filename = imageUri.split('/').pop() || `business_${index}_${imgIndex}.jpg`;
+              const match = /\.(\w+)$/.exec(filename);
+              const type = match ? `image/${match[1]}` : 'image/jpeg';
+              
+              formData.append(`Businesses[${index}].NewImages`, {
+                uri: imageUri,
+                name: filename,
+                type: type,
+              });
+              console.log(`    - Added Businesses[${index}].NewImages (${filename})`);
             });
           }
         });
-        
-        // If no new images were added, send an empty file to satisfy the required field
-        if (!hasNewImages) {
-          // Create a minimal empty file placeholder
-          formData.append('BusinessImages', {
-            uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-            name: 'placeholder.png',
-            type: 'image/png',
-          });
-        }
       } else {
-        // If no businesses, send empty BusinessDescription and placeholder image
-        formData.append('BusinessDescription', '');
-        formData.append('BusinessImages', {
-          uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-          name: 'placeholder.png',
-          type: 'image/png',
-        });
+        console.log("No businesses to send");
       }
+
+      // ✅ WORKAROUND: Send empty values for ALL old format fields to satisfy backend validation
+      // The backend DTO has [Required] attributes that should be removed, but until then, send empty values
+      formData.append('Business', '');
+      formData.append('BusinessDescription', '');
+      // Note: BusinessImages and ProfileImage are IFormFile types, can't send empty string
+      // They will be handled by the backend as null if not provided
+      console.log("Added empty Business and BusinessDescription for backend validation");
 
       console.log("Updating member profile with FormData");
       console.log("Profile data being sent:", {
@@ -455,6 +464,18 @@ const MyProfile = () => {
         hasProfileImage: !!(profile.profileImage && profile.profileImage.startsWith('file://')),
         businessCount: businesses?.length || 0
       });
+      
+      // Debug: Log business data structure
+      console.log("Businesses being sent:", JSON.stringify(businesses, null, 2));
+      console.log("Businesses state length:", businesses?.length);
+      console.log("Businesses state:", businesses);
+      
+      // Debug: Check if businesses have IDs
+      if (businesses && businesses.length > 0) {
+        businesses.forEach((b, i) => {
+          console.log(`Business ${i} has ID:`, b.id, "Name:", b.name);
+        });
+      }
 
       const response = await fetch(`${API_BASE_URL}/api/Members/${memberId}/edit`, {
         method: 'POST',
@@ -466,12 +487,23 @@ const MyProfile = () => {
         const result = await response.json();
         console.log('Profile updated successfully:', result);
         
-        // After successful update, save businesses to AsyncStorage as backup
-        await AsyncStorage.setItem('memberBusinesses', JSON.stringify(businesses));
+        // ✅ IMMEDIATELY update businesses state with IDs from API response
+        if (result.businesses && Array.isArray(result.businesses)) {
+          const updatedBusinesses = result.businesses.map(b => ({
+            id: b.id, // Store the ID returned from API
+            name: b.businessName,
+            description: b.businessDescription || '',
+            images: b.imagePaths || []
+          }));
+          
+          setBusinesses(updatedBusinesses);
+          await AsyncStorage.setItem('memberBusinesses', JSON.stringify(updatedBusinesses));
+          console.log('Businesses updated with IDs from API:', updatedBusinesses);
+        }
         
         alert(t('profileUpdatedSuccessfully'));
         
-        // Refresh profile data
+        // Refresh profile data to ensure everything is in sync
         await refreshProfileData(memberId);
       } else {
         const errorText = await response.text();
@@ -551,11 +583,25 @@ const MyProfile = () => {
         });
 
         // Update businesses from API response
-        if (memberData.business) {
-          // Parse multiple business names from comma-separated string
+        // ✅ NEW: Load businesses from MemberBusinesses table (if available in response)
+        if (memberData.businesses && Array.isArray(memberData.businesses)) {
+          // New format: businesses from MemberBusinesses table
+          const apiBusinesses = memberData.businesses.map(business => ({
+            id: business.id, // Store the business ID for updates
+            name: business.businessName,
+            description: business.businessDescription || '',
+            images: business.imagePaths ? business.imagePaths.map(img => 
+              img.startsWith('http') ? img : `${API_BASE_URL}${img}`
+            ) : []
+          }));
+          
+          setBusinesses(apiBusinesses);
+          await AsyncStorage.setItem('memberBusinesses', JSON.stringify(apiBusinesses));
+          console.log('Businesses refreshed from MemberBusinesses table:', apiBusinesses);
+        } else if (memberData.business) {
+          // Old format: fallback to comma-separated business field
           const businessNames = memberData.business.split(',').map(b => b.trim()).filter(b => b);
           
-          // Parse business images from comma-separated string and construct full URLs
           const businessImages = memberData.businessImages 
             ? memberData.businessImages.split(',')
                 .map(img => img.trim())
@@ -563,18 +609,17 @@ const MyProfile = () => {
                 .map(img => img.startsWith('http') ? img : `${API_BASE_URL}${img}`)
             : [];
           
-          // Parse business descriptions (if multiple, split by delimiter)
           const businessDescriptions = memberData.businessDescription ? memberData.businessDescription.split('\n\n---\n\n').map(d => d.trim()).filter(d => d) : [];
           
-          // Create business cards - one for each business name
           const apiBusinesses = businessNames.map((name, index) => ({
             name: name,
             description: businessDescriptions[index] || '',
-            images: index === 0 ? businessImages : [] // For now, assign all images to first business
+            images: index === 0 ? businessImages : []
           }));
           
           setBusinesses(apiBusinesses);
           await AsyncStorage.setItem('memberBusinesses', JSON.stringify(apiBusinesses));
+          console.log('Businesses refreshed from old format:', apiBusinesses);
         }
       }
     } catch (error) {
@@ -715,18 +760,60 @@ const MyProfile = () => {
   };
 
   const deleteBusiness = async (index) => {
+    const business = businesses[index];
+    
     Alert.alert(
       t('deleteBusiness') || 'Delete Business',
-      t('areYouSureDeleteBusiness') || 'Are you sure you want to delete this business?',
+      'Are you sure you want to delete this business?',
       [
         { text: t('cancel'), style: 'cancel' },
         {
           text: t('delete'),
           style: 'destructive',
           onPress: async () => {
-            const updatedBusinesses = businesses.filter((_, i) => i !== index);
-            setBusinesses(updatedBusinesses);
-            await AsyncStorage.setItem('memberBusinesses', JSON.stringify(updatedBusinesses));
+            try {
+              // If business has an ID, call API to soft delete
+              if (business.id) {
+                const memberId = await getCurrentUserMemberId();
+                if (!memberId) {
+                  alert(t('memberIdNotFound'));
+                  return;
+                }
+
+                console.log(`Deleting business ID ${business.id}`);
+                console.log(`API URL: ${API_BASE_URL}/api/Members/business/${business.id}/delete`);
+                
+                const response = await fetch(`${API_BASE_URL}/api/Members/business/${business.id}/delete`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                });
+
+                console.log('Delete response status:', response.status);
+                
+                if (response.ok) {
+                  const result = await response.json();
+                  console.log(`Business ID ${business.id} deleted successfully:`, result);
+                } else {
+                  const errorText = await response.text();
+                  console.error('Delete failed with status:', response.status);
+                  console.error('Delete failed error:', errorText);
+                  alert(`${t('failedToDeleteBusiness') || 'Failed to delete business'}: ${errorText}`);
+                  return;
+                }
+              }
+
+              // Remove from local state
+              const updatedBusinesses = businesses.filter((_, i) => i !== index);
+              setBusinesses(updatedBusinesses);
+              await AsyncStorage.setItem('memberBusinesses', JSON.stringify(updatedBusinesses));
+              
+              alert('Business deleted successfully');
+            } catch (error) {
+              console.error('Error deleting business:', error);
+              alert(t('errorDeletingBusiness') || 'Error deleting business');
+            }
           }
         }
       ]
@@ -847,7 +934,10 @@ const MyProfile = () => {
     return (
       <View style={styles.fieldContainer}>
         <Text style={styles.editLabel}>{label}</Text>
-        <View style={styles.inputWithIcon}>
+        <View style={[
+          styles.inputWithIcon,
+          isMultiline && styles.inputWithIconMultiline
+        ]}>
           <TextInput
             value={getDisplayValue()}
             onChangeText={(text) => {
@@ -864,6 +954,7 @@ const MyProfile = () => {
             }}
             editable={!isStatusField} // Status field is read-only
             multiline={isMultiline}
+            numberOfLines={isMultiline ? 4 : 1}
             keyboardType={isNumberField ? "numeric" : "default"}
             maxLength={isNumberField ? 10 : undefined}
             style={[
@@ -874,7 +965,7 @@ const MyProfile = () => {
           />
           <TouchableOpacity
             onPress={() => (isEditing ? handleSave(fieldName) : setEditingField(fieldName))}
-            style={styles.iconContainer}
+            style={[styles.iconContainer, isMultiline && styles.iconContainerMultiline]}
             disabled={isStatusField}
           >
             <Icon
@@ -1028,8 +1119,8 @@ const MyProfile = () => {
               contentContainerStyle={styles.formSectionContent}
               showsVerticalScrollIndicator={false}
             >
-              {/* {renderEditableField(t('memberID'), "employeeNo", profile.employeeNo)} */}
-              {renderEditableField(t('business'), "designation", profile.designation)}
+              {/* Business field removed - all businesses shown in MyBusinesses section */}
+              {/* {renderEditableField(t('business'), "designation", profile.designation)} */}
               {renderEditableField(t('status'), "status", profile.status)}
               {renderEditableField(t('joinDate'), "joinDate", profile.joinDate)}
               
@@ -1368,6 +1459,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     height: 40,
   },
+  inputWithIconMultiline: {
+    minHeight: 80,
+    maxHeight: 120,
+    alignItems: 'flex-start',
+    height: 'auto',
+  },
   input: {
     flex: 1,
     fontSize: 14,
@@ -1375,13 +1472,19 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   inputMultiline: {
-    height: 60,
+    minHeight: 80,
+    maxHeight: 120,
     textAlignVertical: 'top',
     paddingTop: 10,
+    paddingBottom: 10,
   },
   iconContainer: {
     padding: 6,
     marginLeft: 6,
+  },
+  iconContainerMultiline: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
   },
   datePickerButton: {
     flexDirection: 'row',
@@ -1432,7 +1535,7 @@ const styles = StyleSheet.create({
   businessesSectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
+    color: '#4A90E2', // Changed to blue
   },
   addBusinessButton: {
     padding: 4,
@@ -1459,8 +1562,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderWidth: 1, // Same as input fields
+    borderColor: '#B0E0E6', // Same light blue as input fields
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
