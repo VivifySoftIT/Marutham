@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
 import LanguageSelector from '../components/LanguageSelector';
@@ -43,6 +44,14 @@ const PaymentDetails = () => {
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState(memberId);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Admin: add payment modal
+  const [showAddPayment, setShowAddPayment] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [payForm, setPayForm] = useState({
+    amount: '', paymentMethod: 'Cash', transactionId: '', paymentForMonth: '', notes: '',
+  });
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
@@ -186,6 +195,93 @@ const PaymentDetails = () => {
     }
   };
 
+  const getToken = async () =>
+    (await AsyncStorage.getItem('jwt_token')) ||
+    (await AsyncStorage.getItem('token')) ||
+    (await AsyncStorage.getItem('authToken'));
+
+  const handleConfirmPayment = async (paymentId) => {
+    if (!paymentId) {
+      Alert.alert('Error', 'Invalid payment ID.');
+      return;
+    }
+    Alert.alert('Confirm Payment', 'Confirm this payment? Member will be able to download their receipt.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Confirm',
+        onPress: async () => {
+          try {
+            const token = await getToken();
+            const res = await fetch(`https://www.vivifysoft.in/AlaigalBE/api/Payments/${paymentId}/confirm`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token && { Authorization: `Bearer ${token}` }),
+              },
+            });
+            const responseText = await res.text();
+            if (res.ok) {
+              Alert.alert('Success', 'Payment confirmed. Member can now download their receipt.');
+              await loadPaymentData(selectedMemberId);
+            } else {
+              let errMsg = `Server error (${res.status})`;
+              try { errMsg = JSON.parse(responseText)?.message || errMsg; } catch (_) {}
+              Alert.alert('Error', errMsg);
+            }
+          } catch (e) {
+            Alert.alert('Error', e.message);
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleAddPayment = async () => {
+    if (!memberData) { Alert.alert('Error', 'Please select a member first'); return; }
+    if (!payForm.amount || isNaN(payForm.amount) || parseFloat(payForm.amount) <= 0) {
+      Alert.alert('Error', 'Enter a valid amount'); return;
+    }
+    if (!payForm.paymentForMonth.trim()) { Alert.alert('Error', 'Enter payment month (e.g. Jan)'); return; }
+    const monthValid = MONTHS.some(m => m.toLowerCase() === payForm.paymentForMonth.trim().toLowerCase());
+    if (!monthValid) { Alert.alert('Error', 'Enter a valid month (Jan-Dec)'); return; }
+
+    setSubmitting(true);
+    try {
+      const token = await getToken();
+      const adminId = await AsyncStorage.getItem('memberId');
+      const payload = {
+        MemberId: memberData.id || memberData.Id,
+        Amount: parseFloat(payForm.amount),
+        PaymentType: 'Monthly',
+        PaymentMethod: payForm.paymentMethod || 'Cash',
+        TransactionId: payForm.transactionId || null,
+        PaymentForMonth: payForm.paymentForMonth.trim(),
+        PaymentDate: new Date().toISOString().split('T')[0],
+        Status: 'AdminConfirmed',
+        Notes: payForm.notes || null,
+        CreatedBy: adminId ? adminId.toString() : 'Admin',
+      };
+      const res = await fetch('https://www.vivifysoft.in/AlaigalBE/api/Inventory/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        Alert.alert('Success', 'Payment added and confirmed.');
+        setShowAddPayment(false);
+        setPayForm({ amount: '', paymentMethod: 'Cash', transactionId: '', paymentForMonth: '', notes: '' });
+        await loadPaymentData(selectedMemberId);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        Alert.alert('Error', err.message || 'Failed to add payment');
+      }
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const getPaymentMethodIcon = (method) => {
     if (!method) return 'cash';
     const methodLower = method.toLowerCase();
@@ -271,12 +367,27 @@ const PaymentDetails = () => {
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('paymentDetails')}</Text>
-        <TouchableOpacity
-          onPress={() => setShowMemberSearch(true)}
-          style={styles.headerButton}
-        >
-          <Icon name="account-search" size={24} color="#FFF" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TouchableOpacity
+            onPress={() => {
+              if (!memberData) {
+                Alert.alert('Select Member', 'Please select a member first before adding a payment.');
+                setShowMemberSearch(true);
+              } else {
+                setShowAddPayment(true);
+              }
+            }}
+            style={styles.headerButton}
+          >
+            <Icon name="plus-circle" size={24} color="#FFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowMemberSearch(true)}
+            style={styles.headerButton}
+          >
+            <Icon name="account-search" size={24} color="#FFF" />
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
 
       <Animated.ScrollView
@@ -429,13 +540,13 @@ const PaymentDetails = () => {
                 }}
               >
                 <View style={styles.paymentCardContent}>
-                  {/* Member Name Row */}
-                  {memberData && (
+                  {/* Member Name Row - always show */}
+                  {(payment.memberName || memberData?.name) ? (
                     <View style={styles.paymentMemberRow}>
                       <Icon name="account" size={16} color="#4A90E2" />
-                      <Text style={styles.paymentMemberName}>{memberData.name}</Text>
+                      <Text style={styles.paymentMemberName}>{payment.memberName || memberData?.name}</Text>
                     </View>
-                  )}
+                  ) : null}
 
                   <View style={styles.paymentCardHeader}>
                     <View style={[styles.paymentIconContainer,
@@ -473,6 +584,7 @@ const PaymentDetails = () => {
                     </View>
                   </View>
 
+        {/* Confirm button on each payment card */}
                   <View style={styles.paymentCardFooter}>
                     <View style={styles.paymentMethod}>
                       <Icon name={getPaymentMethodIcon(payment.paymentMethod)} size={12} color="#6B7280" />
@@ -486,6 +598,21 @@ const PaymentDetails = () => {
                         <Text style={styles.transactionIdText} numberOfLines={1}>
                           {payment.transactionId}
                         </Text>
+                      </View>
+                    )}
+                    {payment.status !== 'AdminConfirmed' && (
+                      <TouchableOpacity
+                        style={styles.confirmBtn}
+                        onPress={() => handleConfirmPayment(payment.id || payment.Id)}
+                      >
+                        <Icon name="check-circle" size={14} color="#FFF" />
+                        <Text style={styles.confirmBtnText}>Confirm</Text>
+                      </TouchableOpacity>
+                    )}
+                    {payment.status === 'AdminConfirmed' && (
+                      <View style={styles.confirmedBadge}>
+                        <Icon name="check-circle" size={13} color="#10B981" />
+                        <Text style={styles.confirmedBadgeText}>Confirmed</Text>
                       </View>
                     )}
                   </View>
@@ -508,22 +635,81 @@ const PaymentDetails = () => {
           )}
         </View>
 
-        {/* Floating Action Button */}
-        {memberData && (
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => navigation.navigate('TakePayment', { memberId: selectedMemberId })}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={['#4A90E2', '#87CEEB']}
-              style={styles.fabGradient}
-            >
-              <Icon name="cash-plus" size={24} color="#FFF" />
-            </LinearGradient>
-          </TouchableOpacity>
-        )}
       </Animated.ScrollView>
+
+      {/* Add Payment Modal */}
+      {showAddPayment && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Add Payment</Text>
+              <TouchableOpacity onPress={() => setShowAddPayment(false)}>
+                <Icon name="close" size={24} color="#374151" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ padding: 16 }}>
+              {memberData && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#E3F2FD', borderRadius: 10, padding: 10, marginBottom: 14 }}>
+                  <Icon name="account" size={18} color="#4A90E2" />
+                  <Text style={{ marginLeft: 8, fontWeight: '600', color: '#1976D2', fontSize: 14 }}>{memberData.name}</Text>
+                </View>
+              )}
+              <Text style={styles.formLabel}>Amount (₹) *</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="e.g. 500"
+                keyboardType="numeric"
+                value={payForm.amount}
+                onChangeText={v => setPayForm(p => ({ ...p, amount: v.replace(/[^0-9]/g, '') }))}
+              />
+              <Text style={styles.formLabel}>Payment Method</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Cash / UPI / Card"
+                value={payForm.paymentMethod}
+                onChangeText={v => setPayForm(p => ({ ...p, paymentMethod: v }))}
+              />
+              <Text style={styles.formLabel}>Transaction ID</Text>
+              <TextInput
+                style={styles.formInput}
+                placeholder="Optional"
+                value={payForm.transactionId}
+                onChangeText={v => setPayForm(p => ({ ...p, transactionId: v }))}
+              />
+              <Text style={styles.formLabel}>Month (e.g. Jan) *</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                {MONTHS.map(m => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[styles.monthChip, payForm.paymentForMonth.toLowerCase() === m.toLowerCase() && styles.monthChipActive]}
+                    onPress={() => setPayForm(p => ({ ...p, paymentForMonth: m }))}
+                  >
+                    <Text style={[styles.monthChipText, payForm.paymentForMonth.toLowerCase() === m.toLowerCase() && styles.monthChipTextActive]}>{m}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.formLabel}>Notes</Text>
+              <TextInput
+                style={[styles.formInput, { height: 70 }]}
+                placeholder="Optional"
+                multiline
+                value={payForm.notes}
+                onChangeText={v => setPayForm(p => ({ ...p, notes: v }))}
+              />
+              <TouchableOpacity
+                style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
+                onPress={handleAddPayment}
+                disabled={submitting}
+              >
+                {submitting
+                  ? <ActivityIndicator size="small" color="#FFF" />
+                  : <Text style={styles.submitBtnText}>Add & Confirm Payment</Text>
+                }
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      )}
 
       {/* Member Search Modal */}
       {showMemberSearch && (
@@ -551,6 +737,30 @@ const PaymentDetails = () => {
             </View>
 
             <ScrollView style={styles.memberList}>
+              {/* All Members option */}
+              <TouchableOpacity
+                style={[styles.modalMemberItem, { borderBottomWidth: 2, borderBottomColor: '#E3F2FD', backgroundColor: !selectedMemberId ? '#F0F8FF' : '#FFF' }]}
+                onPress={async () => {
+                  setSelectedMemberId(null);
+                  setMemberData(null);
+                  setShowMemberSearch(false);
+                  setSearchQuery('');
+                  setLoading(true);
+                  await loadPaymentData(null);
+                  setLoading(false);
+                  animateContent();
+                }}
+              >
+                <View style={[styles.modalMemberAvatar, { backgroundColor: '#4A90E2' }]}>
+                  <Icon name="account-group" size={20} color="#FFF" />
+                </View>
+                <View style={styles.modalMemberInfo}>
+                  <Text style={[styles.modalMemberName, { color: '#4A90E2', fontWeight: '700' }]}>All Members</Text>
+                  <Text style={styles.modalMemberDetails}>View payments for all members</Text>
+                </View>
+                {!selectedMemberId && <Icon name="check-circle" size={24} color="#4A90E2" />}
+              </TouchableOpacity>
+
               {filteredMembers.map((member) => (
                 <TouchableOpacity
                   key={member.id}
@@ -566,7 +776,7 @@ const PaymentDetails = () => {
                   <View style={styles.modalMemberInfo}>
                     <Text style={styles.modalMemberName}>{member.name}</Text>
                     <Text style={styles.modalMemberDetails}>
-                      {member.memberId} • {member.phone}
+                      {member.memberId}  •  {member.phone}
                     </Text>
                   </View>
                   {selectedMemberId === member.id && (
@@ -1085,6 +1295,96 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
   },
+  confirmBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    gap: 4,
+    marginLeft: 'auto',
+  },
+  confirmBtnText: {
+    fontSize: 11,
+    color: '#FFF',
+    fontWeight: '700',
+  },
+  confirmedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+    marginLeft: 'auto',
+  },
+  confirmedBadgeText: {
+    fontSize: 11,
+    color: '#10B981',
+    fontWeight: '600',
+  },
+  formLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 6,
+    marginTop: 10,
+  },
+  formInput: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#111827',
+    marginBottom: 4,
+  },
+  monthChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  monthChipActive: {
+    backgroundColor: '#4A90E2',
+    borderColor: '#4A90E2',
+  },
+  monthChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  monthChipTextActive: {
+    color: '#FFF',
+  },
+  submitBtn: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  submitBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  headerButton: {
+    padding: 4,
+  },
 });
 
 export default PaymentDetails;
+
+
+
+
+
+

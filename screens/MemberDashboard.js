@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -135,6 +135,8 @@ const MemberDashboard = () => {
   const quickActionsScrollRef = useRef(null);
 
   const [notifications, setNotifications] = useState([]);
+  const [pendingVisitorRequests, setPendingVisitorRequests] = useState([]);
+  const [allPendingVisitorRequests, setAllPendingVisitorRequests] = useState([]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -650,6 +652,9 @@ const MemberDashboard = () => {
 
       // Load member name
       await loadMemberName();
+
+      // Load pending visitor member requests
+      await loadPendingVisitorRequests();
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       Alert.alert(
@@ -848,6 +853,93 @@ const MemberDashboard = () => {
       console.error('Error loading member name:', error);
       setMemberName('Admin User');
     }
+  };
+
+  const loadPendingVisitorRequests = async () => {
+    try {
+      const memberId = await MemberIdService.getCurrentUserMemberId();
+      if (!memberId) return;
+      // Member's own submitted requests
+      const response = await fetch(`${API_BASE_URL}/api/Inventory/visitors/pending-member-requests/${memberId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setPendingVisitorRequests(Array.isArray(data) ? data : []);
+      }
+      // All pending requests (admin view)
+      const allRes = await fetch(`${API_BASE_URL}/api/Inventory/visitors/all-pending-member-requests`);
+      if (allRes.ok) {
+        const allData = await allRes.json();
+        setAllPendingVisitorRequests(Array.isArray(allData) ? allData : []);
+      }
+    } catch (error) {
+      console.error('Error loading pending visitor requests:', error);
+    }
+  };
+
+  const handleApproveVisitor = async (visitorId, visitorName) => {
+    Alert.alert(
+      'Approve Member Request',
+      `Approve ${visitorName} as a new member?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Approve',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('jwt_token') ||
+                await AsyncStorage.getItem('token') ||
+                await AsyncStorage.getItem('authToken');
+              const res = await fetch(`${API_BASE_URL}/api/Inventory/visitors/${visitorId}/approve-member`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              });
+              if (res.ok) {
+                Alert.alert('Success', `${visitorName} has been approved as a member.`);
+                await loadPendingVisitorRequests();
+              } else {
+                const err = await res.json().catch(() => ({}));
+                Alert.alert('Error', err.statusDesc || 'Failed to approve request.');
+              }
+            } catch (e) {
+              Alert.alert('Error', e.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleRejectVisitor = async (visitorId, visitorName) => {
+    Alert.alert(
+      'Reject Member Request',
+      `Reject ${visitorName}'s member request?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reject',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('jwt_token') ||
+                await AsyncStorage.getItem('token') ||
+                await AsyncStorage.getItem('authToken');
+              const res = await fetch(`${API_BASE_URL}/api/Inventory/visitors/${visitorId}/reject-member`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              });
+              if (res.ok) {
+                Alert.alert('Done', `${visitorName}'s request has been rejected.`);
+                await loadPendingVisitorRequests();
+              } else {
+                Alert.alert('Error', 'Failed to reject request.');
+              }
+            } catch (e) {
+              Alert.alert('Error', e.message);
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Handle refresh
@@ -1131,6 +1223,54 @@ const MemberDashboard = () => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </Animatable.View>
+        )}
+
+        {/* Admin: All Pending Visitor Member Requests — Approve / Reject */}
+        {allPendingVisitorRequests.length > 0 && (
+          <Animatable.View
+            animation="fadeInUp"
+            delay={320}
+            style={[styles.sectionContainer, { borderLeftWidth: 4, borderLeftColor: '#4A90E2', backgroundColor: '#F0F8FF' }]}
+          >
+            <View style={styles.sectionHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                <Icon name="account-clock" size={20} color="#4A90E2" />
+                <Text style={[styles.sectionTitle, { color: '#1565C0' }]}>
+                  Visitor Member Requests ({allPendingVisitorRequests.length})
+                </Text>
+              </View>
+            </View>
+            {allPendingVisitorRequests.map((req) => (
+              <View key={req.id} style={styles.visitorReqRow}>
+                <View style={styles.visitorReqInfo}>
+                  <Text style={styles.visitorReqName}>{req.visitorName}</Text>
+                  <Text style={styles.visitorReqMeta}>
+                    {req.visitorPhone ? `📞 ${req.visitorPhone}` : ''}
+                    {req.broughtByMemberName ? `  •  Ref: ${req.broughtByMemberName}` : ''}
+                  </Text>
+                  <Text style={styles.visitorReqDate}>
+                    {new Date(req.createdDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </Text>
+                </View>
+                <View style={styles.visitorReqActions}>
+                  <TouchableOpacity
+                    style={styles.approveBtn}
+                    onPress={() => handleApproveVisitor(req.id, req.visitorName)}
+                  >
+                    <Icon name="check" size={14} color="#FFF" />
+                    <Text style={styles.approveBtnText}>Approve</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.rejectBtn}
+                    onPress={() => handleRejectVisitor(req.id, req.visitorName)}
+                  >
+                    <Icon name="close" size={14} color="#FFF" />
+                    <Text style={styles.rejectBtnText}>Reject</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
           </Animatable.View>
         )}
 
@@ -2363,6 +2503,125 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 20,
     paddingHorizontal: 20,
+  },
+  visitorReqRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#BBDEFB',
+    gap: 8,
+  },
+  visitorReqInfo: {
+    flex: 1,
+  },
+  visitorReqName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1A237E',
+    marginBottom: 2,
+  },
+  visitorReqMeta: {
+    fontSize: 12,
+    color: '#3949AB',
+    marginBottom: 2,
+  },
+  visitorReqDate: {
+    fontSize: 11,
+    color: '#7986CB',
+  },
+  visitorReqActions: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  approveBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  approveBtnText: {
+    fontSize: 11,
+    color: '#FFF',
+    fontWeight: '700',
+  },
+  rejectBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F44336',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  rejectBtnText: {
+    fontSize: 11,
+    color: '#FFF',
+    fontWeight: '700',
+  },
+  pendingRequestCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF8C00',
+    backgroundColor: '#FFFBF5',
+  },
+  pendingRequestHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  pendingRequestIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#FFF3E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pendingRequestTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#E65100',
+    marginBottom: 3,
+  },
+  pendingRequestSubtitle: {
+    fontSize: 12,
+    color: '#795548',
+    lineHeight: 17,
+  },
+  pendingBadge: {
+    backgroundColor: '#FFF3E0',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: '#FF8C00',
+    alignSelf: 'flex-start',
+  },
+  pendingBadgeText: {
+    fontSize: 10,
+    color: '#FF8C00',
+    fontWeight: '700',
+  },
+  pendingRequestItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#FFE0B2',
+    gap: 8,
+  },
+  pendingRequestName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4E342E',
+  },
+  pendingRequestDate: {
+    fontSize: 11,
+    color: '#A1887F',
   },
 });
 

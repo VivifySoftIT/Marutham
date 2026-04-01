@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ActivityIndicator, RefreshControl, Alert, ImageBackground, Modal, ScrollView, TextInput, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -224,25 +224,29 @@ const MyFeed = ({ route }) => {
       console.log('Payment API Response:', data);
 
       // Convert payment data to regular feed format (like other feed items)
-      const paymentFeedItems = (data.payments || []).map((payment, index) => ({
-        id: `payment_${payment.paymentId || index}`,
-        type: payment.receiptNo ? 'payment_made' : 'payment_due',
-        title: payment.receiptNo ? t('paymentReceived') : t('pendingPayments'),
-        description: `${t('payment')} ${t('for')} ${payment.paymentForMonth || t('unknown')}`,
-        memberName: data.memberName || t('you'),
-        amount: payment.amount || 0,
-        date: payment.paymentDate || payment.paymentEndDate || new Date().toISOString(),
-        status: payment.receiptNo ? t('paid') : t('pending'),
-        icon: payment.receiptNo ? 'check-circle' : 'alert-circle',
-        color: payment.receiptNo ? '#4CAF50' : '#FF9800',
-        // Additional payment details
-        paymentMethod: payment.paymentMethod,
-        receiptNo: payment.receiptNo,
-        transactionId: payment.transactionId,
-        paymentForMonth: payment.paymentForMonth,
-        dueDate: payment.paymentEndDate,
-        paidDate: payment.paymentDate,
-      }));
+      const paymentFeedItems = (data.payments || []).map((payment, index) => {
+        const isConfirmed = payment.status === 'AdminConfirmed';
+        return {
+          id: `payment_${payment.paymentId || index}`,
+          paymentId: payment.paymentId,
+          type: payment.receiptNo ? 'payment_made' : 'payment_due',
+          title: payment.receiptNo ? t('paymentReceived') : t('pendingPayments'),
+          description: `${t('payment')} ${t('for')} ${payment.paymentForMonth || t('unknown')}`,
+          memberName: data.memberName || t('you'),
+          amount: payment.amount || 0,
+          date: payment.paymentDate || payment.paymentEndDate || new Date().toISOString(),
+          status: payment.status || (payment.receiptNo ? 'Paid' : 'Pending'),
+          adminConfirmed: isConfirmed,
+          icon: payment.receiptNo ? 'check-circle' : 'alert-circle',
+          color: payment.receiptNo ? '#4CAF50' : '#FF9800',
+          paymentMethod: payment.paymentMethod,
+          receiptNo: payment.receiptNo,
+          transactionId: payment.transactionId,
+          paymentForMonth: payment.paymentForMonth,
+          dueDate: payment.paymentEndDate,
+          paidDate: payment.paymentDate,
+        };
+      });
 
       console.log('Mapped payment feed items:', paymentFeedItems);
       setFeedData(paymentFeedItems);
@@ -589,7 +593,7 @@ ${t('memberId')}: ${await getCurrentUserMemberId() ? `MEM-${await getCurrentUser
 
 ${t('paymentDetails').toUpperCase()}
 ${t('month')}: ${selectedPayment.month}
-${t('amount')}: ₹${selectedPayment.amount.toLocaleString()}
+${t('amount')}: \u20B9${selectedPayment.amount.toLocaleString()}
 ${t('paymentType')}: ${selectedPayment.type}
 ${t('status')}: ${selectedPayment.status}
 ${t('dueDate')}: ${selectedPayment.dueDate}
@@ -644,7 +648,7 @@ ${t('memberId')}: ${currentMemberId ? `MEM-${currentMemberId}` : t('notAvailable
 
 ${t('paymentDetails').toUpperCase()}
 ${t('month')}: ${paymentItem.paymentForMonth || t('unknown')}
-${t('amount')}: ₹${(paymentItem.amount || 0).toLocaleString()}
+${t('amount')}: \u20B9${(paymentItem.amount || 0).toLocaleString()}
 ${t('paymentType')}: ${t('monthlyPayment')}
 ${t('status')}: ${paymentItem.status}
 ${t('dueDate')}: ${paymentItem.dueDate || t('notAvailable')}
@@ -830,7 +834,7 @@ ${t('electronicReceipt')}
         console.log('Using entity ID from feed item:', numericId);
       }
 
-      const endpoint = `${API_BASE_URL}/api/TYFCB/tyfcb/${numericId}/status`;
+      const endpoint = `${API_BASE_URL}/api/TYFCB/${numericId}/status`;
       const payload = { Status: status };
 
       console.log('TYFCB API Call:', {
@@ -1026,69 +1030,69 @@ ${t('electronicReceipt')}
     // Handle "you visited" patterns in Tamil
     if (description.includes('you visited') || description.includes('you brought visitor') || description.includes('visitor brought')) {
       const businessName = item.visitorBusiness || item.company || item.businessName || item.memberName || 'D';
-      return `நீங்கள் ${businessName} ஐ பார்வையிட்டீர்கள்`;
+      return `à®¨à¯€à®™à¯à®•à®³à¯ ${businessName} à® à®ªà®¾à®°à¯à®µà¯ˆà®¯à®¿à®Ÿà¯à®Ÿà¯€à®°à¯à®•à®³à¯`;
     }
     
     if (description.includes('you met') || description.includes('you had meeting') || description.includes('meeting with') || description.includes('1:1 with')) {
       const memberName = item.memberName || 'D';
-      return `நீங்கள் ${memberName} ஐ சந்தித்தீர்கள்`;
+      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à® à®šà®¨à¯à®¤à®¿à®¤à¯à®¤à¯€à®°à¯à®•à®³à¯`;
     }
     
     if (description.includes('you gave referral') || description.includes('you gave a referral') || description.includes('you referred') || description.includes('referral to') || description.includes('sent referral')) {
       const memberName = item.memberName || 'D';
-      return `நீங்கள் ${memberName} க்கு பரிந்துரை வழங்கினீர்கள்`;
+      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à®•à¯à®•à¯ à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ˆ à®µà®´à®™à¯à®•à®¿à®©à¯€à®°à¯à®•à®³à¯`;
     }
     
     if (description.includes('you received referral') || description.includes('referral from') || description.includes('got referral')) {
       const memberName = item.memberName || 'D';
-      return `நீங்கள் ${memberName} இடமிருந்து பரிந்துரை பெற்றீர்கள்`;
+      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à®‡à®Ÿà®®à®¿à®°à¯à®¨à¯à®¤à¯ à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ˆ à®ªà¯†à®±à¯à®±à¯€à®°à¯à®•à®³à¯`;
     }
     
     if (description.includes('you gave thanks') || description.includes('you sent thanks') || description.includes('thanks to') || description.includes('tyfcb to')) {
       const memberName = item.memberName || 'D';
-      return `நீங்கள் ${memberName} க்கு நன்றி தெரிவித்தீர்கள்`;
+      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à®•à¯à®•à¯ à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à¯€à®°à¯à®•à®³à¯`;
     }
     
     if (description.includes('you received thanks') || description.includes('thanks from') || description.includes('tyfcb from') || description.includes('got thanks')) {
       const memberName = item.memberName || 'D';
-      return `${memberName} உங்களுக்கு நன்றி தெரிவித்தார்`;
+      return `${memberName} à®‰à®™à¯à®•à®³à¯à®•à¯à®•à¯ à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à®¾à®°à¯`;
     }
     
     // Handle third person patterns in Tamil
     if (description.includes('gave referral') || description.includes('sent referral')) {
       const memberName = item.memberName || 'D';
-      return `${memberName} பரிந்துரை கொடுத்தார்`;
+      return `${memberName} à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ˆ à®•à¯Šà®Ÿà¯à®¤à¯à®¤à®¾à®°à¯`;
     }
     
     if (description.includes('received referral') || description.includes('got referral')) {
       const memberName = item.memberName || 'D';
-      return `${memberName} பரிந்துரை பெற்றார்`;
+      return `${memberName} à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ˆ à®ªà¯†à®±à¯à®±à®¾à®°à¯`;
     }
     
     if (description.includes('gave thanks') || description.includes('sent thanks')) {
       const memberName = item.memberName || 'D';
-      return `${memberName} நன்றி தெரிவித்தார்`;
+      return `${memberName} à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à®¾à®°à¯`;
     }
     
     if (description.includes('received thanks') || description.includes('got thanks')) {
       const memberName = item.memberName || 'D';
-      return `${memberName} நன்றி பெற்றார்`;
+      return `${memberName} à®¨à®©à¯à®±à®¿ à®ªà¯†à®±à¯à®±à®¾à®°à¯`;
     }
     
     // Handle specific thanks note activity types in Tamil
     if (item.type === 'tyfcb_given' || item.type === 'thanksnote_given') {
       const memberName = item.memberName || 'D';
-      return `நீங்கள் ${memberName} க்கு நன்றி தெரிவித்தீர்கள்`;
+      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à®•à¯à®•à¯ à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à¯€à®°à¯à®•à®³à¯`;
     }
     
     if (item.type === 'tyfcb_received' || item.type === 'thanksnote_received') {
       const memberName = item.memberName || 'D';
-      return `${memberName} உங்களுக்கு நன்றி தெரிவித்தார்`;
+      return `${memberName} à®‰à®™à¯à®•à®³à¯à®•à¯à®•à¯ à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à®¾à®°à¯`;
     }
     
     // For payment items in Tamil
     if (item.type === 'payment_made' || item.type === 'payment_due') {
-      return `${item.paymentForMonth || 'தெரியாத'} மாதத்திற்கான பணம்`;
+      return `${item.paymentForMonth || 'à®¤à¯†à®°à®¿à®¯à®¾à®¤'} à®®à®¾à®¤à®¤à¯à®¤à®¿à®±à¯à®•à®¾à®© à®ªà®£à®®à¯`;
     }
     
     // For visitor items in Tamil
@@ -1096,9 +1100,9 @@ ${t('electronicReceipt')}
       const visitorName = item.memberName || item.visitorName || 'D';
       const company = item.visitorBusiness || item.company || '';
       if (company) {
-        return `${visitorName} ${company} இல் இருந்து`;
+        return `${visitorName} ${company} à®‡à®²à¯ à®‡à®°à¯à®¨à¯à®¤à¯`;
       } else {
-        return `${visitorName} பார்வையாளர்`;
+        return `${visitorName} à®ªà®¾à®°à¯à®µà¯ˆà®¯à®¾à®³à®°à¯`;
       }
     }
     
@@ -1207,11 +1211,11 @@ ${t('electronicReceipt')}
           )}
           <Text style={styles.feedDate}>
             {formatDate(item.date || new Date().toISOString())}
-            {item.amount > 0 && ` • ${t('amount')}: ₹${item.amount.toLocaleString()}`}
+            {item.amount > 0 && ` \u2022 ${t('amount')}: \u20B9${item.amount.toLocaleString()}`}
           </Text>
 
-          {/* Show download button only for paid payment items */}
-          {item.type === 'payment_made' && translateStatus(item.status) === t('paid') && (
+          {/* Show download button only for admin-confirmed payment items */}
+          {item.type === 'payment_made' && item.adminConfirmed && (
             <View style={styles.paymentActions}>
               <TouchableOpacity
                 style={styles.downloadButton}
@@ -1220,6 +1224,14 @@ ${t('electronicReceipt')}
                 <Icon name="download" size={16} color="#4A90E2" />
                 <Text style={styles.downloadButtonText}>{t('downloadReceipt')}</Text>
               </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Show pending confirmation badge for submitted but not yet confirmed payments */}
+          {item.type === 'payment_made' && !item.adminConfirmed && (
+            <View style={styles.pendingConfirmBadge}>
+              <Icon name="clock-outline" size={13} color="#FF8C00" />
+              <Text style={styles.pendingConfirmText}>Pending Admin Confirmation</Text>
             </View>
           )}
 
@@ -1503,7 +1515,7 @@ ${t('electronicReceipt')}
                       <Icon name="currency-usd" size={20} color="#666" />
                       <Text style={styles.detailLabel}>{t('amount')}</Text>
                       <Text style={[styles.detailValue, { color: selectedItem.amount > 0 ? '#4CAF50' : '#666', fontWeight: 'bold' }]}>
-                        {selectedItem.amount > 0 ? `₹${selectedItem.amount.toLocaleString()}` : t('notAvailable')}
+                        {selectedItem.amount > 0 ? `\u20B9${selectedItem.amount.toLocaleString()}` : t('notAvailable')}
                       </Text>
                     </View>
 
@@ -1940,7 +1952,7 @@ ${t('electronicReceipt')}
                 </View>
                 <View style={styles.receiptDetailRow}>
                   <Text style={styles.receiptDetailLabel}>{t('amount')}:</Text>
-                  <Text style={styles.receiptDetailValue}>₹{(selectedPayment?.amount || 0).toLocaleString()}</Text>
+                  <Text style={styles.receiptDetailValue}>\u20B9{(selectedPayment?.amount || 0).toLocaleString()}</Text>
                 </View>
                 <View style={styles.receiptDetailRow}>
                   <Text style={styles.receiptDetailLabel}>{t('paymentMethod')}:</Text>
@@ -1950,7 +1962,7 @@ ${t('electronicReceipt')}
 
               <View style={styles.receiptAmountBox}>
                 <Text style={styles.receiptAmountLabel}>{t('totalAmountPaid')}</Text>
-                <Text style={styles.receiptAmountValue}>₹{(selectedPayment?.amount || 0).toLocaleString()}</Text>
+                <Text style={styles.receiptAmountValue}>\u20B9{(selectedPayment?.amount || 0).toLocaleString()}</Text>
               </View>
 
               <View style={styles.receiptFooter}>
@@ -1988,7 +2000,7 @@ const styles = StyleSheet.create({
     color: '#FFF'
   },
   modalContentContainer: {
-  paddingBottom: 40,  // ← Extra space at bottom so buttons are visible
+  paddingBottom: 40,  // â† Extra space at bottom so buttons are visible
 },
   tabBarContainer: {
     backgroundColor: '#FFF',
@@ -2182,6 +2194,24 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#4A90E2',
     fontWeight: '600'
+  },
+  pendingConfirmBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FF8C00',
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    gap: 5,
+  },
+  pendingConfirmText: {
+    fontSize: 11,
+    color: '#FF8C00',
+    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,

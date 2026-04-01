@@ -491,6 +491,27 @@ Date = t.VisitDate?.ToString("yyyy-MM-dd") ?? "",
         }
     }
 
+    // PUT: api/Feed/visitors/{id}/status
+    [HttpPut("visitors/{id}/status")]
+    public async Task<IActionResult> UpdateVisitorStatus(int id, [FromBody] UpdateVisitorStatusDto dto)
+    {
+        var visitor = await _context.Visitors.FindAsync(id);
+        if (visitor == null)
+            return NotFound(new { message = "Visitor not found" });
+
+        visitor.Status = dto.Status; // "Approved" or "Rejected"
+        if (dto.Status == "Approved")
+            visitor.BecameMember = true;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { message = $"Visitor status updated to {dto.Status}" });
+    }
+
+    public class UpdateVisitorStatusDto
+    {
+        public string Status { get; set; } = string.Empty;
+    }
+
     public class VisitorDto
     {
         public int Id { get; set; }

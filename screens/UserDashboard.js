@@ -360,7 +360,6 @@ const UserDashboard = () => {
   const getCurrentUserMemberId = async () => {
     return await MemberIdService.getCurrentUserMemberId();
   };
-
   const loadUserData = async () => {
     try {
       setLoading(true);

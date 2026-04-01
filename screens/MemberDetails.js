@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -211,7 +211,7 @@ const MemberDetails = () => {
           </View>
         </View>
 
-        {/* Business Details — same structure as Profile.js */}
+        {/* Business Details â€” same structure as Profile.js */}
         {businesses.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Business Details</Text>
@@ -592,3 +592,4 @@ const styles = StyleSheet.create({
 });
 
 export default MemberDetails;
+

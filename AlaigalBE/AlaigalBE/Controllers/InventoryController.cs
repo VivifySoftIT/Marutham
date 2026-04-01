@@ -892,30 +892,35 @@ public class InventoryController : ControllerBase
     // Create a DTO that matches exactly what your database expects
     public class CreateVisitorDto
     {
+        [Required]
         public int BroughtByMemberId { get; set; }
-        public string VisitorName { get; set; }
-        public string VisitorPhone { get; set; }
-        public string VisitorEmail { get; set; }
-        public string VisitorBusiness { get; set; }
+
+        [Required]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        public string LastName { get; set; } = string.Empty;
+
+        // Derived from FirstName + LastName; also accepted directly
+        public string? VisitorName { get; set; }
+
+        [Required]
+        public string MobileNumber { get; set; } = string.Empty;
+
+        // Alias accepted from frontend
+        public string? VisitorPhone { get; set; }
+
+        [EmailAddress]
+        public string? VisitorEmail { get; set; }
+
+        public string? VisitorBusiness { get; set; }
+
+        // Alias accepted from frontend
+        public string? Company { get; set; }
+
         public DateTime VisitDate { get; set; }
         public bool? BecameMember { get; set; }
-        public int? MemberId { get; set; }
-        public string Notes { get; set; }
-        public string Title { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Company { get; set; }
-        public string Language { get; set; }
-        public string TelephoneNumber { get; set; }
-        public string MobileNumber { get; set; }
-        public string VisitorCountry { get; set; }
-        public string VisitorAddress { get; set; }
-        public string VisitorCity { get; set; }
-        public string VisitorState { get; set; }
-        public string VisitorPostcode { get; set; }
-        public string Region { get; set; }
-        public string Chapter { get; set; }
-        public string Country { get; set; }
+        public string? Notes { get; set; }
     }
     [HttpGet("members-with-payment")]
     public async Task<IActionResult> GetMembersWithPayment(int? memberId = null)
@@ -1016,147 +1021,48 @@ public class InventoryController : ControllerBase
 
             using var transaction = await _context.Database.BeginTransactionAsync();
 
+            // Resolve phone and name
+            string resolvedPhone = visitorDto.MobileNumber?.Trim()
+                                   ?? visitorDto.VisitorPhone?.Trim()
+                                   ?? string.Empty;
+
+            string resolvedName = !string.IsNullOrWhiteSpace(visitorDto.VisitorName)
+                ? visitorDto.VisitorName.Trim()
+                : $"{visitorDto.FirstName} {visitorDto.LastName}".Trim();
+
+            string resolvedBusiness = visitorDto.VisitorBusiness?.Trim()
+                                      ?? visitorDto.Company?.Trim()
+                                      ?? string.Empty;
+
             // Create Visitor
             var visitor = new Visitor
             {
                 BroughtByMemberId = visitorDto.BroughtByMemberId,
-                VisitorName = visitorDto.VisitorName,
-                VisitorPhone = visitorDto.VisitorPhone,
-                VisitorEmail = visitorDto.VisitorEmail,
-                VisitorBusiness = visitorDto.VisitorBusiness,
+                VisitorName = resolvedName,
+                VisitorPhone = resolvedPhone,
+                VisitorEmail = visitorDto.VisitorEmail ?? string.Empty,
+                VisitorBusiness = resolvedBusiness,
                 VisitDate = visitorDto.VisitDate,
                 BecameMember = visitorDto.BecameMember ?? false,
                 MemberId = visitorDto.BroughtByMemberId,
-                Notes = visitorDto.Notes,
-                Title = visitorDto.Title,
+                Notes = visitorDto.Notes ?? string.Empty,
                 FirstName = visitorDto.FirstName,
                 LastName = visitorDto.LastName,
-                Company = visitorDto.Company,
-                Language = visitorDto.Language,
-                TelephoneNumber = visitorDto.TelephoneNumber,
-                MobileNumber = visitorDto.MobileNumber,
-                VisitorCountry = visitorDto.VisitorCountry,
-                VisitorAddress = visitorDto.VisitorAddress,
-                VisitorCity = visitorDto.VisitorCity,
-                VisitorState = visitorDto.VisitorState,
-                VisitorPostcode = visitorDto.VisitorPostcode,
-                Region = visitorDto.Region,
-                Chapter = visitorDto.Chapter,
-                Country = visitorDto.Country,
-
+                Company = resolvedBusiness,
+                MobileNumber = resolvedPhone,
                 Status = "1",
                 CreatedDate = DateTime.UtcNow,
                 SubCompanyId = broughtByMember.SubCompanyId
             };
-
-            if (string.IsNullOrEmpty(visitor.VisitorName) && !string.IsNullOrEmpty(visitorDto.FirstName))
-            {
-                visitor.VisitorName = $"{visitorDto.FirstName} {visitorDto.LastName}".Trim();
-            }
 
             _context.Visitors.Add(visitor);
             await _context.SaveChangesAsync();
 
             if (visitor.BecameMember)
             {
-                // 🔒 Prevent duplicate email in Users or Members
-                if (!string.IsNullOrWhiteSpace(visitorDto.VisitorEmail))
-                {
-                    bool emailExists = await _context.Users.AnyAsync(u => u.Email == visitorDto.VisitorEmail)
-                                        || await _context.Members.AnyAsync(m => m.Email == visitorDto.VisitorEmail);
-                    if (emailExists)
-                    {
-                        _logger.LogWarning("Duplicate email registration attempt: {Email}", visitorDto.VisitorEmail);
-                        return BadRequest(new
-                        {
-                            statusCode = 400,
-                            statusDesc = "Email already registered."
-                        });
-                    }
-                }
-
-                var now = DateTime.UtcNow;
-
-                // Build full name with title
-                string fullName = !string.IsNullOrWhiteSpace(visitorDto.Title)
-                    ? $"{visitorDto.Title} {visitorDto.FirstName} {visitorDto.LastName}".Trim()
-                    : $"{visitorDto.FirstName} {visitorDto.LastName}".Trim();
-
-                // Determine primary phone
-                string phone = visitorDto.MobileNumber
-                               ?? visitorDto.TelephoneNumber
-                               ?? visitorDto.VisitorPhone
-                               ?? string.Empty;
-
-                // Combine address parts
-                var addressParts = new List<string>
-            {
-                visitorDto.VisitorAddress?.Trim(),
-                visitorDto.VisitorCity?.Trim(),
-                visitorDto.VisitorState?.Trim(),
-                visitorDto.VisitorPostcode?.Trim(),
-                (visitorDto.Country ?? visitorDto.VisitorCountry)?.Trim()
-            };
-                string fullAddress = string.Join(", ", addressParts.Where(p => !string.IsNullOrWhiteSpace(p)));
-
-                // ✅ CREATE MEMBER — with ReferenceId = BroughtByMemberId and CreatedBy = BroughtByMemberId
-                var newMember = new Member
-                {
-                    Name = fullName,
-                    MemberId = null, // or string.Empty — will be set later if needed
-                    Phone = phone,
-                    Email = visitorDto.VisitorEmail,
-                    Password = phone, // plaintext mobile
-                    DOB = null,
-                    Gender = null, // per your preference
-                    JoinDate = now,
-                    Status = "Active",
-                    FeesStatus = "Unpaid",
-                    Address = fullAddress,
-                    Batch = null,
-                    Business = visitorDto.VisitorBusiness,
-                    ReferenceId = visitorDto.BroughtByMemberId, // ✅ Critical: set to BroughtByMemberId
-                    ProfileImage = null,
-                    IsActive = true,
-                    CreatedBy = visitorDto.BroughtByMemberId.ToString(), // ✅ Not "System"
-                    CreatedDate = now,
-                    UpdatedBy = visitorDto.BroughtByMemberId.ToString(), // ✅
-                    UpdatedDate = now,
-                    BusinessCategory = null,
-                    MembershipType = "Monthly",
-                    MembershipStartDate = null,
-                    MembershipEndDate = null,
-                    ReferralGivenCount = 0,
-                    ReferralReceivedCount = 0,
-                    TYFCBGivenCount = 0,
-                    TYFCBReceivedCount = 0,
-                    CEUsCount = 0,
-                    VisitorsCount = 0,
-                    RevenueReceived = 0,
-                    SubCompanyId = broughtByMember.SubCompanyId
-                };
-
-                _context.Members.Add(newMember);
-                await _context.SaveChangesAsync(); // Get newMember.Id
-
-                // ✅ CREATE USER — with Username = fullName, FullName = null, CreatedBy = BroughtByMemberId
-                var user = new User
-                {
-                    Username = fullName,           // e.g., "Mr Vijayakrishnan J"
-                    FullName = fullName,               // Must be NULL (as in your DB sample)
-                    Email = visitorDto.VisitorEmail,
-                    PasswordHash = phone,          // Plaintext mobile in PasswordHash
-                    Role = "Member",
-                    IsActive = true,
-                    MemberId = newMember.Id,
-                    CreatedBy = visitorDto.BroughtByMemberId.ToString(), // ✅
-                    CreatedDate = now,
-                    UpdatedBy = visitorDto.BroughtByMemberId.ToString(), // ✅
-                    UpdatedDate = now
-                    // ProfileImage, LastLogin, ResetToken = null by default
-                };
-
-                _context.Users.Add(user);
+                // ✅ Instead of directly creating Member/User, mark as pending admin approval
+                visitor.Status = "PendingMemberApproval";
+                visitor.BecameMember = false; // Will be set true only after admin approves
                 await _context.SaveChangesAsync();
             }
 
@@ -1191,6 +1097,153 @@ public class InventoryController : ControllerBase
             });
         }
     }
+    [HttpGet("visitors/pending-member-requests/{memberId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetPendingMemberRequests(int memberId)
+    {
+        var pending = await _context.Visitors
+            .Where(v => v.BroughtByMemberId == memberId && v.Status == "PendingMemberApproval")
+            .Select(v => new {
+                v.Id,
+                v.VisitorName,
+                v.VisitorPhone,
+                v.VisitorEmail,
+                v.VisitorBusiness,
+                v.VisitDate,
+                v.Status,
+                v.CreatedDate,
+                v.BroughtByMemberId
+            })
+            .ToListAsync();
+
+        return Ok(pending);
+    }
+
+    [HttpGet("visitors/all-pending-member-requests")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAllPendingMemberRequests()
+    {
+        var pending = await _context.Visitors
+            .Include(v => v.BroughtByMember)
+            .Where(v => v.Status == "PendingMemberApproval")
+            .Select(v => new {
+                v.Id,
+                v.VisitorName,
+                v.VisitorPhone,
+                v.VisitorEmail,
+                v.VisitorBusiness,
+                v.VisitDate,
+                v.Status,
+                v.CreatedDate,
+                v.BroughtByMemberId,
+                BroughtByMemberName = v.BroughtByMember != null ? v.BroughtByMember.Name : null
+            })
+            .ToListAsync();
+
+        return Ok(pending);
+    }
+
+    [HttpPost("visitors/{id}/approve-member")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ApproveMemberRequest(int id)
+    {
+        var visitor = await _context.Visitors.FindAsync(id);
+        if (visitor == null) return NotFound();
+
+        if (visitor.Status != "PendingMemberApproval")
+            return BadRequest(new { statusDesc = "Visitor is not in pending approval state." });
+
+        var broughtByMember = await _context.Members
+            .Where(m => m.Id == visitor.BroughtByMemberId)
+            .Select(m => new { m.Id, m.SubCompanyId })
+            .FirstOrDefaultAsync();
+
+        if (broughtByMember == null)
+            return BadRequest(new { statusDesc = "Referring member not found." });
+
+        if (!string.IsNullOrWhiteSpace(visitor.VisitorEmail))
+        {
+            bool emailExists = await _context.Users.AnyAsync(u => u.Email == visitor.VisitorEmail)
+                                || await _context.Members.AnyAsync(m => m.Email == visitor.VisitorEmail);
+            if (emailExists)
+                return BadRequest(new { statusDesc = "Email already registered." });
+        }
+
+        var now = DateTime.UtcNow;
+        string fullName = visitor.VisitorName ?? $"{visitor.FirstName} {visitor.LastName}".Trim();
+        string phone = visitor.MobileNumber ?? visitor.VisitorPhone ?? string.Empty;
+        string business = visitor.VisitorBusiness ?? visitor.Company ?? string.Empty;
+
+        var newMember = new Member
+        {
+            Name = fullName,
+            Phone = phone,
+            Email = visitor.VisitorEmail,
+            Password = phone,
+            JoinDate = now,
+            Status = "Active",
+            FeesStatus = "Unpaid",
+            Address = string.Empty,
+            Business = business,
+            ReferenceId = visitor.BroughtByMemberId,
+            IsActive = true,
+            CreatedBy = visitor.BroughtByMemberId.ToString(),
+            CreatedDate = now,
+            UpdatedBy = visitor.BroughtByMemberId.ToString(),
+            UpdatedDate = now,
+            MembershipType = "Monthly",
+            ReferralGivenCount = 0,
+            ReferralReceivedCount = 0,
+            TYFCBGivenCount = 0,
+            TYFCBReceivedCount = 0,
+            CEUsCount = 0,
+            VisitorsCount = 0,
+            RevenueReceived = 0,
+            SubCompanyId = broughtByMember.SubCompanyId
+        };
+
+        _context.Members.Add(newMember);
+        await _context.SaveChangesAsync();
+
+        var user = new User
+        {
+            Username = fullName,
+            FullName = fullName,
+            Email = visitor.VisitorEmail,
+            PasswordHash = phone,
+            Role = "Member",
+            IsActive = true,
+            MemberId = newMember.Id,
+            CreatedBy = visitor.BroughtByMemberId.ToString(),
+            CreatedDate = now,
+            UpdatedBy = visitor.BroughtByMemberId.ToString(),
+            UpdatedDate = now
+        };
+
+        _context.Users.Add(user);
+
+        visitor.Status = "MemberApproved";
+        visitor.BecameMember = true;
+        visitor.MemberId = newMember.Id;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { statusCode = 200, statusDesc = "Visitor approved and added as member.", memberId = newMember.Id });
+    }
+
+    [HttpPost("visitors/{id}/reject-member")]
+    [AllowAnonymous]
+    public async Task<IActionResult> RejectMemberRequest(int id)
+    {
+        var visitor = await _context.Visitors.FindAsync(id);
+        if (visitor == null) return NotFound();
+
+        visitor.Status = "MemberRejected";
+        await _context.SaveChangesAsync();
+
+        return Ok(new { statusCode = 200, statusDesc = "Visitor member request rejected." });
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<Visitor>> GetVisitorById(int id)
     {
@@ -1229,3 +1282,4 @@ public class InventoryController : ControllerBase
         return _context.Inventory.Any(e => e.Id == id);
     }
 }
+

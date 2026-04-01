@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -142,7 +142,7 @@ const MyPayments = () => {
         id: p.paymentId?.toString() || index.toString(),
         month: p.paymentForMonth || 'Unknown', // Changed from PaymentForMonth
         amount: p.amount || 0,
-        status: p.receiptNo ? 'Paid' : 'Unpaid', // Changed from ReceiptNo
+        status: p.status || (p.receiptNo ? 'Paid' : 'Unpaid'),
         dueDate: p.paymentEndDate ? new Date(p.paymentEndDate).toISOString().split('T')[0] : 'N/A',
         paidDate: p.paymentDate ? new Date(p.paymentDate).toISOString().split('T')[0] : null,
         type: 'Monthly',
@@ -911,6 +911,23 @@ const styles = StyleSheet.create({
   payButton: { backgroundColor: '#4A90E2', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8 },
   payButtonText: { color: '#FFF', fontSize: 14, fontWeight: '600', marginLeft: 8 },
   receiptButton: { backgroundColor: '#E3F2FD', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8 },
+  pendingConfirmBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  pendingConfirmText: {
+    fontSize: 12,
+    color: '#FF9800',
+    fontWeight: '500',
+    flex: 1,
+  },
   receiptButtonText: { color: '#4A90E2', fontSize: 14, fontWeight: '600', marginLeft: 8 },
 
   infoCard: { flexDirection: 'row', backgroundColor: '#E3F2FD', padding: 15, borderRadius: 12, marginBottom: 20 },
@@ -968,3 +985,4 @@ const styles = StyleSheet.create({
 });
 
 export default MyPayments;
+

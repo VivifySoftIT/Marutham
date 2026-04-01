@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { View, ActivityIndicator } from 'react-native'; // 👈 ADDED
+import { View, ActivityIndicator } from 'react-native'; // ðŸ‘ˆ ADDED
 
 // Import Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -29,6 +29,8 @@ import Visitors from '../screens/Visitors';
 import SettingsScreen from '../screens/SettingsScreen';
 import CreateMeeting from '../screens/CreateMeeting';
 import TakePayment from '../screens/TakePayment';
+import AdminVisitorRequests from '../screens/AdminVisitorRequests';
+import AdminPayments from '../screens/AdminPayments';
 import ForgotPassword from '../screens/ForgotPassword';
 import ResetPassword from '../screens/ResetPassword';
 
@@ -83,7 +85,7 @@ const StackNavigator = () => {
     };
   }, []);
 
-  // ✅ Show loader while checking — BETTER UX
+  // âœ… Show loader while checking â€” BETTER UX
   if (isLoggedIn === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F4F7FB' }}>
@@ -92,12 +94,12 @@ const StackNavigator = () => {
     );
   }
 
-  // ✅ MAGIC LINE: Dynamically set starting screen
+  // âœ… MAGIC LINE: Dynamically set starting screen
   const initialRouteName = isLoggedIn ? 'DrawerNavigator' : 'Login';
 
   return (
     <Stack.Navigator
-      initialRouteName={initialRouteName} // 👈 THIS IS THE FIX — WAS MISSING!
+      initialRouteName={initialRouteName} // ðŸ‘ˆ THIS IS THE FIX â€” WAS MISSING!
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen
@@ -188,6 +190,8 @@ const StackNavigator = () => {
       />
 
 
+      <Stack.Screen name="AdminVisitorRequests" component={AdminVisitorRequests} />
+      <Stack.Screen name="AdminPayments" component={AdminPayments} />
     </Stack.Navigator>
   );
 };

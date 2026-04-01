@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -20,6 +20,32 @@ import LanguageSelector from '../components/LanguageSelector';
 
 // Your API URL
 const API_URL = 'https://www.vivifysoft.in/AlaigalBE';
+
+const MemberAvatar = ({ member }) => {
+  const [imgError, setImgError] = React.useState(false);
+  let photoUrl = null;
+  if (member.profileImage || member.ProfileImage) {
+    const raw = member.profileImage || member.ProfileImage;
+    photoUrl = raw.startsWith('http') ? raw : `${API_BASE_URL}${raw}`;
+  }
+  if (photoUrl && !imgError) {
+    return (
+      <Image
+        source={{ uri: photoUrl }}
+        style={styles.memberAvatar}
+        resizeMode="cover"
+        onError={() => setImgError(true)}
+      />
+    );
+  }
+  return (
+    <View style={styles.memberAvatar}>
+      <Text style={styles.avatarText}>
+        {member.name ? member.name.charAt(0).toUpperCase() : '?'}
+      </Text>
+    </View>
+  );
+};
 
 const MembersDirectory = () => {
   const navigation = useNavigation();
@@ -198,8 +224,8 @@ const MembersDirectory = () => {
             <Text style={styles.memberName}>{item.name || 'No Name'}</Text>
             <Text style={styles.memberBusiness}>{businessName}</Text>
             <Text style={styles.memberId}>Member ID: {memberId}</Text>
-            <Text style={styles.memberPhone}>📞 {formatPhone(item.phone || item.mobile || item.telephone)}</Text>
-            <Text style={styles.memberEmail}>✉️ {item.email || 'No Email'}</Text>
+            <Text style={styles.memberPhone}>ðŸ“ž {formatPhone(item.phone || item.mobile || item.telephone)}</Text>
+            <Text style={styles.memberEmail}>âœ‰ï¸ {item.email || 'No Email'}</Text>
           </View>
           <View style={styles.rightSection}>
             <TouchableOpacity 

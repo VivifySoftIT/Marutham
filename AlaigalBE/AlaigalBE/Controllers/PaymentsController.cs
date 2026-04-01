@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Alaigal.Data;
 using Alaigal.Models;
@@ -144,12 +145,15 @@ public class PaymentsController : ControllerBase
 
             Payments = payments.Select(p => new MemberPaymentDto
             {
+                PaymentId = p.Id,
                 PaymentForMonth = p.PaymentForMonth,
                 Amount = p.Amount,
                 PaymentDate = p.PaymentDate,
                 PaymentEndDate = p.PaymentEndDate,
                 ReceiptNo = p.ReceiptNumber,
-                TransactionId = p.TransactionId
+                TransactionId = p.TransactionId,
+                PaymentMethod = p.PaymentMethod,
+                Status = p.Status,
             }).ToList(),
 
             DueMonths = dueMonths
@@ -172,12 +176,15 @@ public class PaymentsController : ControllerBase
 
     public class MemberPaymentDto
     {
+        public int PaymentId { get; set; }
         public string PaymentForMonth { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public DateTime? PaymentDate { get; set; }
         public DateTime PaymentEndDate { get; set; }
         public string? ReceiptNo { get; set; } = string.Empty;
         public string? TransactionId { get; set; }
+        public string? PaymentMethod { get; set; }
+        public string? Status { get; set; }
     }
 
     public class DueMonthDto
@@ -341,6 +348,22 @@ public class PaymentsController : ControllerBase
     // Update your POST method in PaymentsController.cs
   
 
+    // POST: api/Payments/5/confirm
+    [HttpPost("{id}/confirm")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ConfirmPayment(int id)
+    {
+        var payment = await _context.Payments.FindAsync(id);
+        if (payment == null) return NotFound(new { message = $"Payment with ID {id} not found" });
+
+        payment.Status = "AdminConfirmed";
+        payment.UpdatedDate = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Payment confirmed successfully", paymentId = id });
+    }
+
     // PUT: api/Payments/5
 
 }
+
