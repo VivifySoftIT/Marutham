@@ -1,0 +1,595 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Vivify\\Muthu\\AlaigalBE\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\memberscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\memberscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\noticescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\noticescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\messagenotificationscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\messagenotificationscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\member.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\member.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\inventorycontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\inventorycontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\alaigalcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\alaigalcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\memberbusiness.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\memberbusiness.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\attendance.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\attendance.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\meetingdetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\meetingdetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\tyfcbcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\tyfcbcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\feedcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\feedcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Vivify\\ERP_Publish\\web.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\batchescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\batchescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\maincompaniescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\maincompaniescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\simpleauthcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\simpleauthcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\paymentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\paymentscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\onetoonemeetingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\onetoonemeetingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\subcompaniescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\subcompaniescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\testcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\testcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\meetingdetailscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\meetingdetailscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:controllers\\attendancecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\dailymeetingstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\dailymeetingstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\referral.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\referral.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\subcompany.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\subcompany.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\visitor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\visitor.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\messagenotifications.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\messagenotifications.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\tyfcb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\tyfcb.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\models\\maincompany.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:models\\maincompany.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Vivify\\Harisilk_ERP\\web.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|c:\\vivify\\muthu\\alaigalbe\\appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{924812F0-BBC8-438A-AA95-38BA62FDFD2F}|AlaigalBE.csproj|solutionrelative:appsettings.development.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MessageNotificationsController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\MessageNotificationsController.cs",
+              "RelativeDocumentMoniker": "Controllers\\MessageNotificationsController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\MessageNotificationsController.cs",
+              "RelativeToolTip": "Controllers\\MessageNotificationsController.cs",
+              "ViewState": "AgIAAPUAAAAAAAAAAAAowB0BAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-03-05T06:16:55.206Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MembersController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\MembersController.cs",
+              "RelativeDocumentMoniker": "Controllers\\MembersController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\MembersController.cs",
+              "RelativeToolTip": "Controllers\\MembersController.cs",
+              "ViewState": "AgIAAPYBAAAAAAAAAAAwwBcCAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-24T04:29:03.707Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "AlaigalContext.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\AlaigalContext.cs",
+              "RelativeDocumentMoniker": "Models\\AlaigalContext.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\AlaigalContext.cs",
+              "RelativeToolTip": "Models\\AlaigalContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-08T04:40:38.451Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Member.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Member.cs",
+              "RelativeDocumentMoniker": "Models\\Member.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Member.cs",
+              "RelativeToolTip": "Models\\Member.cs",
+              "ViewState": "AgIAABIAAAAAAAAAAAAAACYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-08T04:47:40.905Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "NoticesController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\NoticesController.cs",
+              "RelativeDocumentMoniker": "Controllers\\NoticesController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\NoticesController.cs",
+              "RelativeToolTip": "Controllers\\NoticesController.cs",
+              "ViewState": "AgIAAKQAAAAAAAAAAAAowMwAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-13T06:47:39.506Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "MeetingDetail.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\MeetingDetail.cs",
+              "RelativeDocumentMoniker": "Models\\MeetingDetail.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\MeetingDetail.cs",
+              "RelativeToolTip": "Models\\MeetingDetail.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAADUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-23T07:41:47.152Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "InventoryController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\InventoryController.cs",
+              "RelativeDocumentMoniker": "Controllers\\InventoryController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\InventoryController.cs",
+              "RelativeToolTip": "Controllers\\InventoryController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAEsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-13T06:47:49.506Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "BatchesController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\BatchesController.cs",
+              "RelativeDocumentMoniker": "Controllers\\BatchesController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\BatchesController.cs",
+              "RelativeToolTip": "Controllers\\BatchesController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-21T09:28:43.177Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "MemberBusiness.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\MemberBusiness.cs",
+              "RelativeDocumentMoniker": "Models\\MemberBusiness.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\MemberBusiness.cs",
+              "RelativeToolTip": "Models\\MemberBusiness.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAADAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-24T05:07:06.921Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "FeedController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\FeedController.cs",
+              "RelativeDocumentMoniker": "Controllers\\FeedController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\FeedController.cs",
+              "RelativeToolTip": "Controllers\\FeedController.cs",
+              "ViewState": "AgIAADQBAAAAAAAAAAAkwJkBAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-09T05:27:42.638Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Attendance.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Attendance.cs",
+              "RelativeDocumentMoniker": "Models\\Attendance.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Attendance.cs",
+              "RelativeToolTip": "Models\\Attendance.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-23T06:46:17.165Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "TYFCBController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\TYFCBController.cs",
+              "RelativeDocumentMoniker": "Controllers\\TYFCBController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\TYFCBController.cs",
+              "RelativeToolTip": "Controllers\\TYFCBController.cs",
+              "ViewState": "AgIAADwBAAAAAAAAAAAQwFgBAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-08T05:49:39.632Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-01-03T07:16:34.33Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "web.config",
+              "DocumentMoniker": "C:\\Vivify\\ERP_Publish\\web.config",
+              "RelativeDocumentMoniker": "..\\..\\ERP_Publish\\web.config",
+              "ToolTip": "C:\\Vivify\\ERP_Publish\\web.config",
+              "RelativeToolTip": "..\\..\\ERP_Publish\\web.config",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
+              "WhenOpened": "2026-02-23T07:15:07.582Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "MainCompaniesController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\MainCompaniesController.cs",
+              "RelativeDocumentMoniker": "Controllers\\MainCompaniesController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\MainCompaniesController.cs",
+              "RelativeToolTip": "Controllers\\MainCompaniesController.cs",
+              "ViewState": "AgIAAEoAAAAAAAAAAAAkwFoAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-22T14:41:44.15Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "SimpleAuthController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\SimpleAuthController.cs",
+              "RelativeDocumentMoniker": "Controllers\\SimpleAuthController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\SimpleAuthController.cs",
+              "RelativeToolTip": "Controllers\\SimpleAuthController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-21T09:52:15.473Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "PaymentsController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\PaymentsController.cs",
+              "RelativeDocumentMoniker": "Controllers\\PaymentsController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\PaymentsController.cs",
+              "RelativeToolTip": "Controllers\\PaymentsController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-02-21T09:29:16.692Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "OneToOneMeetingController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\OneToOneMeetingController.cs",
+              "RelativeDocumentMoniker": "Controllers\\OneToOneMeetingController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\OneToOneMeetingController.cs",
+              "RelativeToolTip": "Controllers\\OneToOneMeetingController.cs",
+              "ViewState": "AgIAABEBAAAAAAAAAAAQwCcBAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-09T05:30:36.197Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "SubCompaniesController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\SubCompaniesController.cs",
+              "RelativeDocumentMoniker": "Controllers\\SubCompaniesController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\SubCompaniesController.cs",
+              "RelativeToolTip": "Controllers\\SubCompaniesController.cs",
+              "ViewState": "AgIAAKMAAAAAAAAAAAAkwLUAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-22T14:37:50.087Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "TestController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\TestController.cs",
+              "RelativeDocumentMoniker": "Controllers\\TestController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\TestController.cs",
+              "RelativeToolTip": "Controllers\\TestController.cs",
+              "ViewState": "AgIAADsAAAAAAAAAAAAcwFIAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-13T10:43:17.758Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "MeetingDetailsController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\MeetingDetailsController.cs",
+              "RelativeDocumentMoniker": "Controllers\\MeetingDetailsController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\MeetingDetailsController.cs",
+              "RelativeToolTip": "Controllers\\MeetingDetailsController.cs",
+              "ViewState": "AgIAACcBAAAAAAAAAAAQwDgBAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-23T06:00:19.323Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "AttendanceController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\AttendanceController.cs",
+              "RelativeDocumentMoniker": "Controllers\\AttendanceController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\AttendanceController.cs",
+              "RelativeToolTip": "Controllers\\AttendanceController.cs",
+              "ViewState": "AgIAAFIBAAAAAAAAAAAkwGABAAAkAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-13T14:05:18.289Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "AuthController.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\AuthController.cs",
+              "RelativeDocumentMoniker": "Controllers\\AuthController.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Controllers\\AuthController.cs",
+              "RelativeToolTip": "Controllers\\AuthController.cs",
+              "ViewState": "AgIAAM0AAAAAAAAAAAAawNsAAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-05T10:41:02.175Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "Referral.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Referral.cs",
+              "RelativeDocumentMoniker": "Models\\Referral.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Referral.cs",
+              "RelativeToolTip": "Models\\Referral.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-31T07:49:06.524Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "DailyMeetingStatus.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\DailyMeetingStatus.cs",
+              "RelativeDocumentMoniker": "Models\\DailyMeetingStatus.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\DailyMeetingStatus.cs",
+              "RelativeToolTip": "Models\\DailyMeetingStatus.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-30T04:35:04.354Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "SubCompany.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\SubCompany.cs",
+              "RelativeDocumentMoniker": "Models\\SubCompany.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\SubCompany.cs",
+              "RelativeToolTip": "Models\\SubCompany.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAiwDoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-22T14:36:53.812Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAACUAAAAAAAAAAAAUwF4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-03T07:16:54.186Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\User.cs",
+              "RelativeDocumentMoniker": "Models\\User.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\User.cs",
+              "RelativeToolTip": "Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-08T07:30:23.314Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "Visitor.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Visitor.cs",
+              "RelativeDocumentMoniker": "Models\\Visitor.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Visitor.cs",
+              "RelativeToolTip": "Models\\Visitor.cs",
+              "ViewState": "AgIAAE8AAAAAAAAAAAAAwFkAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-13T07:39:10.9Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "Payment.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Payment.cs",
+              "RelativeDocumentMoniker": "Models\\Payment.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\Payment.cs",
+              "RelativeToolTip": "Models\\Payment.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAAABkAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-13T07:57:55.495Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "MessageNotifications.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\MessageNotifications.cs",
+              "RelativeDocumentMoniker": "Models\\MessageNotifications.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\MessageNotifications.cs",
+              "RelativeToolTip": "Models\\MessageNotifications.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAAIwCkAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-23T09:50:32.33Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "TYFCB.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\TYFCB.cs",
+              "RelativeDocumentMoniker": "Models\\TYFCB.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\TYFCB.cs",
+              "RelativeToolTip": "Models\\TYFCB.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAMwBcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-13T06:25:02.605Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "MainCompany.cs",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\MainCompany.cs",
+              "RelativeDocumentMoniker": "Models\\MainCompany.cs",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\Models\\MainCompany.cs",
+              "RelativeToolTip": "Models\\MainCompany.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-01-22T14:40:46.801Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "web.config",
+              "DocumentMoniker": "C:\\Vivify\\Harisilk_ERP\\web.config",
+              "RelativeDocumentMoniker": "..\\..\\Harisilk_ERP\\web.config",
+              "ToolTip": "C:\\Vivify\\Harisilk_ERP\\web.config",
+              "RelativeToolTip": "..\\..\\Harisilk_ERP\\web.config",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
+              "WhenOpened": "2026-01-21T10:32:57.734Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "appsettings.Development.json",
+              "DocumentMoniker": "C:\\Vivify\\Muthu\\AlaigalBE\\appsettings.Development.json",
+              "RelativeDocumentMoniker": "appsettings.Development.json",
+              "ToolTip": "C:\\Vivify\\Muthu\\AlaigalBE\\appsettings.Development.json",
+              "RelativeToolTip": "appsettings.Development.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-01-03T07:16:40.592Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
