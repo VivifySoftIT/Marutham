@@ -457,12 +457,10 @@ const CreateMeeting = () => {
               {/* Contact Person Dropdown */}
               {showContactDropdown && contactSearchResults.length > 0 && (
                 <View style={styles.contactPersonDropdown}>
-                  <FlatList
-                    data={contactSearchResults}
-                    keyExtractor={(item) => item.id.toString()}
-                    style={styles.contactPersonList}
-                    renderItem={({ item }) => (
+                  {contactSearchResults.length > 0 ? (
+                    contactSearchResults.map((item) => (
                       <TouchableOpacity
+                        key={item.id.toString()}
                         style={styles.contactPersonItem}
                         onPress={() => selectContactPerson(item)}
                       >
@@ -472,16 +470,15 @@ const CreateMeeting = () => {
                         </View>
                         <Icon name="chevron-right" size={16} color={waterBlueColors.primary} />
                       </TouchableOpacity>
-                    )}
-                    ListEmptyComponent={
-                      <View style={styles.noContactPersonsContainer}>
-                        <Icon name="account-off" size={32} color="#CCC" />
-                        <Text style={styles.noContactPersonsText}>
-                          {t('noMembersFound')}
-                        </Text>
-                      </View>
-                    }
-                  />
+                    ))
+                  ) : (
+                    <View style={styles.noContactPersonsContainer}>
+                      <Icon name="account-off" size={32} color="#CCC" />
+                      <Text style={styles.noContactPersonsText}>
+                        {t('noMembersFound')}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               )}
             </View>
