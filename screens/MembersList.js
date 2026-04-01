@@ -16,6 +16,7 @@ import {
   Animated,
   Keyboard,
   Modal,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
@@ -23,6 +24,145 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Voice from '@react-native-voice/voice';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
+import API_BASE_URL from '../apiConfig';
+
+const MemberCard = ({ item, navigation, t }) => {
+  const [imgError, setImgError] = useState(false);
+  return (
+    <TouchableOpacity
+      style={styles.memberCard}
+      onPress={() => navigation.navigate('MemberDetails', { memberId: item.id })}
+      activeOpacity={0.85}
+    >
+      {/* Member Header with Avatar */}
+      <View style={styles.memberHeader}>
+        <View style={styles.memberAvatarWrapper}>
+          {item.photoUrl && !imgError ? (
+            <Image
+              source={{ uri: item.photoUrl }}
+              style={styles.memberAvatarImage}
+              resizeMode="cover"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <LinearGradient
+              colors={['#4A90E2', '#357ABD']}
+              style={styles.memberAvatar}
+            >
+              <Text style={styles.avatarText}>{item.name?.charAt(0)?.toUpperCase() || '?'}</Text>
+            </LinearGradient>
+          )}
+        </View>
+
+        <View style={styles.memberBasicInfo}>
+          <Text style={styles.memberName}>{item.name}</Text>
+          <Text style={styles.memberId}>ID: {item.memberId || 'N/A'}</Text>
+          {item.business ? (
+            <Text style={styles.businessName} numberOfLines={1}>
+              <Icon name="briefcase-outline" size={12} color="#4A90E2" /> {item.business}
+            </Text>
+          ) : null}
+          <View style={styles.statusRow}>
+            <View style={[styles.statusBadge, {
+              backgroundColor: item.isActive ? '#E8F5E9' : '#FFEBEE'
+            }]}>
+              <Icon
+                name={item.isActive ? 'check-circle' : 'alert-circle'}
+                size={12}
+                color={item.isActive ? '#4CAF50' : '#F44336'}
+              />
+              <Text style={[styles.statusText, { color: item.isActive ? '#4CAF50' : '#F44336' }]}>
+                {item.status}
+              </Text>
+            </View>
+            <View style={[styles.feesStatusBadge, {
+              backgroundColor: item.feesStatus === 'Paid' ? '#E8F5E9' : '#FFF3E0'
+            }]}>
+              <Icon
+                name={item.feesStatus === 'Paid' ? 'check' : 'clock'}
+                size={12}
+                color={item.feesStatus === 'Paid' ? '#4CAF50' : '#FF9800'}
+              />
+              <Text style={[styles.feesStatusText, {
+                color: item.feesStatus === 'Paid' ? '#4CAF50' : '#FF9800'
+              }]}>
+                {item.feesStatus === 'Paid' ? t('paid') : (item.feesStatus || 'Unpaid')}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Contact Info */}
+      <View style={styles.contactSection}>
+        {item.phone ? (
+          <View style={styles.contactItem}>
+            <Icon name="phone" size={14} color="#4A90E2" />
+            <Text style={styles.contactText}>{item.phone}</Text>
+          </View>
+        ) : null}
+        {item.email ? (
+          <View style={styles.contactItem}>
+            <Icon name="email" size={14} color="#4A90E2" />
+            <Text style={styles.contactText} numberOfLines={1}>{item.email}</Text>
+          </View>
+        ) : null}
+        {item.businessCategory ? (
+          <View style={styles.contactItem}>
+            <Icon name="tag-outline" size={14} color="#4A90E2" />
+            <Text style={styles.contactText} numberOfLines={1}>{item.businessCategory}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* Business image preview strip */}
+      {item.firstBizImage ? (
+        <View style={styles.bizPreviewContainer}>
+          <Image source={{ uri: item.firstBizImage }} style={styles.bizPreviewImage} resizeMode="cover" />
+          {item.businesses?.length > 1 && (
+            <View style={styles.bizMoreBadge}>
+              <Text style={styles.bizMoreText}>+{item.businesses.length - 1}</Text>
+            </View>
+          )}
+        </View>
+      ) : null}
+
+      {/* Details Grid */}
+      <View style={styles.detailsGrid}>
+        <View style={styles.detailBox}>
+          <Icon name="calendar" size={16} color="#4A90E2" />
+          <Text style={styles.detailLabel}>{t('joinDate')}</Text>
+          <Text style={styles.detailValue}>
+            {item.joinDate ? new Date(item.joinDate).toLocaleDateString() : t('notAvailable')}
+          </Text>
+        </View>
+        <View style={styles.detailBox}>
+          <Icon name="cash" size={16} color="#4A90E2" />
+          <Text style={styles.detailLabel}>{t('amount')}</Text>
+          <Text style={styles.detailValue}>₹{item.amount || '0'}</Text>
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.viewButton]}
+          onPress={() => navigation.navigate('MemberDetails', { memberId: item.id })}
+        >
+          <Icon name="eye" size={16} color="#2196F3" />
+          <Text style={styles.actionBtnText}>{t('view')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.editButton]}
+          onPress={() => navigation.navigate('NewMember', { member: item, isEditing: true })}
+        >
+          <Icon name="pencil" size={16} color="#FF9800" />
+          <Text style={[styles.actionBtnText, { color: '#FF9800' }]}>{t('edit')}</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const MemberList = () => {
   const navigation = useNavigation();
@@ -113,35 +253,76 @@ const MemberList = () => {
   const loadMembers = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://www.vivifysoft.in/AlaigalBE/api/Inventory/members-with-payment');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      
-      const membersArray = data.Members || data.members || [];
-      const mappedMembers = membersArray.map(member => ({
-        id: member.Id || member.id,
-        name: member.Name || member.name,
-        memberId: (member.Id || member.id).toString(),
-        phone: member.Phone || member.phone,
-        email: member.Email || member.email,
-        joinDate: member.Joined || member.joined,
-        status: (member.IsActive || member.isActive) ? t('active') : t('inactive'),
-        feesStatus: member.FeesStatus || member.feesStatus,
-        amount: member.Amount || member.amount,
-        batch: 'N/A',
-        address: 'N/A',
-      }));
-      
+      // Use /api/Members which returns full member data including business details
+      const data = await ApiService.getMembersWithDetails();
+      const membersArray = Array.isArray(data) ? data : (data.Members || data.members || []);
+
+      const mappedMembers = membersArray.map(member => {
+        const id = member.Id || member.id;
+
+        // Parse businesses exactly like Profile.js
+        let businesses = [];
+        if (member.businesses && Array.isArray(member.businesses)) {
+          businesses = member.businesses.map(b => ({
+            id: b.id,
+            name: b.businessName,
+            description: b.businessDescription || '',
+            images: (b.imagePaths || []).map(img =>
+              img.startsWith('http') ? img : `${API_BASE_URL}${img}`
+            ),
+          }));
+        } else if (member.business || member.Business) {
+          const bizName = member.business || member.Business;
+          const imgs = (member.businessImages || member.BusinessImages || '')
+            .split(',').map(i => i.trim()).filter(Boolean)
+            .map(i => i.startsWith('http') ? i : `${API_BASE_URL}${i}`);
+          businesses = [{ name: bizName, description: '', images: imgs }];
+        }
+
+        // First business image for card preview
+        const firstBizImage = businesses.find(b => b.images?.length > 0)?.images[0] || null;
+
+        // Profile image
+        let photoUrl = null;
+        if (member.profileImage) {
+          photoUrl = member.profileImage.startsWith('http')
+            ? member.profileImage
+            : `${API_BASE_URL}${member.profileImage}`;
+        } else {
+          photoUrl = ApiService.getMemberPhotoUrl(id);
+        }
+
+        return {
+          id,
+          name: member.Name || member.name || '',
+          memberId: id?.toString(),
+          phone: member.Phone || member.phone || member.Mobile || member.mobile,
+          email: member.Email || member.email,
+          joinDate: member.JoinDate || member.joinDate || member.Joined || member.joined,
+          isActive: member.IsActive ?? member.isActive ?? true,
+          status: (member.IsActive ?? member.isActive ?? true) ? t('active') : t('inactive'),
+          feesStatus: member.FeesStatus || member.feesStatus,
+          amount: member.Amount || member.amount || 0,
+          address: member.Address || member.address,
+          business: businesses[0]?.name || member.Business || member.business || member.BusinessName || member.businessName,
+          businessCategory: member.BusinessCategory || member.businessCategory,
+          businesses,
+          firstBizImage,
+          photoUrl,
+        };
+      });
+
       setMembers(mappedMembers);
       setFilteredMembers(mappedMembers);
-      
+
+      // Compute stats from the array
+      const active = mappedMembers.filter(m => m.isActive).length;
+      const unpaid = mappedMembers.filter(m => m.feesStatus && m.feesStatus !== 'Paid').length;
       setStats({
-        total: data.TotalMembers || data.totalMembers,
-        active: data.ActiveMembers || data.activeMembers,
-        pending: data.PendingPayments || data.pendingPayments,
-        unpaid: data.UnpaidPayments || data.unpaidPayments,
+        total: mappedMembers.length,
+        active,
+        pending: 0,
+        unpaid,
       });
     } catch (error) {
       console.error('MembersList - Error loading members:', error);
@@ -285,100 +466,7 @@ const MemberList = () => {
 
   // Render member card
   const renderMemberCard = ({ item }) => (
-    <View style={styles.memberCard}>
-      {/* Member Header with Avatar */}
-      <View style={styles.memberHeader}>
-        <LinearGradient 
-          colors={['#4A90E2', '#357ABD']} 
-          style={styles.memberAvatar}
-        >
-          <Text style={styles.avatarText}>{item.name.charAt(0).toUpperCase()}</Text>
-        </LinearGradient>
-        
-        <View style={styles.memberBasicInfo}>
-          <Text style={styles.memberName}>{item.name}</Text>
-          <Text style={styles.memberId}>ID: {item.memberId || 'N/A'}</Text>
-          <View style={styles.statusRow}>
-            <View style={[styles.statusBadge, { 
-              backgroundColor: item.status === t('active') ? '#E8F5E9' : '#FFEBEE' 
-            }]}>
-              <Icon 
-                name={item.status === t('active') ? 'check-circle' : 'alert-circle'} 
-                size={12} 
-                color={item.status === t('active') ? '#4CAF50' : '#F44336'} 
-              />
-              <Text style={[styles.statusText, { 
-                color: item.status === t('active') ? '#4CAF50' : '#F44336' 
-              }]}>
-                {item.status}
-              </Text>
-            </View>
-            <View style={[styles.feesStatusBadge, { 
-              backgroundColor: item.feesStatus === 'Paid' ? '#E8F5E9' : '#FFF3E0' 
-            }]}>
-              <Icon 
-                name={item.feesStatus === 'Paid' ? 'check' : 'clock'} 
-                size={12} 
-                color={item.feesStatus === 'Paid' ? '#4CAF50' : '#FF9800'} 
-              />
-              <Text style={[styles.feesStatusText, { 
-                color: item.feesStatus === 'Paid' ? '#4CAF50' : '#FF9800' 
-              }]}>
-                {item.feesStatus === 'Paid' ? t('paid') : item.feesStatus}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Contact Info */}
-      <View style={styles.contactSection}>
-        <View style={styles.contactItem}>
-          <Icon name="phone" size={14} color="#4A90E2" />
-          <Text style={styles.contactText}>{item.phone}</Text>
-        </View>
-        {item.email && (
-          <View style={styles.contactItem}>
-            <Icon name="email" size={14} color="#4A90E2" />
-            <Text style={styles.contactText} numberOfLines={1}>{item.email}</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Details Grid */}
-      <View style={styles.detailsGrid}>
-        <View style={styles.detailBox}>
-          <Icon name="calendar" size={16} color="#4A90E2" />
-          <Text style={styles.detailLabel}>{t('joinDate')}</Text>
-          <Text style={styles.detailValue}>{item.joinDate || t('notAvailable')}</Text>
-        </View>
-        
-        <View style={styles.detailBox}>
-          <Icon name="cash" size={16} color="#4A90E2" />
-          <Text style={styles.detailLabel}>{t('amount')}</Text>
-          <Text style={styles.detailValue}>₹{item.amount || '0'}</Text>
-        </View>
-      </View>
-
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.viewButton]}
-          onPress={() => navigation.navigate('MemberDetails', { memberId: item.id })}
-        >
-          <Icon name="eye" size={16} color="#2196F3" />
-          <Text style={[styles.actionButtonText, { color: '#2196F3' }]}>{t('view')}</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.editButton]}
-          onPress={() => navigation.navigate('NewMember', { member: item, isEditing: true })}
-        >
-          <Icon name="pencil" size={16} color="#FF9800" />
-          <Text style={[styles.actionButtonText, { color: '#FF9800' }]}>{t('edit')}</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <MemberCard item={item} navigation={navigation} t={t} />
   );
 
   return (
@@ -754,23 +842,29 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 12,
   },
-  memberAvatar: {
+  memberAvatarWrapper: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginRight: 12,
+    overflow: 'hidden',
     elevation: 2,
     shadowColor: '#4A90E2',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },
-  avatarText: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: 'bold',
+  memberAvatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberAvatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   memberBasicInfo: {
     flex: 1,
@@ -784,7 +878,13 @@ const styles = StyleSheet.create({
   memberId: {
     fontSize: 12,
     color: '#999',
-    marginBottom: 6,
+    marginBottom: 4,
+  },
+  businessName: {
+    fontSize: 12,
+    color: '#4A90E2',
+    fontWeight: '500',
+    marginBottom: 4,
   },
   statusRow: {
     flexDirection: 'row',
@@ -881,6 +981,38 @@ const styles = StyleSheet.create({
   },
   editButton: {
     backgroundColor: '#FFF3E0',
+  },
+  actionBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2196F3',
+  },
+  // Business image preview in card
+  bizPreviewContainer: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 10,
+    height: 110,
+    position: 'relative',
+  },
+  bizPreviewImage: {
+    width: '100%',
+    height: 110,
+    borderRadius: 8,
+  },
+  bizMoreBadge: {
+    position: 'absolute',
+    bottom: 6,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  bizMoreText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
   // Voice Modal
   voiceModalOverlay: {

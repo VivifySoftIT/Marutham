@@ -246,22 +246,21 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
         style={styles.background}
       >
         <View style={styles.content}>
-          {/* Logo Section */}
-          <View style={styles.logoSection}>
-            <View style={styles.logoContainer}>
-              <View style={styles.whiteCircle} />
+          {/* Login Card with overlapping circle */}
+          <View style={styles.cardWrapper}>
+            {/* Circle overlapping top of card */}
+            <View style={styles.logoCircle}>
               <Image
                 source={require('../assets/logoicon.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />
             </View>
-          </View>
 
-          {/* Compact Login Form */}
-          <View style={styles.loginCard}>
-            <Text style={styles.welcomeText}>Welcome to</Text>
-            <Text style={styles.loginTitle}>Alaigal Members Sign In</Text>
+            {/* Login Card */}
+            <View style={styles.loginCard}>
+              <Text style={styles.welcomeText}>Welcome to</Text>
+              <Text style={styles.loginTitle}>Alaigal Members Sign In</Text>
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
@@ -344,7 +343,8 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
                 )}
               </LinearGradient>
             </TouchableOpacity>
-          </View>
+            </View>{/* end loginCard */}
+          </View>{/* end cardWrapper */}
 
           {/* Bottom Section */}
           <View style={styles.bottomSection}>
@@ -387,36 +387,31 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingBottom: 20,
   },
-  // Logo Section
-  logoSection: {
+  // Card wrapper holds circle + card together
+  cardWrapper: {
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 10,
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
   },
-  logoContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  whiteCircle: {
+  logoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: '#fff',
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    marginBottom: -60,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 15,
-    elevation: 12,
-    position: 'absolute',
-    zIndex: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   logo: {
-    width: 220,
-    height: 220,
-    zIndex: 2,
+    width: 140,
+    height: 140,
   },
   welcomeText: {
     fontSize: 16,
@@ -424,22 +419,24 @@ const styles = StyleSheet.create({
     color: '#7a8a99',
     textAlign: 'center',
     letterSpacing: 0.5,
-    marginBottom: 8,
+    marginBottom: 4,
+    marginTop: 10,
   },
   // Login Card
   loginCard: {
     backgroundColor: '#fff',
     borderRadius: 28,
-    padding: 32,
+    paddingTop: 68,
+    paddingHorizontal: 28,
+    paddingBottom: 28,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
     elevation: 10,
     marginBottom: 10,
-    maxWidth: 440,
     width: '100%',
-    alignSelf: 'center',
+    zIndex: 1,
   },
   loginTitle: {
     fontSize: 22,

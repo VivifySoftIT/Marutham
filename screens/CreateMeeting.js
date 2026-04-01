@@ -552,19 +552,7 @@ const CreateMeeting = () => {
 
           {/* Meeting Type */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>{t('reportType')} *</Text>
-            {/* Using reportType as label for 'Type' since 'type' might be reserved or missing, 
-                actually 'type' doesn't exist in searched keys, 'reportType' is 'Report Type'. 
-                Maybe better to use 'meeting' + 'Type' or just 'Type' hardcoded if check failed.
-                Wait, I saw 'Type' somewhere? No. I'll use 'reportType' for now or just 'Type' label if I missed adding it.
-                I didn't add 'type' key. I'll use 'Type' string or add it. 
-                Wait, `meeting` key exists? `meeting`: 'Meeting'
-                Let's checking `LanguageContext` for just 'type'.
-                I will use t('type') if it exists, else 'Type'.
-                Actually I see `meetingType` in `CreateMeeting` object structure but not as a stand alone label key.
-                I see `reportType: 'Report Type'`.
-                I'll use `t('reportType')` for "Type *". Close enough.
-            */}
+            <Text style={styles.label}>Meeting Type *</Text>
             <View style={styles.typeRow}>
               <TouchableOpacity
                 style={[styles.typeButton, meetingType === 'in-person' && styles.typeButtonActive]}

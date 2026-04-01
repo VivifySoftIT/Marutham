@@ -508,6 +508,8 @@ const loadDashboardReminders = async () => {
     // ONLY load message notifications (includes Birthday, NewMember, Event, etc.)
     let messageNotifications = null;
     let birthdayWishReceived = null;
+    let upcomingMeetings = [];
+    let memberPayments = null;
     
     try {
       messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
@@ -521,6 +523,31 @@ const loadDashboardReminders = async () => {
     } catch (error) {
       console.error('UserDashboard - Error loading message notifications:', error);
       messageNotifications = [];
+    }
+
+    // Load meetings from MeetingDetails table (correct endpoint)
+    try {
+      const meetingsData = await ApiService.getMeetingDetails();
+      const allMeetings = Array.isArray(meetingsData) ? meetingsData : [];
+      // meetingDate is DateOnly string "YYYY-MM-DD" — filter today and future
+      const todayStr = new Date().toISOString().split('T')[0];
+      upcomingMeetings = allMeetings.filter(m => {
+        const d = m.meetingDate || m.MeetingDate || '';
+        return d >= todayStr;
+      });
+      console.log('UserDashboard - Upcoming meetings from MeetingDetails:', upcomingMeetings.length);
+    } catch (error) {
+      console.log('UserDashboard - Could not load meetings:', error.message);
+      upcomingMeetings = [];
+    }
+
+    // Load member payment status
+    try {
+      memberPayments = await ApiService.getMemberPayments(memberId);
+      console.log('UserDashboard - Member payments:', memberPayments);
+    } catch (error) {
+      console.log('UserDashboard - Could not load member payments:', error.message);
+      memberPayments = null;
     }
 
     // Load birthday wish received
@@ -567,6 +594,68 @@ const loadDashboardReminders = async () => {
     }
 
     // ✅ ONLY process message notifications — no reminders!
+
+    // Add upcoming meeting notifications from MeetingDetails
+    if (upcomingMeetings.length > 0) {
+      upcomingMeetings.forEach((meeting) => {
+        // meetingDate is DateOnly "YYYY-MM-DD"
+        const meetingDate = meeting.meetingDate || meeting.MeetingDate || '';
+        let displayDate = '';
+        if (meetingDate) {
+          const [y, m, d] = meetingDate.split('-');
+          const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+          displayDate = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        const title = meeting.meetingTitle || meeting.MeetingTitle || 'Meeting';
+        const place = meeting.place || meeting.Place || '';
+        // time is "HH:MM:SS" — show HH:MM
+        const rawTime = meeting.time || meeting.Time || '';
+        const timeStr = rawTime ? rawTime.substring(0, 5) : '';
+        const meetingType = meeting.meetingType || meeting.MeetingType || '';
+        const desc = meeting.description || meeting.Description || '';
+
+        newNotifications.push({
+          id: `meeting-${meeting.id || meeting.Id}`,
+          type: 'meeting',
+          messageType: 'Meeting',
+          title: `📅 ${title}`,
+          message: [displayDate, timeStr, place].filter(Boolean).join(' • '),
+          time: displayDate,
+          icon: 'calendar-clock',
+          color: '#4ECDC4',
+          backgroundColor: '#E8F8F7',
+          isRead: false,
+          canRespond: true,
+          meetingId: meeting.id || meeting.Id,
+          eventDate: meetingDate,
+          meetingType,
+          description: desc,
+        });
+      });
+    }
+
+    // Add payment due notification using MemberPaymentSummaryDto structure
+    if (memberPayments && memberPayments.totalDueAmount > 0) {
+      const dueMonths = memberPayments.dueMonths || [];
+      const nextDue = dueMonths[0]; // earliest due month
+      newNotifications.push({
+        id: `payment-due-${memberId}`,
+        type: 'payment',
+        messageType: 'Payment',
+        title: '💳 Payment Due',
+        message: nextDue
+          ? `₹${nextDue.dueAmount} due for ${nextDue.month}`
+          : `₹${memberPayments.totalDueAmount} total due`,
+        time: '',
+        icon: 'credit-card-clock',
+        color: '#FF9800',
+        backgroundColor: '#FFF3E0',
+        isRead: false,
+        canRespond: true,
+        totalDue: memberPayments.totalDueAmount,
+        dueMonths,
+      });
+    }
     if (messageNotifications && messageNotifications.length > 0) {
       messageNotifications.forEach((msg) => {
         console.log('Processing message notification:', {
@@ -918,193 +1007,68 @@ const handleBirthdayResponse = async (notification) => {
     );
   };
 
- // Handle meeting response - using birthday wish API
+ // Handle meeting response - POST to /api/MeetingDetails/{id}/rsvp
 const handleMeetingResponse = async (notification) => {
   try {
     const memberId = await getCurrentUserMemberId();
-    
     if (!memberId) {
       Alert.alert(t('error'), t('couldNotFindMemberId'));
       return;
     }
-
-    // Convert memberId to integer
     const memberIdInt = parseInt(memberId, 10);
-    
-    if (isNaN(memberIdInt)) {
-      Alert.alert(t('error'), 'Invalid member ID format');
-      return;
-    }
+
+    const rsvp = async (status) => {
+      try {
+        setLoading(true);
+        const meetingId = notification.meetingId;
+        if (!meetingId) {
+          Alert.alert(t('error') || 'Error', 'Meeting ID not found');
+          return;
+        }
+        console.log(`RSVP meeting ${meetingId} for member ${memberIdInt} status=${status}`);
+        const response = await fetch(
+          `${API_BASE_URL}/api/MeetingDetails/${meetingId}/rsvp`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ MemberId: memberIdInt, Status: status }),
+          }
+        );
+        console.log('RSVP response status:', response.status);
+        if (response.ok) {
+          const msg = status === 1
+            ? `${t('youHaveConfirmedAttendance') || 'Attendance confirmed'} ✅`
+            : `${t('youIndicatedNotAttend') || 'Response recorded'} ❌`;
+          Alert.alert(t('success') || 'Success', msg, [{ text: t('ok') || 'OK' }]);
+          markNotificationAsRead(notification.id);
+          await loadDashboardReminders();
+        } else {
+          const errorText = await response.text();
+          console.error('RSVP error:', response.status, errorText);
+          let errorMessage = 'Failed to record response';
+          try { errorMessage = JSON.parse(errorText).message || errorMessage; } catch (e) {}
+          Alert.alert(t('error') || 'Error', errorMessage);
+        }
+      } catch (error) {
+        console.error('RSVP error:', error);
+        Alert.alert(t('error') || 'Error', error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     Alert.alert(
-      t('meetingResponse'),
-      t('respondToMeetingNotification'),
+      t('meetingResponse') || 'Meeting Response',
+      notification.message || 'Will you attend this meeting?',
       [
         { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('attend'),
-          onPress: async () => {
-            try {
-              setLoading(true);
-              
-              console.log('Sending attendance response for member:', memberIdInt, 'status: 1 (Attend)');
-              
-              // Call the meeting attendance API with status=1 for "Attend"
-              const attendRequestData = {
-                memberId: memberIdInt,
-                status: 1
-              };
-              const response = await fetch(
-                `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberIdInt}`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                  },
-                  body: JSON.stringify(attendRequestData)
-                }
-              );
-
-              console.log('Attendance API response status:', response.status);
-
-              if (response.ok) {
-                const result = await response.json();
-                console.log('Attendance response successful:', result);
-                
-                Alert.alert(
-                  t('success'),
-                  `${t('youHaveConfirmedAttendance')} ✅\n\n${t('attendanceMarkedInSystem')}`,
-                  [{ text: t('ok') }]
-                );
-                
-                // Mark notification as read
-                markNotificationAsRead(notification.id);
-                
-                // Refresh notifications to update UI
-                await loadDashboardReminders();
-                
-              } else if (response.status === 404) {
-                // Handle "No birthday wish found" case - this is expected for meeting responses
-                // We can still mark attendance via DailyMeetingStatus
-                console.log('No birthday wish found, but marking attendance via status=1');
-                
-                Alert.alert(
-                  'Success',
-                  'Your attendance has been recorded! ✅\n\n(No birthday wish associated)',
-                  [{ text: 'OK' }]
-                );
-                
-                markNotificationAsRead(notification.id);
-              } else {
-                const errorText = await response.text();
-                console.error('Attendance API error status:', response.status);
-                console.error('Attendance API error response:', errorText);
-                
-                // Try to parse error details
-                let errorMessage = 'Failed to record attendance';
-                try {
-                  const errorJson = JSON.parse(errorText);
-                  errorMessage = errorJson.message || errorJson.error || errorMessage;
-                } catch (e) {
-                  errorMessage = errorText || errorMessage;
-                }
-                
-                Alert.alert('Attendance Status', `Recording attendance: ${errorMessage}\n\nYour response has been noted.`);
-                markNotificationAsRead(notification.id);
-              }
-            } catch (error) {
-              console.error('Error confirming attendance:', error);
-              Alert.alert('Success', 'Your attendance has been recorded!');
-              markNotificationAsRead(notification.id);
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-        {
-          text: t('notAttend'),
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              
-              console.log('Sending not-attend response for member:', memberIdInt, 'status: 2 (Not Attend)');
-              
-              // Call the meeting attendance API with status=2 for "Not Attend"
-              const notAttendRequestData = {
-                memberId: memberIdInt,
-                status: 2
-              };
-              const response = await fetch(
-                `${API_BASE_URL}/api/MessageNotifications/birthday-wish/${memberIdInt}`,
-                {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                  },
-                  body: JSON.stringify(notAttendRequestData)
-                }
-              );
-
-              console.log('Not-attend API response status:', response.status);
-
-              if (response.ok) {
-                const result = await response.json();
-                console.log('Not-attend response successful:', result);
-                
-                Alert.alert(
-                  t('responseRecorded'),
-                  `${t('youIndicatedNotAttend')} ❌\n\n${t('responseRecordedInSystem')}`,
-                  [{ text: t('ok') }]
-                );
-                
-                markNotificationAsRead(notification.id);
-                await loadDashboardReminders();
-                
-              } else if (response.status === 404) {
-                // Handle "No birthday wish found" case - this is expected
-                console.log('No birthday wish found, but recording not-attend via status=2');
-                
-                Alert.alert(
-                  'Response Recorded',
-                  'Your not-attend response has been recorded! ❌\n\n(No birthday wish associated)',
-                  [{ text: 'OK' }]
-                );
-                
-                markNotificationAsRead(notification.id);
-              } else {
-                const errorText = await response.text();
-                console.error('Not-attend API error status:', response.status);
-                console.error('Not-attend API error response:', errorText);
-                
-                // Try to parse error details
-                let errorMessage = 'Failed to record response';
-                try {
-                  const errorJson = JSON.parse(errorText);
-                  errorMessage = errorJson.message || errorJson.error || errorMessage;
-                } catch (e) {
-                  errorMessage = errorText || errorMessage;
-                }
-                
-                Alert.alert('Response Status', `Recording response: ${errorMessage}\n\nYour response has been noted.`);
-                markNotificationAsRead(notification.id);
-              }
-            } catch (error) {
-              console.error('Error recording not-attend response:', error);
-              Alert.alert('Success', 'Your response has been recorded!');
-              markNotificationAsRead(notification.id);
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
+        { text: t('attend') || 'Attend ✅', onPress: () => rsvp(1) },
+        { text: t('notAttend') || 'Not Attending ❌', style: 'destructive', onPress: () => rsvp(2) },
       ]
     );
   } catch (error) {
     console.error('Error in handleMeetingResponse:', error);
-    Alert.alert(t('error'), t('failedToProcessMeetingResponse'));
+    Alert.alert(t('error'), t('failedToProcessMeetingResponse') || 'Failed to process meeting response');
   }
 };
   // Handle notification press
@@ -1605,7 +1569,7 @@ const handleMeetingResponse = async (notification) => {
                 <View style={styles.quickAccessIconContainer}>
                   <Icon name="account-group" size={28} color="#FFF" />
                 </View>
-                <Text style={styles.quickAccessTitle}>{t('memberList') || 'Member List'}</Text>
+                <Text style={styles.quickAccessTitle}>{t('MemberList') || 'Member List'}</Text>
                 <Text style={styles.quickAccessSubtitle}>{t('viewAllMembers') || 'View all members'}</Text>
                 <View style={styles.quickAccessArrow}>
                   <Icon name="arrow-right" size={18} color="#FFF" />

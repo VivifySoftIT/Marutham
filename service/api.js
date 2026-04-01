@@ -275,6 +275,21 @@ class ApiService {
     return await this.request(`/api/Members/${memberId}/photo`);
   }
 
+  // Get member photo URL (direct URL for Image component)
+  getMemberPhotoUrl(memberId) {
+    return `${this.baseURL}/api/Members/${memberId}/photo`;
+  }
+
+  // Get all members with full details (business info included)
+  async getMembersWithDetails() {
+    return await this.request('/api/Members');
+  }
+
+  // Get single member with full business details
+  async getMemberWithBusinessDetails(id) {
+    return await this.request(`/api/Members/${id}`);
+  }
+
   // ==================== PAYMENTS APIs ====================
   async getPayments(memberId = null) {
     // Use Payments controller endpoint
@@ -797,6 +812,11 @@ class ApiService {
 
   async getUpcomingMeetings() {
     return await this.request('/api/AdminMeetings/upcoming');
+  }
+
+  // Get all meetings from MeetingDetails table
+  async getMeetingDetails() {
+    return await this.request('/api/MeetingDetails');
   }
 
   async createMeeting(meetingData) {
