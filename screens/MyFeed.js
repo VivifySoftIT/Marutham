@@ -238,9 +238,9 @@ const MyFeed = ({ route }) => {
           id: `payment_${payment.paymentId || index}`,
           paymentId: payment.paymentId,
           type: payment.receiptNo ? 'payment_made' : 'payment_due',
-          title: payment.receiptNo ? t('paymentReceived') : t('pendingPayments'),
-          description: `${t('payment')} ${t('for')} ${payment.paymentForMonth || t('unknown')}`,
-          memberName: data.memberName || t('you'),
+          title: payment.receiptNo ? 'Payment Received' : 'Pending Payments',
+          description: `Payment for ${payment.paymentForMonth || 'Unknown'}`,
+          memberName: data.memberName || 'You',
           amount: payment.amount || 0,
           date: payment.paymentDate || payment.paymentEndDate || new Date().toISOString(),
           status: payment.status || (payment.receiptNo ? 'Paid' : 'Pending'),
@@ -337,11 +337,11 @@ const MyFeed = ({ route }) => {
       const visitorFeedItems = visitorsArray.map((visitor, index) => ({
         id: `visitor_${visitor.id || index}`,
         type: visitor.becameMember || visitor.BecameMember ? 'visitor_became_member' : 'visitor_brought',
-        title: visitor.becameMember || visitor.BecameMember ? t('visitorBecameMember') : t('visitor'),
-        description: `${visitor.visitorName || visitor.VisitorName || t('unknownVisitor')} ${t('from')} ${visitor.visitorBusiness || visitor.VisitorBusiness || visitor.company || visitor.Company || t('unknownCompany')}`,
-        memberName: visitor.visitorName || visitor.VisitorName || `${visitor.firstName || visitor.FirstName || ''} ${visitor.lastName || visitor.LastName || ''}`.trim() || t('unknownVisitor'),
+        title: visitor.becameMember || visitor.BecameMember ? 'Visitor Became Member' : 'Visitor',
+        description: `${visitor.visitorName || visitor.VisitorName || 'Unknown Visitor'} from ${visitor.visitorBusiness || visitor.VisitorBusiness || visitor.company || visitor.Company || 'Unknown Company'}`,
+        memberName: visitor.visitorName || visitor.VisitorName || `${visitor.firstName || visitor.FirstName || ''} ${visitor.lastName || visitor.LastName || ''}`.trim() || 'Unknown Visitor',
         date: visitor.visitDate || visitor.VisitDate || new Date().toISOString(),
-        status: visitor.becameMember || visitor.BecameMember ? t('member') : (visitor.status || visitor.Status || t('pending')),
+        status: visitor.becameMember || visitor.BecameMember ? 'Member' : (visitor.status || visitor.Status || 'Pending'),
         icon: visitor.becameMember || visitor.BecameMember ? 'account-plus' : 'account-group',
         color: visitor.becameMember || visitor.BecameMember ? '#4CAF50' : '#FF9800',
         // Additional visitor details
@@ -418,13 +418,13 @@ const MyFeed = ({ route }) => {
     const payload = {
       MemberId: parseInt(memberId),
       Amount: parseFloat(paymentForm.amount),
-      PaymentType: t('monthlyPayment'),
+      PaymentType: 'Monthly',
       PaymentMethod: paymentForm.paymentMethod || "UPI",
       TransactionId: paymentForm.transactionId.trim(),
       PaymentForMonth: formattedMonth,
       PaymentDate: paymentForm.paymentDate.toISOString().split('T')[0],
-      Status: t('paid'),
-      CreatedBy: t('member')
+      Status: 'Paid',
+      CreatedBy: 'Member'
     };
 
     setLoading(true);
