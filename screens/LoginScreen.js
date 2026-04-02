@@ -275,7 +275,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
             {/* Login Card */}
             <View style={styles.loginCard}>
               <Text style={styles.welcomeText}>Welcome to</Text>
-              <Text style={styles.loginTitle}>Alaigal Members Sign In</Text>
+              <Text style={styles.loginTitle} numberOfLines={1} adjustsFontSizeToFit>Marutham Members Sign In</Text>
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
@@ -442,12 +442,12 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   loginTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '800',
     color: theme.textDark,
     marginBottom: 28,
     textAlign: 'center',
-    letterSpacing: 0.8,
+    letterSpacing: 0.3,
   },
   inputWrapper: { marginBottom: 18 },
   inputContainer: {

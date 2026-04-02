@@ -698,11 +698,13 @@ const loadDashboardReminders = async () => {
 
   const handleLogout = () => {
     Alert.alert(
-      t('logout'),
+      t('confirmLogout'),
       t('areYouSureLogout'),
       [
         { text: t('cancel'), style: 'cancel' },
         {
+          text: t('logout'),
+          style: 'destructive',
           onPress: async () => {
             try {
               // clear member id cache

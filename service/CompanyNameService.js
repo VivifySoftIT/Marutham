@@ -1,10 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Returns the logged-in user's sub-company name, falling back to 'Alaigal'
+// Returns the logged-in user's sub-company name, falling back to 'Marutham'
 const getCompanyName = async () => {
   try {
-    const name = await AsyncStorage.getItem('subCompanyName');
-    return name || 'Marutham';
+    return 'Marutham';
   } catch {
     return 'Marutham';
   }
