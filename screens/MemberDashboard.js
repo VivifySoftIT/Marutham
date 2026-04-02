@@ -129,7 +129,8 @@ const MemberDashboard = () => {
   const [currentMemberId, setCurrentMemberId] = useState(null);
   const [selectedNotificationFilter, setSelectedNotificationFilter] = useState('all');
   const [memberName, setMemberName] = useState('');
-  const [companyName, setCompanyName] = useState('Alaigal');
+  const [companyName, setCompanyName] = useState('Marutham');
+  const [dailyKural, setDailyKural] = useState(null);
 
   // For swipeable sections
   const [activeQuickActionIndex, setActiveQuickActionIndex] = useState(0);
@@ -650,6 +651,7 @@ const MemberDashboard = () => {
 
     loadDashboardData();
     loadCurrentMemberId();
+    loadDailyKural();
 
     return () => clearInterval(interval);
   }, [t]);
@@ -657,6 +659,25 @@ const MemberDashboard = () => {
   const loadCurrentMemberId = async () => {
     const memberId = await MemberIdService.getCurrentUserMemberId();
     setCurrentMemberId(memberId);
+  };
+
+  const loadDailyKural = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const cacheKey = `dailyKural_${today}`;
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (cached) {
+        setDailyKural(JSON.parse(cached));
+        return;
+      }
+      const kural = await ApiService.getDailyThirukkural();
+      if (kural) {
+        setDailyKural(kural);
+        await AsyncStorage.setItem(cacheKey, JSON.stringify(kural));
+      }
+    } catch (error) {
+      console.log('MemberDashboard - Could not load daily kural:', error.message);
+    }
   };
 
   const loadDashboardData = async () => {
@@ -1152,10 +1173,11 @@ const MemberDashboard = () => {
             </View>
           </View>
           <View style={styles.headerCenterContent}>
-
-            <Text style={styles.thirukkuralQuote}>
-              "தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்" — திருக்குறள் 619
-            </Text>
+            {dailyKural ? (
+              <Text style={styles.thirukkuralQuote}>
+                {`"${dailyKural.tamil}" — திருக்குறள் ${dailyKural.number}`}
+              </Text>
+            ) : null}
           </View>
           {/* Enhanced Member Info Card - My Card Style */}
           {/* Card removed as requested */}

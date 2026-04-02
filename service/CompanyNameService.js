@@ -4,9 +4,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const getCompanyName = async () => {
   try {
     const name = await AsyncStorage.getItem('subCompanyName');
-    return name || 'Alaigal';
+    return name || 'Marutham';
   } catch {
-    return 'Alaigal';
+    return 'Marutham';
   }
 };
 
