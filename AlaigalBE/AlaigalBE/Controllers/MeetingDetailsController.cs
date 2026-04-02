@@ -362,5 +362,65 @@ public class MeetingDetailsController : ControllerBase
         }
     }
 
+    // POST: api/MeetingDetails/{id}/rsvp
+    [HttpPost("{id}/rsvp")]
+    public async Task<IActionResult> SaveRsvp(int id, [FromBody] MeetingRsvpRequest request)
+    {
+        try
+        {
+            var meeting = await _context.MeetingDetails.FindAsync(id);
+            if (meeting == null || !meeting.IsActive)
+                return NotFound(new { message = "Meeting not found" });
+
+            var member = await _context.Members
+                .FirstOrDefaultAsync(m => m.Id == request.MemberId && m.IsActive);
+            if (member == null)
+                return BadRequest(new { message = "Member not found" });
+
+            // Map int status to string: 1 = Attending, 2 = Not Attending
+            string statusStr = request.Status == 1 ? "Present" : "Absent";
+
+            var attendanceDate = meeting.MeetingDate.ToDateTime(TimeOnly.MinValue);
+            var now = DateTime.UtcNow;
+
+            var existing = await _context.Attendance
+                .FirstOrDefaultAsync(a => a.MemberId == request.MemberId && a.MeetingId == id);
+
+            if (existing != null)
+            {
+                existing.Status = statusStr;
+                existing.UpdatedDate = now;
+                existing.UpdatedBy = request.MemberId.ToString();
+            }
+            else
+            {
+                _context.Attendance.Add(new Attendance
+                {
+                    MemberId = request.MemberId,
+                    MeetingId = id,
+                    AttendanceDate = attendanceDate,
+                    Status = statusStr,
+                    SubCompanyId = member.SubCompanyId,
+                    CreatedBy = request.MemberId.ToString(),
+                    CreatedDate = now,
+                    IsActive = true
+                });
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "RSVP saved", status = statusStr });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error saving RSVP", error = ex.Message });
+        }
+    }
+
     
+}
+
+public class MeetingRsvpRequest
+{
+    public int MemberId { get; set; }
+    public int Status { get; set; } // 1 = Attending, 2 = Not Attending
 }

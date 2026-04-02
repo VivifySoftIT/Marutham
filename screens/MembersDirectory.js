@@ -224,8 +224,14 @@ const MembersDirectory = () => {
             <Text style={styles.memberName}>{item.name || 'No Name'}</Text>
             <Text style={styles.memberBusiness}>{businessName}</Text>
             <Text style={styles.memberId}>Member ID: {memberId}</Text>
-            <Text style={styles.memberPhone}>ðŸ“ž {formatPhone(item.phone || item.mobile || item.telephone)}</Text>
-            <Text style={styles.memberEmail}>âœ‰ï¸ {item.email || 'No Email'}</Text>
+            <View style={styles.memberContactRow}>
+              <Icon name="phone" size={12} color="#4A90E2" />
+              <Text style={styles.memberPhone}> {formatPhone(item.phone || item.mobile || item.telephone)}</Text>
+            </View>
+            <View style={styles.memberContactRow}>
+              <Icon name="email-outline" size={12} color="#4A90E2" />
+              <Text style={styles.memberEmail}> {item.email || 'No Email'}</Text>
+            </View>
           </View>
           <View style={styles.rightSection}>
             <TouchableOpacity 
@@ -466,6 +472,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#4A90E2',
     fontWeight: '500',
+    marginTop: 2,
+  },
+  memberContactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 2,
   },
   memberPhone: {

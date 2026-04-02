@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿﻿import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ActivityIndicator, RefreshControl, Alert, ImageBackground, Modal, ScrollView, TextInput, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -1018,95 +1018,62 @@ ${t('electronicReceipt')}
   // Helper function to translate feed item descriptions
   const translateFeedDescription = (item) => {
     if (!item.description) return t('noDataAvailable');
-    
-    // For English, return original description as-is (don't change published behavior)
+
     if (language !== 'ta') {
       return item.description;
     }
-    
-    // Only provide Tamil translations when language is Tamil
+
     const description = item.description.toLowerCase();
-    
-    // Handle "you visited" patterns in Tamil
+    const memberName = item.memberName || '';
+    const businessName = item.visitorBusiness || item.company || item.businessName || memberName || '';
+
     if (description.includes('you visited') || description.includes('you brought visitor') || description.includes('visitor brought')) {
-      const businessName = item.visitorBusiness || item.company || item.businessName || item.memberName || 'D';
-      return `à®¨à¯€à®™à¯à®•à®³à¯ ${businessName} à® à®ªà®¾à®°à¯à®µà¯ˆà®¯à®¿à®Ÿà¯à®Ÿà¯€à®°à¯à®•à®³à¯`;
+      return '\u0BA8\u0BC0\u0B99\u0BCD\u0B95\u0BB3\u0BCD ' + businessName + ' \u0B90 \u0BAA\u0BBE\u0BB0\u0BCD\u0BB5\u0BC8\u0BAF\u0BBF\u0B9F\u0BCD\u0B9F\u0BC0\u0BB0\u0BCD\u0B95\u0BB3\u0BCD';
     }
-    
     if (description.includes('you met') || description.includes('you had meeting') || description.includes('meeting with') || description.includes('1:1 with')) {
-      const memberName = item.memberName || 'D';
-      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à® à®šà®¨à¯à®¤à®¿à®¤à¯à®¤à¯€à®°à¯à®•à®³à¯`;
+      return '\u0BA8\u0BC0\u0B99\u0BCD\u0B95\u0BB3\u0BCD ' + memberName + ' \u0B90 \u0B9A\u0BA8\u0BCD\u0BA4\u0BBF\u0BA4\u0BCD\u0BA4\u0BC0\u0BB0\u0BCD\u0B95\u0BB3\u0BCD';
     }
-    
     if (description.includes('you gave referral') || description.includes('you gave a referral') || description.includes('you referred') || description.includes('referral to') || description.includes('sent referral')) {
-      const memberName = item.memberName || 'D';
-      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à®•à¯à®•à¯ à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ˆ à®µà®´à®™à¯à®•à®¿à®©à¯€à®°à¯à®•à®³à¯`;
+      return '\u0BA8\u0BC0\u0B99\u0BCD\u0B95\u0BB3\u0BCD ' + memberName + ' \u0B95\u0BCD\u0B95\u0BC1 \u0BAA\u0BB0\u0BBF\u0BA8\u0BCD\u0BA4\u0BC1\u0BB0\u0BC8 \u0BB5\u0BB4\u0B99\u0BCD\u0B95\u0BBF\u0BA9\u0BC0\u0BB0\u0BCD\u0B95\u0BB3\u0BCD';
     }
-    
     if (description.includes('you received referral') || description.includes('referral from') || description.includes('got referral')) {
-      const memberName = item.memberName || 'D';
-      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à®‡à®Ÿà®®à®¿à®°à¯à®¨à¯à®¤à¯ à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ˆ à®ªà¯†à®±à¯à®±à¯€à®°à¯à®•à®³à¯`;
+      return '\u0BA8\u0BC0\u0B99\u0BCD\u0B95\u0BB3\u0BCD ' + memberName + ' \u0B87\u0B9F\u0BAE\u0BBF\u0BB0\u0BC1\u0BA8\u0BCD\u0BA4\u0BC1 \u0BAA\u0BB0\u0BBF\u0BA8\u0BCD\u0BA4\u0BC1\u0BB0\u0BC8 \u0BAA\u0BC6\u0BB1\u0BCD\u0BB1\u0BC0\u0BB0\u0BCD\u0B95\u0BB3\u0BCD';
     }
-    
     if (description.includes('you gave thanks') || description.includes('you sent thanks') || description.includes('thanks to') || description.includes('tyfcb to')) {
-      const memberName = item.memberName || 'D';
-      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à®•à¯à®•à¯ à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à¯€à®°à¯à®•à®³à¯`;
+      return '\u0BA8\u0BC0\u0B99\u0BCD\u0B95\u0BB3\u0BCD ' + memberName + ' \u0B95\u0BCD\u0B95\u0BC1 \u0BA8\u0BA9\u0BCD\u0BB1\u0BBF \u0BA4\u0BC6\u0BB0\u0BBF\u0BB5\u0BBF\u0BA4\u0BCD\u0BA4\u0BC0\u0BB0\u0BCD\u0B95\u0BB3\u0BCD';
     }
-    
     if (description.includes('you received thanks') || description.includes('thanks from') || description.includes('tyfcb from') || description.includes('got thanks')) {
-      const memberName = item.memberName || 'D';
-      return `${memberName} à®‰à®™à¯à®•à®³à¯à®•à¯à®•à¯ à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à®¾à®°à¯`;
+      return memberName + ' \u0E09\u0B99\u0BCD\u0B95\u0BB3\u0BC1\u0B95\u0BCD\u0B95\u0BC1 \u0BA8\u0BA9\u0BCD\u0BB1\u0BBF \u0BA4\u0BC6\u0BB0\u0BBF\u0BB5\u0BBF\u0BA4\u0BCD\u0BA4\u0BBE\u0BB0\u0BCD';
     }
-    
-    // Handle third person patterns in Tamil
     if (description.includes('gave referral') || description.includes('sent referral')) {
-      const memberName = item.memberName || 'D';
-      return `${memberName} à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ˆ à®•à¯Šà®Ÿà¯à®¤à¯à®¤à®¾à®°à¯`;
+      return memberName + ' \u0BAA\u0BB0\u0BBF\u0BA8\u0BCD\u0BA4\u0BC1\u0BB0\u0BC8 \u0B95\u0BCA\u0B9F\u0BC1\u0BA4\u0BCD\u0BA4\u0BBE\u0BB0\u0BCD';
     }
-    
     if (description.includes('received referral') || description.includes('got referral')) {
-      const memberName = item.memberName || 'D';
-      return `${memberName} à®ªà®°à®¿à®¨à¯à®¤à¯à®°à¯ˆ à®ªà¯†à®±à¯à®±à®¾à®°à¯`;
+      return memberName + ' \u0BAA\u0BB0\u0BBF\u0BA8\u0BCD\u0BA4\u0BC1\u0BB0\u0BC8 \u0BAA\u0BC6\u0BB1\u0BCD\u0BB1\u0BBE\u0BB0\u0BCD';
     }
-    
     if (description.includes('gave thanks') || description.includes('sent thanks')) {
-      const memberName = item.memberName || 'D';
-      return `${memberName} à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à®¾à®°à¯`;
+      return memberName + ' \u0BA8\u0BA9\u0BCD\u0BB1\u0BBF \u0BA4\u0BC6\u0BB0\u0BBF\u0BB5\u0BBF\u0BA4\u0BCD\u0BA4\u0BBE\u0BB0\u0BCD';
     }
-    
     if (description.includes('received thanks') || description.includes('got thanks')) {
-      const memberName = item.memberName || 'D';
-      return `${memberName} à®¨à®©à¯à®±à®¿ à®ªà¯†à®±à¯à®±à®¾à®°à¯`;
+      return memberName + ' \u0BA8\u0BA9\u0BCD\u0BB1\u0BBF \u0BAA\u0BC6\u0BB1\u0BCD\u0BB1\u0BBE\u0BB0\u0BCD';
     }
-    
-    // Handle specific thanks note activity types in Tamil
     if (item.type === 'tyfcb_given' || item.type === 'thanksnote_given') {
-      const memberName = item.memberName || 'D';
-      return `à®¨à¯€à®™à¯à®•à®³à¯ ${memberName} à®•à¯à®•à¯ à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à¯€à®°à¯à®•à®³à¯`;
+      return '\u0BA8\u0BC0\u0B99\u0BCD\u0B95\u0BB3\u0BCD ' + memberName + ' \u0B95\u0BCD\u0B95\u0BC1 \u0BA8\u0BA9\u0BCD\u0BB1\u0BBF \u0BA4\u0BC6\u0BB0\u0BBF\u0BB5\u0BBF\u0BA4\u0BCD\u0BA4\u0BC0\u0BB0\u0BCD\u0B95\u0BB3\u0BCD';
     }
-    
     if (item.type === 'tyfcb_received' || item.type === 'thanksnote_received') {
-      const memberName = item.memberName || 'D';
-      return `${memberName} à®‰à®™à¯à®•à®³à¯à®•à¯à®•à¯ à®¨à®©à¯à®±à®¿ à®¤à¯†à®°à®¿à®µà®¿à®¤à¯à®¤à®¾à®°à¯`;
+      return memberName + ' \u0E09\u0B99\u0BCD\u0B95\u0BB3\u0BC1\u0B95\u0BCD\u0B95\u0BC1 \u0BA8\u0BA9\u0BCD\u0BB1\u0BBF \u0BA4\u0BC6\u0BB0\u0BBF\u0BB5\u0BBF\u0BA4\u0BCD\u0BA4\u0BBE\u0BB0\u0BCD';
     }
-    
-    // For payment items in Tamil
     if (item.type === 'payment_made' || item.type === 'payment_due') {
-      return `${item.paymentForMonth || 'à®¤à¯†à®°à®¿à®¯à®¾à®¤'} à®®à®¾à®¤à®¤à¯à®¤à®¿à®±à¯à®•à®¾à®© à®ªà®£à®®à¯`;
+      return (item.paymentForMonth || '\u0BA4\u0BC6\u0BB0\u0BBF\u0BAF\u0BBE\u0BA4') + ' \u0BAE\u0BBE\u0BA4\u0BA4\u0BCD\u0BA4\u0BBF\u0BB1\u0BCD\u0B95\u0BBE\u0BA9 \u0BAA\u0BA3\u0BAE\u0BCD';
     }
-    
-    // For visitor items in Tamil
     if (item.type === 'visitor_brought' || item.type === 'visitor_became_member') {
-      const visitorName = item.memberName || item.visitorName || 'D';
+      const visitorName = item.memberName || item.visitorName || '';
       const company = item.visitorBusiness || item.company || '';
-      if (company) {
-        return `${visitorName} ${company} à®‡à®²à¯ à®‡à®°à¯à®¨à¯à®¤à¯`;
-      } else {
-        return `${visitorName} à®ªà®¾à®°à¯à®µà¯ˆà®¯à®¾à®³à®°à¯`;
-      }
+      return company
+        ? visitorName + ' ' + company + ' \u0B87\u0BB2\u0BCD \u0B87\u0BB0\u0BC1\u0BA8\u0BCD\u0BA4\u0BC1 \u0BAA\u0BBE\u0BB0\u0BCD\u0BB5\u0BC8\u0BAF\u0BBE\u0BB3\u0BB0\u0BCD'
+        : visitorName + ' \u0BAA\u0BBE\u0BB0\u0BCD\u0BB5\u0BC8\u0BAF\u0BBE\u0BB3\u0BB0\u0BCD';
     }
-    
-    // Return original description if no Tamil translation pattern matches
+
     return item.description;
   };
 
@@ -1116,7 +1083,6 @@ ${t('electronicReceipt')}
     
     const statusLower = status.toLowerCase();
     
-    // Map common English status values to Tamil translations
     if (statusLower === 'pending' || statusLower === 'waiting') return t('pending');
     if (statusLower === 'completed' || statusLower === 'complete' || statusLower === 'done') return t('completed');
     if (statusLower === 'confirmed' || statusLower === 'confirm') return t('confirmed');
