@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import XLSX from 'xlsx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../service/LanguageContext';
@@ -92,6 +93,75 @@ const NewMemberUploadScreen = () => {
     } catch (error) {
       console.error('NewMemberUpload - Error getting member ID:', error);
       return null;
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      // Template data: header row + 2 sample rows
+      const templateData = [
+        {
+          'MEMBER': 'R. Anbalagan',
+          'Contact': '9884090206',
+          'Email': 'example@email.com',
+          'Company Name': '4 Ankadi',
+          'Type Of Business': 'Super Market',
+          'Date of Birth': '1990-06-15',
+          'Joining Date': '2026-01-28',
+          'Gender': 'Male',
+          'Address': '123, Main Street, Chennai',
+        },
+        {
+          'MEMBER': 'J. Anbazhagan',
+          'Contact': '9444043342',
+          'Email': 'sample@email.com',
+          'Company Name': 'First Insurance Shop',
+          'Type Of Business': 'Investment Consultant',
+          'Date of Birth': '1985-03-20',
+          'Joining Date': '2026-01-28',
+          'Gender': 'Female',
+          'Address': '456, Park Road, Coimbatore',
+        },
+      ];
+
+      const ws = XLSX.utils.json_to_sheet(templateData);
+
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 25 }, // MEMBER
+        { wch: 15 }, // Contact
+        { wch: 28 }, // Email
+        { wch: 28 }, // Company Name
+        { wch: 28 }, // Type Of Business
+        { wch: 18 }, // Date of Birth
+        { wch: 18 }, // Joining Date
+        { wch: 10 }, // Gender
+        { wch: 35 }, // Address
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Members Template');
+
+      const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+      const fileUri = FileSystem.documentDirectory + 'Members_Template.xlsx';
+
+      await FileSystem.writeAsStringAsync(fileUri, wbout, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Download Members Template',
+          UTI: 'com.microsoft.excel.xlsx',
+        });
+      } else {
+        Alert.alert('Saved', `Template saved to: ${fileUri}`);
+      }
+    } catch (error) {
+      console.error('Template download error:', error);
+      Alert.alert('Error', 'Failed to generate template. Please try again.');
     }
   };
 
@@ -382,6 +452,24 @@ const NewMemberUploadScreen = () => {
         {/* Upload Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Upload Excel File</Text>
+
+          {/* Download Template Button */}
+          <TouchableOpacity style={styles.templateButton} onPress={handleDownloadTemplate}>
+            <Icon name="file-download-outline" size={22} color="#212c62" />
+            <View style={styles.templateTextContainer}>
+              <Text style={styles.templateButtonText}>Download Template</Text>
+              <Text style={styles.templateButtonSubtext}>Get the Excel template with required columns</Text>
+            </View>
+            <Icon name="chevron-right" size={20} color="#212c62" />
+          </TouchableOpacity>
+
+          <View style={styles.templateColumns}>
+            <Text style={styles.templateColumnsTitle}>Template Columns:</Text>
+            <Text style={styles.templateColumnsText}>
+              MEMBER · Contact · Email · Company Name · Type Of Business · Date of Birth · Joining Date · Gender · Address
+            </Text>
+          </View>
+
           <TouchableOpacity
             style={styles.uploadButton}
             onPress={handleFileUpload}
@@ -392,13 +480,12 @@ const NewMemberUploadScreen = () => {
             ) : (
               <>
                 <Icon name="file-excel" size={24} color="#FFF" />
-                <Text style={styles.uploadButtonText}>Choose Excel File</Text>
+                <Text style={styles.uploadButtonText}>Import Excel File</Text>
               </>
             )}
           </TouchableOpacity>
           <Text style={styles.uploadHint}>
-            Required columns: Name, Contact, Business Type
-            Optional: Company, DOB
+            Fill the template and upload it here to import members
           </Text>
         </View>
 
@@ -562,15 +649,57 @@ const styles = StyleSheet.create({
     color: '#212c62',
     marginBottom: 12,
   },
+  templateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1.5,
+    borderColor: '#212c62',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+  },
+  templateTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  templateButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#212c62',
+  },
+  templateButtonSubtext: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  templateColumns: {
+    backgroundColor: '#F0F4FF',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 14,
+  },
+  templateColumnsTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#212c62',
+    marginBottom: 4,
+  },
+  templateColumnsText: {
+    fontSize: 11,
+    color: '#555',
+    lineHeight: 18,
+  },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#27AE60',
     paddingVertical: 16,
     borderRadius: 12,
     elevation: 3,
-    shadowColor: '#4A90E2',
+    shadowColor: '#27AE60',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -586,6 +715,7 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 8,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   searchContainer: {
     flexDirection: 'row',

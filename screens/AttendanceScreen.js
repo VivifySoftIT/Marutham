@@ -21,6 +21,7 @@ import { useLanguage } from '../service/LanguageContext';
 import MemberIdService from '../service/MemberIdService';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
 import Voice from '@react-native-voice/voice';
 import SpeechToTextInput from '../components/SpeechToTextInput';
@@ -293,6 +294,76 @@ const MemberAttendanceScreen = () => {
     };
   }, []);
 
+  const handleExcelIconPress = () => {
+    Alert.alert(
+      'Excel Options',
+      'What would you like to do?',
+      [
+        {
+          text: 'Download Template',
+          onPress: handleDownloadTemplate,
+        },
+        {
+          text: 'Import Excel',
+          onPress: handleExcelUpload,
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      // Format today's date as column header e.g. "18-Jan-25"
+      const dateHeader = selectedDate.toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: '2-digit'
+      }).replace(/ /g, '-');
+
+      // Build rows: one per member
+      const templateData = members.length > 0
+        ? members.map(m => ({
+            'Member Name': m.name,
+            [dateHeader]: '',   // blank — user fills Present / Late
+          }))
+        : [
+            { 'Member Name': 'Anbalagan R',  [dateHeader]: 'Present' },
+            { 'Member Name': 'Anbazhagan J', [dateHeader]: 'Present' },
+            { 'Member Name': 'Sample Member',[dateHeader]: '' },
+          ];
+
+      const ws = XLSX.utils.json_to_sheet(templateData);
+      ws['!cols'] = [{ wch: 30 }, { wch: 15 }];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+
+      // binary → base64
+      const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+      const buf = new Uint8Array(wbout.length);
+      for (let i = 0; i < wbout.length; i++) buf[i] = wbout.charCodeAt(i) & 0xff;
+      const base64 = btoa(String.fromCharCode(...buf));
+
+      const fileUri = FileSystem.documentDirectory + 'Attendance_Template.xlsx';
+      await FileSystem.writeAsStringAsync(fileUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Save Attendance Template',
+          UTI: 'com.microsoft.excel.xlsx',
+        });
+      } else {
+        Alert.alert('Saved', 'Template saved to your device.');
+      }
+    } catch (error) {
+      console.error('Attendance template error:', error);
+      Alert.alert('Error', 'Failed to generate template: ' + error.message);
+    }
+  };
+
   const handleExcelUpload = async () => {
     try {
       setUploading(true);
@@ -493,7 +564,7 @@ const MemberAttendanceScreen = () => {
         {/* Right Container */}
         <View style={styles.headerRightContainer}>
           <TouchableOpacity
-            onPress={handleExcelUpload}
+            onPress={handleExcelIconPress}
             style={styles.headerButton}
             disabled={uploading}
           >

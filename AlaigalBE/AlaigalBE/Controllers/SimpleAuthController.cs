@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using Alaigal.Data;
+using Alaigal.Models;
 
 namespace AlaigalBE.Controllers;
 
@@ -42,6 +43,18 @@ public class SimpleAuthController : ControllerBase
             user.LastLogin = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
+            // Get member + subcompany details
+            Alaigal.Models.Member member = null;
+            Alaigal.Models.SubCompany subCompany = null;
+            if (user.MemberId.HasValue)
+            {
+                member = await _context.Members.FirstOrDefaultAsync(m => m.Id == user.MemberId.Value && m.IsActive);
+                if (member?.SubCompanyId != null)
+                {
+                    subCompany = await _context.SubCompanies.FirstOrDefaultAsync(sc => sc.Id == member.SubCompanyId && sc.IsActive);
+                }
+            }
+
             // Create simple token (base64 encoded user info + timestamp)
             var tokenData = $"{user.Id}:{user.Username}:{DateTime.UtcNow.Ticks}";
             var token = Convert.ToBase64String(Encoding.UTF8.GetBytes(tokenData));
@@ -57,7 +70,10 @@ public class SimpleAuthController : ControllerBase
                     email = user.Email,
                     fullName = user.FullName,
                     role = user.Role,
-                    phone = user.Phone
+                    phone = user.Phone,
+                    memberId = user.MemberId,
+                    subCompanyId = member != null ? member.SubCompanyId : (int?)null,
+                    subCompanyName = subCompany != null ? subCompany.SubCompanyName : null
                 }
             });
         }

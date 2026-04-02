@@ -345,20 +345,16 @@ class ApiService {
   }
 
   async getAttendanceWithFilters(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
-    let endpoint = '/api/Attendance';
+    const subCompanyId = await this.getSubCompanyId();
     const params = [];
-    
     if (fromDate) params.push(`fromDate=${fromDate}`);
     if (toDate) params.push(`toDate=${toDate}`);
     if (period) params.push(`period=${period}`);
     if (memberId) params.push(`memberId=${memberId}`);
     if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
-    
-    if (params.length > 0) {
-      endpoint += '?' + params.join('&');
-    }
-    
-    return await this.request(endpoint);
+    if (subCompanyId) params.push(`subCompanyId=${subCompanyId}`);
+    const qs = params.length > 0 ? '?' + params.join('&') : '';
+    return await this.request(`/api/Attendance${qs}`);
   }
 
   async getAttendanceReport(fromDate = null, toDate = null) {
@@ -610,105 +606,81 @@ class ApiService {
   }
 
   async getTYFCBReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
-    let endpoint = '/api/TYFCB/report';
+    const subCompanyId = await this.getSubCompanyId();
     const params = [];
-    
     if (fromDate) params.push(`fromDate=${fromDate}`);
     if (toDate) params.push(`toDate=${toDate}`);
     if (period) params.push(`period=${period}`);
     if (memberId) params.push(`memberId=${memberId}`);
     if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
-    
-    if (params.length > 0) {
-      endpoint += '?' + params.join('&');
-    }
-    
-    return await this.request(endpoint);
+    if (subCompanyId) params.push(`subCompanyId=${subCompanyId}`);
+    const qs = params.length > 0 ? '?' + params.join('&') : '';
+    return await this.request(`/api/TYFCB/report${qs}`);
   }
 
   async getOneToOneMeetingReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
-    let endpoint = '/api/OneToOneMeeting/report';
+    const subCompanyId = await this.getSubCompanyId();
     const params = [];
-    
     if (fromDate) params.push(`fromDate=${fromDate}`);
     if (toDate) params.push(`toDate=${toDate}`);
     if (period) params.push(`period=${period}`);
     if (memberId) params.push(`memberId=${memberId}`);
     if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
-    
-    if (params.length > 0) {
-      endpoint += '?' + params.join('&');
-    }
-    
-    return await this.request(endpoint);
+    if (subCompanyId) params.push(`subCompanyId=${subCompanyId}`);
+    const qs = params.length > 0 ? '?' + params.join('&') : '';
+    return await this.request(`/api/OneToOneMeeting/report${qs}`);
   }
 
   async getReferralReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
-    let endpoint = '/api/Referrals/report';
+    const subCompanyId = await this.getSubCompanyId();
     const params = [];
-    
     if (fromDate) params.push(`fromDate=${fromDate}`);
     if (toDate) params.push(`toDate=${toDate}`);
     if (period) params.push(`period=${period}`);
     if (memberId) params.push(`memberId=${memberId}`);
     if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
-    
-    if (params.length > 0) {
-      endpoint += '?' + params.join('&');
-    }
-    
-    return await this.request(endpoint);
+    if (subCompanyId) params.push(`subCompanyId=${subCompanyId}`);
+    const qs = params.length > 0 ? '?' + params.join('&') : '';
+    return await this.request(`/api/Referrals/report${qs}`);
   }
 
   async getPaymentReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
-    let endpoint = '/api/Payments/report';
+    const subCompanyId = await this.getSubCompanyId();
     const params = [];
-    
     if (fromDate) params.push(`fromDate=${fromDate}`);
     if (toDate) params.push(`toDate=${toDate}`);
     if (period) params.push(`period=${period}`);
     if (memberId) params.push(`memberId=${memberId}`);
     if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
-    
-    if (params.length > 0) {
-      endpoint += '?' + params.join('&');
-    }
-    
-    return await this.request(endpoint);
+    if (subCompanyId) params.push(`subCompanyId=${subCompanyId}`);
+    const qs = params.length > 0 ? '?' + params.join('&') : '';
+    return await this.request(`/api/Payments/report${qs}`);
   }
 
   async getAlaigalMeetingReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
-    let endpoint = '/api/MeetingDetails/report';
+    const subCompanyId = await this.getSubCompanyId();
     const params = [];
-    
     if (fromDate) params.push(`fromDate=${fromDate}`);
     if (toDate) params.push(`toDate=${toDate}`);
     if (period) params.push(`period=${period}`);
     if (memberId) params.push(`memberId=${memberId}`);
     if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
-    
-    if (params.length > 0) {
-      endpoint += '?' + params.join('&');
-    }
-    
-    return await this.request(endpoint);
+    if (subCompanyId) params.push(`subCompanyId=${subCompanyId}`);
+    const qs = params.length > 0 ? '?' + params.join('&') : '';
+    return await this.request(`/api/MeetingDetails/report${qs}`);
   }
 
   async getVisitorReport(fromDate = null, toDate = null, period = 'daily', memberId = null, adminMemberId = null) {
-    let endpoint = '/api/Inventory/visitors/report';
+    const subCompanyId = await this.getSubCompanyId();
     const params = [];
-    
     if (fromDate) params.push(`fromDate=${fromDate}`);
     if (toDate) params.push(`toDate=${toDate}`);
     if (period) params.push(`period=${period}`);
     if (memberId) params.push(`memberId=${memberId}`);
     if (adminMemberId) params.push(`adminMemberId=${adminMemberId}`);
-    
-    if (params.length > 0) {
-      endpoint += '?' + params.join('&');
-    }
-    
-    return await this.request(endpoint);
+    if (subCompanyId) params.push(`subCompanyId=${subCompanyId}`);
+    const qs = params.length > 0 ? '?' + params.join('&') : '';
+    return await this.request(`/api/Inventory/visitors/report${qs}`);
   }
 
   async createTYFCB(tyfcbData) {
