@@ -25,6 +25,7 @@ import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import MemberIdService from '../service/MemberIdService';
+import CompanyNameService from '../service/CompanyNameService';
 import SpeechToTextInput from '../components/SpeechToTextInput';
 
 const { width } = Dimensions.get('window');
@@ -81,6 +82,7 @@ const MyPayments = () => {
   const [totalPaid, setTotalPaid] = useState(0);
   const [totalDue, setTotalDue] = useState(0);
   const [memberName, setMemberName] = useState('');
+  const [companyName, setCompanyName] = useState('Alaigal');
   const [currentMemberId, setCurrentMemberId] = useState(null);
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
   const [showPaymentDatePicker, setShowPaymentDatePicker] = useState(false);
@@ -99,6 +101,8 @@ const MyPayments = () => {
     const loadMemberId = async () => {
       const id = await getMemberId();
       setCurrentMemberId(id);
+      const name = await CompanyNameService.getCompanyName();
+      setCompanyName(name);
     };
     loadMemberId();
   }, []);
@@ -754,7 +758,7 @@ This is an electronically generated receipt.
                   style={styles.receiptLogo}
                   resizeMode="contain"
                 />
-                <Text style={styles.receiptCompanyName}>ALAIGAL</Text>
+                <Text style={styles.receiptCompanyName}>{companyName.toUpperCase()}</Text>
                 <Text style={styles.receiptCompanySubtitle}>Members Network</Text>
               </View>
 

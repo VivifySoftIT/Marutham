@@ -24,7 +24,7 @@ const AdminVisitorRequests = () => {
     setLoading(true);
     try {
       const token = await getToken();
-      const res = await fetch(`${API_BASE_URL}/api/Inventory/visitors/pending-members`, {
+      const res = await fetch(`${API_BASE_URL}/api/Inventory/visitors/all-pending-member-requests`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -49,8 +49,9 @@ const AdminVisitorRequests = () => {
         onPress: async () => {
           try {
             const token = await getToken();
-            const res = await fetch(`${API_BASE_URL}/api/Inventory/visitors/${id}/${action}`, {
-              method: 'PUT',
+            const endpoint = action === 'approve' ? 'approve-member' : 'reject-member';
+            const res = await fetch(`${API_BASE_URL}/api/Inventory/visitors/${id}/${endpoint}`, {
+              method: 'POST',
               headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
             });
             if (res.ok) {

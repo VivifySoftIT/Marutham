@@ -197,12 +197,23 @@ class ApiService {
   }
 
   // ==================== MEMBERS APIs ====================
+  async getSubCompanyId() {
+    try {
+      const id = await AsyncStorage.getItem('subCompanyId');
+      return id ? parseInt(id) : null;
+    } catch { return null; }
+  }
+
   async getMembers() {
-    return await this.request('/api/Members');
+    const subCompanyId = await this.getSubCompanyId();
+    const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+    return await this.request(`/api/Members${qs}`);
   }
 
   async getMember(id) {
-    return await this.request(`/api/Members/${id}`);
+    const subCompanyId = await this.getSubCompanyId();
+    const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+    return await this.request(`/api/Members/${id}${qs}`);
   }
 
   async getMemberByUserId(userId) {
@@ -287,7 +298,9 @@ class ApiService {
 
   // Get single member with full business details
   async getMemberWithBusinessDetails(id) {
-    return await this.request(`/api/Members/${id}`);
+    const subCompanyId = await this.getSubCompanyId();
+    const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+    return await this.request(`/api/Members/${id}${qs}`);
   }
 
   // ==================== PAYMENTS APIs ====================
@@ -926,6 +939,11 @@ class ApiService {
       CreatedBy: senderMemberId,
       CustomMessage: customMessage
     });
+  }
+
+  // Daily Thirukkural — same kural for all users all day, changes each day
+  async getDailyThirukkural() {
+    return await this.request('/api/Thirukkural/daily');
   }
 }
 

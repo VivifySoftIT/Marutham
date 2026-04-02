@@ -49,9 +49,14 @@ public class AuthController : ControllerBase
 
         // Get member details if linked
         Member member = null;
+        SubCompany subCompany = null;
         if (user.MemberId.HasValue)
         {
             member = await _context.Members.FirstOrDefaultAsync(m => m.Id == user.MemberId.Value && m.IsActive);
+            if (member?.SubCompanyId != null)
+            {
+                subCompany = await _context.SubCompanies.FirstOrDefaultAsync(sc => sc.Id == member.SubCompanyId && sc.IsActive);
+            }
         }
 
         return Ok(new
@@ -66,13 +71,16 @@ public class AuthController : ControllerBase
                 user.Role,
                 user.Phone,
                 user.MemberId,
+                SubCompanyId = member != null ? member.SubCompanyId : (int?)null,
+                SubCompanyName = subCompany != null ? subCompany.SubCompanyName : null,
                 MemberDetails = member != null ? new
                 {
                     member.Id,
                     member.Name,
                     member.Email,
                     member.Phone,
-                    member.MemberId
+                    member.MemberId,
+                    member.SubCompanyId
                 } : null
             }
         });

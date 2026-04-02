@@ -144,6 +144,20 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
         await AsyncStorage.setItem('username', response.user.username || '');
         await AsyncStorage.setItem('userId', response.user.id?.toString() || '');
 
+        // Store subCompanyId for scoped member queries
+        if (response.user.subCompanyId) {
+          await AsyncStorage.setItem('subCompanyId', response.user.subCompanyId.toString());
+        } else {
+          await AsyncStorage.removeItem('subCompanyId');
+        }
+
+        // Store subCompanyName for display across screens
+        if (response.user.subCompanyName) {
+          await AsyncStorage.setItem('subCompanyName', response.user.subCompanyName);
+        } else {
+          await AsyncStorage.removeItem('subCompanyName');
+        }
+
         // CRITICAL: Store or Resolve MemberId
         if (response.user.memberId) {
           await MemberIdService.setMemberId(response.user.memberId);
