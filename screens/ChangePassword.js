@@ -128,7 +128,7 @@ const ChangePassword = () => {
       </LinearGradient>
 
       <ImageBackground
-        source={require('../assets/logoicon.png')}
+        source={require('../assets/logomarutham.png')}
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >

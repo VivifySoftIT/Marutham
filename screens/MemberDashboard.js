@@ -1102,7 +1102,7 @@ const MemberDashboard = () => {
               <View style={styles.logoTitleContainer}>
                 <View style={styles.logoContainer}>
                   <Image
-                    source={require('../assets/logoicon2.png')}
+                    source={require('../assets/logomarutham.png')}
                     style={styles.headerLogo}
                     resizeMode="contain"
                   />

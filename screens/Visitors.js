@@ -257,7 +257,7 @@ const Visitors = () => {
       </LinearGradient>
 
       <ImageBackground
-        source={require('../assets/logoicon.png')}
+        source={require('../assets/logomarutham.png')}
         style={styles.bg}
         imageStyle={styles.bgImage}
       >
