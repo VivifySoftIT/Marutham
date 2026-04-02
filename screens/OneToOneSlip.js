@@ -19,9 +19,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../apiConfig';
 import SpeechToTextInput from '../components/SpeechToTextInput';
+import { useLanguage } from '../service/LanguageContext';
 
 const OneToOneSlip = () => {
   const navigation = useNavigation();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -171,8 +173,8 @@ const OneToOneSlip = () => {
       await apiPost('/api/OneToOneMeeting', meetingData);
 
       Alert.alert(
-        'Success',
-        'One-to-One meeting slip submitted successfully!',
+        t('success'),
+        t('meetingSubmittedSuccess'),
         [
           {
             text: 'OK',
@@ -197,7 +199,7 @@ const OneToOneSlip = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>One-to-One Meeting</Text>
+        <Text style={styles.headerTitle}>{t('oneToOneMeetingTitle')}</Text>
         <View style={{ width: 24 }} />
       </LinearGradient>
 
@@ -209,13 +211,13 @@ const OneToOneSlip = () => {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Member Name Dropdown - Searchable */}
           <View style={styles.section}>
-            <Text style={styles.label}>Met with *</Text>
+            <Text style={styles.label}>{t('metWith')} *</Text>
             <View style={styles.dropdownContainer}>
               <View style={styles.inputContainer}>
                 <Icon name="account-search" size={20} color="#4A90E2" style={styles.icon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Type to search member..."
+                  placeholder={t('typeToSearchMember')}
                   value={showMemberDropdown ? memberSearchQuery : (formData.memberName || '')}
                   onChangeText={(text) => {
                     setMemberSearchQuery(text);
@@ -259,7 +261,7 @@ const OneToOneSlip = () => {
                           ))
                         ) : (
                           <View style={styles.noMembersContainer}>
-                            <Text style={styles.noMembersText}>No members found</Text>
+                            <Text style={styles.noMembersText}>{t('noMembersFound')}</Text>
                           </View>
                         );
                       })()
@@ -275,13 +277,13 @@ const OneToOneSlip = () => {
 
           {/* Location */}
           <View style={styles.section}>
-            <Text style={styles.label}>Location *</Text>
+            <Text style={styles.label}>{t('location')} *</Text>
             <View style={styles.rowContainer}>
               <Icon name="map-marker" size={20} color="#4A90E2" style={styles.icon} />
               <SpeechToTextInput
                 style={styles.speechInput}
                 inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }} // Remove internal border
-                placeholder="Enter location"
+                placeholder={t('enterLocation')}
                 value={formData.location}
                 onChangeText={(text) => handleInputChange('location', text)}
                 placeholderTextColor="#999"
@@ -291,7 +293,7 @@ const OneToOneSlip = () => {
 
           {/* Date */}
           <View style={styles.section}>
-            <Text style={styles.label}>Date *</Text>
+            <Text style={styles.label}>{t('date')} *</Text>
             <TouchableOpacity
               style={styles.inputContainer}
               onPress={() => setShowDatePicker(true)}
@@ -313,12 +315,12 @@ const OneToOneSlip = () => {
 
           {/* Topic */}
           <View style={styles.section}>
-            <Text style={styles.label}>Topic *</Text>
+            <Text style={styles.label}>{t('topic')} *</Text>
             <View style={[styles.rowContainer, styles.textAreaContainer]}>
               <SpeechToTextInput
                 style={styles.speechTextArea}
                 inputStyle={{ borderBottomWidth: 0, borderWidth: 0, minHeight: 80 }} // Remove internal border
-                placeholder="Enter meeting topic"
+                placeholder={t('enterMeetingTopic')}
                 value={formData.topic}
                 onChangeText={(text) => handleInputChange('topic', text)}
                 multiline
@@ -339,7 +341,7 @@ const OneToOneSlip = () => {
             ) : (
               <>
                 <Icon name="check-circle" size={20} color="#FFF" />
-                <Text style={styles.confirmButtonText}>Confirm Meeting</Text>
+                <Text style={styles.confirmButtonText}>{t('confirmMeeting')}</Text>
               </>
             )}
           </TouchableOpacity>

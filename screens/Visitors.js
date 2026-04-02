@@ -126,19 +126,19 @@ const Visitors = () => {
 
   const validateForm = () => {
     if (!formData.FirstName.trim()) {
-      Alert.alert(t('missingInformation'), 'First name is required.');
+      Alert.alert(t('missingInformation'), t('firstNameRequired'));
       return false;
     }
     if (!formData.LastName.trim()) {
-      Alert.alert(t('missingInformation'), 'Last name is required.');
+      Alert.alert(t('missingInformation'), t('lastNameRequired'));
       return false;
     }
     if (!formData.Phone.trim()) {
-      Alert.alert(t('missingInformation'), 'Phone number is required.');
+      Alert.alert(t('missingInformation'), t('phoneNumberRequired'));
       return false;
     }
     if (!/^\d{10}$/.test(formData.Phone.trim())) {
-      Alert.alert('Invalid Phone Number', 'Please enter a valid 10-digit mobile number.');
+      Alert.alert(t('invalidPhoneNumber'), t('pleaseEnterValid10DigitPhone'));
       return false;
     }
     if (formData.Email && !/\S+@\S+\.\S+/.test(formData.Email)) {
@@ -273,34 +273,34 @@ const Visitors = () => {
               <View style={styles.memberBanner}>
                 <Icon name="check-circle" size={16} color="#4CAF50" />
                 <Text style={styles.memberBannerText}>
-                  Visitor will be registered under your reference
+                  {t('visitorRegisteredUnderAccount').replace('{{memberId}}', memberId)}
                 </Text>
               </View>
             ) : null}
 
             {/* Visitor Info Card */}
             <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Visitor Information</Text>
+              <Text style={styles.sectionTitle}>{t('visitorInformation')}</Text>
 
-              <Text style={styles.label}>First Name *</Text>
+              <Text style={styles.label}>{t('firstName')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter first name"
+                placeholder={t('enterFirstName')}
                 value={formData.FirstName}
                 onChangeText={text => handleChange('FirstName', text)}
                 placeholderTextColor="#999"
               />
 
-              <Text style={styles.label}>Last Name *</Text>
+              <Text style={styles.label}>{t('lastName')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter last name"
+                placeholder={t('enterLastName')}
                 value={formData.LastName}
                 onChangeText={text => handleChange('LastName', text)}
                 placeholderTextColor="#999"
               />
 
-              <Text style={styles.label}>Phone Number *</Text>
+              <Text style={styles.label}>{t('phoneNumber')} *</Text>
               <SpeechToTextInput
-                placeholder="Enter 10-digit phone number"
+                placeholder={t('enterPhoneNumber')}
                 value={formData.Phone}
                 onChangeText={text => handleChange('Phone', text.replace(/[^0-9]/g, '').slice(0, 10))}
                 keyboardType="phone-pad"
@@ -308,9 +308,9 @@ const Visitors = () => {
                 placeholderTextColor="#999"
               />
 
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>{t('visitorEmail')}</Text>
               <SpeechToTextInput
-                placeholder="Enter email address"
+                placeholder={t('enterVisitorEmail')}
                 value={formData.Email}
                 onChangeText={text => handleChange('Email', text)}
                 keyboardType="email-address"
@@ -318,9 +318,9 @@ const Visitors = () => {
                 placeholderTextColor="#999"
               />
 
-              <Text style={styles.label}>Business / Company</Text>
+              <Text style={styles.label}>{t('businessCompany')}</Text>
               <SpeechToTextInput
-                placeholder="Enter business or company name"
+                placeholder={t('enterBusinessOrCompany')}
                 value={formData.Business}
                 onChangeText={text => handleChange('Business', text)}
                 placeholderTextColor="#999"
@@ -329,9 +329,9 @@ const Visitors = () => {
 
             {/* Visit Details Card */}
             <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Visit Details</Text>
+              <Text style={styles.sectionTitle}>{t('visitDetails')}</Text>
 
-              <Text style={styles.label}>Visit Date</Text>
+              <Text style={styles.label}>{t('visitDate')}</Text>
               <TouchableOpacity
                 style={styles.dateInput}
                 onPress={() => setShowDatePicker(true)}
@@ -350,9 +350,9 @@ const Visitors = () => {
                 />
               )}
 
-              <Text style={styles.label}>Notes</Text>
+              <Text style={styles.label}>{t('notes')}</Text>
               <SpeechToTextInput
-                placeholder="Any additional notes..."
+                placeholder={t('enterAdditionalNotes')}
                 value={formData.Notes}
                 onChangeText={text => handleChange('Notes', text)}
                 multiline
@@ -401,12 +401,12 @@ const Visitors = () => {
             <Icon name="check-circle" size={60} color="#4CAF50" />
             <Text style={styles.modalTitle}>
               {formData.BecameMember
-                ? 'Member Request Submitted'
+                ? t('memberRequestSubmitted')
                 : t('visitorRegisteredSuccessfully')}
             </Text>
             <Text style={styles.modalMsg}>
               {formData.BecameMember
-                ? 'Your visitor member request has been submitted. It will be reviewed by the admin. You will see a notification on your dashboard until it is approved or rejected.'
+                ? t('memberRequestSubmittedDesc')
                 : t('visitorInfoSavedToSystem')}
             </Text>
             <TouchableOpacity

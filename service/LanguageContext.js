@@ -1170,6 +1170,31 @@ const translations = {
     addNewMember: 'Add New Member',
     joinDate: 'Joined',
     inactive: 'Inactive',
+
+    // One to One Slip
+    oneToOneMeetingTitle: 'One-to-One Meeting',
+    metWith: 'Met with',
+    typeToSearchMember: 'Type to search member...',
+    enterLocation: 'Enter location',
+    enterMeetingTopic: 'Enter meeting topic',
+    confirmMeeting: 'Confirm Meeting',
+    meetingSubmittedSuccess: 'One-to-One meeting slip submitted successfully!',
+    noMembersFound: 'No members found',
+
+    // Visitors Screen Simple Form
+    visitorInformation: 'Visitor Information',
+    visitDetails: 'Visit Details',
+    phoneNumber: 'Phone Number',
+    enterPhoneNumber: 'Enter 10-digit phone number',
+    businessCompany: 'Business / Company',
+    enterBusinessOrCompany: 'Enter business or company name',
+    firstNameRequired: 'First name is required.',
+    lastNameRequired: 'Last name is required.',
+    phoneNumberRequired: 'Phone number is required.',
+    invalidPhoneNumber: 'Invalid Phone Number',
+    pleaseEnterValid10DigitPhone: 'Please enter a valid 10-digit mobile number.',
+    memberRequestSubmitted: 'Member Request Submitted',
+    memberRequestSubmittedDesc: 'Your visitor member request has been submitted. It will be reviewed by the admin. You will see a notification on your dashboard until it is approved or rejected.',
   },
   ta: {
     // Common
@@ -2482,6 +2507,31 @@ const translations = {
     from: 'இருந்து',
     successfully: 'வெற்றிகரமாக',
     memberIdNotAssigned: 'உறுப்பினர் அடையாளம்: ஒதுக்கப்படவில்லை',
+
+    // One to One Slip
+    oneToOneMeetingTitle: 'ஒருவருக்கு ஒருவர் சந்திப்பு',
+    metWith: 'யாருடன் சந்தித்தீர்கள்',
+    typeToSearchMember: 'உறுப்பினரை தேட தட்டச்சு செய்யவும்...',
+    enterLocation: 'இடத்தை உள்ளிடவும்',
+    enterMeetingTopic: 'சந்திப்பு தலைப்பை உள்ளிடவும்',
+    confirmMeeting: 'சந்திப்பை உறுதிப்படுத்தவும்',
+    meetingSubmittedSuccess: 'ஒருவருக்கு ஒருவர் சந்திப்பு வெற்றிகரமாக சமர்ப்பிக்கப்பட்டது!',
+    noMembersFound: 'உறுப்பினர்கள் எவரும் கிடைக்கவில்லை',
+
+    // Visitors Screen Simple Form
+    visitorInformation: 'பார்வையாளர் தகவல்',
+    visitDetails: 'வருகை விவரங்கள்',
+    phoneNumber: 'தொலைபேசி எண்',
+    enterPhoneNumber: '10 இலக்க தொலைபேசி எண்ணை உள்ளிடவும்',
+    businessCompany: 'வணிகம் / நிறுவனம்',
+    enterBusinessOrCompany: 'வணிகம் அல்லது நிறுவன பெயரை உள்ளிடவும்',
+    firstNameRequired: 'முதல் பெயர் தேவை.',
+    lastNameRequired: 'கடைசி பெயர் தேவை.',
+    phoneNumberRequired: 'தொலைபேசி எண் தேவை.',
+    invalidPhoneNumber: 'தவறான தொலைபேசி எண்',
+    pleaseEnterValid10DigitPhone: 'சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.',
+    memberRequestSubmitted: 'உறுப்பினர் கோரிக்கை சமர்ப்பிக்கப்பட்டது',
+    memberRequestSubmittedDesc: 'உங்கள் பார்வையாளர் உறுப்பினர் கோரிக்கை சமர்ப்பிக்கப்பட்டது. நிர்வாகியால் மதிப்பாய்வு செய்யப்படும். அங்கீகரிக்கப்படும் வரை உங்கள் டாஷ்போர்டில் அறிவிப்பு காண்பிக்கப்படும்.',
   },
 
 };
