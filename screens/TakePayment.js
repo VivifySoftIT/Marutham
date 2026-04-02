@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -109,7 +109,7 @@ const TakePayment = ({ navigation }) => {
       console.log('Payment response:', responseText);
 
       if (response.ok) {
-        Alert.alert('Success', `Payment of ₹${amount} received from ${selectedMember.name}`);
+        Alert.alert('Success', `Payment of \u20B9${amount} received from ${selectedMember.name}`);
         setSelectedMember(null);
         setAmount('');
         // Optional: refresh dashboard or navigate back
@@ -187,7 +187,7 @@ const TakePayment = ({ navigation }) => {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Amount</Text>
               <View style={styles.amountInput}>
-                <Text style={styles.currencySymbol}>₹</Text>
+                <Text style={styles.currencySymbol}>\u20B9</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="0"

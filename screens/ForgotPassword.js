@@ -426,7 +426,7 @@ const ForgotPassword = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={['#C9A84C', '#2E7D4F', '#B0E0E6']}
+        colors={['#1B5E35', '#2E7D4F', '#E8F5EC']}
         style={styles.background}
       >
         <View style={styles.content}>

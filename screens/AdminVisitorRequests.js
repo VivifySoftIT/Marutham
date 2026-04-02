@@ -132,8 +132,8 @@ const AdminVisitorRequests = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -190,4 +190,5 @@ const styles = StyleSheet.create({
   rejectBtn: { backgroundColor: '#F44336' },
   btnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
 });
+
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -543,8 +543,8 @@ const loadDashboardReminders = async () => {
         messageType: 'Payment',
         title: `💳 ${t('paymentDueTitle')}`,
         message: nextDue
-          ? `₹${nextDue.dueAmount} ${t('dueFor')} ${nextDue.month}`
-          : `₹${memberPayments.totalDueAmount} ${t('totalDue')}`,
+          ? `\u20B9${nextDue.dueAmount} ${t('dueFor')} ${nextDue.month}`
+          : `\u20B9${memberPayments.totalDueAmount} ${t('totalDue')}`,
         time: '',
         icon: 'credit-card-clock',
         color: '#FF9800',

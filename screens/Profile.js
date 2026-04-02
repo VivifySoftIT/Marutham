@@ -993,10 +993,10 @@ const MyProfile = () => {
       style={{ flex: 1 }}
     >
       <View style={styles.container}>
-        <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+        <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
         
         <LinearGradient
-          colors={['#C9A84C', '#2E7D4F']}
+          colors={['#1B5E35', '#2E7D4F']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.headerGradient}
@@ -1862,3 +1862,4 @@ const styles = StyleSheet.create({
 });
 
 export default MyProfile;
+

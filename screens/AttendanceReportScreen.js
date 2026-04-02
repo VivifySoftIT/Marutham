@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -123,7 +123,7 @@ const AttendanceReportScreen = ({ navigation }) => {
         </View>
         <View style={styles.statBadge}>
           <Icon name="cash-multiple" size={14} color="#27AE60" />
-          <Text style={styles.statBadgeText}>₹{member.TotalAmountPaidThisMonth || 0}</Text>
+          <Text style={styles.statBadgeText}>\u20B9{member.TotalAmountPaidThisMonth || 0}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -222,13 +222,13 @@ const AttendanceReportScreen = ({ navigation }) => {
           />
           <StatCard
             label="Total Amount"
-            value={`₹${TotalAmountCollected.toLocaleString()}`}
+            value={`\u20B9${TotalAmountCollected.toLocaleString()}`}
             icon="cash-multiple"
             color="#F39C12"
           />
           <StatCard
             label="Avg Payment"
-            value={`₹${TotalPaidMembers > 0 ? Math.round(TotalAmountCollected / TotalPaidMembers) : 0}`}
+            value={`\u20B9${TotalPaidMembers > 0 ? Math.round(TotalAmountCollected / TotalPaidMembers) : 0}`}
             icon="calculator"
             color="#C9A84C"
           />
@@ -255,7 +255,7 @@ const AttendanceReportScreen = ({ navigation }) => {
                   <Text style={styles.memberPhone}>{item.Phone}</Text>
                 </View>
                 <View style={styles.paymentAmount}>
-                  <Text style={styles.paymentAmountText}>₹{item.TotalAmountPaidThisMonth}</Text>
+                  <Text style={styles.paymentAmountText}>\u20B9{item.TotalAmountPaidThisMonth}</Text>
                   <Text style={styles.paymentCountText}>{item.PaymentsThisMonth} payments</Text>
                 </View>
               </View>
@@ -279,7 +279,7 @@ const AttendanceReportScreen = ({ navigation }) => {
       <StatusBar barStyle="light-content" backgroundColor="#1B5E35" />
 
       {/* Header */}
-      <LinearGradient colors={['#1B5E35', '#1a1f47']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="white" />
@@ -406,7 +406,7 @@ const AttendanceReportScreen = ({ navigation }) => {
 
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Total Amount Paid</Text>
-                  <Text style={styles.detailValue}>₹{selectedMember.TotalAmountPaidThisMonth || 0}</Text>
+                  <Text style={styles.detailValue}>\u20B9{selectedMember.TotalAmountPaidThisMonth || 0}</Text>
                 </View>
 
                 {selectedMember.LastVisitDate && (
@@ -773,4 +773,5 @@ const styles = StyleSheet.create({
 });
 
 export default AttendanceReportScreen;
+
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -485,10 +485,10 @@ const TYFCBSlip = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -523,7 +523,7 @@ const TYFCBSlip = () => {
         <View style={styles.successOverlay}>
           <View style={styles.successCard}>
             <LinearGradient
-              colors={['#C9A84C', '#2E7D4F']}
+              colors={['#1B5E35', '#2E7D4F']}
               style={styles.successHeader}
             >
               <Icon name="check-circle" size={60} color="#FFF" />
@@ -544,7 +544,7 @@ const TYFCBSlip = () => {
               {savedData?.amount && (
                 <View style={styles.successDetailRow}>
                   <Text style={styles.successLabel}>{t('amount')}:</Text>
-                  <Text style={styles.successValue}>₹{savedData.amount}</Text>
+                  <Text style={styles.successValue}>\u20B9{savedData.amount}</Text>
                 </View>
               )}
 
@@ -950,3 +950,4 @@ const styles = StyleSheet.create({
 });
 
 export default TYFCBSlip;
+

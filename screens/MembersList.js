@@ -471,10 +471,10 @@ const MemberList = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
       
       {/* Header - MembersDirectory Style */}
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -1132,4 +1132,5 @@ const styles = StyleSheet.create({
 });
 
 export default MemberList;
+
 

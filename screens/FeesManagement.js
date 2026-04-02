@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -83,7 +83,7 @@ const FeesManagement = ({ navigation }) => {
     
     Alert.alert(
       'Success',
-      `${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} plan (₹${amount}) applied for ${selectedMember.name}!`,
+      `${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} plan (\u20B9${amount}) applied for ${selectedMember.name}!`,
       [{ text: 'OK', onPress: () => {
         setShowPlanModal(false);
         setSelectedMember(null);
@@ -129,25 +129,25 @@ const FeesManagement = ({ navigation }) => {
       >
         <View style={[styles.statCard, { backgroundColor: '#E3F2FD' }]}>
           <Icon name="cash-multiple" size={20} color="#2196F3" />
-          <Text style={styles.statAmount}>₹{stats.total.toLocaleString()}</Text>
+          <Text style={styles.statAmount}>\u20B9{stats.total.toLocaleString()}</Text>
           <Text style={styles.statLabel}>Total</Text>
         </View>
         
         <View style={[styles.statCard, { backgroundColor: '#E8F5E9' }]}>
           <Icon name="check-circle" size={20} color="#4CAF50" />
-          <Text style={styles.statAmount}>₹{stats.collected.toLocaleString()}</Text>
+          <Text style={styles.statAmount}>\u20B9{stats.collected.toLocaleString()}</Text>
           <Text style={styles.statLabel}>Collected</Text>
         </View>
         
         <View style={[styles.statCard, { backgroundColor: '#FFF3E0' }]}>
           <Icon name="clock-alert" size={20} color="#FF9800" />
-          <Text style={styles.statAmount}>₹{stats.pending.toLocaleString()}</Text>
+          <Text style={styles.statAmount}>\u20B9{stats.pending.toLocaleString()}</Text>
           <Text style={styles.statLabel}>Pending</Text>
         </View>
         
         <View style={[styles.statCard, { backgroundColor: '#FFEBEE' }]}>
           <Icon name="alert-circle" size={20} color="#F44336" />
-          <Text style={styles.statAmount}>₹{stats.overdue.toLocaleString()}</Text>
+          <Text style={styles.statAmount}>\u20B9{stats.overdue.toLocaleString()}</Text>
           <Text style={styles.statLabel}>Overdue</Text>
         </View>
       </ScrollView>
@@ -203,7 +203,7 @@ const FeesManagement = ({ navigation }) => {
               <View style={styles.feeRow}>
                 <Icon name="currency-inr" size={18} color="#666" />
                 <Text style={styles.feeLabel}>Amount:</Text>
-                <Text style={styles.feeValue}>₹{item.amount.toLocaleString()}</Text>
+                <Text style={styles.feeValue}>\u20B9{item.amount.toLocaleString()}</Text>
               </View>
               <View style={styles.feeRow}>
                 <Icon name="calendar" size={18} color="#666" />
@@ -285,7 +285,7 @@ const FeesManagement = ({ navigation }) => {
                       {plan.charAt(0).toUpperCase() + plan.slice(1).replace('-', ' ')}
                     </Text>
                     <Text style={styles.planPrice}>
-                      ₹{getPlanAmount(plan)}
+                      \u20B9{getPlanAmount(plan)}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -296,7 +296,7 @@ const FeesManagement = ({ navigation }) => {
             <View style={styles.customAmountContainer}>
               <Text style={styles.customAmountLabel}>Custom Amount (Optional)</Text>
               <View style={styles.amountInputContainer}>
-                <Text style={styles.currencySymbol}>₹</Text>
+                <Text style={styles.currencySymbol}>\u20B9</Text>
                 <TextInput
                   style={styles.amountInput}
                   placeholder="Enter custom amount"

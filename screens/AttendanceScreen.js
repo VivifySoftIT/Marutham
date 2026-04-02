@@ -545,10 +545,10 @@ const MemberAttendanceScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
       {/* Header - Fixed */}
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         {/* Left Container */}
         <View style={styles.headerLeftContainer}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
@@ -1393,3 +1393,4 @@ const styles = StyleSheet.create({
 });
 
 export default MemberAttendanceScreen;
+

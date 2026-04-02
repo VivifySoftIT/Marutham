@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   View,
   Text,
@@ -74,7 +74,7 @@ const ReferralReports = ({ navigation }) => {
   const handleViewDetails = (referrer) => {
     Alert.alert(
       referrer.name,
-      `Total Referrals: ${referrer.count}\nRevenue Generated: ₹${referrer.revenue.toLocaleString()}\nMember Since: ${referrer.joinDate}`,
+      `Total Referrals: ${referrer.count}\nRevenue Generated: \u20B9${referrer.revenue.toLocaleString()}\nMember Since: ${referrer.joinDate}`,
       [{ text: 'OK' }]
     );
   };
@@ -190,7 +190,7 @@ const ReferralReports = ({ navigation }) => {
                     </View>
                     <View style={styles.statItem}>
                       <Icon name="currency-inr" size={14} color="#666" />
-                      <Text style={styles.statText}>₹{(referrer.revenue / 1000).toFixed(0)}K</Text>
+                      <Text style={styles.statText}>\u20B9{(referrer.revenue / 1000).toFixed(0)}K</Text>
                     </View>
                   </View>
                 </View>

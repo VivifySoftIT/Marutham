@@ -178,8 +178,8 @@ const AdminPayments = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -214,7 +214,7 @@ const AdminPayments = () => {
       <Modal visible={showAddModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.modalHeader}>
+            <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Payment</Text>
               <TouchableOpacity onPress={() => setShowAddModal(false)}>
                 <Icon name="close" size={22} color="#FFF" />
@@ -373,4 +373,5 @@ const styles = StyleSheet.create({
   submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#4CAF50', paddingVertical: 14, borderRadius: 10, marginTop: 20, marginBottom: 30, gap: 8 },
   submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 });
+
 

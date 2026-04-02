@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -118,7 +118,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
     >
       <View style={styles.activityContent}>
         <LinearGradient
-          colors={['#C9A84C', '#2E7D4F']}
+          colors={['#1B5E35', '#2E7D4F']}
           style={styles.activityIcon}
         >
           <Icon name={item.icon} size={24} color="#FFF" />
@@ -130,7 +130,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
           </Text>
           <Text style={styles.activityType}>{item.type}</Text>
           {item.amount && (
-            <Text style={styles.activityAmount}>₹{item.amount.toLocaleString()}</Text>
+            <Text style={styles.activityAmount}>\u20B9{item.amount.toLocaleString()}</Text>
           )}
           <Text style={styles.activityDateTime}>
             {item.date} at {item.time}
@@ -160,10 +160,10 @@ const AdminNotificationsScreen = ({ navigation }) => {
         onRequestClose={() => setShowDetailModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+          <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
           {/* Modal Header */}
-          <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.modalHeader}>
+          <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setShowDetailModal(false)}>
               <Icon name="close" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -175,7 +175,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
           <ScrollView style={styles.modalContent}>
             {/* Header Card */}
             <LinearGradient
-              colors={['#C9A84C', '#2E7D4F']}
+              colors={['#1B5E35', '#2E7D4F']}
               style={styles.detailHeaderCard}
             >
               <Icon name={selectedActivity.icon} size={40} color="#FFF" />
@@ -220,7 +220,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
                   <View style={styles.detailCard}>
                     <Icon name="currency-inr" size={20} color="#C9A84C" />
                     <Text style={styles.detailValue}>
-                      ₹{selectedActivity.amount.toLocaleString()}
+                      \u20B9{selectedActivity.amount.toLocaleString()}
                     </Text>
                   </View>
                 </View>
@@ -294,10 +294,10 @@ const AdminNotificationsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <Text style={styles.headerTitle}>Member Activities</Text>
       </LinearGradient>
 
@@ -546,4 +546,5 @@ const styles = StyleSheet.create({
 });
 
 export default AdminNotificationsScreen;
+
 

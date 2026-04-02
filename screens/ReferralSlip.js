@@ -449,9 +449,9 @@ const ReferralSlip = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -771,7 +771,7 @@ const ReferralSlip = ({ route }) => {
         <View style={styles.successOverlay}>
           <View style={styles.successCard}>
             <LinearGradient
-              colors={['#C9A84C', '#2E7D4F']}
+              colors={['#1B5E35', '#2E7D4F']}
               style={styles.successHeader}
             >
               <Icon name="check-circle" size={60} color="#FFF" />
@@ -1246,3 +1246,4 @@ const styles = StyleSheet.create({
 });
 
 export default ReferralSlip;
+

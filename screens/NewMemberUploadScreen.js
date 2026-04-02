@@ -438,7 +438,7 @@ const NewMemberUploadScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1B5E35" />
 
-      <LinearGradient colors={['#1B5E35', '#1a1f47']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="white" />
@@ -909,3 +909,4 @@ const styles = StyleSheet.create({
 });
 
 export default NewMemberUploadScreen;
+

@@ -481,10 +481,10 @@ const Messages = ({ navigation }) => {
         onRequestClose={() => setShowComposeModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+          <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
           {/* Modal Header */}
-          <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.modalHeader}>
+          <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setShowComposeModal(false)}>
               <Icon name="close" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -863,10 +863,10 @@ const Messages = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -971,10 +971,10 @@ const Messages = ({ navigation }) => {
         }}
       >
         <SafeAreaView style={styles.memberSelectionModalContainer}>
-          <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+          <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
           {/* Modal Header */}
-          <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={[
+          <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={[
             styles.modalHeader,
             currentLanguage === 'ta' && styles.modalHeaderTamil
           ]}>
@@ -1907,3 +1907,4 @@ const styles = StyleSheet.create({
 });
 
 export default Messages;
+

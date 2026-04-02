@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -45,7 +45,7 @@ const NotificationsScreen = () => {
           toMember: currentUser,
           type: 'TYFCB',
           title: 'Thank You From John Doe',
-          description: 'John Doe gave you a TYFCB for New business (₹5000)',
+          description: 'John Doe gave you a TYFCB for New business (\u20B95000)',
           amount: 5000,
           businessType: 'New',
           referralType: 'Inside',
@@ -60,7 +60,7 @@ const NotificationsScreen = () => {
           toMember: currentUser,
           type: 'TYFCB',
           title: 'Thank You From Sarah Smith',
-          description: 'Sarah Smith gave you a TYFCB for Repeat business (₹3000)',
+          description: 'Sarah Smith gave you a TYFCB for Repeat business (\u20B93000)',
           amount: 3000,
           businessType: 'Repeat',
           referralType: 'Outside',
@@ -134,7 +134,7 @@ const NotificationsScreen = () => {
       <View style={styles.notificationContent}>
         <View style={styles.iconContainer}>
           <LinearGradient
-            colors={['#C9A84C', '#2E7D4F']}
+            colors={['#1B5E35', '#2E7D4F']}
             style={styles.iconGradient}
           >
             <Icon name={item.icon} size={24} color="#FFF" />
@@ -177,10 +177,10 @@ const NotificationsScreen = () => {
         onRequestClose={() => setShowDetailModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+          <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
           {/* Modal Header */}
-          <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.modalHeader}>
+          <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setShowDetailModal(false)}>
               <Icon name="close" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -192,7 +192,7 @@ const NotificationsScreen = () => {
           <ScrollView style={styles.modalContent}>
             {/* Header Card */}
             <LinearGradient
-              colors={['#C9A84C', '#2E7D4F']}
+              colors={['#1B5E35', '#2E7D4F']}
               style={styles.detailHeaderCard}
             >
               <Icon name={selectedNotification.icon} size={40} color="#FFF" />
@@ -226,7 +226,7 @@ const NotificationsScreen = () => {
                   <View style={styles.detailCard}>
                     <Icon name="currency-inr" size={20} color="#C9A84C" />
                     <Text style={styles.detailValue}>
-                      ₹{selectedNotification.amount.toLocaleString()}
+                      \u20B9{selectedNotification.amount.toLocaleString()}
                     </Text>
                   </View>
                 </View>
@@ -292,10 +292,10 @@ const NotificationsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -525,4 +525,5 @@ const styles = StyleSheet.create({
 });
 
 export default NotificationsScreen;
+
 

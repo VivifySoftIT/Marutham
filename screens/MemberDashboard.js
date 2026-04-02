@@ -66,7 +66,7 @@ const BirthdayWishesSection = ({ memberId }) => {
         style={styles.sectionContainer}
       >
         <View style={styles.birthdayWishCard}>
-          <ActivityIndicator size="small" color="#4A90E2" />
+          <ActivityIndicator size="small" color="#C9A84C" />
           <Text style={styles.birthdayWishLoading}>{t('checkingBirthdayWishes')}</Text>
         </View>
       </Animatable.View>
@@ -109,12 +109,12 @@ const BirthdayWishesSection = ({ memberId }) => {
 
 // Define waterBlueColors outside the component so it's accessible
 const waterBlueColors = {
-  primary: '#4A90E2',
-  light: '#87CEEB',
-  lighter: '#B3E0F2',
-  lightest: '#E0F7FA',
-  dark: '#357ABD',
-  darker: '#1E5A96',
+   primary: '#C9A84C',
+  light: '#2E7D4F',
+  lighter: '#E8F5EC',
+  lightest: '#E8F5EC',
+  dark: '#0D3B1E',
+  darker: '#0D3B1E',
 };
 
 const MemberDashboard = () => {
@@ -1050,6 +1050,7 @@ const MemberDashboard = () => {
     },
   ];
 
+
   const QuickActionCard = ({ action, index }) => {
     return (
       <TouchableOpacity
@@ -1060,12 +1061,24 @@ const MemberDashboard = () => {
         onPress={() => handleQuickAction(action)}
         activeOpacity={0.8}
       >
-        <View style={styles.quickActionContent}>
-          <View style={styles.quickActionIconContainer}>
-            <Icon name={action.icon} size={24} color={waterBlueColors.primary} />
+        <LinearGradient
+          colors={['#E8F5EC', '#F4F9F6']}
+          style={styles.quickActionGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          {/* Green top strip */}
+          <View style={styles.quickActionTopStrip} />
+          <View style={styles.quickActionContent}>
+            <LinearGradient
+              colors={['#2E7D4F', '#1B5E35']}
+              style={styles.quickActionIconContainer}
+            >
+              <Icon name={action.icon} size={20} color="#FFF" />
+            </LinearGradient>
+            <Text style={styles.quickActionText}>{action.title}</Text>
           </View>
-          <Text style={styles.quickActionText}>{action.title}</Text>
-        </View>
+        </LinearGradient>
       </TouchableOpacity>
     );
   };
@@ -1080,11 +1093,11 @@ const MemberDashboard = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={waterBlueColors.primary} barStyle="light-content" />
+      <StatusBar backgroundColor={'#1B5E35'} barStyle="light-content" />
 
       {/* Header with Water Blue Gradient */}
       <LinearGradient
-        colors={[waterBlueColors.primary, waterBlueColors.light]}
+        colors={['#1B5E35', '#2E7D4F']}
         style={styles.headerGradient}
       >
         <View style={styles.header}>
@@ -1156,8 +1169,8 @@ const MemberDashboard = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[waterBlueColors.primary]}
-            tintColor={waterBlueColors.primary}
+             colors={['#1B5E35']}
+            tintColor={'#1B5E35'}
           />
         }
       >
@@ -1249,11 +1262,11 @@ const MemberDashboard = () => {
           <Animatable.View
             animation="fadeInUp"
             delay={320}
-            style={[styles.sectionContainer, { borderLeftWidth: 4, borderLeftColor: '#4A90E2', backgroundColor: '#F0F8FF' }]}
+              style={[styles.sectionContainer, { borderLeftWidth: 4, borderLeftColor: '#C9A84C', backgroundColor: '#F0F8FF' }]}
           >
             <View style={styles.sectionHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                <Icon name="account-clock" size={20} color="#4A90E2" />
+              <Icon name="account-clock" size={20} color="#C9A84C" />
                 <Text style={[styles.sectionTitle, { color: '#1565C0' }]}>
                   Visitor Member Requests ({allPendingVisitorRequests.length})
                 </Text>
@@ -1349,7 +1362,7 @@ const MemberDashboard = () => {
             <Text style={styles.sectionTitle}>📱 {t('memberFeatures')}</Text>
             <TouchableOpacity style={styles.viewAllButton} onPress={() => navigation.navigate('MembersList')}>
               <Text style={styles.viewAllText}>{t('viewAll')}</Text>
-              <Icon name="chevron-right" size={14} color={waterBlueColors.primary} />
+              <Icon name="chevron-right" size={14} color={'#1B5E35'} />
             </TouchableOpacity>
           </View>
           <View style={styles.modulesGrid}>
@@ -1365,12 +1378,23 @@ const MemberDashboard = () => {
                   onPress={() => handleModulePress(module)}
                   activeOpacity={0.7}
                 >
-                  <View style={styles.moduleCardContent}>
-                    <View style={[styles.moduleIconContainer, { backgroundColor: `${waterBlueColors.primary}15` }]}>
-                      <Icon name={module.icon} size={24} color={waterBlueColors.primary} />
+                  <LinearGradient
+                    colors={['#E8F5EC', '#F4F9F6']}
+                    style={styles.moduleCardGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <View style={styles.moduleCardTopStrip} />
+                    <View style={styles.moduleCardContent}>
+                      <LinearGradient
+                        colors={['#2E7D4F', '#1B5E35']}
+                        style={styles.moduleIconContainer}
+                      >
+                        <Icon name={module.icon} size={22} color="#FFF" />
+                      </LinearGradient>
+                      <Text style={styles.moduleTitle} numberOfLines={2}>{module.title}</Text>
                     </View>
-                    <Text style={styles.moduleTitle} numberOfLines={2}>{module.title}</Text>
-                  </View>
+                  </LinearGradient>
                 </TouchableOpacity>
               </Animatable.View>
             ))}
@@ -1389,8 +1413,8 @@ const MemberDashboard = () => {
           </View>
           <View style={styles.activityCard}>
             <View style={styles.activityItem}>
-              <View style={[styles.activityIcon, { backgroundColor: `${waterBlueColors.primary}15` }]}>
-                <Icon name="bell-ring" size={18} color={waterBlueColors.primary} />
+             <View style={[styles.activityIcon, { backgroundColor: `${'#1B5E35'}15` }]}>
+                <Icon name="bell-ring" size={18} color={'#1B5E35'} />
               </View>
               <View style={styles.activityContent}>
                 <Text style={styles.activityText}>{t('newNotificationReceived')}</Text>
@@ -1398,8 +1422,8 @@ const MemberDashboard = () => {
               </View>
             </View>
             <View style={styles.activityItem}>
-              <View style={[styles.activityIcon, { backgroundColor: `${waterBlueColors.primary}15` }]}>
-                <Icon name="calendar-check" size={18} color={waterBlueColors.primary} />
+               <View style={[styles.activityIcon, { backgroundColor: `${'#1B5E35'}15` }]}>
+                <Icon name="calendar-check" size={18} color={'#1B5E35'} />
               </View>
               <View style={styles.activityContent}>
                 <Text style={styles.activityText}>{t('eventRegistrationConfirmed')}</Text>
@@ -1439,7 +1463,7 @@ const MemberDashboard = () => {
                   style={styles.closeButton}
                   onPress={() => setShowNotifications(false)}
                 >
-                  <Icon name="close" size={22} color={waterBlueColors.primary} />
+                  <Icon name="close" size={22} color={'#1B5E35'} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -1471,7 +1495,7 @@ const MemberDashboard = () => {
                     <Icon
                       name={filter.icon}
                       size={16}
-                      color={selectedNotificationFilter === filter.id ? '#FFF' : waterBlueColors.primary}
+                       color={selectedNotificationFilter === filter.id ? '#FFF' : '#1B5E35'}
                     />
                     <Text style={[
                       styles.notificationFilterTabText,
@@ -1587,7 +1611,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     elevation: 10,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
@@ -1776,7 +1800,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: 'hidden',
     elevation: 6,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
@@ -1858,7 +1882,7 @@ const styles = StyleSheet.create({
   },
   viewAllNotifications: {
     fontSize: 11,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   notificationScrollView: {
@@ -1878,14 +1902,14 @@ const styles = StyleSheet.create({
     position: 'relative',
     minHeight: 140, // Increased height
     elevation: 2,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   unreadNotificationCard: {
     backgroundColor: '#F0F7FF',
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     borderWidth: 1.5,
   },
   notificationSwipeIcon: {
@@ -1928,7 +1952,7 @@ const styles = StyleSheet.create({
   },
   tapToRespondText: {
     fontSize: 9,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   swipeUnreadIndicator: {
@@ -1948,12 +1972,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     borderStyle: 'dashed',
   },
   moreNotificationsText: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     marginTop: 4,
   },
@@ -1963,7 +1987,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     elevation: 3,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -1998,7 +2022,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 11,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     marginRight: 4,
   },
@@ -2013,48 +2037,58 @@ const styles = StyleSheet.create({
   },
   quickActionCard: {
     width: 105,
-    height: 80,
+    height: 88,
     marginRight: 10,
     borderRadius: 16,
-    backgroundColor: '#FFF',
-    elevation: 3,
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#1B5E35',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  quickActionGradient: {
+    flex: 1,
+    position: 'relative',
+  },
+  quickActionTopStrip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: '#1B5E35',
     opacity: 0.85,
-    transform: [{ scale: 0.96 }],
-    borderWidth: 1,
-    borderColor: '#E8F0FE',
   },
   activeQuickActionCard: {
-    opacity: 1,
-    transform: [{ scale: 1 }],
-    elevation: 6,
-    shadowColor: waterBlueColors.primary,
-    shadowOpacity: 0.15,
+    elevation: 8,
+    shadowOpacity: 0.25,
   },
   quickActionContent: {
+    flex: 1,
     padding: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100%',
   },
   quickActionIconContainer: {
     width: 36,
     height: 36,
-    borderRadius: 12,
-    backgroundColor: `${waterBlueColors.primary}15`,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
+    elevation: 3,
+    shadowColor: '#0D3B1E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   quickActionText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: '#1A2E1F',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 14,
   },
   modulesGrid: {
     flexDirection: 'row',
@@ -2066,40 +2100,54 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   moduleCard: {
-    backgroundColor: '#FFF',
     borderRadius: 16,
-    padding: 16,
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E8F0FE',
-    elevation: 3,
-    shadowColor: '#4A90E2',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#1B5E35',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
     minHeight: 110,
+  },
+  moduleCardGradient: {
+    flex: 1,
+    minHeight: 110,
+    position: 'relative',
+  },
+  moduleCardTopStrip: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    backgroundColor: '#1B5E35',
+    opacity: 0.85,
   },
   moduleCardContent: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 16,
   },
   moduleIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
+    elevation: 3,
+    shadowColor: '#0D3B1E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
     position: 'relative',
   },
   badge: {
     position: 'absolute',
     top: -5,
     right: -5,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     borderRadius: 8,
     minWidth: 18,
     height: 18,
@@ -2122,7 +2170,7 @@ const styles = StyleSheet.create({
   moduleTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: '#1A2E1F',
     marginBottom: 2,
     lineHeight: 16,
     textAlign: 'center',
@@ -2246,7 +2294,7 @@ const styles = StyleSheet.create({
   },
   respondBadgeText: {
     fontSize: 9,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   notificationModalOverlay: {
@@ -2293,7 +2341,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   clearAllText: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -2334,20 +2382,20 @@ const styles = StyleSheet.create({
     borderColor: '#E3F2FD',
   },
   notificationFilterTabActive: {
-    backgroundColor: waterBlueColors.primary,
-    borderColor: waterBlueColors.primary,
+    backgroundColor: '#1B5E35',
+    borderColor: '#1B5E35',
   },
   notificationFilterTabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: waterBlueColors.primary,
+    color: '#1B5E35',
     marginLeft: 6,
   },
   notificationFilterTabTextActive: {
     color: '#FFF',
   },
   notificationFilterBadge: {
-    backgroundColor: waterBlueColors.primary,
+    backgroundColor: '#1B5E35',
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -2364,7 +2412,7 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   notificationFilterBadgeTextActive: {
-    color: waterBlueColors.primary,
+    color: '#1B5E35',
   },
   notificationsList: {
     maxHeight: 400,
@@ -2382,7 +2430,7 @@ const styles = StyleSheet.create({
   unreadNotificationItem: {
     backgroundColor: '#F8FBFF',
     borderLeftWidth: 3,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   notificationIcon: {
     width: 44,
@@ -2465,7 +2513,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   welcomeText: {
-    fontSize: 22, // Base size — will be adjusted per language
+    fontSize: 22, // Base size   will be adjusted per language
     fontWeight: '900',
     color: '#FFF',
     textAlign: 'center',
