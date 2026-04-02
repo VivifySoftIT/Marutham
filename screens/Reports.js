@@ -219,7 +219,7 @@ const Reports = ({ navigation }) => {
     { id: 'attendance', title: t('attendance'), icon: 'calendar-check', endpoint: 'attendance' },
     { id: 'tyfcb', title: t('thanksNote'), icon: 'handshake', endpoint: 'tyfcb' },
     { id: 'meeting', title: t('oneToOneMeeting'), icon: 'account-multiple', endpoint: 'meeting' },
-    { id: 'alaigalmeeting', title: t('meeting'), icon: 'calendar-account', endpoint: 'alaigalmeeting' },
+    { id: 'alaigalmeeting', title: t('weeklyMeeting'), icon: 'calendar-account', endpoint: 'alaigalmeeting' },
     { id: 'visitor', title: t('visitor'), icon: 'account-plus', endpoint: 'visitor' },
     { id: 'payment', title: t('payment'), icon: 'cash-multiple', endpoint: 'payment' },
     { id: 'referral', title: t('referral'), icon: 'share-variant', endpoint: 'referral' },
@@ -587,7 +587,7 @@ const Reports = ({ navigation }) => {
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
 
       // Rename file: e.g. "Attendance Report 2026-04-02.pdf"
-      const titleFormatted = selectedReportTab === 'alaigalmeeting' ? 'Meeting' : currentTab.title;
+      const titleFormatted = selectedReportTab === 'alaigalmeeting' ? 'Weekly Meeting' : currentTab.title;
       const namedFilePath = `${FileSystem.documentDirectory}${titleFormatted} Report ${timestamp}.pdf`;
       await FileSystem.copyAsync({ from: uri, to: namedFilePath });
 
@@ -618,12 +618,12 @@ const Reports = ({ navigation }) => {
         <title>${title} ${t('report')}</title>
         <style>
           body { font-family: sans-serif; padding: 20px; }
-          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          h1 { color: #1B5E20; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          th { background-color: #1B5E20; color: #C9A84C; padding: 12px; text-align: left; font-weight: bold; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
+          tr:nth-child(even) { background-color: #f0f7f0; }
           .status-present { color: #4CAF50; font-weight: bold; }
           .status-absent { color: #F44336; font-weight: bold; }
           .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
@@ -632,10 +632,7 @@ const Reports = ({ navigation }) => {
       <body>
         <h1>${title} ${t('report')}</h1>
         <div class="report-info">
-          <p><strong>${t('period')}:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>${t('dateRange')}:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>${t('totalRecords')}:</strong> ${reportData.totalRecords}</p>
-          <p><strong>${t('generated')}:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>${t('dateRange')}:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()} &nbsp;&nbsp; <strong>${t('totalRecords')}:</strong> ${reportData.totalRecords}</p>
         </div>
         
         <table>
@@ -645,9 +642,7 @@ const Reports = ({ navigation }) => {
               <th>${t('memberName')}</th>
               <th>${t('date')}</th>
               <th>${t('checkInTime')}</th>
-              <th>${t('checkOutTime')}</th>
               <th>${t('status')}</th>
-              <th>${t('batch')}</th>
               <th>${t('notes')}</th>
             </tr>
           </thead>
@@ -658,9 +653,7 @@ const Reports = ({ navigation }) => {
                 <td>${item.memberName || t('unknown')}</td>
                 <td>${new Date(item.attendanceDate).toLocaleDateString()}</td>
                 <td>${item.checkInTime || '-'}</td>
-                <td>${item.checkOutTime || '-'}</td>
                 <td class="status-${item.status?.toLowerCase()}">${item.status || '-'}</td>
-                <td>${item.batch || '-'}</td>
                 <td>${item.notes || '-'}</td>
               </tr>
             `).join('')}
@@ -685,12 +678,12 @@ const Reports = ({ navigation }) => {
         <title>${title} ${t('report')}</title>
         <style>
           body { font-family: sans-serif; padding: 20px; }
-          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          h1 { color: #1B5E20; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          th { background-color: #1B5E20; color: #C9A84C; padding: 12px; text-align: left; font-weight: bold; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
+          tr:nth-child(even) { background-color: #f0f7f0; }
           .status-completed { color: #4CAF50; font-weight: bold; }
           .status-pending { color: #FF9800; font-weight: bold; }
           .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
@@ -699,10 +692,7 @@ const Reports = ({ navigation }) => {
       <body>
         <h1>${title} ${t('report')}</h1>
         <div class="report-info">
-          <p><strong>${t('period')}:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>${t('dateRange')}:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>${t('totalRecords')}:</strong> ${reportData.totalRecords}</p>
-          <p><strong>${t('generated')}:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>${t('dateRange')}:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()} &nbsp;&nbsp; <strong>${t('totalRecords')}:</strong> ${reportData.totalRecords}</p>
         </div>
         
         <table>
@@ -754,12 +744,12 @@ const Reports = ({ navigation }) => {
         <title>${title} Report</title>
         <style>
           body { font-family: sans-serif; padding: 20px; }
-          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          h1 { color: #1B5E20; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          th { background-color: #1B5E20; color: #C9A84C; padding: 12px; text-align: left; font-weight: bold; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
+          tr:nth-child(even) { background-color: #f0f7f0; }
           .status-completed { color: #4CAF50; font-weight: bold; }
           .status-pending { color: #FF9800; font-weight: bold; }
           .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
@@ -768,10 +758,7 @@ const Reports = ({ navigation }) => {
       <body>
         <h1>${title} Report</h1>
         <div class="report-info">
-          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
-          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()} &nbsp;&nbsp; <strong>Total Records:</strong> ${reportData.totalRecords}</p>
         </div>
         
         <table>
@@ -823,12 +810,12 @@ const Reports = ({ navigation }) => {
         <title>${title} Report</title>
         <style>
           body { font-family: sans-serif; padding: 20px; }
-          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          h1 { color: #1B5E20; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          th { background-color: #1B5E20; color: #C9A84C; padding: 12px; text-align: left; font-weight: bold; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
+          tr:nth-child(even) { background-color: #f0f7f0; }
           .status-confirmed { color: #4CAF50; font-weight: bold; }
           .status-pending { color: #FF9800; font-weight: bold; }
           .status-rejected { color: #F44336; font-weight: bold; }
@@ -838,10 +825,7 @@ const Reports = ({ navigation }) => {
       <body>
         <h1>${title} Report</h1>
         <div class="report-info">
-          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
-          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()} &nbsp;&nbsp; <strong>Total Records:</strong> ${reportData.totalRecords}</p>
         </div>
         
         <table>
@@ -893,12 +877,12 @@ const Reports = ({ navigation }) => {
         <title>${title} Report</title>
         <style>
           body { font-family: sans-serif; padding: 20px; }
-          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          h1 { color: #1B5E20; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          th { background-color: #1B5E20; color: #C9A84C; padding: 12px; text-align: left; font-weight: bold; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
+          tr:nth-child(even) { background-color: #f0f7f0; }
           .status-paid { color: #4CAF50; font-weight: bold; }
           .status-completed { color: #4CAF50; font-weight: bold; }
           .status-pending { color: #FF9800; font-weight: bold; }
@@ -909,10 +893,7 @@ const Reports = ({ navigation }) => {
       <body>
         <h1>${title} Report</h1>
         <div class="report-info">
-          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
-          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()} &nbsp;&nbsp; <strong>Total Records:</strong> ${reportData.totalRecords}</p>
         </div>
         
         <table>
@@ -964,22 +945,19 @@ const Reports = ({ navigation }) => {
         <title>Meeting Report</title>
         <style>
           body { font-family: sans-serif; padding: 20px; }
-          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          h1 { color: #1B5E20; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          th { background-color: #1B5E20; color: #C9A84C; padding: 12px; text-align: left; font-weight: bold; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
+          tr:nth-child(even) { background-color: #f0f7f0; }
           .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
         </style>
       </head>
       <body>
-        <h1>Meeting Report</h1>
+        <h1>Weekly Meeting Report</h1>
         <div class="report-info">
-          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
-          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()} &nbsp;&nbsp; <strong>Total Records:</strong> ${reportData.totalRecords}</p>
         </div>
         
         <table>
@@ -1031,12 +1009,12 @@ const Reports = ({ navigation }) => {
         <title>${title} Report</title>
         <style>
           body { font-family: sans-serif; padding: 20px; }
-          h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
+          h1 { color: #1B5E20; text-align: center; margin-bottom: 10px; }
           .report-info { text-align: center; color: #666; margin-bottom: 20px; }
           table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-          th { background-color: #4A90E2; color: white; padding: 12px; text-align: left; font-weight: bold; }
+          th { background-color: #1B5E20; color: #C9A84C; padding: 12px; text-align: left; font-weight: bold; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
-          tr:nth-child(even) { background-color: #f9f9f9; }
+          tr:nth-child(even) { background-color: #f0f7f0; }
           .status-member { color: #4CAF50; font-weight: bold; }
           .status-visitor { color: #FF9800; font-weight: bold; }
           .footer { margin-top: 30px; text-align: center; color: #999; font-size: 12px; }
@@ -1045,10 +1023,7 @@ const Reports = ({ navigation }) => {
       <body>
         <h1>${title} Report</h1>
         <div class="report-info">
-          <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
-          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
-          <p><strong>Total Records:</strong> ${reportData.totalRecords}</p>
-          <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()} &nbsp;&nbsp; <strong>Total Records:</strong> ${reportData.totalRecords}</p>
         </div>
         
         <table>
@@ -1107,13 +1082,11 @@ const Reports = ({ navigation }) => {
             { wch: 20 }, // Member Name
             { wch: 12 }, // Date
             { wch: 15 }, // Check-In Time
-            { wch: 15 }, // Check-Out Time
             { wch: 10 }, // Status
-            { wch: 10 }, // Batch
             { wch: 30 }, // Notes
           ];
           sheetName = 'Attendance Report';
-          filename = `attendance_report_${timestamp}.xlsx`;
+          filename = `Attendance Report.xlsx`;
           break;
 
         case 'tyfcb':
@@ -1130,7 +1103,7 @@ const Reports = ({ navigation }) => {
             { wch: 30 }, // Notes
           ];
           sheetName = 'ThanksNote Report';
-          filename = `thanksnote_report_${timestamp}.xlsx`;
+          filename = `ThanksNote Report.xlsx`;
           break;
 
         case 'meeting':
@@ -1147,7 +1120,7 @@ const Reports = ({ navigation }) => {
             { wch: 30 }, // Notes
           ];
           sheetName = '1:1 Meeting Report';
-          filename = `meeting_report_${timestamp}.xlsx`;
+          filename = `1-1 Meeting Report.xlsx`;
           break;
 
         case 'referral':
@@ -1164,7 +1137,7 @@ const Reports = ({ navigation }) => {
             { wch: 12 }, // Date
           ];
           sheetName = 'Referral Report';
-          filename = `referral_report_${timestamp}.xlsx`;
+          filename = `Referral Report.xlsx`;
           break;
 
         case 'payment':
@@ -1181,7 +1154,7 @@ const Reports = ({ navigation }) => {
             { wch: 20 }, // Transaction ID
           ];
           sheetName = 'Payment Report';
-          filename = `payment_report_${timestamp}.xlsx`;
+          filename = `Payment Report.xlsx`;
           break;
 
         case 'alaigalmeeting':
@@ -1198,7 +1171,7 @@ const Reports = ({ navigation }) => {
             { wch: 15 }, // Contact Number
           ];
           sheetName = 'Alaigal Meeting Report';
-          filename = `alaigal_meeting_report_${timestamp}.xlsx`;
+          filename = `Meeting Report.xlsx`;
           break;
 
         case 'visitor':
@@ -1215,7 +1188,7 @@ const Reports = ({ navigation }) => {
             { wch: 20 }, // Company
           ];
           sheetName = 'Visitor Report';
-          filename = `visitor_report_${timestamp}.xlsx`;
+          filename = `Visitor Report.xlsx`;
           break;
 
         default:
@@ -1271,9 +1244,7 @@ const Reports = ({ navigation }) => {
       [t('memberName')]: item.memberName || t('unknown'),
       [t('date')]: new Date(item.attendanceDate).toLocaleDateString(),
       [t('checkInTime')]: item.checkInTime || '-',
-      [t('checkOutTime')]: item.checkOutTime || '-',
       [t('status')]: item.status || '-',
-      [t('batch')]: item.batch || '-',
       [t('notes')]: item.notes || '-',
     }));
   };
