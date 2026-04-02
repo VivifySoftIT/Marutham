@@ -178,7 +178,11 @@ const MemberDetails = () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Member Avatar Card */}
         <View style={styles.avatarCard}>
-          <View style={styles.avatarWrapper}>
+          <TouchableOpacity
+            style={styles.avatarWrapper}
+            onPress={() => photoUri && !photoError && setFullScreenImage(photoUri)}
+            activeOpacity={photoUri && !photoError ? 0.8 : 1}
+          >
             {photoUri && !photoError ? (
               <Image
                 source={{ uri: photoUri }}
@@ -193,7 +197,7 @@ const MemberDetails = () => {
                 </Text>
               </View>
             )}
-          </View>
+          </TouchableOpacity>
           <Text style={styles.memberName}>{memberData.name || 'Unknown'}</Text>
           <Text style={styles.memberId}>
             ID: {memberData.memberId || memberData.id || 'N/A'}
@@ -337,19 +341,7 @@ const MemberDetails = () => {
         </View>
 
         {/* Action Buttons - Only for Admin */}
-        {isAdmin && (
-          <View style={styles.section}>
-            <TouchableOpacity style={styles.editButton} onPress={handleEditMember}>
-              <Icon name="pencil" size={18} color="#FFF" />
-              <Text style={styles.buttonText}>Edit Member</Text>
-            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteMember}>
-              <Icon name="trash-can" size={18} color="#FFF" />
-              <Text style={styles.buttonText}>Delete Member</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
         <View style={{ height: 20 }} />
       </ScrollView>
