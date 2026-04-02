@@ -209,7 +209,8 @@ public class TYFCBController : ControllerBase
      [FromQuery] DateTime? toDate = null,
      [FromQuery] string? period = "daily",
      [FromQuery] int? memberId = null,
-     [FromQuery] int? adminMemberId = null)
+     [FromQuery] int? adminMemberId = null,
+     [FromQuery] int? subCompanyId = null)
     {
         try
         {
@@ -258,7 +259,7 @@ public class TYFCBController : ControllerBase
             var queryEndDate = endDate.Date.AddDays(1).AddTicks(-1); // e.g., 2026-01-30 23:59:59.9999999
 
             // 🔑 Step 1: Handle adminMemberId — get SubCompanyId
-            int? targetSubCompanyId = null;
+            int? targetSubCompanyId = subCompanyId;
             if (adminMemberId.HasValue)
             {
                 var adminMember = await _context.Members
@@ -267,9 +268,8 @@ public class TYFCBController : ControllerBase
                 if (adminMember == null)
                     return NotFound(new { message = $"Active admin member with ID {adminMemberId} not found." });
 
-                targetSubCompanyId = adminMember.SubCompanyId;
-                if (!targetSubCompanyId.HasValue)
-                    return BadRequest(new { message = "Admin member is not associated with any sub-company." });
+                if (adminMember.SubCompanyId.HasValue)
+                    targetSubCompanyId = adminMember.SubCompanyId;
             }
 
             // 🔑 Step 2: Handle memberId — validate and optionally restrict by SubCompany
