@@ -769,10 +769,8 @@ const Reports = ({ navigation }) => {
               <th>${t('member2Name')}</th>
               <th>${t('meetingDate')}</th>
               <th>${t('location')}</th>
-              <th>${t('duration')}</th>
               <th>${t('topic')}</th>
               <th>${t('status')}</th>
-              <th>${t('notes')}</th>
             </tr>
           </thead>
           <tbody>
@@ -783,10 +781,8 @@ const Reports = ({ navigation }) => {
                 <td>${item.member2Name || t('unknown')}</td>
                 <td>${new Date(item.meetingDate).toLocaleDateString()}</td>
                 <td>${item.location || '-'}</td>
-                <td>${item.duration || '-'} min</td>
                 <td>${item.topic || '-'}</td>
                 <td class="status-${item.status?.toLowerCase()}">${item.status || t('completed')}</td>
-                <td>${item.notes || '-'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -899,28 +895,28 @@ const Reports = ({ navigation }) => {
         <table>
           <thead>
             <tr>
-              <th>${t('serialNumber')}</th>
-              <th>${t('memberName')}</th>
-              <th>${t('amount')}</th>
-              <th>${t('paymentDate')}</th>
-              <th>${t('paymentFor')}</th>
-              <th>${t('paymentMethod')}</th>
-              <th>${t('receiptNo')}</th>
-              <th>${t('status')}</th>
-              <th>${t('transactionId')}</th>
+              <th>S.No</th>
+              <th>Member Name</th>
+              <th>Amount</th>
+              <th>Payment Date</th>
+              <th>Payment For</th>
+              <th>Payment Method</th>
+              <th>Receipt No</th>
+              <th>Status</th>
+              <th>Transaction ID</th>
             </tr>
           </thead>
           <tbody>
             ${data.map((item, index) => `
               <tr>
                 <td>${index + 1}</td>
-                <td>${item.memberName || t('unknown')}</td>
+                <td>${item.memberName || 'Unknown'}</td>
                 <td>₹${item.amount || 0}</td>
                 <td>${new Date(item.paymentDate).toLocaleDateString()}</td>
                 <td>${item.paymentForMonth || '-'}</td>
                 <td>${item.paymentMethod || '-'}</td>
                 <td>${item.receiptNumber || '-'}</td>
-                <td class="status-${item.status?.toLowerCase()}">${item.status || t('paid')}</td>
+                <td class="status-${normalizeStatus(item.status)?.toLowerCase()}">${normalizeStatus(item.status)}</td>
                 <td>${item.transactionId || '-'}</td>
               </tr>
             `).join('')}
@@ -1033,7 +1029,6 @@ const Reports = ({ navigation }) => {
               <th>${t('visitorName')}</th>
               <th>${t('phone')}</th>
               <th>${t('business')}</th>
-              <th>${t('city')}</th>
               <th>${t('broughtBy')}</th>
               <th>${t('visitDate')}</th>
               <th>${t('status')}</th>
@@ -1047,7 +1042,6 @@ const Reports = ({ navigation }) => {
                 <td>${item.visitorName || t('unknown')}</td>
                 <td>${item.visitorPhone || '-'}</td>
                 <td>${item.visitorBusiness || '-'}</td>
-                <td>${item.visitorCity || '-'}</td>
                 <td>${item.broughtByMemberName || t('unknown')}</td>
                 <td>${new Date(item.visitDate).toLocaleDateString()}</td>
                 <td class="status-${item.becameMember ? 'member' : 'visitor'}">${item.becameMember ? 'Member' : 'Visitor'}</td>
@@ -1114,10 +1108,8 @@ const Reports = ({ navigation }) => {
             { wch: 20 }, // Member 2
             { wch: 12 }, // Meeting Date
             { wch: 15 }, // Location
-            { wch: 10 }, // Duration
             { wch: 20 }, // Topic
             { wch: 12 }, // Status
-            { wch: 30 }, // Notes
           ];
           sheetName = '1:1 Meeting Report';
           filename = `1-1 Meeting Report.xlsx`;
@@ -1181,7 +1173,6 @@ const Reports = ({ navigation }) => {
             { wch: 20 }, // Visitor Name
             { wch: 15 }, // Phone
             { wch: 20 }, // Business
-            { wch: 15 }, // City
             { wch: 20 }, // Brought By
             { wch: 12 }, // Visit Date
             { wch: 12 }, // Status
@@ -1272,10 +1263,8 @@ const Reports = ({ navigation }) => {
       [t('member2Name')]: item.member2Name || t('unknown'),
       [t('meetingDate')]: new Date(item.meetingDate).toLocaleDateString(),
       [t('location')]: item.location || '-',
-      [t('duration')]: item.duration ? `${item.duration} min` : '-',
       [t('topic')]: item.topic || '-',
       [t('status')]: item.status || t('completed'),
-      [t('notes')]: item.notes || '-',
     }));
   };
 
@@ -1294,18 +1283,47 @@ const Reports = ({ navigation }) => {
     }));
   };
 
+  // Helper to normalize status to English
+  const normalizeStatus = (status) => {
+    const map = {
+      // Tamil → English
+      'செலுத்தப்பட்டது': 'Paid',
+      'செலுத்தப்பட்ட': 'Paid',
+      'நிலுவையில்': 'Pending',
+      'நிலுவை': 'Pending',
+      'நிராகரிக்கப்பட்டது': 'Rejected',
+      'உறுதிப்படுத்தப்பட்டது': 'Admin Confirmed',
+      'நிறைவடைந்தது': 'Completed',
+      // English variants → normalized English
+      'AdminConfirmed': 'Admin Confirmed',
+      'adminconfirmed': 'Admin Confirmed',
+      'admin confirmed': 'Admin Confirmed',
+      'Completed': 'Completed',
+      'completed': 'Completed',
+      'Paid': 'Paid',
+      'paid': 'Paid',
+      'Pending': 'Pending',
+      'pending': 'Pending',
+      'Rejected': 'Rejected',
+      'rejected': 'Rejected',
+      'Confirmed': 'Admin Confirmed',
+      'confirmed': 'Admin Confirmed',
+    };
+    return map[status] || map[status?.trim()] || status || '-';
+  };
+
   // Generate Payment Excel Data
   const generatePaymentExcelData = (data) => {
     return data.map((item, index) => ({
-      [t('serialNumber')]: index + 1,
-      [t('memberName')]: item.memberName || t('unknown'),
-      [t('amount')]: `₹${item.amount || 0}`,
-      [t('paymentDate')]: new Date(item.paymentDate).toLocaleDateString(),
-      [t('paymentFor')]: item.paymentForMonth || '-',
-      [t('paymentMethod')]: item.paymentMethod || '-',
-      [t('receiptNo')]: item.receiptNumber || '-',
-      [t('status')]: item.status || t('paid'),
-      [t('transactionId')]: item.transactionId || '-',
+      'S.No': index + 1,
+      'Member Name': item.memberName || 'Unknown',
+      'Amount': `₹${item.amount || 0}`,
+      'Payment Date': new Date(item.paymentDate).toLocaleDateString(),
+      'Payment For': item.paymentForMonth || '-',
+      'Payment Method': item.paymentMethod || '-',
+      'Receipt No': item.receiptNumber || '-',
+      'Status': normalizeStatus(item.status),
+      'Transaction ID': item.transactionId || '-',
     }));
   };
 
@@ -1331,7 +1349,6 @@ const Reports = ({ navigation }) => {
       [t('visitorName')]: item.visitorName || t('unknown'),
       [t('phone')]: item.visitorPhone || '-',
       [t('business')]: item.visitorBusiness || '-',
-      [t('city')]: item.visitorCity || '-',
       [t('broughtBy')]: item.broughtByMemberName || t('unknown'),
       [t('visitDate')]: new Date(item.visitDate).toLocaleDateString(),
       [t('status')]: item.becameMember ? 'Member' : 'Visitor',
@@ -2124,7 +2141,7 @@ const Reports = ({ navigation }) => {
                   <View style={styles.reportCard}>
                     <View style={styles.reportHeader}>
                       <View style={styles.reportTextContainer}>
-                        <Text style={styles.reportTitle}>{selectedReportTab === 'alaigalmeeting' ? 'Meeting' : currentTab.title} {t('report')}</Text>
+                        <Text style={styles.reportTitle}>{selectedReportTab === 'alaigalmeeting' ? 'Weekly Meeting' : currentTab.title} {t('report')}</Text>
                         <Text style={styles.reportSubtitle}>
                           {t(selectedPeriod)} {t('report')}
                         </Text>
