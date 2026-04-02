@@ -3322,6 +3322,7 @@ quickAccessSubtitle: {
   fontWeight: '500',
   marginBottom: 4,
   lineHeight: 16,
+  numberOfLines: 2,
 },
 quickAccessArrow: {
   position: 'absolute',

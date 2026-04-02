@@ -1351,9 +1351,9 @@ birthdayReminderTitle: 'Birthday Reminder',
     status: 'நிலை',
     paid: 'செலுத்தப்பட்ட',
     pending: 'நிலுவையில்',
-    MemberList: '\u0E09\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BBF\u0BA9\u0BB0\u0BCD \u0BAA\u0B9F\u0BCD\u0B9F\u0BBF\u0BAF\u0BB2\u0BCD',
-    viewAllMembers: '\u0E09\u0BB1\u0BC1\u0BAA\u0BCD\u0BAA\u0BBF\u0BA9\u0BB0\u0BCD\u0B95\u0BB3\u0BC8 \u0BAA\u0BBE\u0BB0\u0BCD\u0B95\u0BCD\u0B95\u0BB5\u0BC1\u0BAE\u0BCD',
-    scheduleNewMeeting: '\u0BAA\u0BC1\u0BA4\u0BBF\u0BAF \u0B9A\u0BA8\u0BCD\u0BA4\u0BBF\u0BAA\u0BCD\u0BAA\u0BC1 \u0BA4\u0BBF\u0B9F\u0BCD\u0B9F\u0BAE\u0BBF\u0B9F\u0BC1',
+    MemberList: 'உறுப்பினர் பட்டியல்',
+    viewAllMembers: 'உறுப்பினர்களை பார்க்கவும்',
+    scheduleNewMeeting: 'புதிய சந்திப்பு',
 
     // Reports
     reports: 'அறிக்கைகள்',
