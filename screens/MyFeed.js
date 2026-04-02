@@ -1,4 +1,4 @@
-﻿﻿import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ActivityIndicator, RefreshControl, Alert, ImageBackground, Modal, ScrollView, TextInput, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -1478,7 +1478,7 @@ ${t('electronicReceipt')}
 
                     {/* Row 2: Amount and Type */}
                     <View style={styles.detailItem}>
-                      <Icon name="currency-usd" size={20} color="#666" />
+                      <Icon name="currency-inr" size={20} color="#666" />
                       <Text style={styles.detailLabel}>{t('amount')}</Text>
                       <Text style={[styles.detailValue, { color: selectedItem.amount > 0 ? '#4CAF50' : '#666', fontWeight: 'bold' }]}>
                         {selectedItem.amount > 0 ? `\u20B9${selectedItem.amount.toLocaleString()}` : t('notAvailable')}
