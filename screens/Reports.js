@@ -219,7 +219,7 @@ const Reports = ({ navigation }) => {
     { id: 'attendance', title: t('attendance'), icon: 'calendar-check', endpoint: 'attendance' },
     { id: 'tyfcb', title: t('thanksNote'), icon: 'handshake', endpoint: 'tyfcb' },
     { id: 'meeting', title: t('oneToOneMeeting'), icon: 'account-multiple', endpoint: 'meeting' },
-    { id: 'alaigalmeeting', title: t('alaigalMeeting'), icon: 'calendar-account', endpoint: 'alaigalmeeting' },
+    { id: 'alaigalmeeting', title: t('meeting'), icon: 'calendar-account', endpoint: 'alaigalmeeting' },
     { id: 'visitor', title: t('visitor'), icon: 'account-plus', endpoint: 'visitor' },
     { id: 'payment', title: t('payment'), icon: 'cash-multiple', endpoint: 'payment' },
     { id: 'referral', title: t('referral'), icon: 'share-variant', endpoint: 'referral' },
@@ -586,16 +586,21 @@ const Reports = ({ navigation }) => {
       // Generate PDF
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
 
+      // Rename file: e.g. "Attendance Report 2026-04-02.pdf"
+      const titleFormatted = selectedReportTab === 'alaigalmeeting' ? 'Meeting' : currentTab.title;
+      const namedFilePath = `${FileSystem.documentDirectory}${titleFormatted} Report ${timestamp}.pdf`;
+      await FileSystem.copyAsync({ from: uri, to: namedFilePath });
+
       // Share the PDF
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
+        await Sharing.shareAsync(namedFilePath, {
           mimeType: 'application/pdf',
           dialogTitle: `Share ${currentTab.title} Report`,
           UTI: 'com.adobe.pdf',
         });
         Alert.alert(t('success'), `${currentTab.title} ${t('pdfReportGeneratedSuccessfully')}`);
       } else {
-        Alert.alert(t('success'), `${t('pdfSavedTo')}: ${uri}`);
+        Alert.alert(t('success'), `${t('pdfSavedTo')}: ${namedFilePath}`);
       }
     } catch (error) {
       console.error('PDF generation error:', error);
@@ -663,7 +668,6 @@ const Reports = ({ navigation }) => {
         </table>
         
         <div class="footer">
-          <p>Alaigal Member Management System</p>
           <p>${t('report')} ${t('generated')} ${new Date().toLocaleString()}</p>
         </div>
       </body>
@@ -733,7 +737,6 @@ const Reports = ({ navigation }) => {
         </table>
         
         <div class="footer">
-          <p>Alaigal Member Management System</p>
           <p>${t('report')} ${t('generated')} ${new Date().toLocaleString()}</p>
         </div>
       </body>
@@ -803,7 +806,6 @@ const Reports = ({ navigation }) => {
         </table>
         
         <div class="footer">
-          <p>Alaigal Member Management System</p>
           <p>Report generated on ${new Date().toLocaleString()}</p>
         </div>
       </body>
@@ -874,7 +876,6 @@ const Reports = ({ navigation }) => {
         </table>
         
         <div class="footer">
-          <p>Alaigal Member Management System</p>
           <p>Report generated on ${new Date().toLocaleString()}</p>
         </div>
       </body>
@@ -946,7 +947,6 @@ const Reports = ({ navigation }) => {
         </table>
         
         <div class="footer">
-          <p>Alaigal Member Management System</p>
           <p>Report generated on ${new Date().toLocaleString()}</p>
         </div>
       </body>
@@ -961,7 +961,7 @@ const Reports = ({ navigation }) => {
       <html>
       <head>
         <meta charset="utf-8">
-        <title>${title} Report</title>
+        <title>Meeting Report</title>
         <style>
           body { font-family: sans-serif; padding: 20px; }
           h1 { color: #4A90E2; text-align: center; margin-bottom: 10px; }
@@ -974,7 +974,7 @@ const Reports = ({ navigation }) => {
         </style>
       </head>
       <body>
-        <h1>${title} Report</h1>
+        <h1>Meeting Report</h1>
         <div class="report-info">
           <p><strong>Period:</strong> ${selectedPeriod.toUpperCase()}</p>
           <p><strong>Date Range:</strong> ${new Date(reportData.fromDate).toLocaleDateString()} - ${new Date(reportData.toDate).toLocaleDateString()}</p>
@@ -1014,7 +1014,6 @@ const Reports = ({ navigation }) => {
         </table>
         
         <div class="footer">
-          <p>Alaigal Member Management System</p>
           <p>Report generated on ${new Date().toLocaleString()}</p>
         </div>
       </body>
@@ -1084,7 +1083,6 @@ const Reports = ({ navigation }) => {
         </table>
         
         <div class="footer">
-          <p>Alaigal Member Management System</p>
           <p>Report generated on ${new Date().toLocaleString()}</p>
         </div>
       </body>
@@ -2155,7 +2153,7 @@ const Reports = ({ navigation }) => {
                   <View style={styles.reportCard}>
                     <View style={styles.reportHeader}>
                       <View style={styles.reportTextContainer}>
-                        <Text style={styles.reportTitle}>{currentTab.title} {t('report')}</Text>
+                        <Text style={styles.reportTitle}>{selectedReportTab === 'alaigalmeeting' ? 'Meeting' : currentTab.title} {t('report')}</Text>
                         <Text style={styles.reportSubtitle}>
                           {t(selectedPeriod)} {t('report')}
                         </Text>
