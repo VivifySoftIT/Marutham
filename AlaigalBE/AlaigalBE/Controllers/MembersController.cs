@@ -25,12 +25,15 @@ public class MembersController : ControllerBase
 
     // GET: api/Members/GetMemberNames
     [HttpGet("GetMemberNames")]
-    public async Task<ActionResult<IEnumerable<object>>> GetMemberNames()
+    public async Task<ActionResult<IEnumerable<object>>> GetMemberNames([FromQuery] int? subCompanyId = null)
     {
         try
         {
-            var memberNames = await _context.Members
-                .Where(m => m.IsActive)
+            var query = _context.Members.Where(m => m.IsActive);
+            if (subCompanyId.HasValue)
+                query = query.Where(m => m.SubCompanyId == subCompanyId.Value);
+
+            var memberNames = await query
                 .OrderBy(m => m.Name)
                 .Select(m => new
                 {
@@ -52,12 +55,15 @@ public class MembersController : ControllerBase
 
     // GET: api/Members/GetMemberDetails/{id}
     [HttpGet("GetMemberDetails/{id}")]
-    public async Task<ActionResult<object>> GetMemberDetails(int id)
+    public async Task<ActionResult<object>> GetMemberDetails(int id, [FromQuery] int? subCompanyId = null)
     {
         try
         {
-            var memberDetails = await _context.Members
-                .Where(m => m.Id == id && m.IsActive)
+            var query = _context.Members.Where(m => m.Id == id && m.IsActive);
+            if (subCompanyId.HasValue)
+                query = query.Where(m => m.SubCompanyId == subCompanyId.Value);
+
+            var memberDetails = await query
                 .Select(m => new
                 {
                     m.Id,
@@ -76,8 +82,8 @@ public class MembersController : ControllerBase
                     m.MembershipEndDate,
                     m.ReferenceId,
                     m.Batch,
-                    m.Gender,  // 👈 Added
-                    m.DOB      // 👈 Added
+                    m.Gender,
+                    m.DOB
                 })
                 .FirstOrDefaultAsync();
 
@@ -164,12 +170,15 @@ public class MembersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetMembers()
+    public async Task<ActionResult<IEnumerable<object>>> GetMembers([FromQuery] int? subCompanyId = null)
     {
         try
         {
-            var members = await _context.Members
-                .Where(m => m.IsActive)
+            var query = _context.Members.Where(m => m.IsActive);
+            if (subCompanyId.HasValue)
+                query = query.Where(m => m.SubCompanyId == subCompanyId.Value);
+
+            var members = await query
                 .OrderBy(m => m.Name)
                 .Select(m => new
                 {
@@ -194,12 +203,17 @@ public class MembersController : ControllerBase
     }
     // GET: api/Members/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Member>> GetMember(int id)
+    public async Task<ActionResult<Member>> GetMember(int id, [FromQuery] int? subCompanyId = null)
     {
-        var member = await _context.Members
+        var query = _context.Members
             .Include(m => m.Payments)
             .Include(m => m.Attendances)
-            .FirstOrDefaultAsync(m => m.Id == id);
+            .Where(m => m.Id == id);
+
+        if (subCompanyId.HasValue)
+            query = query.Where(m => m.SubCompanyId == subCompanyId.Value);
+
+        var member = await query.FirstOrDefaultAsync();
 
         if (member == null)
         {
@@ -214,12 +228,16 @@ public class MembersController : ControllerBase
 
     // GET: api/Members/stats
     [HttpGet("stats")]
-    public async Task<ActionResult<object>> GetMemberStats()
+    public async Task<ActionResult<object>> GetMemberStats([FromQuery] int? subCompanyId = null)
     {
-        var total = await _context.Members.CountAsync(m => m.IsActive);
-        var active = await _context.Members.CountAsync(m => m.IsActive && m.Status == "Active");
-        var pending = await _context.Members.CountAsync(m => m.IsActive && m.Status == "Pending");
-        var unpaid = await _context.Members.CountAsync(m => m.IsActive && m.FeesStatus == "Unpaid");
+        var query = _context.Members.Where(m => m.IsActive);
+        if (subCompanyId.HasValue)
+            query = query.Where(m => m.SubCompanyId == subCompanyId.Value);
+
+        var total = await query.CountAsync();
+        var active = await query.CountAsync(m => m.Status == "Active");
+        var pending = await query.CountAsync(m => m.Status == "Pending");
+        var unpaid = await query.CountAsync(m => m.FeesStatus == "Unpaid");
 
         return new
         {

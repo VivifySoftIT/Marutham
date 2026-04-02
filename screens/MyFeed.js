@@ -9,6 +9,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import Voice from '@react-native-voice/voice';
 import API_BASE_URL from '../apiConfig';
+import CompanyNameService from '../service/CompanyNameService';
 import { useLanguage } from '../service/LanguageContext';
 
 const MyFeed = ({ route }) => {
@@ -16,6 +17,7 @@ const MyFeed = ({ route }) => {
   const { t, language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [companyName, setCompanyName] = useState('Alaigal');
   const [activeTab, setActiveTab] = useState(route?.params?.tab || 'all');
   const [referralTab, setReferralTab] = useState(route?.params?.referralTab || 'my');
   const [thanksNoteTab, setThanksNoteTab] = useState(route?.params?.subTab || 'given');
@@ -134,6 +136,9 @@ const MyFeed = ({ route }) => {
   const loadFeedData = async () => {
     try {
       setLoading(true);
+
+      const name = await CompanyNameService.getCompanyName();
+      setCompanyName(name);
 
       const memberId = await getCurrentUserMemberId();
       if (!memberId) {
@@ -1883,8 +1888,8 @@ ${t('electronicReceipt')}
 
             <ScrollView style={styles.receiptContent}>
               <View style={styles.receiptLogoSection}>
-                <Text style={styles.receiptCompanyName}>{t('alaigalMembersNetwork').split(' ')[0]}</Text>
-                <Text style={styles.receiptCompanySubtitle}>{t('alaigalMembersNetwork').split(' ').slice(1).join(' ')}</Text>
+                <Text style={styles.receiptCompanyName}>{companyName}</Text>
+                <Text style={styles.receiptCompanySubtitle}>Members Network</Text>
               </View>
 
               <Text style={styles.receiptTitle}>{t('paymentReceipt').toUpperCase()}</Text>

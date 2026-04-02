@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
 import ApiService from '../service/api';
 import MemberIdService from '../service/MemberIdService';
+import CompanyNameService from '../service/CompanyNameService';
 import { useLanguage } from '../service/LanguageContext';
 import API_BASE_URL from '../apiConfig';
 
@@ -128,6 +129,7 @@ const MemberDashboard = () => {
   const [currentMemberId, setCurrentMemberId] = useState(null);
   const [selectedNotificationFilter, setSelectedNotificationFilter] = useState('all');
   const [memberName, setMemberName] = useState('');
+  const [companyName, setCompanyName] = useState('Alaigal');
 
   // For swipeable sections
   const [activeQuickActionIndex, setActiveQuickActionIndex] = useState(0);
@@ -668,6 +670,10 @@ const MemberDashboard = () => {
       // Load member name
       await loadMemberName();
 
+      // Load company name
+      const name = await CompanyNameService.getCompanyName();
+      setCompanyName(name);
+
       // Load pending visitor member requests
       await loadPendingVisitorRequests();
     } catch (error) {
@@ -1105,7 +1111,7 @@ const MemberDashboard = () => {
                   styles.welcomeText,
                   t('alaigal') === 'அலைகள்' && styles.tamilText
                 ]}>
-                  {t('alaigal')}
+                  {companyName}
                 </Text>
               </View>
             </View>

@@ -15,6 +15,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLanguage } from '../service/LanguageContext';
 import LanguageSelector from '../components/LanguageSelector';
 
@@ -61,9 +62,12 @@ const MembersDirectory = () => {
     try {
       setLoading(true);
       
-      console.log('Calling API:', `${API_URL}/api/Members`);
+      const subCompanyId = await AsyncStorage.getItem('subCompanyId');
+      const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+
+      console.log('Calling API:', `${API_URL}/api/Members${qs}`);
       
-      const response = await fetch(`${API_URL}/api/Members`, {
+      const response = await fetch(`${API_URL}/api/Members${qs}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

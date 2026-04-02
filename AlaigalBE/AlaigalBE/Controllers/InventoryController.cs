@@ -1211,7 +1211,7 @@ public class InventoryController : ControllerBase
             FullName = fullName,
             Email = visitor.VisitorEmail,
             PasswordHash = phone,
-            Role = "Member",
+            Role = "User",
             IsActive = true,
             MemberId = newMember.Id,
             CreatedBy = visitor.BroughtByMemberId.ToString(),
