@@ -1315,12 +1315,9 @@ const handleMeetingResponse = async (notification) => {
 </View>
 <View style={styles.headerCenterContent}>
               {dailyKural ? (
-                <>
-                  <Text style={styles.thirukkuralQuote}>
-                    {`"${dailyKural.tamil}" — திருக்குறள் ${dailyKural.number}`}
-                  </Text>
-                  <Text style={styles.thirukkuralMeaning}>{dailyKural.meaning}</Text>
-                </>
+                <Text style={styles.thirukkuralQuote}>
+                  {`“${dailyKural.tamil}” — திருக்குறள் ${dailyKural.number}`}
+                </Text>
               ) : null}
             </View>
           {/* Enhanced Member Info Card - My Card Style */}

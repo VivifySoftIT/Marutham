@@ -26,4 +26,4 @@ public class ThirukkuralController : ControllerBase
     }
 }
 
-public record KuralDto(int Number, string Tamil, string Meaning);
+public record KuralDto(int Number, string Tamil);
