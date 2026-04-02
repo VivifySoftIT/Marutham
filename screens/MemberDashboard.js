@@ -2052,13 +2052,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   quickActionTopStrip: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: '#1B5E35',
-    opacity: 0.85,
+    display: 'none',
   },
   activeQuickActionCard: {
     elevation: 8,
@@ -2120,8 +2114,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 4,
-    backgroundColor: '#1B5E35',
-    opacity: 0.85,
+    backgroundColor: '#C9A84C',
+    opacity: 1,
   },
   moduleCardContent: {
     flex: 1,
