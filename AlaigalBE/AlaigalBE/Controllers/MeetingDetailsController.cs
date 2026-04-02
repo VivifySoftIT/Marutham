@@ -193,7 +193,8 @@ public class MeetingDetailsController : ControllerBase
      [FromQuery] DateTime? toDate = null,
      [FromQuery] string? period = "daily",
      [FromQuery] int? memberId = null,
-     [FromQuery] int? adminMemberId = null)
+     [FromQuery] int? adminMemberId = null,
+     [FromQuery] int? subCompanyId = null)
     {
         try
         {
@@ -242,7 +243,7 @@ public class MeetingDetailsController : ControllerBase
             var endFilter = DateOnly.FromDateTime(endDate);
 
             // 🔑 Handle adminMemberId — get SubCompanyId
-            int? targetSubCompanyId = null;
+            int? targetSubCompanyId = subCompanyId;
             if (adminMemberId.HasValue)
             {
                 var adminMember = await _context.Members
@@ -251,9 +252,8 @@ public class MeetingDetailsController : ControllerBase
                 if (adminMember == null)
                     return NotFound(new { message = $"Active admin member with ID {adminMemberId} not found." });
 
-                targetSubCompanyId = adminMember.SubCompanyId;
-                if (!targetSubCompanyId.HasValue)
-                    return BadRequest(new { message = "Admin member is not associated with any sub-company." });
+                if (adminMember.SubCompanyId.HasValue)
+                    targetSubCompanyId = adminMember.SubCompanyId;
             }
 
             // 🔑 Handle memberId — validate and check sub-company if admin is present
