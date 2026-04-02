@@ -1277,7 +1277,7 @@ const handleMeetingResponse = async (notification) => {
     <View style={styles.logoTitleContainer}>
       <View style={styles.logoContainer}>
         <Image 
-          source={require('../assets/logoicon2.png')} 
+          source={require('../assets/logomarutham.png')}
           style={styles.headerLogo}
           resizeMode="contain"
         />
@@ -1314,14 +1314,14 @@ const handleMeetingResponse = async (notification) => {
   </View>
 </View>
 <View style={styles.headerCenterContent}>
-              <Text style={styles.thirukkuralQuote}>
-                {dailyKural
-                  ? `"${dailyKural.tamil}" — திருக்குறள் ${dailyKural.number}`
-                  : '"தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்" — திருக்குறள் 619'}
-              </Text>
-              {dailyKural && (
-                <Text style={styles.thirukkuralMeaning}>{dailyKural.meaning}</Text>
-              )}
+              {dailyKural ? (
+                <>
+                  <Text style={styles.thirukkuralQuote}>
+                    {`"${dailyKural.tamil}" — திருக்குறள் ${dailyKural.number}`}
+                  </Text>
+                  <Text style={styles.thirukkuralMeaning}>{dailyKural.meaning}</Text>
+                </>
+              ) : null}
             </View>
           {/* Enhanced Member Info Card - My Card Style */}
           {/* Card removed as requested */}
