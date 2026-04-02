@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Alaigal",
-    "slug": "alaigal",
-    "version": "1.0.6",
+    "name": "Marutham",
+    "slug": "Marutham",
+    "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/Alaigal.png",
+    "icon": "./assets/logomarutham.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
     "splash": {
-      "image": "./assets/Alaigal.png",
+      "image": "./assets/logomarutham.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1B5E35"
     },
     "ios": {
       "supportsTablet": true,
@@ -30,8 +30,8 @@
     "android": {
       "versionCode": 12,
       "adaptiveIcon": {
-        "foregroundImage": "./assets/Alaigal.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/logomarutham.png",
+        "backgroundColor": "#1B5E35"
       },
       "useNextNotificationsApi": true,
       "permissions": [
@@ -41,7 +41,7 @@
         "POST_NOTIFICATIONS",
         "RECORD_AUDIO"
       ],
-      "package": "com.alaigal"
+      "package": "com.Marutham"
     },
     "web": {
       "favicon": "./assets/playstore-icon.png"
