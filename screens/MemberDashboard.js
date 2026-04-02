@@ -1145,7 +1145,7 @@ const MemberDashboard = () => {
                   styles.welcomeText,
                   t('alaigal') === 'அலைகள்' && styles.tamilText
                 ]}>
-                  {companyName}
+                  Marutham
                 </Text>
               </View>
             </View>
