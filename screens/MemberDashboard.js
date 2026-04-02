@@ -118,7 +118,7 @@ const waterBlueColors = {
 
 const MemberDashboard = () => {
   const navigation = useNavigation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [greeting, setGreeting] = useState('');
   const [quote, setQuote] = useState('');
   const [loading, setLoading] = useState(true);
@@ -194,6 +194,21 @@ const MemberDashboard = () => {
   const clearAllNotifications = () => {
     setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
     setNotificationCount(0);
+  };
+
+  // Returns translated title/message/time for a notification at render time
+  const getNotificationDisplay = (notification) => {
+    if ((notification.type === 'meeting' || notification.messageType === 'Meeting') && notification.rawDate) {
+      const [y, m, d] = notification.rawDate.split('-');
+      const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const displayDate = language === 'ta'
+        ? dt.toLocaleDateString('ta-IN', { month: 'short', day: 'numeric', year: 'numeric' })
+        : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const titleText = notification.rawTitle || t('meetingNotificationTitle');
+      const parts = [displayDate, notification.rawTime, notification.rawPlace].filter(Boolean);
+      return { title: `📅 ${titleText}`, message: parts.join(' • '), time: displayDate };
+    }
+    return { title: notification.title, message: notification.message, time: notification.time };
   };
 
   // Handle notification press
@@ -719,14 +734,14 @@ const MemberDashboard = () => {
             id: `birthday-reminder-${reminder.id || Date.now()}`,
             type: 'birthday',
             messageType: 'Birthday',
-            title: `🎂 Birthday Reminder`,
-            message: `Today is ${reminder.memberName || 'Member'}'s Birthday! Send them wishes.`,
-            time: 'Today',
+            title: `🎂 ${t('birthdayReminderTitle')}`,
+            message: `${t('todayIs')} ${reminder.memberName || t('member')}${t('birthdayExclaim')} ${t('sendThemWishes')}`,
+            time: t('today'),
             icon: 'cake-variant',
             color: '#9C27B0',
             backgroundColor: '#F3E5F5',
             isRead: false,
-            canRespond: true, // Birthday reminders can be responded to
+            canRespond: true,
             attachmentUrl: null,
             eventDate: reminder.birthDate,
             createdBy: null,
@@ -743,43 +758,47 @@ const MemberDashboard = () => {
             'Payment': { icon: 'credit-card-check', color: '#FFA726', backgroundColor: '#FFF3E0' },
             'Birthday': { icon: 'cake-variant', color: '#9C27B0', backgroundColor: '#F3E5F5' },
             'Event': { icon: 'calendar-star', color: '#FF9800', backgroundColor: '#FFF3E0' },
-            'Meeting': { icon: 'calendar-clock', color: '#4ECDC4', backgroundColor: '#E8F8F7' }, // Using clock only, no star
+            'Meeting': { icon: 'calendar-clock', color: '#4ECDC4', backgroundColor: '#E8F8F7' },
             'Welcome': { icon: 'hand-wave', color: '#9C27B0', backgroundColor: '#F3E5F5' },
             'NewMember': { icon: 'account-plus', color: '#2196F3', backgroundColor: '#E3F2FD' }
           };
           const typeConfig = notificationTypeMap[msg.messageType] ||
             { icon: 'information', color: '#45B7D1', backgroundColor: '#E3F2FD' };
 
-          let notificationMessage = msg.content || 'New notification received';
+          // Use t()-based default message when content is missing
+          let notificationMessage = msg.content || t('newNotificationReceived');
           if ((msg.messageType === 'Event' || msg.messageType === 'Meeting') && msg.date) {
             const eventDate = new Date(msg.date);
             const formattedDate = eventDate.toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
+              month: 'short', day: 'numeric', year: 'numeric'
             });
             notificationMessage = `${notificationMessage}\n📅 ${formattedDate}`;
           }
+
+          // Translated title using t() keys
+          const getTitle = (messageType, subject) => {
+            if (messageType === 'Birthday') return `🎂 ${t('birthdayReminderTitle')}`;
+            if (messageType === 'BirthdayWishReceived') return `🎉 ${t('birthdayWishReceived')}`;
+            if (messageType === 'Payment') return t('paymentNotificationTitle');
+            if (messageType === 'Meeting') return t('meetingNotificationTitle');
+            if (messageType === 'Event') return t('eventNotificationTitle');
+            if (messageType === 'NewMember') return t('newMemberNotificationTitle');
+            if (subject && subject.trim()) return subject;
+            return `${messageType} ${t('notificationSuffix')}`;
+          };
 
           // Extract member IDs for Birthday and NewMember notifications
           let recipientMemberId = null;
           let recipientName = null;
 
           if (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') {
-            // Extract name from content for Birthday notifications
             if (msg.messageType === 'Birthday' && msg.content) {
               const match = msg.content.match(/Today is (.+)'s birthday/);
-              if (match) {
-                recipientName = match[1];
-              }
+              if (match) recipientName = match[1];
             }
-
-            // Extract name from content for NewMember notifications
             if (msg.messageType === 'NewMember' && msg.content) {
               const match = msg.content.match(/New member joined: (.+)/);
-              if (match) {
-                recipientName = match[1];
-              }
+              if (match) recipientName = match[1];
             }
           }
 
@@ -787,20 +806,16 @@ const MemberDashboard = () => {
             id: `message-${msg.id}`,
             type: 'message',
             messageType: msg.messageType,
-            title: msg.subject || `${msg.messageType} Notification`,
+            title: getTitle(msg.messageType, msg.subject),
             message: notificationMessage,
             time: msg.messageType === 'Meeting' && msg.date
-              ? new Date(msg.date).toLocaleDateString([], {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })
-              : (msg.createdDate ? new Date(msg.createdDate).toLocaleDateString() : 'Recent'),
+              ? new Date(msg.date).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+              : (msg.createdDate ? new Date(msg.createdDate).toLocaleDateString() : t('recent')),
             icon: typeConfig.icon,
             color: typeConfig.color,
             backgroundColor: typeConfig.backgroundColor,
             isRead: false,
-            canRespond: true, // Always allow response for Birthday notifications
+            canRespond: true,
             eventDate: msg.date,
             createdBy: msg.createdBy,
             attachmentUrl: msg.attachmentUrl,
@@ -1165,7 +1180,9 @@ const MemberDashboard = () => {
               style={styles.notificationScrollView}
               contentContainerStyle={styles.notificationScrollContent}
             >
-              {notifications.slice(0, 5).map((notification) => (
+              {notifications.slice(0, 5).map((notification) => {
+                const display = getNotificationDisplay(notification);
+                return (
                 <TouchableOpacity
                   key={notification.id}
                   style={[
@@ -1180,13 +1197,8 @@ const MemberDashboard = () => {
                     { backgroundColor: notification.backgroundColor }
                   ]}>
                     {notification.messageType === 'Birthday' ? (
-                      // Animated Birthday Cake Icon
                       <Animatable.View
-                        animation={{
-                          0: { scale: 1 },
-                          0.5: { scale: 1.2 },
-                          1: { scale: 1 }
-                        }}
+                        animation={{ 0: { scale: 1 }, 0.5: { scale: 1.2 }, 1: { scale: 1 } }}
                         iterationCount="infinite"
                         duration={2500}
                         easing="ease-in-out"
@@ -1199,15 +1211,14 @@ const MemberDashboard = () => {
                   </View>
                   <View style={styles.notificationSwipeContent}>
                     <Text style={styles.notificationSwipeTitle} numberOfLines={2}>
-                      {notification.title}
+                      {display.title}
                     </Text>
                     <Text style={styles.notificationSwipeMessage} numberOfLines={3}>
-                      {notification.message}
+                      {display.message}
                     </Text>
                     <Text style={styles.notificationSwipeTime}>
-                      {notification.time}
+                      {display.time}
                     </Text>
-                    {/* Tap to respond badge - always show for responsive notifications */}
                     {notification.canRespond && (
                       <View style={styles.tapToRespondBadge}>
                         <Text style={styles.tapToRespondText}>
@@ -1221,7 +1232,8 @@ const MemberDashboard = () => {
                     <View style={styles.swipeUnreadIndicator} />
                   )}
                 </TouchableOpacity>
-              ))}
+                );
+              })}
             </ScrollView>
           </Animatable.View>
         )}
@@ -1500,7 +1512,9 @@ const MemberDashboard = () => {
                   );
                 }
 
-                return filteredNotifications.map((notification) => (
+                return filteredNotifications.map((notification) => {
+                  const display = getNotificationDisplay(notification);
+                  return (
                   <TouchableOpacity
                     key={notification.id}
                     style={[
@@ -1515,13 +1529,8 @@ const MemberDashboard = () => {
                       { backgroundColor: notification.backgroundColor }
                     ]}>
                       {notification.messageType === 'Birthday' ? (
-                        // Animated Birthday Cake Icon in Modal
                         <Animatable.View
-                          animation={{
-                            0: { scale: 1 },
-                            0.5: { scale: 1.2 },
-                            1: { scale: 1 }
-                          }}
+                          animation={{ 0: { scale: 1 }, 0.5: { scale: 1.2 }, 1: { scale: 1 } }}
                           iterationCount="infinite"
                           duration={2500}
                           easing="ease-in-out"
@@ -1538,21 +1547,22 @@ const MemberDashboard = () => {
                           styles.notificationItemTitle,
                           !notification.isRead && styles.unreadNotificationTitle
                         ]}>
-                          {notification.title}
+                          {display.title}
                         </Text>
                         {!notification.isRead && (
                           <View style={styles.unreadIndicator} />
                         )}
                       </View>
                       <Text style={styles.notificationItemMessage}>
-                        {notification.message}
+                        {display.message}
                       </Text>
                       <Text style={styles.notificationItemTime}>
-                        {notification.time}
+                        {display.time}
                       </Text>
                     </View>
                   </TouchableOpacity>
-                ));
+                  );
+                });
               })()}
             </ScrollView>
           </View>

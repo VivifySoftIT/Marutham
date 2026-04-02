@@ -134,168 +134,36 @@ const UserDashboard = () => {
     return /[\u0B80-\u0BFF]/.test(text);
   };
 
-  // Function to get translated notification title
+  // Function to get translated notification title using t() keys
   const getNotificationTitle = (messageType, subject) => {
-    // Handle specific titles based on message type and language
-    if (language === 'ta') {
-      // Tamil translations for common notification titles
-      if (messageType === 'Birthday') {
-        if (subject && subject.includes('Reminder')) {
-          return 'பிறந்தநாள் நினைவூட்டல்!';
-        } else if (subject && subject.includes('Wish')) {
-          return '🎉 பிறந்தநாள் வாழ்த்து பெறப்பட்டது!';
-        } else {
-          return 'பிறந்தநாள் அறிவிப்பு';
-        }
-      } else if (messageType === 'BirthdayWishReceived') {
-        return '🎉 பிறந்தநாள் வாழ்த்து பெறப்பட்டது!';
-      } else if (messageType === 'Payment') {
-        return 'பணம் அறிவிப்பு';
-      } else if (messageType === 'Meeting') {
-        return 'கூட்டம் அறிவிப்பு';
-      } else if (messageType === 'Event') {
-        return 'நிகழ்வு அறிவிப்பு';
-      } else if (messageType === 'NewMember') {
-        return 'புதிய உறுப்பினர் அறிவிப்பு';
-      }
-      
-      // If subject exists, try to translate common patterns
-      if (subject && subject.trim()) {
-        let translatedSubject = subject;
-        translatedSubject = translatedSubject.replace(/Birthday Reminder/gi, 'பிறந்தநாள் நினைவூட்டல்');
-        translatedSubject = translatedSubject.replace(/Birthday Wish/gi, 'பிறந்தநாள் வாழ்த்து');
-        translatedSubject = translatedSubject.replace(/Payment Reminder/gi, 'பணம் நினைவூட்டல்');
-        translatedSubject = translatedSubject.replace(/Meeting Reminder/gi, 'கூட்டம் நினைவூட்டல்');
-        translatedSubject = translatedSubject.replace(/Event Reminder/gi, 'நிகழ்வு நினைவூட்டல்');
-        translatedSubject = translatedSubject.replace(/New Member Alert/gi, 'புதிய உறுப்பினர் எச்சரிக்கை');
-        translatedSubject = translatedSubject.replace(/Welcome Message/gi, 'வரவேற்பு செய்தி');
-        return translatedSubject;
-      }
-      
-      return `${messageType} அறிவிப்பு`;
-    } else {
-      // English titles
-      if (messageType === 'Birthday') {
-        if (subject && subject.includes('Reminder')) {
-          return 'Birthday Reminder!';
-        } else if (subject && subject.includes('Wish')) {
-          return '🎉 Birthday Wish Received!';
-        } else {
-          return 'Birthday Notification';
-        }
-      } else if (messageType === 'BirthdayWishReceived') {
-        return '🎉 Birthday Wish Received!';
-      } else if (messageType === 'Payment') {
-        return 'Payment Notification';
-      } else if (messageType === 'Meeting') {
-        return 'Meeting Notification';
-      } else if (messageType === 'Event') {
-        return 'Event Notification';
-      } else if (messageType === 'NewMember') {
-        return 'New Member Alert';
-      }
-      
-      // Use original subject if available
-      if (subject && subject.trim()) {
-        return subject;
-      }
-      
-      return `${messageType} Notification`;
+    if (messageType === 'Birthday') {
+      if (subject && subject.includes('Reminder')) return t('birthdayReminderTitle');
+      if (subject && subject.includes('Wish')) return `🎉 ${t('birthdayWishReceived')}`;
+      return t('birthdayNotificationTitle');
     }
+    if (messageType === 'BirthdayWishReceived') return `🎉 ${t('birthdayWishReceived')}`;
+    if (messageType === 'Payment') return t('paymentNotificationTitle');
+    if (messageType === 'Meeting') return t('meetingNotificationTitle');
+    if (messageType === 'Event') return t('eventNotificationTitle');
+    if (messageType === 'NewMember') return t('newMemberNotificationTitle');
+    if (subject && subject.trim()) return subject;
+    return `${messageType} ${t('notificationSuffix')}`;
   };
 
-  // Function to get translated notification message
-  const getNotificationMessage = (msg, notificationMessage) => {
-    // If the message is already in the content, try to translate common patterns
-    if (msg.content && msg.content.trim()) {
-      let content = msg.content;
-      
-      // Only translate if language is Tamil
-      if (language === 'ta') {
-        // Birthday patterns - more comprehensive
-        content = content.replace(/Birthday Reminder!?/gi, 'பிறந்தநாள் நினைவூட்டல்!');
-        content = content.replace(/Today is (.+?)(?:'s| அவர்களின்) birthday!?/gi, 'இன்று $1 அவர்களின் பிறந்தநாள்!');
-        content = content.replace(/Happy Birthday to (.+?)!?/gi, '$1 அவர்களுக்கு பிறந்தநாள் வாழ்த்துகள்!');
-        content = content.replace(/(.+?)(?:'s| அவர்களின்) birthday is today!?/gi, 'இன்று $1 அவர்களின் பிறந்தநாள்!');
-        content = content.replace(/It's (.+?)(?:'s| அவர்களின்) birthday!?/gi, 'இன்று $1 அவர்களின் பிறந்தநாள்!');
-        content = content.replace(/Member sent you birthday wishes today!?/gi, 'உறுப்பினர் இன்று உங்களுக்கு பிறந்தநாள் வாழ்த்துகள் அனுப்பினார்!');
-        
-        // Payment patterns
-        content = content.replace(/Payment Reminder/gi, 'பணம் நினைவூட்டல்');
-        content = content.replace(/Payment Due/gi, 'பணம் நிலுவை');
-        content = content.replace(/Payment Received/gi, 'பணம் பெறப்பட்டது');
-        content = content.replace(/Payment Required/gi, 'பணம் தேவை');
-        
-        // Meeting patterns
-        content = content.replace(/Meeting Reminder/gi, 'கூட்டம் நினைவூட்டல்');
-        content = content.replace(/Meeting Today/gi, 'இன்று கூட்டம்');
-        content = content.replace(/Meeting Scheduled/gi, 'கூட்டம் திட்டமிடப்பட்டது');
-        content = content.replace(/Upcoming Meeting/gi, 'வரவிருக்கும் கூட்டம்');
-        
-        // Event patterns
-        content = content.replace(/Event Reminder/gi, 'நிகழ்வு நினைவூட்டல்');
-        content = content.replace(/Event Today/gi, 'இன்று நிகழ்வு');
-        content = content.replace(/Upcoming Event/gi, 'வரவிருக்கும் நிகழ்வு');
-        
-        // New Member patterns
-        content = content.replace(/New Member/gi, 'புதிய உறுப்பினர்');
-        content = content.replace(/Welcome (.+?)!?/gi, '$1 அவர்களை வரவேற்கிறோம்!');
-        content = content.replace(/(.+?) has joined/gi, '$1 சேர்ந்துள்ளார்');
-        content = content.replace(/(.+?) joined the group/gi, '$1 குழுவில் சேர்ந்துள்ளார்');
-        
-        // Common words and phrases
-        content = content.replace(/\bToday\b/gi, 'இன்று');
-        content = content.replace(/\bTomorrow\b/gi, 'நாளை');
-        content = content.replace(/\bYesterday\b/gi, 'நேற்று');
-        content = content.replace(/\bPlease\b/gi, 'தயவுசெய்து');
-        content = content.replace(/\bThank you\b/gi, 'நன்றி');
-        content = content.replace(/\bReminder\b/gi, 'நினைவூட்டல்');
-        content = content.replace(/\bAlert\b/gi, 'எச்சரிக்கை');
-        content = content.replace(/\bNotification\b/gi, 'அறிவிப்பு');
-        
-        // Time-related
-        content = content.replace(/\bthis morning\b/gi, 'இன்று காலை');
-        content = content.replace(/\bthis afternoon\b/gi, 'இன்று மதியம்');
-        content = content.replace(/\bthis evening\b/gi, 'இன்று மாலை');
-        content = content.replace(/\btonight\b/gi, 'இன்று இரவு');
-      }
-      
-      return content;
+  // Function to get translated notification message using t() keys
+  const getNotificationMessage = (msg, fallback) => {
+    if (!msg.content || !msg.content.trim()) {
+      // Use t() key-based defaults
+      if (msg.messageType === 'Birthday' || msg.messageType === 'BirthdayWishReceived')
+        return t('birthdayWishDefaultMsg');
+      if (msg.messageType === 'Payment') return t('paymentNotificationMsg');
+      if (msg.messageType === 'Meeting') return t('meetingNotificationMsg');
+      if (msg.messageType === 'Event') return t('eventNotificationMsg');
+      if (msg.messageType === 'NewMember') return t('newMemberNotificationMsg');
+      return fallback || t('newNotificationReceived');
     }
-    
-    // Generate default messages based on message type and language
-    if (language === 'ta') {
-      if (msg.messageType === 'Birthday') {
-        return 'உறுப்பினர் இன்று உங்களுக்கு பிறந்தநாள் வாழ்த்துகள் அனுப்பினார்!';
-      } else if (msg.messageType === 'BirthdayWishReceived') {
-        return 'உறுப்பினர் இன்று உங்களுக்கு பிறந்தநாள் வாழ்த்துகள் அனுப்பினார்!';
-      } else if (msg.messageType === 'Payment') {
-        return 'பணம் தொடர்பான அறிவிப்பு';
-      } else if (msg.messageType === 'Meeting') {
-        return 'கூட்டம் தொடர்பான அறிவிப்பு';
-      } else if (msg.messageType === 'Event') {
-        return 'நிகழ்வு தொடர்பான அறிவிப்பு';
-      } else if (msg.messageType === 'NewMember') {
-        return 'புதிய உறுப்பினர் சேர்ந்துள்ளார்';
-      }
-      return notificationMessage || 'புதிய அறிவிப்பு பெறப்பட்டது';
-    } else {
-      // English default messages
-      if (msg.messageType === 'Birthday') {
-        return 'Member sent you birthday wishes today!';
-      } else if (msg.messageType === 'BirthdayWishReceived') {
-        return 'Member sent you birthday wishes today!';
-      } else if (msg.messageType === 'Payment') {
-        return 'Payment related notification';
-      } else if (msg.messageType === 'Meeting') {
-        return 'Meeting related notification';
-      } else if (msg.messageType === 'Event') {
-        return 'Event related notification';
-      } else if (msg.messageType === 'NewMember') {
-        return 'New member has joined';
-      }
-      return notificationMessage || 'New notification received';
-    }
+    // Return raw content — language-specific display handled by t() keys above
+    return msg.content;
   };
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
@@ -341,6 +209,11 @@ const UserDashboard = () => {
     setGreetingMessage();
     loadDashboardReminders();
   }, []);
+
+  // Reload notifications when language changes so titles/messages update
+  useEffect(() => {
+    loadDashboardReminders();
+  }, [language]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -597,28 +470,28 @@ const loadDashboardReminders = async () => {
     // Add upcoming meeting notifications from MeetingDetails
     if (upcomingMeetings.length > 0) {
       upcomingMeetings.forEach((meeting) => {
-        // meetingDate is DateOnly "YYYY-MM-DD"
         const meetingDate = meeting.meetingDate || meeting.MeetingDate || '';
+        const rawTitle = meeting.meetingTitle || meeting.MeetingTitle || '';
+        const rawPlace = meeting.place || meeting.Place || '';
+        const rawTime = meeting.time || meeting.Time || '';
+        const timeStr = rawTime ? rawTime.substring(0, 5) : '';
+        const meetingType = meeting.meetingType || meeting.MeetingType || '';
+        const desc = meeting.description || meeting.Description || '';
+
+        // Format date for display (will be re-formatted at render via rawDate)
         let displayDate = '';
         if (meetingDate) {
           const [y, m, d] = meetingDate.split('-');
           const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
           displayDate = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
-        const title = meeting.meetingTitle || meeting.MeetingTitle || 'Meeting';
-        const place = meeting.place || meeting.Place || '';
-        // time is "HH:MM:SS" — show HH:MM
-        const rawTime = meeting.time || meeting.Time || '';
-        const timeStr = rawTime ? rawTime.substring(0, 5) : '';
-        const meetingType = meeting.meetingType || meeting.MeetingType || '';
-        const desc = meeting.description || meeting.Description || '';
 
         newNotifications.push({
           id: `meeting-${meeting.id || meeting.Id}`,
           type: 'meeting',
           messageType: 'Meeting',
-          title: `📅 ${title}`,
-          message: [displayDate, timeStr, place].filter(Boolean).join(' • '),
+          title: `📅 ${rawTitle || t('meetingNotificationTitle')}`,
+          message: [displayDate, timeStr, rawPlace].filter(Boolean).join(' • '),
           time: displayDate,
           icon: 'calendar-clock',
           color: '#4ECDC4',
@@ -629,6 +502,11 @@ const loadDashboardReminders = async () => {
           eventDate: meetingDate,
           meetingType,
           description: desc,
+          // Raw fields for re-rendering when language changes
+          rawTitle,
+          rawDate: meetingDate,
+          rawPlace,
+          rawTime: timeStr,
         });
       });
     }
@@ -641,10 +519,10 @@ const loadDashboardReminders = async () => {
         id: `payment-due-${memberId}`,
         type: 'payment',
         messageType: 'Payment',
-        title: '💳 Payment Due',
+        title: `💳 ${t('paymentDueTitle')}`,
         message: nextDue
-          ? `₹${nextDue.dueAmount} due for ${nextDue.month}`
-          : `₹${memberPayments.totalDueAmount} total due`,
+          ? `₹${nextDue.dueAmount} ${t('dueFor')} ${nextDue.month}`
+          : `₹${memberPayments.totalDueAmount} ${t('totalDue')}`,
         time: '',
         icon: 'credit-card-clock',
         color: '#FF9800',
@@ -1327,6 +1205,32 @@ const handleMeetingResponse = async (notification) => {
     return period ? period.label : 'All Time';
   };
 
+  // Returns translated title/message/time for a notification at render time
+  const getNotificationDisplay = (notification) => {
+    if ((notification.type === 'meeting' || notification.messageType === 'Meeting') && notification.rawDate) {
+      // Format date in current locale
+      const [y, m, d] = notification.rawDate.split('-');
+      const dt = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const displayDate = language === 'ta'
+        ? dt.toLocaleDateString('ta-IN', { month: 'short', day: 'numeric', year: 'numeric' })
+        : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+      const titleText = notification.rawTitle || t('meetingNotificationTitle');
+      const parts = [displayDate, notification.rawTime, notification.rawPlace].filter(Boolean);
+
+      return {
+        title: `📅 ${titleText}`,
+        message: parts.join(' • '),
+        time: displayDate,
+      };
+    }
+    return {
+      title: notification.title,
+      message: notification.message,
+      time: notification.time,
+    };
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={waterBlueColors.primary} barStyle="light-content" />
@@ -1435,7 +1339,9 @@ const handleMeetingResponse = async (notification) => {
               style={styles.notificationScrollView}
               contentContainerStyle={styles.notificationScrollContent}
             >
-              {notifications.slice(0, 5).map((notification) => (
+              {notifications.slice(0, 5).map((notification) => {
+                const display = getNotificationDisplay(notification);
+                return (
                 <TouchableOpacity
                   key={notification.id}
                   style={[
@@ -1456,17 +1362,17 @@ const handleMeetingResponse = async (notification) => {
                       styles.notificationSwipeTitle,
                       language === 'ta' && styles.tamilNotificationSwipeTitle
                     ]} numberOfLines={2}>
-                      {notification.title}
+                      {display.title}
                     </Text>
                     <Text style={[
                       styles.notificationSwipeMessage,
                       language === 'ta' && styles.tamilNotificationSwipeMessage
                     ]} numberOfLines={2}>
-                      {notification.message}
+                      {display.message}
                     </Text>
-                    {notification.time && (
+                    {display.time && (
                       <Text style={styles.notificationSwipeTime}>
-                        {notification.time}
+                        {display.time}
                       </Text>
                     )}
                     {(notification.canRespond && (notification.messageType === 'Birthday' || notification.messageType === 'NewMember' || notification.messageType === 'Meeting' || notification.messageType === 'Payment')) && (
@@ -1482,7 +1388,8 @@ const handleMeetingResponse = async (notification) => {
                     <View style={[styles.swipeUnreadIndicator, { backgroundColor: '#FF0000' }]} />
                   )}
                 </TouchableOpacity>
-              ))}
+                );
+              })}
 
               {/* Remove the "View More" card as requested */}
             </ScrollView>
@@ -1906,7 +1813,9 @@ const handleMeetingResponse = async (notification) => {
                   <Text style={styles.emptyNotificationsSubtext}>{t('youreAllCaughtUp')}</Text>
                 </View>
               ) : (
-                notifications.map((notification) => (
+                notifications.map((notification) => {
+                  const display = getNotificationDisplay(notification);
+                  return (
                   <TouchableOpacity
                     key={notification.id}
                     style={[
@@ -1929,7 +1838,7 @@ const handleMeetingResponse = async (notification) => {
                             styles.notificationItemTitle,
                             !notification.isRead && styles.unreadNotificationTitle
                           ]}>
-                            {notification.title}
+                            {display.title}
                           </Text>
                         </View>
                         {!notification.isRead && (
@@ -1937,11 +1846,11 @@ const handleMeetingResponse = async (notification) => {
                         )}
                       </View>
                       <Text style={styles.notificationItemMessage}>
-                        {notification.message}
+                        {display.message}
                       </Text>
-                      {notification.time && (
+                      {display.time && (
                         <Text style={styles.notificationItemTime}>
-                          {notification.time}
+                          {display.time}
                         </Text>
                       )}
                       {notification.canRespond && (
@@ -1952,7 +1861,8 @@ const handleMeetingResponse = async (notification) => {
                       )}
                     </View>
                   </TouchableOpacity>
-                ))
+                  );
+                })
               )}
             </ScrollView>
 
