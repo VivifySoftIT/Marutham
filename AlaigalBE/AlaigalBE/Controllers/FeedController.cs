@@ -324,9 +324,46 @@ Date = t.VisitDate?.ToString("yyyy-MM-dd") ?? "",
             }
 
             var feedItems = new List<FeedItemDto>();
+            var addedMeetingIds = new HashSet<int>();
 
             // =========================================
-            // 1️⃣ GET MEETINGS FROM ATTENDANCE TABLE
+            // 1️⃣ ALL ACTIVE MEETINGS FOR MEMBER'S SUBCOMPANY
+            // =========================================
+
+            if (member.SubCompanyId.HasValue)
+            {
+                var subCompanyMeetings = await _context.MeetingDetails
+                    .Where(m => m.SubCompanyId == member.SubCompanyId && m.IsActive)
+                    .OrderByDescending(m => m.MeetingDate)
+                    .ToListAsync();
+
+                foreach (var meeting in subCompanyMeetings)
+                {
+                    if (addedMeetingIds.Add(meeting.Id))
+                    {
+                        // Check if member has attendance for this meeting
+                        var hasAttendance = await _context.Attendance
+                            .AnyAsync(a => a.MemberId == memberId && a.MeetingId == meeting.Id);
+
+                        feedItems.Add(new FeedItemDto
+                        {
+                            Id = $"meeting_general_{meeting.Id}",
+                            Type = "meeting",
+                            Title = meeting.MeetingTitle ?? "Meeting",
+                            Description = meeting.Description ?? "General Meeting",
+                            Date = meeting.MeetingDate.ToString("yyyy-MM-dd"),
+                            Status = hasAttendance ? "Attended" : "Scheduled",
+                            Icon = "calendar",
+                            Color = hasAttendance ? "#4CAF50" : "#FF9800",
+                            MemberName = null,
+                            Amount = 0
+                        });
+                    }
+                }
+            }
+
+            // =========================================
+            // 2️⃣ GET MEETINGS FROM ATTENDANCE TABLE (other subcompanies)
             // =========================================
 
             var attendanceMeetings = await _context.Attendance
@@ -338,25 +375,28 @@ Date = t.VisitDate?.ToString("yyyy-MM-dd") ?? "",
             if (attendanceMeetings.Any())
             {
                 var meetings = await _context.MeetingDetails
-                    .Where(m => attendanceMeetings.Contains(m.Id) && m.IsActive)
+                    .Where(m => attendanceMeetings.Contains(m.Id) && m.IsActive && !addedMeetingIds.Contains(m.Id))
                     .OrderByDescending(m => m.MeetingDate)
                     .ToListAsync();
 
                 foreach (var meeting in meetings)
                 {
-                    feedItems.Add(new FeedItemDto
+                    if (addedMeetingIds.Add(meeting.Id))
                     {
-                        Id = $"meeting_general_{meeting.Id}",
-                        Type = "meeting",
-                        Title = meeting.MeetingTitle ?? "Meeting",
-                        Description = meeting.Description ?? "General Meeting",
-                        Date = meeting.MeetingDate.ToString("yyyy-MM-dd"),
-                        Status = "Completed",
-                        Icon = "calendar",
-                        Color = "#4CAF50",
-                        MemberName = null,
-                        Amount = 0
-                    });
+                        feedItems.Add(new FeedItemDto
+                        {
+                            Id = $"meeting_general_{meeting.Id}",
+                            Type = "meeting",
+                            Title = meeting.MeetingTitle ?? "Meeting",
+                            Description = meeting.Description ?? "General Meeting",
+                            Date = meeting.MeetingDate.ToString("yyyy-MM-dd"),
+                            Status = "Attended",
+                            Icon = "calendar",
+                            Color = "#4CAF50",
+                            MemberName = null,
+                            Amount = 0
+                        });
+                    }
                 }
             }
 
