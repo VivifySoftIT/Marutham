@@ -21,6 +21,7 @@ const MyFeed = ({ route }) => {
   const [activeTab, setActiveTab] = useState(route?.params?.tab || 'all');
   const [referralTab, setReferralTab] = useState(route?.params?.referralTab || 'my');
   const [thanksNoteTab, setThanksNoteTab] = useState(route?.params?.subTab || 'given');
+  const [meetingTab, setMeetingTab] = useState('one_to_one'); // 'one_to_one' | 'weekly'
   const [feedData, setFeedData] = useState([]);
   const [updatingItemId, setUpdatingItemId] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -78,7 +79,7 @@ const MyFeed = ({ route }) => {
           Voice.destroy().then(Voice.removeAllListeners);
         }
       };
-    }, [activeTab, referralTab])
+    }, [activeTab, referralTab, meetingTab])
   );
 
   // Get current user's member ID
@@ -164,7 +165,9 @@ const MyFeed = ({ route }) => {
       } else if (activeTab === 'tyfcb' || activeTab === 'thanksnote') {
         endpoint = `/api/Feed/member/${memberId}/tyfcb`;
       } else if (activeTab === 'one_to_one') {
-        endpoint = `/api/Feed/member/${memberId}/meetings`;
+        endpoint = meetingTab === 'weekly'
+          ? `/api/Feed/member/${memberId}/meetings/weekly`
+          : `/api/Feed/member/${memberId}/meetings/one-to-one`;
       } else if (activeTab === 'visitor' || activeTab === 'visitors') {
         endpoint = `/api/Feed/member/${memberId}/visitors`;
       }
@@ -987,36 +990,34 @@ ${t('electronicReceipt')}
   // Helper function to translate feed item titles
   const translateFeedTitle = (item) => {
     if (!item.title) return t('activity');
-    
-    const title = item.title.toLowerCase();
-    
-    // Map common English titles to Tamil translations with proper patterns
-    if (title.includes('referral given') || title.includes('referral sent') || title.includes('you gave') || title.includes('gave referral') || title.includes('sent referral')) {
-      return t('referralGiven');
+
+    // Check by type first — most reliable
+    if (item.type === 'weekly_meeting' || item.type === 'meeting') {
+      return t('weeklyMeeting');
     }
-    if (title.includes('referral received') || title.includes('you received referral') || title.includes('received referral')) {
-      return t('referralReceived');
-    }
-    if ((title.includes('thanks') || title.includes('tyfcb')) && (title.includes('given') || title.includes('you gave') || title.includes('sent'))) {
-      return t('thanksNoteGiven');
-    }
-    if ((title.includes('thanks') || title.includes('tyfcb')) && (title.includes('received') || title.includes('you received'))) {
-      return t('thanksNoteReceived');
-    }
-    if (title.includes('one to one') || title.includes('meeting') || title.includes('you met') || title.includes('1:1') || title.includes('one-to-one')) {
+    if (item.type === 'one_to_one') {
       return t('oneToOneMeeting');
     }
-    if (title.includes('payment received') || title.includes('payment made')) {
-      return t('paymentReceived');
-    }
-    if (title.includes('pending payment') || title.includes('payment due')) {
-      return t('pendingPayments');
-    }
-    if (title.includes('visitor') || title.includes('you visited')) {
-      return t('visitor');
-    }
-    
-    // If no match found, return the original title or fallback
+    if (item.type === 'referral_given') return t('referralGiven');
+    if (item.type === 'referral_received') return t('referralReceived');
+    if (item.type === 'tyfcb_given') return t('thanksNoteGiven');
+    if (item.type === 'tyfcb_received') return t('thanksNoteReceived');
+    if (item.type === 'payment_made') return t('paymentReceived');
+    if (item.type === 'payment_due') return t('pendingPayments');
+    if (item.type === 'visitor_brought' || item.type === 'visitor_became_member') return t('visitor');
+
+    // Fallback to title string matching
+    const title = item.title.toLowerCase();
+    if (title.includes('referral given') || title.includes('gave referral')) return t('referralGiven');
+    if (title.includes('referral received') || title.includes('received referral')) return t('referralReceived');
+    if ((title.includes('thanks') || title.includes('tyfcb')) && (title.includes('given') || title.includes('sent'))) return t('thanksNoteGiven');
+    if ((title.includes('thanks') || title.includes('tyfcb')) && title.includes('received')) return t('thanksNoteReceived');
+    if (title.includes('weekly')) return t('weeklyMeeting');
+    if (title.includes('one to one') || title.includes('one-to-one') || title.includes('1:1')) return t('oneToOneMeeting');
+    if (title.includes('payment received') || title.includes('payment made')) return t('paymentReceived');
+    if (title.includes('pending payment') || title.includes('payment due')) return t('pendingPayments');
+    if (title.includes('visitor')) return t('visitor');
+
     return item.title || t('activity');
   };
 
@@ -1128,6 +1129,11 @@ ${t('electronicReceipt')}
       case 'one_to_one':
         iconName = 'calendar-account';
         iconColor = '#3F51B5';
+        break;
+      case 'meeting':
+      case 'weekly_meeting':
+        iconName = 'calendar-multiselect';
+        iconColor = item.status === 'Attended' ? '#4CAF50' : '#FF9800';
         break;
       case 'payment_made':
         iconName = 'check-circle';
@@ -1351,6 +1357,25 @@ ${t('electronicReceipt')}
           >
             <Icon name="hand-heart" size={18} color={thanksNoteTab === 'received' ? '#FFF' : '#FF9800'} />
             <Text style={[styles.toggleText, thanksNoteTab === 'received' && styles.toggleTextActive]}>{t('received')}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {activeTab === 'one_to_one' && (
+        <View style={styles.referralToggle}>
+          <TouchableOpacity
+            style={[styles.toggleButton, meetingTab === 'one_to_one' && styles.toggleButtonActive]}
+            onPress={() => { setMeetingTab('one_to_one'); }}
+          >
+            <Icon name="calendar-account" size={18} color={meetingTab === 'one_to_one' ? '#FFF' : '#3F51B5'} />
+            <Text style={[styles.toggleText, meetingTab === 'one_to_one' && styles.toggleTextActive]}>{t('oneToOneMeeting')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleButton, meetingTab === 'weekly' && styles.toggleButtonActive]}
+            onPress={() => { setMeetingTab('weekly'); }}
+          >
+            <Icon name="calendar-multiselect" size={18} color={meetingTab === 'weekly' ? '#FFF' : '#3F51B5'} />
+            <Text style={[styles.toggleText, meetingTab === 'weekly' && styles.toggleTextActive]}>{t('weeklyMeeting')}</Text>
           </TouchableOpacity>
         </View>
       )}

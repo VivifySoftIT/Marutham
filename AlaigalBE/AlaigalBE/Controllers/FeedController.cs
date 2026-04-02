@@ -309,170 +309,113 @@ Date = t.VisitDate?.ToString("yyyy-MM-dd") ?? "",
         }
     }
 
-    // GET: api/Feed/member/{memberId}/meetings
-    [HttpGet("member/{memberId}/meetings")]
-    public async Task<ActionResult<IEnumerable<FeedItemDto>>> GetMemberMeetings(int memberId)
+    // GET: api/Feed/member/{memberId}/meetings/one-to-one
+    [HttpGet("member/{memberId}/meetings/one-to-one")]
+    public async Task<ActionResult<IEnumerable<FeedItemDto>>> GetMemberOneToOneMeetings(int memberId)
     {
         try
         {
-            _logger.LogInformation($"Getting meetings for member ID: {memberId}");
-
-            var member = await _context.Members.FindAsync(memberId);
-            if (member == null)
-            {
+            var memberExists = await _context.Members.AnyAsync(m => m.Id == memberId);
+            if (!memberExists)
                 return NotFound(new { message = $"Member with ID {memberId} not found" });
-            }
 
-            var feedItems = new List<FeedItemDto>();
-            var addedMeetingIds = new HashSet<int>();
-
-            // =========================================
-            // 1️⃣ ALL ACTIVE MEETINGS FOR MEMBER'S SUBCOMPANY
-            // =========================================
-
-            if (member.SubCompanyId.HasValue)
-            {
-                var subCompanyMeetings = await _context.MeetingDetails
-                    .Where(m => m.SubCompanyId == member.SubCompanyId && m.IsActive)
-                    .OrderByDescending(m => m.MeetingDate)
-                    .ToListAsync();
-
-                foreach (var meeting in subCompanyMeetings)
-                {
-                    if (addedMeetingIds.Add(meeting.Id))
-                    {
-                        // Check if member has attendance for this meeting
-                        var hasAttendance = await _context.Attendance
-                            .AnyAsync(a => a.MemberId == memberId && a.MeetingId == meeting.Id);
-
-                        feedItems.Add(new FeedItemDto
-                        {
-                            Id = $"meeting_general_{meeting.Id}",
-                            Type = "meeting",
-                            Title = meeting.MeetingTitle ?? "Meeting",
-                            Description = meeting.Description ?? "General Meeting",
-                            Date = meeting.MeetingDate.ToString("yyyy-MM-dd"),
-                            Status = hasAttendance ? "Attended" : "Scheduled",
-                            Icon = "calendar",
-                            Color = hasAttendance ? "#4CAF50" : "#FF9800",
-                            MemberName = null,
-                            Amount = 0
-                        });
-                    }
-                }
-            }
-
-            // =========================================
-            // 2️⃣ GET MEETINGS FROM ATTENDANCE TABLE (other subcompanies)
-            // =========================================
-
-            var attendanceMeetings = await _context.Attendance
-                .Where(a => a.MemberId == memberId && a.MeetingId != null)
-                .Select(a => a.MeetingId.Value)
-                .Distinct()
-                .ToListAsync();
-
-            if (attendanceMeetings.Any())
-            {
-                var meetings = await _context.MeetingDetails
-                    .Where(m => attendanceMeetings.Contains(m.Id) && m.IsActive && !addedMeetingIds.Contains(m.Id))
-                    .OrderByDescending(m => m.MeetingDate)
-                    .ToListAsync();
-
-                foreach (var meeting in meetings)
-                {
-                    if (addedMeetingIds.Add(meeting.Id))
-                    {
-                        feedItems.Add(new FeedItemDto
-                        {
-                            Id = $"meeting_general_{meeting.Id}",
-                            Type = "meeting",
-                            Title = meeting.MeetingTitle ?? "Meeting",
-                            Description = meeting.Description ?? "General Meeting",
-                            Date = meeting.MeetingDate.ToString("yyyy-MM-dd"),
-                            Status = "Attended",
-                            Icon = "calendar",
-                            Color = "#4CAF50",
-                            MemberName = null,
-                            Amount = 0
-                        });
-                    }
-                }
-            }
-
-            // =========================================
-            // 2️⃣ ONE-TO-ONE (Participant 1)
-            // =========================================
-
-            var meetingsAsParticipant1 = await _context.OneToOneMeetings
-                .Where(m => m.Member1Id == memberId)
+            // Get all one-to-one meetings where this member is either participant
+            var meetings = await _context.OneToOneMeetings
+                .Where(m => m.Member1Id == memberId || m.Member2Id == memberId)
+                .Include(m => m.Member1)
                 .Include(m => m.Member2)
                 .OrderByDescending(m => m.MeetingDate)
                 .ToListAsync();
 
-            foreach (var meeting in meetingsAsParticipant1)
+            var feedItems = meetings.Select(m =>
             {
-                feedItems.Add(new FeedItemDto
+                var otherMember = m.Member1Id == memberId ? m.Member2 : m.Member1;
+                return new FeedItemDto
                 {
-                    Id = $"meeting_p1_{meeting.Id}",
+                    Id = $"oto_{m.Id}",
                     Type = "one_to_one",
-                    Title = "One-to-One Meeting",
-                    Description = $"You met with {meeting.Member2?.Name ?? "Unknown"}",
-                    Date = meeting.MeetingDate.ToString("yyyy-MM-dd"),
-                    Status = !string.IsNullOrEmpty(meeting.Status) ? meeting.Status : "Completed",
+                    Title = !string.IsNullOrEmpty(m.Topic) ? m.Topic : "One-to-One Meeting",
+                    Description = $"Met with {otherMember?.Name ?? m.MetWith ?? "Unknown"}",
+                    Date = m.MeetingDate.ToString("yyyy-MM-dd"),
+                    Status = !string.IsNullOrEmpty(m.Status) ? m.Status : "Completed",
                     Icon = "calendar-account",
                     Color = "#3F51B5",
-                    MemberName = meeting.Member2?.Name,
+                    MemberName = otherMember?.Name ?? m.MetWith,
                     Amount = 0
-                });
-            }
+                };
+            }).ToList();
 
-            // =========================================
-            // 3️⃣ ONE-TO-ONE (Participant 2)
-            // =========================================
-
-            var meetingsAsParticipant2 = await _context.OneToOneMeetings
-                .Where(m => m.Member2Id == memberId)
-                .Include(m => m.Member1)
-                .OrderByDescending(m => m.MeetingDate)
-                .ToListAsync();
-
-            foreach (var meeting in meetingsAsParticipant2)
-            {
-                feedItems.Add(new FeedItemDto
-                {
-                    Id = $"meeting_p2_{meeting.Id}",
-                    Type = "one_to_one",
-                    Title = "One-to-One Meeting",
-                    Description = $"You met with {meeting.Member1?.Name ?? "Unknown"}",
-                    Date = meeting.MeetingDate.ToString("yyyy-MM-dd"),
-                    Status = !string.IsNullOrEmpty(meeting.Status) ? meeting.Status : "Completed",
-                    Icon = "calendar-account",
-                    Color = "#3F51B5",
-                    MemberName = meeting.Member1?.Name,
-                    Amount = 0
-                });
-            }
-
-            if (!feedItems.Any())
-                return Ok(new List<FeedItemDto>());
-
-            var sortedFeed = feedItems
-                .OrderByDescending(f => DateTime.ParseExact(f.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture))
-                .ToList();
-
-            return Ok(sortedFeed);
+            return Ok(feedItems);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Error fetching meetings for member {memberId}");
-
-            return StatusCode(500, new
-            {
-                message = "Error fetching meetings",
-                error = ex.InnerException?.Message ?? ex.Message
-            });
+            _logger.LogError(ex, $"Error fetching one-to-one meetings for member {memberId}");
+            return StatusCode(500, new { message = "Error fetching one-to-one meetings", error = ex.Message });
         }
+    }
+
+    // GET: api/Feed/member/{memberId}/meetings/weekly
+    [HttpGet("member/{memberId}/meetings/weekly")]
+    public async Task<ActionResult<IEnumerable<FeedItemDto>>> GetMemberWeeklyMeetings(int memberId)
+    {
+        try
+        {
+            var member = await _context.Members.FindAsync(memberId);
+            if (member == null)
+                return NotFound(new { message = $"Member with ID {memberId} not found" });
+
+            if (!member.SubCompanyId.HasValue)
+                return Ok(new List<FeedItemDto>());
+
+            // Get all active meetings for this member's SubCompanyId
+            var weeklyMeetings = await _context.MeetingDetails
+                .Where(m => m.SubCompanyId == member.SubCompanyId && m.IsActive)
+                .OrderByDescending(m => m.MeetingDate)
+                .ToListAsync();
+
+            // Batch-fetch attendance for this member (one query)
+            var attendedMeetingIds = (await _context.Attendance
+                .Where(a => a.MemberId == memberId && a.MeetingId != null)
+                .Select(a => a.MeetingId!.Value)
+                .ToListAsync()).ToHashSet();
+
+            var feedItems = weeklyMeetings.Select(meeting => new FeedItemDto
+            {
+                Id = $"weekly_{meeting.Id}",
+                Type = "weekly_meeting",
+                Title = meeting.MeetingTitle ?? "Weekly Meeting",
+                Description = !string.IsNullOrEmpty(meeting.Description)
+                    ? meeting.Description
+                    : $"{meeting.Place ?? ""} • {meeting.MeetingType}".Trim(' ', '•', ' '),
+                Date = meeting.MeetingDate.ToString("yyyy-MM-dd"),
+                Status = attendedMeetingIds.Contains(meeting.Id) ? "Attended" : "Scheduled",
+                Icon = "calendar-multiselect",
+                Color = attendedMeetingIds.Contains(meeting.Id) ? "#4CAF50" : "#FF9800",
+                MemberName = meeting.ContactPersonName,
+                Amount = 0
+            }).ToList();
+
+            return Ok(feedItems);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error fetching weekly meetings for member {memberId}");
+            return StatusCode(500, new { message = "Error fetching weekly meetings", error = ex.Message });
+        }
+    }
+
+    // GET: api/Feed/member/{memberId}/meetings  (kept for backward compat)
+    [HttpGet("member/{memberId}/meetings")]
+    public async Task<ActionResult<IEnumerable<FeedItemDto>>> GetMemberMeetings(int memberId)
+    {
+        var oto = await GetMemberOneToOneMeetings(memberId);
+        var weekly = await GetMemberWeeklyMeetings(memberId);
+
+        var all = new List<FeedItemDto>();
+        if (oto.Result is OkObjectResult o1) all.AddRange((IEnumerable<FeedItemDto>)o1.Value!);
+        if (weekly.Result is OkObjectResult o2) all.AddRange((IEnumerable<FeedItemDto>)o2.Value!);
+
+        return Ok(all.OrderByDescending(f => DateTime.Parse(f.Date!)).ToList());
     }
     [HttpGet("member/{memberId}/visitors")]
     public async Task<ActionResult<IEnumerable<VisitorDto>>> GetMemberVisitors(int memberId)
