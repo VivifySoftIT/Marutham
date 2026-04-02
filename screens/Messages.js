@@ -1016,9 +1016,8 @@ const Messages = ({ navigation }) => {
                     styles.selectAllText,
                     currentLanguage === 'ta' && styles.selectAllTextTamil
                   ]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit={currentLanguage === 'ta'}
-                  minimumFontScale={0.8}
+                  numberOfLines={2}
+                  adjustsFontSizeToFit={false}
                 >
                   {(() => {
                     const filteredMembers = getFilteredMembers();
@@ -1284,7 +1283,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     flex: 1,
     textAlign: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: 8,
   },
   modalContent: {
     flex: 1,
@@ -1635,15 +1634,15 @@ const styles = StyleSheet.create({
     marginTop: 50,
   },
   selectAllText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#FFF',
+    textAlign: 'center',
   },
   selectAllTextTamil: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     textAlign: 'center',
-    flexShrink: 0,
     fontWeight: '700',
   },
   headerRightButtons: {
@@ -1658,21 +1657,22 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   selectAllButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    minHeight: 32,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    minHeight: 36,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   selectAllButtonTamil: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    minWidth: 100,
-    maxWidth: 100,
-    minHeight: 40,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    minWidth: 120,
+    maxWidth: 140,
+    minHeight: 44,
     borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
   },
   refreshButton: {
     padding: 8,

@@ -139,7 +139,7 @@ const MemberCard = ({ item, navigation, t }) => {
         <View style={styles.detailBox}>
           <Icon name="cash" size={16} color="#4A90E2" />
           <Text style={styles.detailLabel}>{t('amount')}</Text>
-          <Text style={styles.detailValue}>â‚¹{item.amount || '0'}</Text>
+          <Text style={styles.detailValue}>₹{item.amount || '0'}</Text>
         </View>
       </View>
 
@@ -302,7 +302,7 @@ const MemberList = () => {
           isActive: member.IsActive ?? member.isActive ?? true,
           status: (member.IsActive ?? member.isActive ?? true) ? t('active') : t('inactive'),
           feesStatus: member.FeesStatus || member.feesStatus,
-          amount: member.Amount || member.amount || 0,
+          amount: member.TotalPaid || member.totalPaid || member.Amount || member.amount || member.Fees || member.fees || 0,
           address: member.Address || member.address,
           business: businesses[0]?.name || member.Business || member.business || member.BusinessName || member.businessName,
           businessCategory: member.BusinessCategory || member.businessCategory,
