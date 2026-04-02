@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   summaryNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginVertical: 8,
   },
   summaryLabel: {
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 12,
   },
   periodContainer: {
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   activePeriod: {
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
   },
   periodText: {
     fontSize: 13,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   activeFormat: {
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
   },
   formatText: {
     fontSize: 13,
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   referrerName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 4,
   },
   referrerStats: {
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   recentReferrer: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginLeft: 8,
   },
   recentDetails: {
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
   },
   recentValue: {
     fontSize: 12,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '500',
   },
   statusBadge: {
@@ -501,3 +501,4 @@ const styles = StyleSheet.create({
 });
 
 export default ReferralReports;
+

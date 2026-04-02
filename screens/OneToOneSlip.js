@@ -192,10 +192,10 @@ const OneToOneSlip = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -214,7 +214,7 @@ const OneToOneSlip = () => {
             <Text style={styles.label}>{t('metWith')} *</Text>
             <View style={styles.dropdownContainer}>
               <View style={styles.inputContainer}>
-                <Icon name="account-search" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="account-search" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder={t('typeToSearchMember')}
@@ -227,7 +227,7 @@ const OneToOneSlip = () => {
                   placeholderTextColor="#999"
                 />
                 <TouchableOpacity onPress={() => setShowMemberDropdown(!showMemberDropdown)}>
-                  <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
+                  <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#C9A84C" />
                 </TouchableOpacity>
               </View>
 
@@ -235,7 +235,7 @@ const OneToOneSlip = () => {
                 <View style={styles.memberDropdownList}>
                   <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }}>
                     {loadingMembers ? (
-                      <ActivityIndicator size="small" color="#4A90E2" style={{ padding: 20 }} />
+                      <ActivityIndicator size="small" color="#C9A84C" style={{ padding: 20 }} />
                     ) : (
                       (() => {
                         const filtered = allMembers.filter(m =>
@@ -255,7 +255,7 @@ const OneToOneSlip = () => {
                                 <Text style={styles.memberDetail}>{member.memberId || 'N/A'} - {member.business || 'Member'}</Text>
                               </View>
                               {formData.memberId === member.id && (
-                                <Icon name="check" size={20} color="#4A90E2" />
+                                <Icon name="check" size={20} color="#C9A84C" />
                               )}
                             </TouchableOpacity>
                           ))
@@ -279,7 +279,7 @@ const OneToOneSlip = () => {
           <View style={styles.section}>
             <Text style={styles.label}>{t('location')} *</Text>
             <View style={styles.rowContainer}>
-              <Icon name="map-marker" size={20} color="#4A90E2" style={styles.icon} />
+              <Icon name="map-marker" size={20} color="#C9A84C" style={styles.icon} />
               <SpeechToTextInput
                 style={styles.speechInput}
                 inputStyle={{ borderBottomWidth: 0, borderWidth: 0 }} // Remove internal border
@@ -298,7 +298,7 @@ const OneToOneSlip = () => {
               style={styles.inputContainer}
               onPress={() => setShowDatePicker(true)}
             >
-              <Icon name="calendar" size={20} color="#4A90E2" style={styles.icon} />
+              <Icon name="calendar" size={20} color="#C9A84C" style={styles.icon} />
               <Text style={styles.dateText}>
                 {formData.date.toLocaleDateString()}
               </Text>
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 8,
   },
   inputContainer: {
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   confirmButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -522,3 +522,4 @@ const styles = StyleSheet.create({
 });
 
 export default OneToOneSlip;
+

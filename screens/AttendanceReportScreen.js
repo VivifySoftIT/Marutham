@@ -110,7 +110,7 @@ const AttendanceReportScreen = ({ navigation }) => {
 
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="account-multiple" size={14} color="#4A90E2" />
+          <Icon name="account-multiple" size={14} color="#C9A84C" />
           <Text style={styles.statBadgeText}>{member.VisitorsBrought || 0}</Text>
         </View>
         <View style={styles.statBadge}>
@@ -143,7 +143,7 @@ const AttendanceReportScreen = ({ navigation }) => {
             label="Total Members"
             value={reportData.Attendance.TotalMembers || 0}
             icon="account-group"
-            color="#4A90E2"
+            color="#C9A84C"
           />
           <StatCard
             label="Present"
@@ -230,7 +230,7 @@ const AttendanceReportScreen = ({ navigation }) => {
             label="Avg Payment"
             value={`₹${TotalPaidMembers > 0 ? Math.round(TotalAmountCollected / TotalPaidMembers) : 0}`}
             icon="calculator"
-            color="#4A90E2"
+            color="#C9A84C"
           />
         </View>
 
@@ -276,10 +276,10 @@ const AttendanceReportScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#212c62" />
+      <StatusBar barStyle="light-content" backgroundColor="#1B5E35" />
 
       {/* Header */}
-      <LinearGradient colors={['#212c62', '#1a1f47']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#1a1f47']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="white" />
@@ -314,7 +314,7 @@ const AttendanceReportScreen = ({ navigation }) => {
       {/* Content */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color="#C9A84C" />
           <Text style={styles.loadingText}>Loading report...</Text>
         </View>
       ) : error ? (
@@ -347,7 +347,7 @@ const AttendanceReportScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Member Details</Text>
               <TouchableOpacity onPress={() => setShowMemberDetail(false)}>
-                <Icon name="close" size={24} color="#212c62" />
+                <Icon name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   periodButtonActive: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
   },
   periodButtonText: {
     fontSize: 14,
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     borderRadius: 8,
   },
   retryButtonText: {
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   memberTabs: {
     flexDirection: 'row',
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   memberTabTextActive: {
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   memberCard: {
     backgroundColor: 'white',
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 2,
   },
   memberPhone: {
@@ -651,12 +651,12 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 12,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 12,
     marginTop: 20,
   },
@@ -733,7 +733,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   modalBody: {
     flex: 1,
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
@@ -767,9 +767,10 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 14,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '500',
   },
 });
 
 export default AttendanceReportScreen;
+

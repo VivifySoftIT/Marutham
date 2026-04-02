@@ -289,7 +289,7 @@ const SpeechToTextInput = ({
         <Icon
           name={isListening ? 'microphone' : 'microphone-outline'}
           size={18}
-          color={isListening ? '#FF4444' : '#4A90E2'}
+          color={isListening ? '#FF4444' : '#C9A84C'}
         />
       </TouchableOpacity>
     </View>
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

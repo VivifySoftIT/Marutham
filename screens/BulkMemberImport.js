@@ -607,7 +607,7 @@ const BulkMemberImport = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#212c62" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
       {/* Header */}
       {/* <View style={styles.header}>
@@ -668,7 +668,7 @@ const BulkMemberImport = () => {
       {/* Loading Indicator */}
       {loading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#212c62" />
+          <ActivityIndicator size="large" color="#1B5E35" />
           <Text style={styles.loadingText}>Processing Excel file...</Text>
         </View>
       )}
@@ -851,7 +851,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5F5F5',
   },
   header: {
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     paddingTop: 10,
     paddingHorizontal: 15,
     paddingBottom: 15,
@@ -873,7 +873,7 @@ const styles = StyleSheet.create({
   instructionsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginTop: 16,
     marginBottom: 6,
   },
@@ -897,7 +897,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -913,7 +913,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   stepDesc: {
     fontSize: 12,
@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     borderRadius: 10,
     paddingVertical: 13,
     paddingHorizontal: 24,
@@ -947,7 +947,7 @@ const styles = StyleSheet.create({
   columnBoxTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 4,
   },
   columnBoxText: {
@@ -981,7 +981,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 15,
     fontSize: 16,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '600',
   },
   statsBar: {
@@ -998,7 +998,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   statLabel: {
     fontSize: 12,
@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   memberId: {
     fontSize: 12,
@@ -1121,7 +1121,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   saveButton: {
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1156,7 +1156,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   modalBody: {
     padding: 20,
@@ -1164,7 +1164,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 8,
     marginTop: 12,
   },
@@ -1177,7 +1177,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   saveEditButton: {
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     padding: 15,
     margin: 20,
     borderRadius: 12,
@@ -1191,3 +1191,4 @@ const styles = StyleSheet.create({
 });
 
 export default BulkMemberImport;
+

@@ -47,10 +47,10 @@ const SendNotice = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
       
       {/* Header - PaymentDetails Style */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 15,
   },
   templateCard: {
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   },
   templateTitle: {
     fontSize: 12,
-    color: '#212c62',
+    color: '#1B5E35',
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 10,
   },
   input: {
@@ -313,8 +313,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   activeSendTo: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
+    borderColor: '#C9A84C',
   },
   sendToText: {
     fontSize: 14,
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   },
   sendButton: {
     flexDirection: 'row',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     borderRadius: 10,
     paddingVertical: 15,
     justifyContent: 'center',
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   previewTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginLeft: 10,
   },
   previewContent: {
@@ -390,3 +390,4 @@ const styles = StyleSheet.create({
 });
 
 export default SendNotice;
+

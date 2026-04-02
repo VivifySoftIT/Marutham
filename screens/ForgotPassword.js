@@ -221,7 +221,7 @@ const ForgotPassword = ({ navigation }) => {
         return (
           <>
             <View style={styles.headerSection}>
-              <FontAwesome name="lock" size={50} color="#4A90E2" />
+              <FontAwesome name="lock" size={50} color="#C9A84C" />
               <Text style={styles.title}>Forgot Password?</Text>
               <Text style={styles.subtitle}>
                 Enter your email address and we'll send you a verification code.
@@ -230,7 +230,7 @@ const ForgotPassword = ({ navigation }) => {
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
-                <FontAwesome name="envelope" size={18} color="#4A90E2" style={styles.icon} />
+                <FontAwesome name="envelope" size={18} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your email address"
@@ -250,7 +250,7 @@ const ForgotPassword = ({ navigation }) => {
               disabled={isLoading}
             >
               <LinearGradient
-                colors={['#4A90E2', '#357ABD']}
+                colors={['#C9A84C', '#0D3B1E']}
                 style={styles.buttonGradient}
               >
                 {isLoading ? (
@@ -268,7 +268,7 @@ const ForgotPassword = ({ navigation }) => {
               style={styles.backButton}
               onPress={() => navigation.replace('Login')}
             >
-              <FontAwesome name="arrow-left" size={16} color="#4A90E2" style={styles.backIcon} />
+              <FontAwesome name="arrow-left" size={16} color="#C9A84C" style={styles.backIcon} />
               <Text style={styles.backButtonText}>Back to Login</Text>
             </TouchableOpacity>
           </>
@@ -278,7 +278,7 @@ const ForgotPassword = ({ navigation }) => {
         return (
           <>
             <View style={styles.headerSection}>
-              <FontAwesome name="shield" size={50} color="#4A90E2" />
+              <FontAwesome name="shield" size={50} color="#C9A84C" />
               <Text style={styles.title}>Enter Verification Code</Text>
               <Text style={styles.subtitle}>
                 We've sent a 6-digit code to {email}
@@ -287,7 +287,7 @@ const ForgotPassword = ({ navigation }) => {
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
-                <FontAwesome name="key" size={18} color="#4A90E2" style={styles.icon} />
+                <FontAwesome name="key" size={18} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter 6-digit code"
@@ -306,7 +306,7 @@ const ForgotPassword = ({ navigation }) => {
               disabled={isLoading}
             >
               <LinearGradient
-                colors={['#4A90E2', '#357ABD']}
+                colors={['#C9A84C', '#0D3B1E']}
                 style={styles.buttonGradient}
               >
                 {isLoading ? (
@@ -324,7 +324,7 @@ const ForgotPassword = ({ navigation }) => {
               style={styles.backButton}
               onPress={() => setStep(1)}
             >
-              <FontAwesome name="arrow-left" size={16} color="#4A90E2" style={styles.backIcon} />
+              <FontAwesome name="arrow-left" size={16} color="#C9A84C" style={styles.backIcon} />
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
 
@@ -342,7 +342,7 @@ const ForgotPassword = ({ navigation }) => {
         return (
           <>
             <View style={styles.headerSection}>
-              <FontAwesome name="key" size={40} color="#4A90E2" />
+              <FontAwesome name="key" size={40} color="#C9A84C" />
               <Text style={styles.title}>Reset Password</Text>
               <Text style={styles.subtitle}>
                 Enter your new password below.
@@ -351,7 +351,7 @@ const ForgotPassword = ({ navigation }) => {
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
-                <FontAwesome name="lock" size={16} color="#4A90E2" style={styles.icon} />
+                <FontAwesome name="lock" size={16} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="New Password"
@@ -373,7 +373,7 @@ const ForgotPassword = ({ navigation }) => {
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
-                <FontAwesome name="lock" size={16} color="#4A90E2" style={styles.icon} />
+                <FontAwesome name="lock" size={16} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Confirm Password"
@@ -399,7 +399,7 @@ const ForgotPassword = ({ navigation }) => {
               disabled={isLoading}
             >
               <LinearGradient
-                colors={['#4A90E2', '#357ABD']}
+                colors={['#C9A84C', '#0D3B1E']}
                 style={styles.buttonGradient}
               >
                 {isLoading ? (
@@ -426,7 +426,7 @@ const ForgotPassword = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={['#4A90E2', '#87CEEB', '#B0E0E6']}
+        colors={['#C9A84C', '#2E7D4F', '#B0E0E6']}
         style={styles.background}
       >
         <View style={styles.content}>
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 12,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -581,13 +581,13 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   backIcon: {
     marginRight: 8,
   },
   backButtonText: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     fontSize: 15,
   },
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   resendText: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontSize: 14,
     fontWeight: '600',
     textDecorationLine: 'underline',
@@ -660,3 +660,4 @@ const styles = StyleSheet.create({
 });
 
 export default ForgotPassword;
+

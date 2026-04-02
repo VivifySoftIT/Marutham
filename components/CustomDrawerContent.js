@@ -153,7 +153,7 @@ const CustomDrawerContent = (props) => {
         <DrawerItem
           key={index}
           label={() => <Text style={styles.drawerItemLabel}>{item.label}</Text>}
-          icon={() => <MaterialIcons name={item.icon} size={22} color="#212c62" />}
+          icon={() => <MaterialIcons name={item.icon} size={22} color="#1B5E35" />}
           onPress={item.isSignOut
             ? handleSignOut
             : item.isReports
@@ -177,7 +177,7 @@ const CustomDrawerContent = (props) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Select Report</Text>
               <TouchableOpacity onPress={() => setShowReportsModal(false)}>
-                <MaterialIcons name="close" size={24} color="#212c62" />
+                <MaterialIcons name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -190,7 +190,7 @@ const CustomDrawerContent = (props) => {
                   props.navigation.navigate(item.screen);
                 }}
               >
-                <MaterialIcons name={item.icon} size={20} color="#212c62" style={styles.modalIcon} />
+                <MaterialIcons name={item.icon} size={20} color="#1B5E35" style={styles.modalIcon} />
                 <Text style={styles.modalItemText}>{item.label}</Text>
               </TouchableOpacity>
             ))}
@@ -210,7 +210,7 @@ const CustomDrawerContent = (props) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Safety Track</Text>
               <TouchableOpacity onPress={() => setShowSafetyModal(false)}>
-                <MaterialIcons name="close" size={24} color="#212c62" />
+                <MaterialIcons name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 

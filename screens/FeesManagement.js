@@ -251,7 +251,7 @@ const FeesManagement = ({ navigation }) => {
             <View style={styles.planModalHeader}>
               <Text style={styles.planModalTitle}>Select Membership Plan</Text>
               <TouchableOpacity onPress={() => setShowPlanModal(false)}>
-                <Icon name="close" size={24} color="#212c62" />
+                <Icon name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -327,7 +327,7 @@ const FeesManagement = ({ navigation }) => {
             <View style={styles.referralModalHeader}>
               <Text style={styles.referralModalTitle}>Referral Statistics</Text>
               <TouchableOpacity onPress={() => setShowReferralStats(false)}>
-                <Icon name="close" size={24} color="#212c62" />
+                <Icon name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   statAmount: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginTop: 6,
   },
   statLabel: {
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   activeTab: {
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
   },
   tabText: {
     fontSize: 14,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   planText: {
     fontSize: 12,
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   feeValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   collectButton: {
     flexDirection: 'row',
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
   planModalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   memberInfoCard: {
     flexDirection: 'row',
@@ -636,7 +636,7 @@ const styles = StyleSheet.create({
   memberInfoText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginLeft: 10,
   },
   planOptions: {
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   planPrice: {
     fontSize: 14,
@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
   referralModalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   referralStatsCards: {
     flexDirection: 'row',
@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
   referralStatNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginVertical: 8,
   },
   referralStatLabel: {
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
   topReferrersTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 12,
   },
   topReferrersList: {
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   topReferrerName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   topReferrerCount: {
     fontSize: 12,
@@ -778,7 +778,7 @@ const styles = StyleSheet.create({
   customAmountLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 8,
   },
   amountInputContainer: {
@@ -793,15 +793,16 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginRight: 8,
   },
   amountInput: {
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#212c62',
+    color: '#1B5E35',
   },
 });
 
 export default FeesManagement;
+

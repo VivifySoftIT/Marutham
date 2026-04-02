@@ -147,7 +147,7 @@ const TakePayment = ({ navigation }) => {
 
           <View style={styles.membersList}>
             {loading ? (
-              <ActivityIndicator size="small" color="#212c62" style={{ padding: 20 }} />
+              <ActivityIndicator size="small" color="#1B5E35" style={{ padding: 20 }} />
             ) : filteredMembers.length > 0 ? (
               filteredMembers.map(member => (
                 <TouchableOpacity
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 15,
   },
   searchContainer: {
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   memberPhone: {
     fontSize: 12,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 10,
   },
   amountInput: {
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginRight: 5,
   },
   input: {
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 18,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   methodsContainer: {
     flexDirection: 'row',
@@ -385,8 +385,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   activeMethod: {
-    backgroundColor: '#212c62',
-    borderColor: '#212c62',
+    backgroundColor: '#1B5E35',
+    borderColor: '#1B5E35',
   },
   methodText: {
     fontSize: 14,
@@ -415,3 +415,4 @@ const styles = StyleSheet.create({
 });
 
 export default TakePayment;
+

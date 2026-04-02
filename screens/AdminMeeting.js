@@ -96,9 +96,9 @@ const AdminMeeting = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -111,7 +111,7 @@ const AdminMeeting = () => {
         <View style={styles.section}>
           <Text style={styles.label}>Meeting Title *</Text>
           <View style={styles.inputContainer}>
-            <Icon name="calendar-check" size={20} color="#4A90E2" style={styles.icon} />
+            <Icon name="calendar-check" size={20} color="#C9A84C" style={styles.icon} />
             <TextInput
               style={styles.input}
               placeholder="Enter meeting title"
@@ -145,9 +145,9 @@ const AdminMeeting = () => {
             style={styles.dateButton}
             onPress={() => setShowDatePicker(true)}
           >
-            <Icon name="calendar" size={20} color="#4A90E2" />
+            <Icon name="calendar" size={20} color="#C9A84C" />
             <Text style={styles.dateButtonText}>{formatDate(formData.date)}</Text>
-            <Icon name="chevron-down" size={20} color="#4A90E2" />
+            <Icon name="chevron-down" size={20} color="#C9A84C" />
           </TouchableOpacity>
         </View>
 
@@ -167,9 +167,9 @@ const AdminMeeting = () => {
             style={styles.dateButton}
             onPress={() => setShowTimePicker(true)}
           >
-            <Icon name="clock" size={20} color="#4A90E2" />
+            <Icon name="clock" size={20} color="#C9A84C" />
             <Text style={styles.dateButtonText}>{formatTime(formData.time)}</Text>
-            <Icon name="chevron-down" size={20} color="#4A90E2" />
+            <Icon name="chevron-down" size={20} color="#C9A84C" />
           </TouchableOpacity>
         </View>
 
@@ -186,7 +186,7 @@ const AdminMeeting = () => {
         <View style={styles.section}>
           <Text style={styles.label}>Location *</Text>
           <View style={styles.inputContainer}>
-            <Icon name="map-marker" size={20} color="#4A90E2" style={styles.icon} />
+            <Icon name="map-marker" size={20} color="#C9A84C" style={styles.icon} />
             <TextInput
               style={styles.input}
               placeholder="Enter meeting location"
@@ -201,7 +201,7 @@ const AdminMeeting = () => {
         <View style={styles.section}>
           <Text style={styles.label}>Meeting Link (Optional)</Text>
           <View style={styles.inputContainer}>
-            <Icon name="link" size={20} color="#4A90E2" style={styles.icon} />
+            <Icon name="link" size={20} color="#C9A84C" style={styles.icon} />
             <TextInput
               style={styles.input}
               placeholder="Enter Zoom/Meet link"
@@ -214,7 +214,7 @@ const AdminMeeting = () => {
 
         {/* Info Card */}
         <View style={styles.infoCard}>
-          <Icon name="information" size={20} color="#4A90E2" />
+          <Icon name="information" size={20} color="#C9A84C" />
           <Text style={styles.infoText}>
             All members will receive a notification about this meeting with the details and link.
           </Text>
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 8,
   },
   inputContainer: {
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   createButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -348,3 +348,4 @@ const styles = StyleSheet.create({
 });
 
 export default AdminMeeting;
+

@@ -896,7 +896,7 @@ const MyProfile = () => {
                   <Icon 
                     name={profile.gender === option.key ? "radiobox-marked" : "radiobox-blank"} 
                     size={20} 
-                    color={profile.gender === option.key ? "#4A90E2" : "#999"} 
+                    color={profile.gender === option.key ? "#C9A84C" : "#999"} 
                   />
                   <Text style={[
                     styles.genderOptionText,
@@ -924,7 +924,7 @@ const MyProfile = () => {
             <Text style={[styles.datePickerText, !value && styles.datePickerPlaceholder]}>
               {value || t('selectDate')}
             </Text>
-            <Icon name="calendar" size={20} color="#4A90E2" />
+            <Icon name="calendar" size={20} color="#C9A84C" />
           </TouchableOpacity>
         </View>
       );
@@ -971,7 +971,7 @@ const MyProfile = () => {
             <Icon
               name={isStatusField ? "lock" : (isEditing ? "check" : "pencil")}
               size={20}
-              color={isStatusField ? "#999" : (isEditing ? "#28A745" : "#4A90E2")}
+              color={isStatusField ? "#999" : (isEditing ? "#28A745" : "#C9A84C")}
             />
           </TouchableOpacity>
         </View>
@@ -993,10 +993,10 @@ const MyProfile = () => {
       style={{ flex: 1 }}
     >
       <View style={styles.container}>
-        <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+        <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
         
         <LinearGradient
-          colors={['#4A90E2', '#87CEEB']}
+          colors={['#C9A84C', '#2E7D4F']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.headerGradient}
@@ -1022,7 +1022,7 @@ const MyProfile = () => {
                 />
               ) : (
                 <View style={styles.profileImagePlaceholder}>
-                  <Icon name="account-circle" size={60} color="#4A90E2" />
+                  <Icon name="account-circle" size={60} color="#C9A84C" />
                 </View>
               )}
               <View style={styles.cameraIconContainer}>
@@ -1129,7 +1129,7 @@ const MyProfile = () => {
                 <View style={styles.businessesHeader}>
                   <Text style={styles.businessesSectionTitle}>{t('MyBusinesses') || 'My Businesses'}</Text>
                   <TouchableOpacity style={styles.addBusinessButton} onPress={addBusiness}>
-                    <Icon name="plus-circle" size={24} color="#4A90E2" />
+                    <Icon name="plus-circle" size={24} color="#C9A84C" />
                   </TouchableOpacity>
                 </View>
 
@@ -1146,7 +1146,7 @@ const MyProfile = () => {
                         <Text style={styles.businessName}>{business.name}</Text>
                         <View style={styles.businessActions}>
                           <TouchableOpacity onPress={() => editBusiness(index)} style={styles.businessActionButton}>
-                            <Icon name="pencil" size={20} color="#4A90E2" />
+                            <Icon name="pencil" size={20} color="#C9A84C" />
                           </TouchableOpacity>
                           <TouchableOpacity onPress={() => deleteBusiness(index)} style={styles.businessActionButton}>
                             <Icon name="delete" size={20} color="#F44336" />
@@ -1200,7 +1200,7 @@ const MyProfile = () => {
                 <Text style={styles.modalButtonText}>{t('confirm')}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={cancelImage} style={styles.modalButtonSecondary}>
-                <Icon name="close" size={20} color="#4A90E2" />
+                <Icon name="close" size={20} color="#C9A84C" />
                 <Text style={styles.modalButtonTextSecondary}>{t('cancel')}</Text>
               </TouchableOpacity>
             </View>
@@ -1292,7 +1292,7 @@ const MyProfile = () => {
                     style={styles.addImagesButton}
                     onPress={pickBusinessImage}
                   >
-                    <Icon name="camera-plus" size={18} color="#4A90E2" />
+                    <Icon name="camera-plus" size={18} color="#C9A84C" />
                     <Text style={styles.addImagesButtonText}>
                       {t('addImages') || 'Add Images'}
                     </Text>
@@ -1323,7 +1323,7 @@ const MyProfile = () => {
                 <Text style={styles.modalButtonText}>{t('save') || 'Save'}</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowAddBusinessModal(false)} style={styles.modalButtonSecondary}>
-                <Icon name="close" size={20} color="#4A90E2" />
+                <Icon name="close" size={20} color="#C9A84C" />
                 <Text style={styles.modalButtonTextSecondary}>{t('cancel')}</Text>
               </TouchableOpacity>
             </View>
@@ -1370,7 +1370,7 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     borderWidth: 3,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   profileImagePlaceholder: {
     width: 70,
@@ -1386,7 +1386,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     width: 26,
     height: 26,
     borderRadius: 13,
@@ -1422,8 +1422,8 @@ const styles = StyleSheet.create({
     borderColor: '#B0E0E6',
   },
   activeTab: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
+    borderColor: '#C9A84C',
   },
   tabText: {
     fontSize: 13,
@@ -1446,7 +1446,7 @@ const styles = StyleSheet.create({
   editLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 6,
   },
   inputWithIcon: {
@@ -1505,11 +1505,11 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   updateButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingVertical: 12,
     borderRadius: 8,
     marginTop: 15,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -1535,7 +1535,7 @@ const styles = StyleSheet.create({
   businessesSectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#4A90E2', // Changed to blue
+    color: '#C9A84C', // Changed to blue
   },
   addBusinessButton: {
     padding: 4,
@@ -1640,7 +1640,7 @@ const styles = StyleSheet.create({
   },
   modalButtonPrimary: {
     flex: 1,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingVertical: 12,
     borderRadius: 10,
     flexDirection: 'row',
@@ -1654,7 +1654,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1666,7 +1666,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   modalButtonTextSecondary: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -1773,7 +1773,7 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   genderOptionTextSelected: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   // Business Modal Styles
@@ -1828,7 +1828,7 @@ const styles = StyleSheet.create({
   },
   addImagesButtonText: {
     marginLeft: 6,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontSize: 13,
     fontWeight: '600',
   },

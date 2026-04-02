@@ -545,10 +545,10 @@ const MemberAttendanceScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
       {/* Header - Fixed */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         {/* Left Container */}
         <View style={styles.headerLeftContainer}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerButton}>
@@ -589,18 +589,18 @@ const MemberAttendanceScreen = () => {
               onPress={() => setShowDatePicker(true)}
               style={styles.dateButton}
             >
-              <Icon name="calendar-edit" size={20} color="#4A90E2" />
+              <Icon name="calendar-edit" size={20} color="#C9A84C" />
             </TouchableOpacity>
           </View>
           <TouchableOpacity
             style={styles.dateSelector}
             onPress={() => setShowDatePicker(true)}
           >
-            <Icon name="calendar" size={20} color="#4A90E2" />
+            <Icon name="calendar" size={20} color="#C9A84C" />
             <Text style={styles.dateText}>
               {selectedDate.toDateString()}
             </Text>
-            <Icon name="chevron-down" size={18} color="#4A90E2" />
+            <Icon name="chevron-down" size={18} color="#C9A84C" />
           </TouchableOpacity>
 
           <Text style={styles.dateNote}>
@@ -651,7 +651,7 @@ const MemberAttendanceScreen = () => {
               </View>
             ) : (
               <View style={styles.voiceHintContainer}>
-                <Icon name="information" size={14} color="#4A90E2" />
+                <Icon name="information" size={14} color="#C9A84C" />
                 <Text style={styles.voiceHint}>
                   {t('speakMemberName') || 'Speak member name to search'}
                 </Text>
@@ -663,7 +663,7 @@ const MemberAttendanceScreen = () => {
               <View style={styles.memberDropdown}>
                 {loading ? (
                   <View style={styles.noMembersContainer}>
-                    <ActivityIndicator size="small" color="#4A90E2" />
+                    <ActivityIndicator size="small" color="#C9A84C" />
                     <Text style={styles.noMembersText}>{t('loadingMembers')}</Text>
                   </View>
                 ) : filteredMembers && filteredMembers.length > 0 ? (
@@ -684,7 +684,7 @@ const MemberAttendanceScreen = () => {
                           {member.employeeId || 'N/A'}
                         </Text>
                       </View>
-                      <Icon name="chevron-right" size={20} color="#4A90E2" />
+                      <Icon name="chevron-right" size={20} color="#C9A84C" />
                     </TouchableOpacity>
                   ))
                 ) : (
@@ -725,7 +725,7 @@ const MemberAttendanceScreen = () => {
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4A90E2" />
+              <ActivityIndicator size="large" color="#C9A84C" />
               <Text style={styles.loadingText}>{t('loading')}</Text>
             </View>
           ) : displayMembers.length === 0 ? (
@@ -743,7 +743,7 @@ const MemberAttendanceScreen = () => {
                 style={[
                   styles.memberCard,
                   {
-                    borderLeftColor: attendanceData[member.id] ? '#4CAF50' : '#4A90E2',
+                    borderLeftColor: attendanceData[member.id] ? '#4CAF50' : '#C9A84C',
                     borderColor: attendanceData[member.id] ? '#E8F5E9' : '#E8F1FF'
                   }
                 ]}
@@ -762,7 +762,7 @@ const MemberAttendanceScreen = () => {
 
                 {/* Business Information */}
                 <View style={styles.businessContainer}>
-                  <Icon name="office-building" size={16} color="#4A90E2" />
+                  <Icon name="office-building" size={16} color="#C9A84C" />
                   <Text style={styles.businessText} numberOfLines={1}>
                     {member.business}
                   </Text>
@@ -915,7 +915,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     elevation: 2,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -929,7 +929,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   searchSaveRow: {
     flexDirection: 'row',
@@ -941,13 +941,13 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   saveButtonInRow: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     borderRadius: 12,
     padding: 15,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -976,7 +976,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: 14,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '500',
   },
   dateNote: {
@@ -1049,7 +1049,7 @@ const styles = StyleSheet.create({
   },
   voiceHint: {
     fontSize: 11,
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginLeft: 6,
     fontStyle: 'italic',
   },
@@ -1073,7 +1073,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -1098,7 +1098,7 @@ const styles = StyleSheet.create({
   },
   dropdownMoreText: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -1133,7 +1133,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   selectedMemberInfo: {
     flexDirection: 'row',
@@ -1144,7 +1144,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1165,7 +1165,7 @@ const styles = StyleSheet.create({
   },
   selectedMemberBusiness: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 2,
   },
   selectedMemberId: {
@@ -1181,7 +1181,7 @@ const styles = StyleSheet.create({
   saveButtonSmall: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 6,
@@ -1249,7 +1249,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -1279,7 +1279,7 @@ const styles = StyleSheet.create({
   },
   businessText: {
     fontSize: 13,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '500',
     marginLeft: 6,
     flex: 1,
@@ -1347,10 +1347,10 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   retryButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -1366,7 +1366,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flexDirection: 'row',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     padding: 16,
     borderRadius: 10,
     alignItems: 'center',

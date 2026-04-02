@@ -54,7 +54,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Country *</Text>
               <View style={styles.inputContainer}>
-                <Icon name="globe" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="globe" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter country"
@@ -68,7 +68,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Region *</Text>
               <View style={styles.inputContainer}>
-                <Icon name="map" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="map" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter region"
@@ -82,7 +82,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Chapter *</Text>
               <View style={styles.inputContainer}>
-                <Icon name="book" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="book" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter chapter"
@@ -101,7 +101,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Title *</Text>
               <View style={styles.inputContainer}>
-                <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="account" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Mr, Mrs, Ms, Dr"
@@ -115,7 +115,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>First Name *</Text>
               <View style={styles.inputContainer}>
-                <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="account" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter first name"
@@ -129,7 +129,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Last Name *</Text>
               <View style={styles.inputContainer}>
-                <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="account" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter last name"
@@ -143,7 +143,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Company *</Text>
               <View style={styles.inputContainer}>
-                <Icon name="briefcase" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="briefcase" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter company name"
@@ -162,7 +162,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Language</Text>
               <View style={styles.inputContainer}>
-                <Icon name="translate" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="translate" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter language"
@@ -181,7 +181,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Telephone</Text>
               <View style={styles.inputContainer}>
-                <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="phone" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter telephone"
@@ -196,7 +196,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Visitor Email</Text>
               <View style={styles.inputContainer}>
-                <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="email" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter visitor email"
@@ -211,7 +211,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Mobile Number</Text>
               <View style={styles.inputContainer}>
-                <Icon name="phone-mobile" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="phone-mobile" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter mobile number"
@@ -231,7 +231,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>County</Text>
               <View style={styles.inputContainer}>
-                <Icon name="map-marker" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="map-marker" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter county"
@@ -260,7 +260,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>City</Text>
               <View style={styles.inputContainer}>
-                <Icon name="city" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="city" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter city"
@@ -274,7 +274,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>State</Text>
               <View style={styles.inputContainer}>
-                <Icon name="map" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="map" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter state"
@@ -288,7 +288,7 @@ const Visitors = () => {
             <View style={styles.section}>
               <Text style={styles.label}>Post Code</Text>
               <View style={styles.inputContainer}>
-                <Icon name="mailbox" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="mailbox" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter post code"
@@ -318,10 +318,10 @@ const Visitors = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -346,7 +346,7 @@ const Visitors = () => {
             <Icon
               name={tab.icon}
               size={18}
-              color={activeTab === tab.id ? '#FFF' : '#4A90E2'}
+              color={activeTab === tab.id ? '#FFF' : '#C9A84C'}
               style={styles.tabIcon}
             />
             <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
   },
   tabActive: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
   },
   tabIcon: {
     marginRight: 6,
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   tabLabelActive: {
     color: '#FFF',
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 6,
   },
   inputContainer: {
@@ -480,14 +480,14 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxActive: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
+    borderColor: '#C9A84C',
   },
   confirmText: {
     fontSize: 14,
@@ -495,3 +495,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+

@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   SafeAreaView, StatusBar, ActivityIndicator, Alert, RefreshControl,
@@ -155,7 +155,7 @@ const AdminPayments = () => {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.memberName}>{item.memberName}</Text>
-          <Text style={styles.sub}>Month: {item.paymentForMonth} • ₹{item.amount}</Text>
+          <Text style={styles.sub}>Month: {item.paymentForMonth} � ?{item.amount}</Text>
           <Text style={styles.sub}>Method: {item.paymentMethod}</Text>
           {item.transactionId ? <Text style={styles.sub}>TxnID: {item.transactionId}</Text> : null}
           {item.receiptNumber ? <Text style={styles.sub}>Receipt: {item.receiptNumber}</Text> : null}
@@ -178,8 +178,8 @@ const AdminPayments = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -190,7 +190,7 @@ const AdminPayments = () => {
       </LinearGradient>
 
       {loading && !refreshing ? (
-        <View style={styles.center}><ActivityIndicator size="large" color="#4A90E2" /></View>
+        <View style={styles.center}><ActivityIndicator size="large" color="#C9A84C" /></View>
       ) : (
         <FlatList
           data={payments}
@@ -214,7 +214,7 @@ const AdminPayments = () => {
       <Modal visible={showAddModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.modalHeader}>
+            <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add Payment</Text>
               <TouchableOpacity onPress={() => setShowAddModal(false)}>
                 <Icon name="close" size={22} color="#FFF" />
@@ -228,7 +228,7 @@ const AdminPayments = () => {
                 style={styles.dropdownBtn}
                 onPress={() => setShowMemberDropdown(!showMemberDropdown)}
               >
-                <Icon name="account" size={18} color="#4A90E2" />
+                <Icon name="account" size={18} color="#C9A84C" />
                 <Text style={[styles.dropdownText, !form.selectedMember && { color: '#999' }]}>
                   {form.selectedMember ? (form.selectedMember.name || form.selectedMember.Name) : 'Select member...'}
                 </Text>
@@ -271,7 +271,7 @@ const AdminPayments = () => {
                 </View>
               )}
 
-              <Text style={styles.label}>Amount (₹) *</Text>
+              <Text style={styles.label}>Amount (?) *</Text>
               <SpeechToTextInput
                 placeholder="e.g. 5000"
                 value={form.amount}
@@ -348,9 +348,9 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15, color: '#999', marginTop: 12 },
   card: { backgroundColor: '#FFF', borderRadius: 12, padding: 14, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 3 },
   cardRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#4A90E2', justifyContent: 'center', alignItems: 'center' },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#C9A84C', justifyContent: 'center', alignItems: 'center' },
   avatarText: { color: '#FFF', fontSize: 16, fontWeight: 'bold' },
-  memberName: { fontSize: 15, fontWeight: '700', color: '#212c62' },
+  memberName: { fontSize: 15, fontWeight: '700', color: '#1B5E35' },
   sub: { fontSize: 12, color: '#666', marginTop: 2 },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, alignSelf: 'flex-start' },
   statusText: { fontSize: 11, fontWeight: '700' },
@@ -368,8 +368,9 @@ const styles = StyleSheet.create({
   searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', gap: 8 },
   searchInput: { flex: 1, fontSize: 14, color: '#333', paddingVertical: 2 },
   dropdownItem: { paddingHorizontal: 14, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F5F5F5' },
-  dropdownItemName: { fontSize: 14, fontWeight: '600', color: '#212c62' },
+  dropdownItemName: { fontSize: 14, fontWeight: '600', color: '#1B5E35' },
   dropdownItemSub: { fontSize: 12, color: '#666', marginTop: 2 },
   submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#4CAF50', paddingVertical: 14, borderRadius: 10, marginTop: 20, marginBottom: 30, gap: 8 },
   submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 });
+

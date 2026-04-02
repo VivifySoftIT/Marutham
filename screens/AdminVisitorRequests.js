@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   SafeAreaView, StatusBar, ActivityIndicator, Alert, RefreshControl,
@@ -87,19 +87,19 @@ const AdminVisitorRequests = () => {
       <View style={styles.details}>
         {item.mobileNumber || item.visitorPhone ? (
           <View style={styles.detailRow}>
-            <Icon name="phone" size={14} color="#4A90E2" />
+            <Icon name="phone" size={14} color="#C9A84C" />
             <Text style={styles.detailText}>{item.mobileNumber || item.visitorPhone}</Text>
           </View>
         ) : null}
         {item.visitorEmail ? (
           <View style={styles.detailRow}>
-            <Icon name="email" size={14} color="#4A90E2" />
+            <Icon name="email" size={14} color="#C9A84C" />
             <Text style={styles.detailText}>{item.visitorEmail}</Text>
           </View>
         ) : null}
         {item.visitorBusiness || item.company ? (
           <View style={styles.detailRow}>
-            <Icon name="briefcase" size={14} color="#4A90E2" />
+            <Icon name="briefcase" size={14} color="#C9A84C" />
             <Text style={styles.detailText}>{item.visitorBusiness || item.company}</Text>
           </View>
         ) : null}
@@ -132,8 +132,8 @@ const AdminVisitorRequests = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -145,7 +145,7 @@ const AdminVisitorRequests = () => {
 
       {loading && !refreshing ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color="#C9A84C" />
         </View>
       ) : (
         <FlatList
@@ -175,11 +175,11 @@ const styles = StyleSheet.create({
   list: { padding: 14, paddingBottom: 30 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 },
   emptyText: { fontSize: 15, color: '#999', marginTop: 12 },
-  card: { backgroundColor: '#FFF', borderRadius: 12, padding: 14, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 3, borderLeftWidth: 4, borderLeftColor: '#4A90E2' },
+  card: { backgroundColor: '#FFF', borderRadius: 12, padding: 14, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 3, borderLeftWidth: 4, borderLeftColor: '#C9A84C' },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#4A90E2', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#C9A84C', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   avatarText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
-  name: { fontSize: 15, fontWeight: '700', color: '#212c62' },
+  name: { fontSize: 15, fontWeight: '700', color: '#1B5E35' },
   sub: { fontSize: 12, color: '#666', marginTop: 2 },
   details: { backgroundColor: '#F8FBFF', borderRadius: 8, padding: 10, marginBottom: 12, gap: 6 },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -190,3 +190,4 @@ const styles = StyleSheet.create({
   rejectBtn: { backgroundColor: '#F44336' },
   btnText: { color: '#FFF', fontWeight: '700', fontSize: 14 },
 });
+

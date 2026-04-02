@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -122,7 +122,7 @@ const MemberDetails = () => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+        <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
@@ -130,7 +130,7 @@ const MemberDetails = () => {
           <View style={{ width: 24 }} />
         </LinearGradient>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color="#C9A84C" />
           <Text style={styles.loadingText}>Loading member details...</Text>
         </View>
       </SafeAreaView>
@@ -140,7 +140,7 @@ const MemberDetails = () => {
   if (!memberData) {
     return (
       <SafeAreaView style={styles.container}>
-        <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+        <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
@@ -164,10 +164,10 @@ const MemberDetails = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -215,14 +215,14 @@ const MemberDetails = () => {
           </View>
         </View>
 
-        {/* Business Details â€” same structure as Profile.js */}
+        {/* Business Details — same structure as Profile.js */}
         {businesses.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Business Details</Text>
             {businesses.map((biz, idx) => (
               <View key={idx} style={styles.businessCard}>
                 <View style={styles.businessCardHeader}>
-                  <Icon name="briefcase" size={18} color="#4A90E2" />
+                  <Icon name="briefcase" size={18} color="#C9A84C" />
                   <Text style={styles.businessCardName}>{biz.name}</Text>
                 </View>
                 {biz.description ? (
@@ -247,7 +247,7 @@ const MemberDetails = () => {
           <Text style={styles.sectionTitle}>Contact Information</Text>
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
-              <Icon name="phone" size={20} color="#4A90E2" />
+              <Icon name="phone" size={20} color="#C9A84C" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Phone</Text>
                 <Text style={styles.infoValue}>
@@ -257,7 +257,7 @@ const MemberDetails = () => {
             </View>
             <View style={styles.divider} />
             <View style={styles.infoRow}>
-              <Icon name="email" size={20} color="#4A90E2" />
+              <Icon name="email" size={20} color="#C9A84C" />
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Email</Text>
                 <Text style={styles.infoValue}>
@@ -269,7 +269,7 @@ const MemberDetails = () => {
               <>
                 <View style={styles.divider} />
                 <View style={styles.infoRow}>
-                  <Icon name="map-marker" size={20} color="#4A90E2" />
+                  <Icon name="map-marker" size={20} color="#C9A84C" />
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Address</Text>
                     <Text style={styles.infoValue}>
@@ -289,7 +289,7 @@ const MemberDetails = () => {
             {(memberData.joinDate || memberData.JoinDate) && (
               <>
                 <View style={styles.infoRow}>
-                  <Icon name="calendar" size={20} color="#4A90E2" />
+                  <Icon name="calendar" size={20} color="#C9A84C" />
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Join Date</Text>
                     <Text style={styles.infoValue}>
@@ -303,7 +303,7 @@ const MemberDetails = () => {
             {(memberData.dob || memberData.DOB) && (
               <>
                 <View style={styles.infoRow}>
-                  <Icon name="cake" size={20} color="#4A90E2" />
+                  <Icon name="cake" size={20} color="#C9A84C" />
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Date of Birth</Text>
                     <Text style={styles.infoValue}>
@@ -317,7 +317,7 @@ const MemberDetails = () => {
             {memberData.gender && (
               <>
                 <View style={styles.infoRow}>
-                  <Icon name="gender-male-female" size={20} color="#4A90E2" />
+                  <Icon name="gender-male-female" size={20} color="#C9A84C" />
                   <View style={styles.infoContent}>
                     <Text style={styles.infoLabel}>Gender</Text>
                     <Text style={styles.infoValue}>{memberData.gender}</Text>
@@ -328,7 +328,7 @@ const MemberDetails = () => {
             )}
             {(memberData.subCompanyId || memberData.SubCompanyId) && (
               <View style={styles.infoRow}>
-                <Icon name="office-building" size={20} color="#4A90E2" />
+                <Icon name="office-building" size={20} color="#C9A84C" />
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Sub Company ID</Text>
                   <Text style={styles.infoValue}>
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 12,
     elevation: 3,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 5,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 10,
   },
   infoCard: {
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     padding: 12,
     elevation: 1,
     borderLeftWidth: 4,
-    borderLeftColor: '#87CEEB',
+    borderLeftColor: '#2E7D4F',
   },
   infoRow: {
     flexDirection: 'row',
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
   },
   editButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     elevation: 1,
     borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   businessCardHeader: {
     flexDirection: 'row',
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
   businessCardName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
     flex: 1,
   },
   businessCardDesc: {
@@ -584,4 +584,5 @@ const styles = StyleSheet.create({
 });
 
 export default MemberDetails;
+
 

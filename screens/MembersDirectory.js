@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -229,11 +229,11 @@ const MembersDirectory = () => {
             <Text style={styles.memberBusiness}>{businessName}</Text>
             <Text style={styles.memberId}>Member ID: {memberId}</Text>
             <View style={styles.memberContactRow}>
-              <Icon name="phone" size={12} color="#4A90E2" />
+              <Icon name="phone" size={12} color="#C9A84C" />
               <Text style={styles.memberPhone}> {formatPhone(item.phone || item.mobile || item.telephone)}</Text>
             </View>
             <View style={styles.memberContactRow}>
-              <Icon name="email-outline" size={12} color="#4A90E2" />
+              <Icon name="email-outline" size={12} color="#C9A84C" />
               <Text style={styles.memberEmail}> {item.email || 'No Email'}</Text>
             </View>
           </View>
@@ -242,7 +242,7 @@ const MembersDirectory = () => {
               style={styles.referralButton}
               onPress={(e) => handleGiveReferral(item, e)}
             >
-              <Icon name="account-arrow-right" size={18} color="#4A90E2" />
+              <Icon name="account-arrow-right" size={18} color="#C9A84C" />
               <Text style={styles.referralButtonText}>Refer</Text>
             </TouchableOpacity>
             <Icon name="chevron-right" size={24} color="#999" />
@@ -255,7 +255,7 @@ const MembersDirectory = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Icon name="account-group" size={80} color="#4A90E2" />
+      <Icon name="account-group" size={80} color="#C9A84C" />
       <Text style={styles.emptyStateTitle}>No Members Found</Text>
       <Text style={styles.emptyStateText}>
         {loading ? 'Loading from server...' : 'Could not load members.'}
@@ -285,8 +285,8 @@ const MembersDirectory = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -322,7 +322,7 @@ const MembersDirectory = () => {
       
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color="#C9A84C" />
           <Text style={styles.loadingText}>Loading members...</Text>
         </View>
       ) : (
@@ -335,7 +335,7 @@ const MembersDirectory = () => {
             <RefreshControl 
               refreshing={refreshing} 
               onRefresh={onRefresh}
-              colors={['#4A90E2']}
+              colors={['#C9A84C']}
             />
           }
           ListEmptyComponent={renderEmptyState}
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
     width: 50, 
     height: 50, 
     borderRadius: 25, 
-    backgroundColor: '#4A90E2', 
+    backgroundColor: '#C9A84C', 
     justifyContent: 'center', 
     alignItems: 'center', 
     marginRight: 12,
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   },
   memberId: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '500',
     marginTop: 2,
   },
@@ -507,12 +507,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#F0F7FF',
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   referralButtonText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   statsRow: {
     flexDirection: 'row',
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
@@ -584,3 +584,4 @@ const styles = StyleSheet.create({
 });
 
 export default MembersDirectory;
+

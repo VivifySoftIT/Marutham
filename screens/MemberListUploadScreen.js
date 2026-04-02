@@ -191,11 +191,11 @@ const MemberListUploadScreen = () => {
       </View>
       <View style={styles.memberCardDetails}>
         <View style={styles.detailItem}>
-          <Icon name="email" size={14} color="#4A90E2" />
+          <Icon name="email" size={14} color="#C9A84C" />
           <Text style={styles.detailText}>{member.email || 'N/A'}</Text>
         </View>
         <View style={styles.detailItem}>
-          <Icon name="phone" size={14} color="#4A90E2" />
+          <Icon name="phone" size={14} color="#C9A84C" />
           <Text style={styles.detailText}>{member.phone || 'N/A'}</Text>
         </View>
       </View>
@@ -212,10 +212,10 @@ const MemberListUploadScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#212c62" />
+      <StatusBar barStyle="light-content" backgroundColor="#1B5E35" />
 
       {/* Header */}
-      <LinearGradient colors={['#212c62', '#1a1f47']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#1a1f47']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="white" />
@@ -256,7 +256,7 @@ const MemberListUploadScreen = () => {
                   style={styles.statsToggle}
                   onPress={() => setShowStats(!showStats)}
                 >
-                  <Icon name={showStats ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
+                  <Icon name={showStats ? 'chevron-up' : 'chevron-down'} size={20} color="#C9A84C" />
                 </TouchableOpacity>
               </View>
               {showStats && (
@@ -265,7 +265,7 @@ const MemberListUploadScreen = () => {
                     label="Total Members"
                     value={uploadedMembers.length}
                     icon="account-group"
-                    color="#4A90E2"
+                    color="#C9A84C"
                   />
                   <StatBox
                     label="With Email"
@@ -376,7 +376,7 @@ const MemberListUploadScreen = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Member Details</Text>
               <TouchableOpacity onPress={() => setShowMemberDetail(false)}>
-                <Icon name="close" size={24} color="#212c62" />
+                <Icon name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -501,18 +501,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 12,
   },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingVertical: 16,
     borderRadius: 12,
     elevation: 3,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -553,7 +553,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
     marginTop: 8,
   },
   statLabel: {
@@ -604,7 +604,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 2,
   },
   memberId: {
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginTop: 16,
   },
   emptyStateSubtext: {
@@ -719,7 +719,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   modalBody: {
     flex: 1,
@@ -728,7 +728,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 14,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '500',
   },
   statusBadge: {
@@ -770,3 +770,4 @@ const styles = StyleSheet.create({
 });
 
 export default MemberListUploadScreen;
+

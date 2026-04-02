@@ -118,7 +118,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
     >
       <View style={styles.activityContent}>
         <LinearGradient
-          colors={['#4A90E2', '#87CEEB']}
+          colors={['#C9A84C', '#2E7D4F']}
           style={styles.activityIcon}
         >
           <Icon name={item.icon} size={24} color="#FFF" />
@@ -143,7 +143,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
             setShowDetailModal(true);
           }}
         >
-          <Icon name="eye" size={20} color="#4A90E2" />
+          <Icon name="eye" size={20} color="#C9A84C" />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -160,10 +160,10 @@ const AdminNotificationsScreen = ({ navigation }) => {
         onRequestClose={() => setShowDetailModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+          <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
           {/* Modal Header */}
-          <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.modalHeader}>
+          <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setShowDetailModal(false)}>
               <Icon name="close" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -175,7 +175,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
           <ScrollView style={styles.modalContent}>
             {/* Header Card */}
             <LinearGradient
-              colors={['#4A90E2', '#87CEEB']}
+              colors={['#C9A84C', '#2E7D4F']}
               style={styles.detailHeaderCard}
             >
               <Icon name={selectedActivity.icon} size={40} color="#FFF" />
@@ -189,7 +189,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
             <View style={styles.detailSection}>
               <Text style={styles.detailLabel}>Given By</Text>
               <View style={styles.detailCard}>
-                <Icon name="account" size={20} color="#4A90E2" />
+                <Icon name="account" size={20} color="#C9A84C" />
                 <Text style={styles.detailValue}>{selectedActivity.givenBy}</Text>
               </View>
             </View>
@@ -198,7 +198,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
             <View style={styles.detailSection}>
               <Text style={styles.detailLabel}>Given To</Text>
               <View style={styles.detailCard}>
-                <Icon name="account" size={20} color="#4A90E2" />
+                <Icon name="account" size={20} color="#C9A84C" />
                 <Text style={styles.detailValue}>{selectedActivity.givenTo}</Text>
               </View>
             </View>
@@ -207,7 +207,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
             <View style={styles.detailSection}>
               <Text style={styles.detailLabel}>Activity Type</Text>
               <View style={styles.detailCard}>
-                <Icon name="tag" size={20} color="#4A90E2" />
+                <Icon name="tag" size={20} color="#C9A84C" />
                 <Text style={styles.detailValue}>{selectedActivity.type}</Text>
               </View>
             </View>
@@ -218,7 +218,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Amount</Text>
                   <View style={styles.detailCard}>
-                    <Icon name="currency-inr" size={20} color="#4A90E2" />
+                    <Icon name="currency-inr" size={20} color="#C9A84C" />
                     <Text style={styles.detailValue}>
                       ₹{selectedActivity.amount.toLocaleString()}
                     </Text>
@@ -228,7 +228,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Business Type</Text>
                   <View style={styles.detailCard}>
-                    <Icon name="briefcase" size={20} color="#4A90E2" />
+                    <Icon name="briefcase" size={20} color="#C9A84C" />
                     <Text style={styles.detailValue}>
                       {selectedActivity.businessType}
                     </Text>
@@ -238,7 +238,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Referral Type</Text>
                   <View style={styles.detailCard}>
-                    <Icon name="link" size={20} color="#4A90E2" />
+                    <Icon name="link" size={20} color="#C9A84C" />
                     <Text style={styles.detailValue}>
                       {selectedActivity.referralType}
                     </Text>
@@ -264,7 +264,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Referral Type</Text>
                   <View style={styles.detailCard}>
-                    <Icon name="link" size={20} color="#4A90E2" />
+                    <Icon name="link" size={20} color="#C9A84C" />
                     <Text style={styles.detailValue}>
                       {selectedActivity.referralType}
                     </Text>
@@ -274,7 +274,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
                 <View style={styles.detailSection}>
                   <Text style={styles.detailLabel}>Status</Text>
                   <View style={styles.detailCard}>
-                    <Icon name="check-circle" size={20} color="#4A90E2" />
+                    <Icon name="check-circle" size={20} color="#C9A84C" />
                     <Text style={styles.detailValue}>
                       {selectedActivity.status}
                     </Text>
@@ -294,10 +294,10 @@ const AdminNotificationsScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <Text style={styles.headerTitle}>Member Activities</Text>
       </LinearGradient>
 
@@ -331,7 +331,7 @@ const AdminNotificationsScreen = ({ navigation }) => {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color="#C9A84C" />
         </View>
       ) : filteredActivities.length > 0 ? (
         <FlatList
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
   },
   filterButtonActive: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
   },
   filterText: {
     fontSize: 12,
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor: '#87CEEB',
+    borderLeftColor: '#2E7D4F',
   },
   activityContent: {
     flexDirection: 'row',
@@ -439,14 +439,14 @@ const styles = StyleSheet.create({
   },
   activityType: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     marginBottom: 2,
   },
   activityAmount: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 2,
   },
   activityDateTime: {
@@ -517,7 +517,7 @@ const styles = StyleSheet.create({
   detailLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 8,
   },
   detailCard: {
@@ -546,3 +546,4 @@ const styles = StyleSheet.create({
 });
 
 export default AdminNotificationsScreen;
+

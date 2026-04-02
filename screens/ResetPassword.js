@@ -141,7 +141,7 @@ const ResetPassword = ({ navigation, route }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={['#4A90E2', '#87CEEB', '#B0E0E6']}
+        colors={['#C9A84C', '#2E7D4F', '#B0E0E6']}
         style={styles.background}
       >
         <View style={styles.content}>
@@ -159,7 +159,7 @@ const ResetPassword = ({ navigation, route }) => {
           {/* Reset Password Card */}
           <View style={styles.formContainer}>
             <View style={styles.headerSection}>
-              <FontAwesome name="key" size={50} color="#4A90E2" />
+              <FontAwesome name="key" size={50} color="#C9A84C" />
               <Text style={styles.title}>Reset Password</Text>
               <Text style={styles.subtitle}>
                 Enter your new password below.
@@ -168,7 +168,7 @@ const ResetPassword = ({ navigation, route }) => {
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
-                <FontAwesome name="lock" size={18} color="#4A90E2" style={styles.icon} />
+                <FontAwesome name="lock" size={18} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="New Password"
@@ -197,7 +197,7 @@ const ResetPassword = ({ navigation, route }) => {
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
-                <FontAwesome name="lock" size={18} color="#4A90E2" style={styles.icon} />
+                <FontAwesome name="lock" size={18} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Confirm Password"
@@ -232,7 +232,7 @@ const ResetPassword = ({ navigation, route }) => {
               disabled={isLoading}
             >
               <LinearGradient
-                colors={['#4A90E2', '#357ABD']}
+                colors={['#C9A84C', '#0D3B1E']}
                 style={styles.buttonGradient}
               >
                 {isLoading ? (
@@ -250,7 +250,7 @@ const ResetPassword = ({ navigation, route }) => {
               style={styles.backButton}
               onPress={() => navigation.replace('Login')}
             >
-              <FontAwesome name="arrow-left" size={16} color="#4A90E2" style={styles.backIcon} />
+              <FontAwesome name="arrow-left" size={16} color="#C9A84C" style={styles.backIcon} />
               <Text style={styles.backButtonText}>Back to Login</Text>
             </TouchableOpacity>
           </View>
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 15,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -408,16 +408,17 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   backIcon: {
     marginRight: 8,
   },
   backButtonText: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     fontSize: 15,
   },
 });
 
 export default ResetPassword;
+

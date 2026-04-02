@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 15,
   },
   formCard: {
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 10,
   },
   input: {
@@ -222,8 +222,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
   },
   selectedDay: {
-    backgroundColor: '#212c62',
-    borderColor: '#212c62',
+    backgroundColor: '#1B5E35',
+    borderColor: '#1B5E35',
   },
   dayText: {
     fontSize: 14,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   trainerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   trainerSpec: {
     fontSize: 12,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     flexDirection: 'row',
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     borderRadius: 10,
     paddingVertical: 15,
     justifyContent: 'center',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   batchName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginLeft: 10,
   },
   batchDetails: {
@@ -329,3 +329,4 @@ const styles = StyleSheet.create({
 });
 
 export default AddBatch;
+

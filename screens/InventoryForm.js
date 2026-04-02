@@ -348,7 +348,7 @@ const InventoryForm = ({ navigation }) => {
                 <Text style={styles.filterButtonText}>
                   {selectedMonth === 'All' ? 'All Months' : selectedMonth}
                 </Text>
-                <MaterialCommunityIcons name="calendar-month" size={18} color="#212c62" />
+                <MaterialCommunityIcons name="calendar-month" size={18} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -370,7 +370,7 @@ const InventoryForm = ({ navigation }) => {
                     key={index}
                     style={[
                       styles.dot,
-                      { backgroundColor: index === 0 ? '#212c62' : '#cbd5e1' }
+                      { backgroundColor: index === 0 ? '#1B5E35' : '#cbd5e1' }
                     ]}
                   />
                 ))}
@@ -404,7 +404,7 @@ const InventoryForm = ({ navigation }) => {
                     >
                       <Text style={[
                         styles.monthOptionText,
-                        { color: selectedMonth === item ? '#212c62' : '#475569' }
+                        { color: selectedMonth === item ? '#1B5E35' : '#475569' }
                       ]}>
                         {item}
                       </Text>
@@ -426,7 +426,7 @@ const InventoryForm = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
   employeeGreeting: { color: 'rgb(221, 213, 213)' },
-  greetingCard: { backgroundColor: '#212c62', padding: 20, alignItems: 'center', marginBottom: 20 },
+  greetingCard: { backgroundColor: '#1B5E35', padding: 20, alignItems: 'center', marginBottom: 20 },
   greetingText: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   emoji: { fontSize: 40, marginVertical: 10 },
   quote: { fontSize: 16, color: '#e0f2fe', textAlign: 'center' },
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   },
   filterButtonText: {
     fontSize: 14,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '500',
     marginRight: 6,
   },
@@ -628,7 +628,7 @@ const styles = StyleSheet.create({
     padding: 10,
     paddingHorizontal: 20,
     elevation: 2,
-    backgroundColor: "#212c62",
+    backgroundColor: "#1B5E35",
     width: '100%',
     alignItems: 'center',
     marginTop: 15,

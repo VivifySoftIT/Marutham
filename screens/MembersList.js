@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -46,7 +46,7 @@ const MemberCard = ({ item, navigation, t }) => {
             />
           ) : (
             <LinearGradient
-              colors={['#4A90E2', '#357ABD']}
+              colors={['#C9A84C', '#0D3B1E']}
               style={styles.memberAvatar}
             >
               <Text style={styles.avatarText}>{item.name?.charAt(0)?.toUpperCase() || '?'}</Text>
@@ -59,7 +59,7 @@ const MemberCard = ({ item, navigation, t }) => {
           <Text style={styles.memberId}>ID: {item.memberId || 'N/A'}</Text>
           {item.business ? (
             <Text style={styles.businessName} numberOfLines={1}>
-              <Icon name="briefcase-outline" size={12} color="#4A90E2" /> {item.business}
+              <Icon name="briefcase-outline" size={12} color="#C9A84C" /> {item.business}
             </Text>
           ) : null}
           <View style={styles.statusRow}>
@@ -97,19 +97,19 @@ const MemberCard = ({ item, navigation, t }) => {
       <View style={styles.contactSection}>
         {item.phone ? (
           <View style={styles.contactItem}>
-            <Icon name="phone" size={14} color="#4A90E2" />
+            <Icon name="phone" size={14} color="#C9A84C" />
             <Text style={styles.contactText}>{item.phone}</Text>
           </View>
         ) : null}
         {item.email ? (
           <View style={styles.contactItem}>
-            <Icon name="email" size={14} color="#4A90E2" />
+            <Icon name="email" size={14} color="#C9A84C" />
             <Text style={styles.contactText} numberOfLines={1}>{item.email}</Text>
           </View>
         ) : null}
         {item.businessCategory ? (
           <View style={styles.contactItem}>
-            <Icon name="tag-outline" size={14} color="#4A90E2" />
+            <Icon name="tag-outline" size={14} color="#C9A84C" />
             <Text style={styles.contactText} numberOfLines={1}>{item.businessCategory}</Text>
           </View>
         ) : null}
@@ -130,16 +130,16 @@ const MemberCard = ({ item, navigation, t }) => {
       {/* Details Grid */}
       <View style={styles.detailsGrid}>
         <View style={styles.detailBox}>
-          <Icon name="calendar" size={16} color="#4A90E2" />
+          <Icon name="calendar" size={16} color="#C9A84C" />
           <Text style={styles.detailLabel}>{t('joinDate')}</Text>
           <Text style={styles.detailValue}>
             {item.joinDate ? new Date(item.joinDate).toLocaleDateString() : t('notAvailable')}
           </Text>
         </View>
         <View style={styles.detailBox}>
-          <Icon name="cash" size={16} color="#4A90E2" />
+          <Icon name="cash" size={16} color="#C9A84C" />
           <Text style={styles.detailLabel}>{t('amount')}</Text>
-          <Text style={styles.detailValue}>₹{item.amount || '0'}</Text>
+          <Text style={styles.detailValue}>?{item.amount || '0'}</Text>
         </View>
       </View>
 
@@ -471,10 +471,10 @@ const MemberList = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
       
       {/* Header - MembersDirectory Style */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -491,7 +491,7 @@ const MemberList = () => {
       {/* Search Section with Voice */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Icon name="magnify" size={20} color="#4A90E2" style={styles.searchIcon} />
+          <Icon name="magnify" size={20} color="#C9A84C" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder={t('searchByNameIdPhoneEmail')}
@@ -502,11 +502,11 @@ const MemberList = () => {
           />
           {searchQuery.length > 0 ? (
             <TouchableOpacity onPress={handleClearSearch}>
-              <Icon name="close-circle" size={20} color="#4A90E2" />
+              <Icon name="close-circle" size={20} color="#C9A84C" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity onPress={startVoiceRecognition}>
-              <Icon name="microphone" size={20} color="#212c62" />
+              <Icon name="microphone" size={20} color="#1B5E35" />
             </TouchableOpacity>
           )}
         </View>
@@ -602,7 +602,7 @@ const MemberList = () => {
       <View style={styles.membersListContainer}>
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#212c62" />
+            <ActivityIndicator size="large" color="#1B5E35" />
             <Text style={styles.loadingText}>{t('loadingMembers')}</Text>
           </View>
         ) : (
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   searchButton: {
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     width: 44,
     height: 44,
     borderRadius: 8,
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginVertical: 2,
   },
   statLabel: {
@@ -804,7 +804,7 @@ const styles = StyleSheet.create({
   listTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   clearSearchButton: {
     flexDirection: 'row',
@@ -830,12 +830,12 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 12,
     elevation: 2,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   memberHeader: {
     flexDirection: 'row',
@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     overflow: 'hidden',
     elevation: 2,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 2,
   },
   memberId: {
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
   },
   businessName: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '500',
     marginBottom: 4,
   },
@@ -956,7 +956,7 @@ const styles = StyleSheet.create({
   detailValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   // Action Buttons
   actionButtons: {
@@ -1033,7 +1033,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -1042,7 +1042,7 @@ const styles = StyleSheet.create({
   voiceModalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 10,
   },
   voiceModalSubtitle: {
@@ -1053,7 +1053,7 @@ const styles = StyleSheet.create({
   },
   partialResultText: {
     fontSize: 16,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     marginBottom: 15,
     textAlign: 'center',
@@ -1117,7 +1117,7 @@ const styles = StyleSheet.create({
   voiceSearchButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 6,
@@ -1132,3 +1132,4 @@ const styles = StyleSheet.create({
 });
 
 export default MemberList;
+

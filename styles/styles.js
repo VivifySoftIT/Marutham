@@ -1,21 +1,22 @@
 import { StyleSheet, StatusBar, Dimensions } from 'react-native';
+import theme from './theme';
 
 const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: theme.bgLight,
     paddingTop: StatusBar.currentHeight || 28,
   },
   drawerBackground: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: theme.bgLight,
     flex: 1,
   },
   profileContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#212c62',
+    backgroundColor: theme.primary,
     paddingVertical: 20,
     paddingHorizontal: 15,
     marginBottom: 10,
@@ -25,7 +26,7 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     marginRight: 15,
-    borderColor: 'white',
+    borderColor: theme.gold,
     borderWidth: 2,
   },
   profileDetails: {
@@ -34,12 +35,12 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: theme.white,
     marginBottom: 4,
   },
   profileDesignation: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: theme.goldLight,
     fontWeight: '500',
   },
   customDrawerItemContainer: {
@@ -50,7 +51,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   drawerItemLabel: {
-    color: '#212c62',
+    color: theme.primary,
     fontWeight: '600',
     fontSize: 16,
     marginLeft: -10,
@@ -58,42 +59,38 @@ const styles = StyleSheet.create({
   menuButton: {
     paddingLeft: 15,
   },
-  // Home button with blue background and white icon
   homeButton: {
     marginLeft: 15,
     padding: 8,
-    backgroundColor: '#212c62',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   homeButtonIcon: {
-    color: 'white', // White home icon
+    color: theme.white,
   },
-  // Back button with blue background and white icon
   backButton: {
     marginRight: 15,
     padding: 8,
-    backgroundColor: '#212c62',
+    backgroundColor: theme.primary,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backButtonIcon: {
-    color: 'white', // White back icon
+    color: theme.white,
   },
-  // Header container with blue background
   headerContainer: {
-    backgroundColor: '#212c62',
+    backgroundColor: theme.primary,
     borderBottomWidth: 0,
     elevation: 0,
     shadowOpacity: 0,
   },
-  // Header title with white color
   headerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'white',
+    color: theme.white,
   },
   modalOverlay: {
     flex: 1,
@@ -104,16 +101,13 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: width * 0.85,
-    backgroundColor: 'white',
+    backgroundColor: theme.white,
     borderRadius: 16,
     padding: 0,
     overflow: 'hidden',
     elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowColor: theme.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
   },
@@ -123,14 +117,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 18,
-    backgroundColor: '#212c62',
+    backgroundColor: theme.primary,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    borderBottomColor: theme.border,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: 'white', // Changed to white for modal title
+    color: theme.white,
   },
   modalItem: {
     flexDirection: 'row',
@@ -138,7 +132,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F5',
+    borderBottomColor: theme.primaryLightest,
   },
   modalIcon: {
     marginRight: 15,
@@ -146,17 +140,16 @@ const styles = StyleSheet.create({
     height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#EFF2FF',
+    backgroundColor: theme.primaryLightest,
     borderRadius: 6,
     padding: 4,
   },
   modalItemText: {
     fontSize: 16,
-    color: '#2D3748',
+    color: theme.textDark,
     fontWeight: '500',
     flex: 1,
   },
-  // Additional styles for better drawer items
   drawerItemContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -167,39 +160,37 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#EFF2FF',
+    backgroundColor: theme.primaryLightest,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   activeDrawerItem: {
-    backgroundColor: '#212c62',
+    backgroundColor: theme.primary,
     borderRadius: 8,
   },
   activeDrawerLabel: {
-    color: 'white',
+    color: theme.white,
   },
   activeDrawerIcon: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
-  // Separator style for drawer items
   drawerSeparator: {
     height: 1,
-    backgroundColor: '#E9ECEF',
+    backgroundColor: theme.border,
     marginVertical: 4,
     marginHorizontal: 20,
   },
-  // Version text at bottom
   versionContainer: {
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
+    borderTopColor: theme.border,
     marginTop: 'auto',
   },
   versionText: {
     fontSize: 12,
-    color: '#6C757D',
+    color: theme.textGray,
     textAlign: 'center',
     fontWeight: '500',
   },

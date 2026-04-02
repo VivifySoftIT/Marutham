@@ -28,12 +28,12 @@ const SettingsScreen = () => {
 
   // Water blue color theme
   const waterBlueColors = {
-    primary: '#4A90E2',
-    light: '#87CEEB',
-    lighter: '#B3E0F2',
-    lightest: '#E0F7FA',
-    dark: '#357ABD',
-    darker: '#1E5A96',
+    primary: '#C9A84C',
+    light: '#2E7D4F',
+    lighter: '#E8F5EC',
+    lightest: '#E8F5EC',
+    dark: '#0D3B1E',
+    darker: '#0D3B1E',
   };
 
   useEffect(() => {
@@ -166,7 +166,7 @@ const SettingsScreen = () => {
       title: t('myDetails'),
       subtitle: t('viewManageAccount'),
       icon: 'account-circle',
-      color: '#4A90E2',
+      color: '#C9A84C',
       onPress: () => {
         Alert.alert(
           t('myDetails'),
@@ -261,10 +261,10 @@ const SettingsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={waterBlueColors.primary} />
+      <StatusBar barStyle="light-content" backgroundColor={'#1B5E35'} />
       
       {/* Header */}
-      <LinearGradient colors={[waterBlueColors.primary, waterBlueColors.light]} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
             <Icon name="arrow-left" size={28} color="white" />
@@ -278,12 +278,12 @@ const SettingsScreen = () => {
         {/* User Profile Card */}
         <Animatable.View animation="fadeIn" delay={100} style={styles.profileCard}>
           <LinearGradient
-            colors={[waterBlueColors.lightest, '#FFFFFF']}
+            colors={['#2E7D4F', '#FFFFFF']}
             style={styles.profileGradient}
           >
             <View style={styles.profileContent}>
               <LinearGradient
-                colors={[waterBlueColors.light, waterBlueColors.primary]}
+                colors={['#2E7D4F', '#1B5E35']}
                 style={styles.profileAvatar}
               >
                 <Icon name="account" size={32} color="#FFF" />
@@ -292,7 +292,7 @@ const SettingsScreen = () => {
                 <Text style={styles.profileName}>{userData?.fullName || 'Admin User'}</Text>
                 <Text style={styles.profileEmail}>{userData?.email || 'admin@alaigal.com'}</Text>
                 <View style={styles.profileBadge}>
-                  <Icon name="shield-crown" size={14} color={waterBlueColors.primary} />
+                  <Icon name="shield-crown" size={14} color={'#1B5E35'} />
                   <Text style={styles.profileBadgeText}>{t('administrator')}</Text>
                 </View>
               </View>
@@ -311,7 +311,7 @@ const SettingsScreen = () => {
         {/* App Info */}
         <Animatable.View animation="fadeInUp" delay={700} style={styles.appInfoSection}>
           <View style={styles.appInfo}>
-            <Icon name="information" size={20} color={waterBlueColors.primary} />
+            <Icon name="information" size={20} color={'#1B5E35'} />
             <View style={styles.appInfoContent}>
               <Text style={styles.appInfoTitle}>{t('professionalNetworking')}</Text>
               <Text style={styles.appInfoText}>{t('version')} 1.0.0 • {t('professionalNetworking')}</Text>
@@ -332,7 +332,7 @@ const SettingsScreen = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <LinearGradient
-              colors={[waterBlueColors.primary, waterBlueColors.light]}
+              colors={['#1B5E35', '#2E7D4F']}
               style={styles.modalHeader}
             >
               <Text style={styles.modalTitle}>{t('language')}</Text>
@@ -358,7 +358,7 @@ const SettingsScreen = () => {
                   <Text style={styles.languageDesc}>{t('englishLanguage')}</Text>
                 </View>
                 {selectedLanguage === 'en' && (
-                  <Icon name="check-circle" size={24} color={waterBlueColors.primary} />
+                  <Icon name="check-circle" size={24} color={'#1B5E35'} />
                 )}
               </TouchableOpacity>
 
@@ -375,7 +375,7 @@ const SettingsScreen = () => {
                   <Text style={styles.languageDesc}>{t('tamilLanguage')}</Text>
                 </View>
                 {selectedLanguage === 'ta' && (
-                  <Icon name="check-circle" size={24} color={waterBlueColors.primary} />
+                  <Icon name="check-circle" size={24} color={'#1B5E35'} />
                 )}
               </TouchableOpacity>
             </View>
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     elevation: 5,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     elevation: 4,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 16,
     elevation: 3,
-    shadowColor: '#357ABD',
+    shadowColor: '#0D3B1E',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
   },
   profileEmail: {
     fontSize: 14,
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 8,
   },
   profileBadge: {
@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
   },
   profileBadgeText: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   appInfoContent: {
     marginLeft: 12,
@@ -547,12 +547,12 @@ const styles = StyleSheet.create({
   appInfoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 4,
   },
   appInfoText: {
     fontSize: 13,
-    color: '#357ABD',
+    color: '#0D3B1E',
     lineHeight: 18,
   },
   // Modal Styles
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   languageOptionSelected: {
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     backgroundColor: '#E8F4FD',
   },
   languageContent: {

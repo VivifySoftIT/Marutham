@@ -20,6 +20,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Constants from "expo-constants";
 import { useLanguage } from '../service/LanguageContext';
+import theme from '../styles/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -256,7 +257,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
-        colors={['#4A90E2', '#87CEEB', '#B0E0E6']}
+        colors={theme.gradientLogin}
         style={styles.background}
       >
         <View style={styles.content}>
@@ -278,7 +279,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
-                <FontAwesome name="user" size={20} color="#4A90E2" style={styles.icon} />
+                <FontAwesome name="user" size={20} color={theme.gold} style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Username or email"
@@ -295,7 +296,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
 
             <View style={styles.inputWrapper}>
               <View style={styles.inputContainer}>
-                <FontAwesome name="lock" size={20} color="#4A90E2" style={styles.icon} />
+                <FontAwesome name="lock" size={20} color={theme.gold} style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Password"
@@ -344,7 +345,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
               disabled={isLoading}
             >
               <LinearGradient
-                colors={['#4A90E2', '#357ABD']}
+                colors={theme.gradientHeader}
                 style={styles.buttonGradient}
               >
                 {isLoading ? (
@@ -388,12 +389,8 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  background: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  background: { flex: 1 },
   content: {
     flex: 1,
     justifyContent: 'space-evenly',
@@ -401,51 +398,43 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 50 : 30,
     paddingBottom: 20,
   },
-  // Card wrapper holds circle + card together
-  cardWrapper: {
-    alignItems: 'center',
-    maxWidth: 440,
-    width: '100%',
-    alignSelf: 'center',
-  },
+  cardWrapper: { alignItems: 'center', maxWidth: 440, width: '100%', alignSelf: 'center' },
   logoCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#fff',
+    backgroundColor: theme.white,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
     marginBottom: -60,
-    shadowColor: '#000',
+    shadowColor: theme.primaryDark,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    borderWidth: 2,
+    borderColor: theme.gold,
   },
-  logo: {
-    width: 140,
-    height: 140,
-  },
+  logo: { width: 140, height: 140 },
   welcomeText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#7a8a99',
+    color: theme.textLight,
     textAlign: 'center',
     letterSpacing: 0.5,
     marginBottom: 4,
     marginTop: 10,
   },
-  // Login Card
   loginCard: {
-    backgroundColor: '#fff',
+    backgroundColor: theme.white,
     borderRadius: 28,
     paddingTop: 68,
     paddingHorizontal: 28,
     paddingBottom: 28,
-    shadowColor: '#000',
+    shadowColor: theme.primaryDark,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 10,
     marginBottom: 10,
@@ -455,37 +444,25 @@ const styles = StyleSheet.create({
   loginTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#2c3e50',
+    color: theme.textDark,
     marginBottom: 28,
     textAlign: 'center',
     letterSpacing: 0.8,
   },
-  inputWrapper: {
-    marginBottom: 18,
-  },
+  inputWrapper: { marginBottom: 18 },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f5f7fa',
+    backgroundColor: theme.primaryLightest,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#e8ecf1',
+    borderColor: theme.border,
     paddingHorizontal: 18,
     height: 56,
   },
-  icon: {
-    marginRight: 14,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: '#2c3e50',
-    height: '100%',
-    fontWeight: '500',
-  },
-  eyeIcon: {
-    padding: 8,
-  },
+  icon: { marginRight: 14 },
+  input: { flex: 1, fontSize: 16, color: theme.textDark, height: '100%', fontWeight: '500' },
+  eyeIcon: { padding: 8 },
   rememberForgotContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -493,34 +470,20 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     marginTop: 6,
   },
-  rememberMeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  rememberMeContainer: { flexDirection: 'row', alignItems: 'center' },
   checkbox: {
     width: 20,
     height: 20,
     borderRadius: 5,
     borderWidth: 2,
-    borderColor: '#4A90E2',
+    borderColor: theme.primary,
     marginRight: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: '#4A90E2',
-  },
-  rememberMeText: {
-    fontSize: 14,
-    color: '#5a6c7d',
-    fontWeight: '600',
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: '#4A90E2',
-    fontWeight: '700',
-    textDecorationLine: 'underline',
-  },
+  checkboxChecked: { backgroundColor: theme.primary },
+  rememberMeText: { fontSize: 14, color: theme.textMid, fontWeight: '600' },
+  forgotPasswordText: { fontSize: 14, color: theme.primary, fontWeight: '700', textDecorationLine: 'underline' },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -531,26 +494,18 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#ef5350',
   },
-  errorText: {
-    color: '#c62828',
-    fontSize: 14,
-    marginLeft: 12,
-    flex: 1,
-    fontWeight: '600',
-  },
+  errorText: { color: '#c62828', fontSize: 14, marginLeft: 12, flex: 1, fontWeight: '600' },
   loginButton: {
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 0,
-    shadowColor: '#4A90E2',
+    shadowColor: theme.primaryDark,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 6,
   },
-  loginButtonDisabled: {
-    opacity: 0.6,
-  },
+  loginButtonDisabled: { opacity: 0.6 },
   buttonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -558,50 +513,20 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 28,
   },
-  loginIcon: {
-    marginRight: 10,
-  },
-  loginButtonText: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: 0.8,
-  },
-  bottomSection: {
-    alignItems: 'center',
-    marginTop: 10,
-    paddingTop: 20,
-  },
+  loginIcon: { marginRight: 10 },
+  loginButtonText: { color: theme.white, fontSize: 17, fontWeight: '800', letterSpacing: 0.8 },
+  bottomSection: { alignItems: 'center', marginTop: 10, paddingTop: 20 },
   footerNote: {
     marginBottom: 14,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 24,
   },
-  footerText: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.98)',
-    textAlign: 'center',
-    lineHeight: 20,
-    fontWeight: '500',
-  },
-  contactSupportText: {
-    color: '#fff',
-    fontWeight: '800',
-    textDecorationLine: 'underline',
-  },
-  versionText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  copyrightText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontWeight: '600',
-  },
+  footerText: { fontSize: 13, color: 'rgba(255,255,255,0.95)', textAlign: 'center', lineHeight: 20, fontWeight: '500' },
+  contactSupportText: { color: theme.goldLight, fontWeight: '800', textDecorationLine: 'underline' },
+  versionText: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginBottom: 8, fontWeight: '600' },
+  copyrightText: { fontSize: 11, color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
 });
 
 export default LoginScreen;

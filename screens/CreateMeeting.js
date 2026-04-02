@@ -25,8 +25,8 @@ import SpeechToTextInput from '../components/SpeechToTextInput';
 
 // Alaigal Water Blue Colors
 const waterBlueColors = {
-  primary: '#4A90E2',
-  secondary: '#87CEEB',
+  primary: '#C9A84C',
+  secondary: '#2E7D4F',
   light: '#E3F2FD',
   dark: '#2C5F8D',
   accent: '#5DADE2',
@@ -381,10 +381,10 @@ const CreateMeeting = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={waterBlueColors.primary} />
+      <StatusBar barStyle="light-content" backgroundColor={'#1B5E35'} />
 
       {/* Header */}
-      <LinearGradient colors={[waterBlueColors.primary, waterBlueColors.secondary]} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', waterBlueColors.secondary]} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -393,7 +393,7 @@ const CreateMeeting = () => {
       </LinearGradient>
 
       <ImageBackground
-        source={require('../assets/Alaigal.png')}
+        source={require('../assets/logomarutham.png')}
         style={styles.backgroundImage}
         imageStyle={styles.backgroundImageStyle}
       >
@@ -468,7 +468,7 @@ const CreateMeeting = () => {
                           <Text style={styles.contactPersonName}>{item.name}</Text>
                           <Text style={styles.contactPersonPhone}>{item.phone}</Text>
                         </View>
-                        <Icon name="chevron-right" size={16} color={waterBlueColors.primary} />
+                        <Icon name="chevron-right" size={16} color={'#1B5E35'} />
                       </TouchableOpacity>
                     ))
                   ) : (
@@ -507,7 +507,7 @@ const CreateMeeting = () => {
                 style={styles.inputContainer}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Icon name="calendar" size={16} color={waterBlueColors.primary} />
+                <Icon name="calendar" size={16} color={'#1B5E35'} />
                 <Text style={styles.dateTimeText}>
                   {meetingDate.toLocaleDateString()}
                 </Text>
@@ -520,7 +520,7 @@ const CreateMeeting = () => {
                 style={styles.inputContainer}
                 onPress={() => setShowTimePicker(true)}
               >
-                <Icon name="clock-outline" size={16} color={waterBlueColors.primary} />
+                <Icon name="clock-outline" size={16} color={'#1B5E35'} />
                 <Text style={styles.dateTimeText}>
                   {meetingTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
@@ -555,7 +555,7 @@ const CreateMeeting = () => {
                 style={[styles.typeButton, meetingType === 'in-person' && styles.typeButtonActive]}
                 onPress={() => setMeetingType('in-person')}
               >
-                <Icon name="office-building" size={18} color={meetingType === 'in-person' ? '#FFF' : waterBlueColors.primary} />
+                <Icon name="office-building" size={18} color={meetingType === 'in-person' ? '#FFF' : '#1B5E35'} />
                 <Text style={[styles.typeButtonText, meetingType === 'in-person' && styles.typeButtonTextActive]}>
                   {t('inPerson')}
                 </Text>
@@ -565,7 +565,7 @@ const CreateMeeting = () => {
                 style={[styles.typeButton, meetingType === 'virtual' && styles.typeButtonActive]}
                 onPress={() => setMeetingType('virtual')}
               >
-                <Icon name="video" size={18} color={meetingType === 'virtual' ? '#FFF' : waterBlueColors.primary} />
+                <Icon name="video" size={18} color={meetingType === 'virtual' ? '#FFF' : '#1B5E35'} />
                 <Text style={[styles.typeButtonText, meetingType === 'virtual' && styles.typeButtonTextActive]}>
                   {t('virtual')}
                 </Text>
@@ -609,7 +609,7 @@ const CreateMeeting = () => {
                 style={[styles.typeButton, memberSelection === 'all' && styles.typeButtonActive]}
                 onPress={() => setMemberSelection('all')}
               >
-                <Icon name="account-group" size={16} color={memberSelection === 'all' ? '#FFF' : waterBlueColors.primary} />
+                <Icon name="account-group" size={16} color={memberSelection === 'all' ? '#FFF' : '#1B5E35'} />
                 <Text style={[styles.typeButtonText, memberSelection === 'all' && styles.typeButtonTextActive]}>
                   {t('all')}
                 </Text>
@@ -619,7 +619,7 @@ const CreateMeeting = () => {
                 style={[styles.typeButton, memberSelection === 'specific' && styles.typeButtonActive]}
                 onPress={() => setMemberSelection('specific')}
               >
-                <Icon name="account-multiple-check" size={16} color={memberSelection === 'specific' ? '#FFF' : waterBlueColors.primary} />
+                <Icon name="account-multiple-check" size={16} color={memberSelection === 'specific' ? '#FFF' : '#1B5E35'} />
                 <Text style={[styles.typeButtonText, memberSelection === 'specific' && styles.typeButtonTextActive]}>
                   {t('specificMembers')}
                 </Text>
@@ -632,11 +632,11 @@ const CreateMeeting = () => {
               style={styles.selectMembersButton}
               onPress={() => setShowMemberModal(true)}
             >
-              <Icon name="account-multiple-plus" size={16} color={waterBlueColors.primary} />
+              <Icon name="account-multiple-plus" size={16} color={'#1B5E35'} />
               <Text style={styles.selectMembersText}>
                 {selectedMembers.length > 0 ? `${selectedMembers.length} ${t('selected')}` : t('selectMembers')}
               </Text>
-              <Icon name="chevron-right" size={16} color={waterBlueColors.primary} />
+              <Icon name="chevron-right" size={16} color={'#1B5E35'} />
             </TouchableOpacity>
           )}
 
@@ -670,7 +670,7 @@ const CreateMeeting = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('selectMembers')}</Text>
               <TouchableOpacity onPress={() => setShowMemberModal(false)}>
-                <Icon name="close" size={24} color={waterBlueColors.primary} />
+                <Icon name="close" size={24} color={'#1B5E35'} />
               </TouchableOpacity>
             </View>
 
@@ -704,7 +704,7 @@ const CreateMeeting = () => {
             {/* Members List */}
             {loadingMembers ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={waterBlueColors.primary} />
+                <ActivityIndicator size="large" color={'#1B5E35'} />
                 <Text style={styles.loadingText}>{t('loadingMembers')}</Text>
               </View>
             ) : (
@@ -768,7 +768,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '600',
-    color: waterBlueColors.dark,
+    color: '#0D3B1E',
     marginBottom: 4,
     height: 35, // Fixed height to enforce alignment
     textAlignVertical: 'center',
@@ -842,14 +842,14 @@ const styles = StyleSheet.create({
     borderColor: waterBlueColors.secondary,
   },
   typeButtonActive: {
-    backgroundColor: waterBlueColors.primary,
-    borderColor: waterBlueColors.primary,
+    backgroundColor: '#1B5E35',
+    borderColor: '#1B5E35',
   },
   typeButtonText: {
     marginLeft: 4,
     fontSize: 11, // Smaller font for Tamil text wrap
     fontWeight: '600',
-    color: waterBlueColors.primary,
+    color: '#1B5E35',
     flexShrink: 1, // Allow text to shrink/wrap
     textAlign: 'center',
   },
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: waterBlueColors.primary,
+    backgroundColor: '#1B5E35',
     paddingVertical: 11,
     borderRadius: 8,
     marginTop: 6,
@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
   contactPersonName: {
     fontSize: 13,
     fontWeight: '600',
-    color: waterBlueColors.dark,
+    color: '#0D3B1E',
     marginBottom: 2,
   },
   contactPersonPhone: {
@@ -994,19 +994,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: waterBlueColors.light,
+    borderBottomColor: '#2E7D4F',
   },
   modalTitle: {
     flex: 1,
     fontSize: 17,
     fontWeight: '600',
-    color: waterBlueColors.dark,
+    color: '#0D3B1E',
     marginRight: 10,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: waterBlueColors.light,
+    backgroundColor: '#2E7D4F',
     paddingHorizontal: 10,
     borderRadius: 8,
     marginBottom: 10,
@@ -1030,7 +1030,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 10,
     marginHorizontal: 4,
-    backgroundColor: waterBlueColors.light,
+    backgroundColor: '#2E7D4F',
     borderRadius: 6,
     alignItems: 'center',
     borderWidth: 1,
@@ -1039,7 +1039,7 @@ const styles = StyleSheet.create({
   bulkActionText: {
     fontSize: 12,
     fontWeight: '600',
-    color: waterBlueColors.primary,
+    color: '#1B5E35',
   },
   membersList: {
     flex: 1,
@@ -1054,11 +1054,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 6,
     borderWidth: 1,
-    borderColor: waterBlueColors.light,
+    borderColor: '#2E7D4F',
   },
   memberItemSelected: {
-    backgroundColor: waterBlueColors.light,
-    borderColor: waterBlueColors.primary,
+    backgroundColor: '#2E7D4F',
+    borderColor: '#1B5E35',
   },
   memberInfo: {
     flex: 1,
@@ -1066,7 +1066,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 14,
     fontWeight: '600',
-    color: waterBlueColors.dark,
+    color: '#0D3B1E',
     marginBottom: 3,
   },
   memberDetails: {
@@ -1084,11 +1084,11 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   checkboxChecked: {
-    backgroundColor: waterBlueColors.primary,
-    borderColor: waterBlueColors.primary,
+    backgroundColor: '#1B5E35',
+    borderColor: '#1B5E35',
   },
   doneButton: {
-    backgroundColor: waterBlueColors.primary,
+    backgroundColor: '#1B5E35',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -1113,3 +1113,4 @@ const styles = StyleSheet.create({
 });
 
 export default CreateMeeting;
+

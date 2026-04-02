@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -239,9 +239,9 @@ const Visitors = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -336,7 +336,7 @@ const Visitors = () => {
                 style={styles.dateInput}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Icon name="calendar" size={20} color="#4A90E2" style={{ marginRight: 8 }} />
+                <Icon name="calendar" size={20} color="#C9A84C" style={{ marginRight: 8 }} />
                 <Text style={styles.dateText}>
                   {formData.VisitDate.toDateString()}
                 </Text>
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   memberBannerText: {
     fontSize: 13,
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 10,
   },
   label: {
@@ -502,12 +502,12 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 5,
     borderWidth: 2,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     marginRight: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  checkboxActive: { backgroundColor: '#4A90E2', borderColor: '#4A90E2' },
+  checkboxActive: { backgroundColor: '#C9A84C', borderColor: '#C9A84C' },
   checkboxLabel: { fontSize: 14, color: '#333', fontWeight: '500' },
   submitBtn: {
     backgroundColor: '#4CAF50',
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginTop: 12,
     marginBottom: 8,
     textAlign: 'center',
@@ -548,10 +548,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   modalBtn: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingHorizontal: 25,
     paddingVertical: 10,
     borderRadius: 8,
   },
   modalBtnText: { color: '#FFF', fontSize: 15, fontWeight: '600' },
 });
+

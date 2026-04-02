@@ -67,7 +67,7 @@ const BirthdayWishesSection = ({ memberId }) => {
         style={styles.sectionContainer}
       >
         <View style={styles.birthdayWishCard}>
-          <ActivityIndicator size="small" color="#4A90E2" />
+          <ActivityIndicator size="small" color="#C9A84C" />
           <Text style={styles.birthdayWishLoading}>{t('checkingBirthdayWishes')}</Text>
         </View>
       </Animatable.View>
@@ -110,12 +110,12 @@ const BirthdayWishesSection = ({ memberId }) => {
 
 // Define waterBlueColors OUTSIDE the component
 const waterBlueColors = {
-  primary: '#4A90E2',
-  light: '#87CEEB',
-  lighter: '#B3E0F2',
-  lightest: '#E0F7FA',
-  dark: '#357ABD',
-  darker: '#1E5A96',
+  primary: '#C9A84C',
+  light: '#2E7D4F',
+  lighter: '#E8F5EC',
+  lightest: '#E8F5EC',
+  dark: '#0D3B1E',
+  darker: '#0D3B1E',
 };
 
 // API base URL
@@ -1182,7 +1182,7 @@ const handleMeetingResponse = async (notification) => {
   };
 
   // Activity Stat Card with Water Color Theme and Shadows
-  const StatCard = ({ icon, label, value, color = waterBlueColors.primary, onPress, delay = 0 }) => (
+  const StatCard = ({ icon, label, value, color = '#1B5E35', onPress, delay = 0 }) => (
     <Animatable.View
       animation="fadeInUp"
       delay={delay}
@@ -1206,7 +1206,7 @@ const handleMeetingResponse = async (notification) => {
           {/* Content */}
           <View style={styles.statContent}>
             <LinearGradient
-              colors={[waterBlueColors.light, waterBlueColors.primary]}
+              colors={['#2E7D4F', '#1B5E35']}
               style={styles.statIconContainer}
             >
               <Icon name={icon} size={18} color="#FFF" />
@@ -1255,11 +1255,11 @@ const handleMeetingResponse = async (notification) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={waterBlueColors.primary} barStyle="light-content" />
+      <StatusBar backgroundColor={'#1B5E35'} barStyle="light-content" />
 
       {/* Header with Water Blue Gradient */}
       <LinearGradient
-        colors={[waterBlueColors.primary, waterBlueColors.light]}
+        colors={['#1B5E35', '#2E7D4F']}
         style={styles.headerGradient}
       >
         <View style={styles.header}>
@@ -1333,7 +1333,7 @@ const handleMeetingResponse = async (notification) => {
         {loading && (
           <Animatable.View animation="fadeIn" style={styles.loadingOverlay}>
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={waterBlueColors.primary} />
+              <ActivityIndicator size="large" color={'#1B5E35'} />
               <Text style={styles.loadingText}>{t('loadingYourDashboard')}</Text>
             </View>
           </Animatable.View>
@@ -1438,7 +1438,7 @@ const handleMeetingResponse = async (notification) => {
                 onPress={() => setShowPeriodDropdown(!showPeriodDropdown)}
                 activeOpacity={0.7}
               >
-                <Icon name="calendar" size={18} color={waterBlueColors.primary} />
+                <Icon name="calendar" size={18} color={'#1B5E35'} />
                 <Text style={[
                   styles.periodSelectorText,
                   language === 'ta' && styles.tamilPeriodSelectorText
@@ -1446,7 +1446,7 @@ const handleMeetingResponse = async (notification) => {
                 <Icon
                   name={showPeriodDropdown ? "chevron-up" : "chevron-down"}
                   size={18}
-                  color={waterBlueColors.primary}
+                  color={'#1B5E35'}
                 />
               </TouchableOpacity>
 
@@ -1464,7 +1464,7 @@ const handleMeetingResponse = async (notification) => {
                       <Icon
                         name={period.icon}
                         size={18}
-                        color={selectedPeriod === period.id ? waterBlueColors.primary : '#666'}
+                        color={selectedPeriod === period.id ? '#1B5E35' : '#666'}
                       />
                       <Text style={[
                         styles.periodDropdownText,
@@ -1474,7 +1474,7 @@ const handleMeetingResponse = async (notification) => {
                         {period.label}
                       </Text>
                       {selectedPeriod === period.id && (
-                        <Icon name="check" size={18} color={waterBlueColors.primary} />
+                        <Icon name="check" size={18} color={'#1B5E35'} />
                       )}
                     </TouchableOpacity>
                   ))}
@@ -1492,7 +1492,7 @@ const handleMeetingResponse = async (notification) => {
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={['#4A90E2', '#357ABD']}
+                colors={['#C9A84C', '#0D3B1E']}
                 style={styles.quickAccessGradient}
               >
                 <View style={styles.quickAccessIconContainer}>
@@ -1513,7 +1513,7 @@ const handleMeetingResponse = async (notification) => {
               activeOpacity={0.7}
             >
               <LinearGradient
-                colors={['#87CEEB', '#4A90E2']}
+                colors={['#2E7D4F', '#C9A84C']}
                 style={styles.quickAccessGradient}
               >
                 <View style={styles.quickAccessIconContainer}>
@@ -1582,7 +1582,7 @@ const handleMeetingResponse = async (notification) => {
           style={styles.revenueSection}
         >
           {/* <LinearGradient
-            colors={[waterBlueColors.primary, waterBlueColors.dark]}
+            colors={['#1B5E35', '#0D3B1E']}
             style={styles.revenueCard}
           >
             <View style={styles.revenueContent}>
@@ -1612,11 +1612,11 @@ const handleMeetingResponse = async (notification) => {
           style={styles.infoSection}
         >
           <LinearGradient
-            colors={[waterBlueColors.lightest, '#E8F4FD']}
+            colors={['#2E7D4F', '#E8F5EC']}
             style={styles.infoCard}
           >
             <LinearGradient
-              colors={[waterBlueColors.light, waterBlueColors.primary]}
+              colors={['#2E7D4F', '#1B5E35']}
               style={styles.infoIcon}
             >
               <Icon name="information" size={20} color="#FFF" />
@@ -1660,7 +1660,7 @@ const handleMeetingResponse = async (notification) => {
           />
           <View style={styles.modalContainer}>
             <LinearGradient
-              colors={[waterBlueColors.primary, waterBlueColors.light]}
+              colors={['#1B5E35', '#2E7D4F']}
               style={styles.modalHeader}
             >
               <Text style={styles.modalTitle}>👤 {t('memberDetails')}</Text>
@@ -1676,7 +1676,7 @@ const handleMeetingResponse = async (notification) => {
               {/* Profile Section */}
               <View style={styles.modalProfileSection}>
                 <LinearGradient
-                  colors={[waterBlueColors.light, waterBlueColors.primary]}
+                  colors={['#2E7D4F', '#1B5E35']}
                   style={styles.modalAvatar}
                 >
                   <Icon name="account" size={40} color="#FFF" />
@@ -1687,7 +1687,7 @@ const handleMeetingResponse = async (notification) => {
                   {/* Member ID prominently displayed */}
                   {userData?.memberId && (
                     <View style={styles.modalMemberIdContainer}>
-                      <Icon name="id-card" size={16} color={waterBlueColors.primary} />
+                      <Icon name="id-card" size={16} color={'#1B5E35'} />
                       <Text style={styles.modalMemberId}>{t('memberId')}: {userData.memberId}</Text>
                     </View>
                   )}
@@ -1704,7 +1704,7 @@ const handleMeetingResponse = async (notification) => {
                   onPress={() => setShowLanguageSettings(!showLanguageSettings)}
                 >
                   <View style={[styles.optionIcon, { backgroundColor: '#E3F2FD' }]}>
-                    <Icon name="translate" size={22} color={waterBlueColors.primary} />
+                    <Icon name="translate" size={22} color={'#1B5E35'} />
                   </View>
                   <Text style={styles.settingsOptionText}>{t('language')}</Text>
                   <Icon name={showLanguageSettings ? "chevron-up" : "chevron-down"} size={20} color="#999" />
@@ -1724,7 +1724,7 @@ const handleMeetingResponse = async (notification) => {
                       >
                         <Text style={styles.languageFlag}>{lang.flag}</Text>
                         <Text style={styles.languageName}>{lang.name}</Text>
-                        <Icon name="check-circle" size={16} color={waterBlueColors.primary} />
+                        <Icon name="check-circle" size={16} color={'#1B5E35'} />
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -1823,7 +1823,7 @@ const handleMeetingResponse = async (notification) => {
                   style={styles.closeButton}
                   onPress={() => setShowNotifications(false)}
                 >
-                  <Icon name="close" size={22} color={waterBlueColors.primary} />
+                  <Icon name="close" size={22} color={'#1B5E35'} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -1878,7 +1878,7 @@ const handleMeetingResponse = async (notification) => {
                       )}
                       {notification.canRespond && (
                         <View style={styles.respondButton}>
-                          <Icon name="reply" size={14} color={waterBlueColors.primary} />
+                          <Icon name="reply" size={14} color={'#1B5E35'} />
                           <Text style={styles.respondButtonText}>{t('tapToRespond')}</Text>
                         </View>
                       )}
@@ -1923,7 +1923,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     elevation: 10,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1995,7 +1995,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginHorizontal: 15,
     elevation: 4,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 6,
@@ -2019,7 +2019,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
     elevation: 3,
-    shadowColor: '#357ABD',
+    shadowColor: '#0D3B1E',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -2054,7 +2054,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: waterBlueColors.light,
+    borderColor: '#2E7D4F',
     gap: 6,
   },
   memberIdInfo: {
@@ -2068,7 +2068,7 @@ const styles = StyleSheet.create({
   },
   memberIdValue: {
     fontSize: 14,
-    color: waterBlueColors.primary,
+    color: '#1B5E35',
     fontWeight: '700',
   },
   content: {
@@ -2102,7 +2102,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 15,
     fontSize: 14,
-    color: '#357ABD',
+    color: '#0D3B1E',
     fontWeight: '600',
   },
   sectionContainer: {
@@ -2143,7 +2143,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: waterBlueColors.light,
+    borderColor: '#2E7D4F',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -2153,7 +2153,7 @@ const styles = StyleSheet.create({
   },
   periodSelectorText: {
     fontSize: 13,
-    color: waterBlueColors.primary,
+    color: '#1B5E35',
     fontWeight: '600',
     marginHorizontal: 8,
     textAlign: 'center',
@@ -2201,7 +2201,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   periodDropdownTextSelected: {
-    color: waterBlueColors.primary,
+    color: '#1B5E35',
     fontWeight: '600',
   },
   // Tamil dropdown text
@@ -2216,7 +2216,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 15,
     borderLeftWidth: 3,
-    borderLeftColor: waterBlueColors.primary,
+    borderLeftColor: '#1B5E35',
   },
   periodIndicatorText: {
     fontSize: 13,
@@ -2224,7 +2224,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   periodIndicatorValue: {
-    color: waterBlueColors.primary,
+    color: '#1B5E35',
     fontWeight: '600',
   },
   // Tamil period indicator text
@@ -2246,7 +2246,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     elevation: 5,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -2262,7 +2262,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 4,
-    backgroundColor: '#87CEEB',
+    backgroundColor: '#2E7D4F',
     opacity: 0.5,
   },
   statContent: {
@@ -2278,7 +2278,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
     elevation: 3,
-    shadowColor: '#357ABD',
+    shadowColor: '#0D3B1E',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -2286,7 +2286,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1E5A96',
+    color: '#0D3B1E',
     marginBottom: 3,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 1, height: 1 },
@@ -2294,7 +2294,7 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 14, // Increased from 11
-    color: '#357ABD',
+    color: '#0D3B1E',
     fontWeight: '600',
     textAlign: 'center',
     lineHeight: 18, // Better line height
@@ -2313,7 +2313,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     elevation: 6,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -2354,7 +2354,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 15,
     elevation: 4,
-    shadowColor: '#87CEEB',
+    shadowColor: '#2E7D4F',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -2392,7 +2392,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     position: 'relative',
     elevation: 2,
-    shadowColor: '#87CEEB',
+    shadowColor: '#2E7D4F',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
@@ -2435,12 +2435,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     elevation: 4,
-    shadowColor: '#87CEEB',
+    shadowColor: '#2E7D4F',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
     borderWidth: 1,
-    borderColor: '#E0F7FA',
+    borderColor: '#E8F5EC',
   },
   infoIcon: {
     width: 44,
@@ -2450,7 +2450,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 15,
     elevation: 3,
-    shadowColor: '#357ABD',
+    shadowColor: '#0D3B1E',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -2461,13 +2461,13 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1E5A96',
+    color: '#0D3B1E',
     marginBottom: 8,
     textAlign: 'left',
   },
   infoText: {
     fontSize: 13,
-    color: '#357ABD',
+    color: '#0D3B1E',
     lineHeight: 20,
     textAlign: 'left',
   },
@@ -2567,7 +2567,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
     elevation: 6,
-    shadowColor: '#357ABD',
+    shadowColor: '#0D3B1E',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -2591,7 +2591,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 10,
     elevation: 2,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -2599,12 +2599,12 @@ const styles = StyleSheet.create({
   modalMemberId: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginLeft: 6,
   },
   modalUserRole: {
     fontSize: 15,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   // Enhanced Settings Options
@@ -2653,7 +2653,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E0F7FA',
+    borderColor: '#E8F5EC',
   },
   infoGridTextCompact: {
     flex: 1,
@@ -2684,7 +2684,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0F7FA',
+    borderColor: '#E8F5EC',
   },
   infoGridLabel: {
     fontSize: 11,
@@ -2705,7 +2705,7 @@ const styles = StyleSheet.create({
   statsTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1E5A96',
+    color: '#0D3B1E',
     marginBottom: 15,
   },
   statsGridModal: {
@@ -2721,17 +2721,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0F7FA',
+    borderColor: '#E8F5EC',
   },
   statNumberModal: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 4,
   },
   statLabelModal: {
     fontSize: 12,
-    color: '#357ABD',
+    color: '#0D3B1E',
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -2745,12 +2745,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingVertical: 14,
     borderRadius: 12,
     marginHorizontal: 5,
     elevation: 3,
-    shadowColor: '#357ABD',
+    shadowColor: '#0D3B1E',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
@@ -2795,7 +2795,7 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 10,
     elevation: 3,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -2820,7 +2820,7 @@ const styles = StyleSheet.create({
   },
   viewAllNotifications: {
     fontSize: 11,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   notificationScrollView: {
@@ -2842,7 +2842,7 @@ const styles = StyleSheet.create({
   },
   unreadNotificationCard: {
     backgroundColor: '#F0F7FF',
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     borderWidth: 1.5,
     paddingRight: 16, // Increased padding on right for red dot space
   },
@@ -2913,7 +2913,7 @@ const styles = StyleSheet.create({
   },
   respondBadgeText: {
     fontSize: 9,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   moreNotificationsCard: {
@@ -2924,12 +2924,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     borderStyle: 'dashed',
   },
   moreNotificationsText: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     marginTop: 4,
   },
@@ -2977,7 +2977,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   clearAllText: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -3010,7 +3010,7 @@ const styles = StyleSheet.create({
   unreadNotificationItem: {
     backgroundColor: '#F8FBFF',
     borderLeftWidth: 3,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   notificationIcon: {
     width: 44,
@@ -3072,7 +3072,7 @@ const styles = StyleSheet.create({
   },
   respondButtonText: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -3132,7 +3132,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderLeftWidth: 4,
-    borderLeftColor: waterBlueColors.primary,
+    borderLeftColor: '#1B5E35',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

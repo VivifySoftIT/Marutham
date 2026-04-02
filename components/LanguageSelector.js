@@ -78,7 +78,7 @@ const LanguageSelector = ({
           <Text style={styles.compactLanguageText}>
             {currentLanguage?.code.toUpperCase()}
           </Text>
-          <Icon name="chevron-down" size={16} color="#4A90E2" />
+          <Icon name="chevron-down" size={16} color="#C9A84C" />
         </TouchableOpacity>
 
         {/* Language Selection Modal */}
@@ -111,7 +111,7 @@ const LanguageSelector = ({
                     <Text style={styles.nativeLanguageName}>{lang.nativeName}</Text>
                   </View>
                   {language === lang.code && (
-                    <Icon name="check" size={20} color="#4A90E2" />
+                    <Icon name="check" size={20} color="#C9A84C" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -139,7 +139,7 @@ const LanguageSelector = ({
             <Text style={styles.nativeLanguageName}>{currentLanguage?.nativeName}</Text>
           </View>
         </View>
-        <Icon name="chevron-right" size={20} color="#4A90E2" />
+        <Icon name="chevron-right" size={20} color="#C9A84C" />
       </TouchableOpacity>
 
       {/* Language Selection Modal */}
@@ -154,7 +154,7 @@ const LanguageSelector = ({
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('language')}</Text>
               <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
-                <Icon name="close" size={24} color="#4A90E2" />
+                <Icon name="close" size={24} color="#C9A84C" />
               </TouchableOpacity>
             </View>
             
@@ -173,7 +173,7 @@ const LanguageSelector = ({
                   <Text style={styles.nativeLanguageName}>{lang.nativeName}</Text>
                 </View>
                 {language === lang.code && (
-                  <Icon name="check" size={20} color="#4A90E2" />
+                  <Icon name="check" size={20} color="#C9A84C" />
                 )}
               </TouchableOpacity>
             ))}
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   compactLanguageText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   
   // Modal styles
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   languageOption: {
     flexDirection: 'row',
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   selectedLanguageOption: {
     backgroundColor: '#E3F2FD',
     borderWidth: 2,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   languageInfo: {
     flex: 1,

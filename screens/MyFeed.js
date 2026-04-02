@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ActivityIndicator, RefreshControl, Alert, ImageBackground, Modal, ScrollView, TextInput, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -1106,7 +1106,7 @@ ${t('electronicReceipt')}
 
   const renderFeedItem = ({ item }) => {
     let iconName = 'information';
-    let iconColor = '#4A90E2';
+    let iconColor = '#C9A84C';
 
     switch (item.type) {
       case 'referral_given':
@@ -1147,7 +1147,7 @@ ${t('electronicReceipt')}
         break;
       default:
         iconName = item.icon || 'information';
-        iconColor = item.color || '#4A90E2';
+        iconColor = item.color || '#C9A84C';
     }
 
     let statusColor = '#FF9800';
@@ -1192,7 +1192,7 @@ ${t('electronicReceipt')}
                 style={styles.downloadButton}
                 onPress={() => handleDownloadPaymentReceipt(item)}
               >
-                <Icon name="download" size={16} color="#4A90E2" />
+                <Icon name="download" size={16} color="#C9A84C" />
                 <Text style={styles.downloadButtonText}>{t('downloadReceipt')}</Text>
               </TouchableOpacity>
             </View>
@@ -1211,7 +1211,7 @@ ${t('electronicReceipt')}
             (item.type === 'tyfcb_received')) &&
             (!item.status || translateStatus(item.status) === t('pending')) && (
               <View style={styles.clickHint}>
-                <Icon name="hand-pointing-right" size={14} color="#4A90E2" />
+                <Icon name="hand-pointing-right" size={14} color="#C9A84C" />
                 <Text style={styles.clickHintText}>{t('tapToView')}</Text>
               </View>
             )}
@@ -1223,8 +1223,8 @@ ${t('electronicReceipt')}
   const filteredData = getFilteredData();
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -1323,14 +1323,14 @@ ${t('electronicReceipt')}
             style={[styles.toggleButton, referralTab === 'give' && styles.toggleButtonActive]}
             onPress={() => setReferralTab('give')}
           >
-            <Icon name="account-arrow-right" size={18} color={referralTab === 'give' ? '#FFF' : '#4A90E2'} />
+            <Icon name="account-arrow-right" size={18} color={referralTab === 'give' ? '#FFF' : '#C9A84C'} />
             <Text style={[styles.toggleText, referralTab === 'give' && styles.toggleTextActive]}>{t('given')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.toggleButton, referralTab === 'my' && styles.toggleButtonActive]}
             onPress={() => setReferralTab('my')}
           >
-            <Icon name="account-arrow-left" size={18} color={referralTab === 'my' ? '#FFF' : '#4A90E2'} />
+            <Icon name="account-arrow-left" size={18} color={referralTab === 'my' ? '#FFF' : '#C9A84C'} />
             <Text style={[styles.toggleText, referralTab === 'my' && styles.toggleTextActive]}>{t('received')}</Text>
           </TouchableOpacity>
         </View>
@@ -1357,7 +1357,7 @@ ${t('electronicReceipt')}
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color="#C9A84C" />
         </View>
       ) : filteredData.length > 0 ? (
         <ImageBackground
@@ -1374,8 +1374,8 @@ ${t('electronicReceipt')}
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={onRefresh}
-                colors={['#4A90E2']}
-                tintColor="#4A90E2"
+                colors={['#C9A84C']}
+                tintColor="#C9A84C"
               />
             }
           />
@@ -1399,7 +1399,7 @@ ${t('electronicReceipt')}
                 style={styles.refreshButton}
                 onPress={loadFeedData}
               >
-                <Icon name="refresh" size={20} color="#4A90E2" />
+                <Icon name="refresh" size={20} color="#C9A84C" />
                 <Text style={styles.refreshButtonText}>{t('refresh')}</Text>
               </TouchableOpacity>
             )}
@@ -1437,14 +1437,14 @@ ${t('electronicReceipt')}
                   <View style={styles.detailHeader}>
                     <View style={[styles.detailIconContainer, {
                       backgroundColor: selectedItem.type === 'referral_received' ? '#2196F320' :
-                        selectedItem.type === 'tyfcb_received' ? '#E91E6320' : '#4A90E220'
+                        selectedItem.type === 'tyfcb_received' ? '#E91E6320' : '#1B5E3520'
                     }]}>
                       <Icon
                         name={selectedItem.type === 'referral_received' ? 'account-arrow-left' :
                           selectedItem.type === 'tyfcb_received' ? 'hand-heart' : 'information'}
                         size={32}
                         color={selectedItem.type === 'referral_received' ? '#2196F3' :
-                          selectedItem.type === 'tyfcb_received' ? '#E91E63' : '#4A90E2'}
+                          selectedItem.type === 'tyfcb_received' ? '#E91E63' : '#C9A84C'}
                       />
                     </View>
                     <Text style={styles.detailTitle}>{translateFeedTitle(selectedItem)}</Text>
@@ -1615,7 +1615,7 @@ ${t('electronicReceipt')}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>{t('amountRequired')}</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="currency-inr" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="currency-inr" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder={t('enterAmount')}
@@ -1631,7 +1631,7 @@ ${t('electronicReceipt')}
                     <Icon 
                       name={isListening && activeVoiceField === 'amount' ? "microphone" : "microphone-outline"} 
                       size={18} 
-                      color={isListening && activeVoiceField === 'amount' ? "#F44336" : "#4A90E2"} 
+                      color={isListening && activeVoiceField === 'amount' ? "#F44336" : "#C9A84C"} 
                     />
                   </TouchableOpacity>
                 </View>
@@ -1647,7 +1647,7 @@ ${t('electronicReceipt')}
                   <Icon 
                     name={paymentMethods.find(method => method.value === paymentForm.paymentMethod)?.icon || 'credit-card'} 
                     size={18} 
-                    color="#4A90E2" 
+                    color="#C9A84C" 
                     style={styles.inputIcon} 
                   />
                   <Text style={styles.dropdownText}>
@@ -1656,7 +1656,7 @@ ${t('electronicReceipt')}
                   <Icon 
                     name={showPaymentMethodDropdown ? 'chevron-up' : 'chevron-down'} 
                     size={20} 
-                    color="#4A90E2" 
+                    color="#C9A84C" 
                   />
                 </TouchableOpacity>
                 
@@ -1678,7 +1678,7 @@ ${t('electronicReceipt')}
                           setShowPaymentMethodDropdown(false);
                         }}
                       >
-                        <Icon name={method.icon} size={18} color="#4A90E2" />
+                        <Icon name={method.icon} size={18} color="#C9A84C" />
                         <Text style={[
                           styles.dropdownItemText,
                           paymentForm.paymentMethod === method.value && styles.dropdownItemTextSelected
@@ -1686,7 +1686,7 @@ ${t('electronicReceipt')}
                           {method.label}
                         </Text>
                         {paymentForm.paymentMethod === method.value && (
-                          <Icon name="check" size={18} color="#4A90E2" />
+                          <Icon name="check" size={18} color="#C9A84C" />
                         )}
                       </TouchableOpacity>
                     ))}
@@ -1701,7 +1701,7 @@ ${t('electronicReceipt')}
                   style={styles.dateInputContainer}
                   onPress={() => setShowPaymentDatePicker(true)}
                 >
-                  <Icon name="calendar" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="calendar" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <Text style={styles.dateText}>
                     {paymentForm.paymentDate.toDateString()}
                   </Text>
@@ -1720,7 +1720,7 @@ ${t('electronicReceipt')}
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>{t('transactionIdRequired')}</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="barcode" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="barcode" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder={t('enterTransactionId')}
@@ -1735,7 +1735,7 @@ ${t('electronicReceipt')}
                     <Icon 
                       name={isListening && activeVoiceField === 'transactionId' ? "microphone" : "microphone-outline"} 
                       size={18} 
-                      color={isListening && activeVoiceField === 'transactionId' ? "#F44336" : "#4A90E2"} 
+                      color={isListening && activeVoiceField === 'transactionId' ? "#F44336" : "#C9A84C"} 
                     />
                   </TouchableOpacity>
                 </View>
@@ -1750,7 +1750,7 @@ ${t('electronicReceipt')}
                 
                 {/* Single Input Field with Autocomplete */}
                 <View style={styles.inputContainer}>
-                  <Icon name="calendar-month" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="calendar-month" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder={t('enterMonth')}
@@ -1786,7 +1786,7 @@ ${t('electronicReceipt')}
                     <Icon 
                       name={isListening && activeVoiceField === 'paymentForMonth' ? "microphone" : "microphone-outline"} 
                       size={18} 
-                      color={isListening && activeVoiceField === 'paymentForMonth' ? "#F44336" : "#4A90E2"} 
+                      color={isListening && activeVoiceField === 'paymentForMonth' ? "#F44336" : "#C9A84C"} 
                     />
                   </TouchableOpacity>
                 </View>
@@ -1813,11 +1813,11 @@ ${t('electronicReceipt')}
                             setShowMonthDropdown(false);
                           }}
                         >
-                          <Icon name="calendar" size={18} color="#4A90E2" />
+                          <Icon name="calendar" size={18} color="#C9A84C" />
                           <Text style={styles.dropdownItemText}>
                             {month.label} ({month.value})
                           </Text>
-                          <Icon name="arrow-right" size={16} color="#4A90E2" />
+                          <Icon name="arrow-right" size={16} color="#C9A84C" />
                         </TouchableOpacity>
                       ))
                     }
@@ -1882,7 +1882,7 @@ ${t('electronicReceipt')}
               </TouchableOpacity>
               <Text style={styles.receiptHeaderTitle}>{t('paymentReceipt')}</Text>
               <TouchableOpacity onPress={handleDownloadReceipt}>
-                <Icon name="download" size={24} color="#4A90E2" />
+                <Icon name="download" size={24} color="#C9A84C" />
               </TouchableOpacity>
             </View>
 
@@ -1971,7 +1971,7 @@ const styles = StyleSheet.create({
     color: '#FFF'
   },
   modalContentContainer: {
-  paddingBottom: 40,  // â† Extra space at bottom so buttons are visible
+  paddingBottom: 40,  // ← Extra space at bottom so buttons are visible
 },
   tabBarContainer: {
     backgroundColor: '#FFF',
@@ -1993,7 +1993,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   tabButtonActive: {
-    backgroundColor: '#4A90E2'
+    backgroundColor: '#C9A84C'
   },
   tabButtonText: {
     fontSize: 12,
@@ -2023,7 +2023,7 @@ const styles = StyleSheet.create({
     gap: 6
   },
   toggleButtonActive: {
-    backgroundColor: '#4A90E2'
+    backgroundColor: '#C9A84C'
   },
   toggleText: {
     fontSize: 12,
@@ -2045,7 +2045,7 @@ const styles = StyleSheet.create({
   shortcutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
@@ -2121,7 +2121,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '500',
     marginBottom: 4
   },
@@ -2142,7 +2142,7 @@ const styles = StyleSheet.create({
   },
   clickHintText: {
     fontSize: 11,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '500',
     marginLeft: 6
   },
@@ -2158,12 +2158,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     gap: 6
   },
   downloadButtonText: {
     fontSize: 11,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600'
   },
   pendingConfirmBadge: {
@@ -2217,11 +2217,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     gap: 8
   },
   refreshButtonText: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
     fontSize: 14
   },
@@ -2409,7 +2409,7 @@ const styles = StyleSheet.create({
   formLabel: { 
     fontSize: 14, 
     fontWeight: '600', 
-    color: '#4A90E2', 
+    color: '#C9A84C', 
     marginBottom: 8 
   },
   formHint: { 
@@ -2424,7 +2424,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA', 
     borderRadius: 10, 
     borderWidth: 1, 
-    borderColor: '#87CEEB', 
+    borderColor: '#2E7D4F', 
     paddingHorizontal: 12, 
     minHeight: 45 
   },
@@ -2443,7 +2443,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA', 
     borderRadius: 10, 
     borderWidth: 1, 
-    borderColor: '#87CEEB', 
+    borderColor: '#2E7D4F', 
     paddingHorizontal: 12, 
     minHeight: 45 
   },
@@ -2459,7 +2459,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     paddingHorizontal: 12,
     minHeight: 45,
     justifyContent: 'space-between'
@@ -2474,7 +2474,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     marginTop: 5,
     elevation: 3,
     shadowColor: '#000',
@@ -2502,7 +2502,7 @@ const styles = StyleSheet.create({
     color: '#333'
   },
   dropdownItemTextSelected: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600'
   },
   orText: {
@@ -2531,7 +2531,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   submitButton: { 
-    backgroundColor: '#4A90E2', 
+    backgroundColor: '#C9A84C', 
     flexDirection: 'row', 
     alignItems: 'center', 
     justifyContent: 'center', 
@@ -2541,7 +2541,7 @@ const styles = StyleSheet.create({
     marginBottom: 10 
   },
   submitButtonDisabled: { 
-    backgroundColor: '#87CEEB' 
+    backgroundColor: '#2E7D4F' 
   },
   submitButtonText: { 
     color: '#FFF', 
@@ -2586,7 +2586,7 @@ const styles = StyleSheet.create({
   receiptHeaderTitle: { 
     fontSize: 18, 
     fontWeight: 'bold', 
-    color: '#4A90E2' 
+    color: '#C9A84C' 
   },
   receiptContent: { 
     flex: 1, 
@@ -2597,12 +2597,12 @@ const styles = StyleSheet.create({
     marginBottom: 20, 
     paddingBottom: 15, 
     borderBottomWidth: 2, 
-    borderBottomColor: '#4A90E2' 
+    borderBottomColor: '#C9A84C' 
   },
   receiptCompanyName: { 
     fontSize: 24, 
     fontWeight: 'bold', 
-    color: '#4A90E2' 
+    color: '#C9A84C' 
   },
   receiptCompanySubtitle: { 
     fontSize: 12, 
@@ -2645,7 +2645,7 @@ const styles = StyleSheet.create({
   receiptSectionTitle: { 
     fontSize: 14, 
     fontWeight: 'bold', 
-    color: '#4A90E2', 
+    color: '#C9A84C', 
     marginBottom: 12, 
     paddingBottom: 8, 
     borderBottomWidth: 1, 
@@ -2673,7 +2673,7 @@ const styles = StyleSheet.create({
     marginBottom: 20, 
     alignItems: 'center', 
     borderLeftWidth: 4, 
-    borderLeftColor: '#4A90E2' 
+    borderLeftColor: '#C9A84C' 
   },
   receiptAmountLabel: { 
     fontSize: 12, 
@@ -2683,7 +2683,7 @@ const styles = StyleSheet.create({
   receiptAmountValue: { 
     fontSize: 28, 
     fontWeight: 'bold', 
-    color: '#4A90E2' 
+    color: '#C9A84C' 
   },
   receiptFooter: { 
     alignItems: 'center', 
@@ -2703,7 +2703,7 @@ const styles = StyleSheet.create({
     marginBottom: 4 
   },
   receiptDownloadButton: { 
-    backgroundColor: '#4A90E2', 
+    backgroundColor: '#C9A84C', 
     flexDirection: 'row', 
     alignItems: 'center', 
     justifyContent: 'center', 
@@ -2721,3 +2721,5 @@ const styles = StyleSheet.create({
 });
 
 export default MyFeed;
+
+

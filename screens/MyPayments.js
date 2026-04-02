@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -392,7 +392,7 @@ Member ID: ${currentMemberId ? `MEM-${currentMemberId}` : 'N/A'}
 
 PAYMENT DETAILS
 Month: ${selectedPayment.month}
-Amount: ₹${selectedPayment.amount.toLocaleString()}
+Amount: ?${selectedPayment.amount.toLocaleString()}
 Payment Type: ${selectedPayment.type}
 Status: ${selectedPayment.status}
 Due Date: ${selectedPayment.dueDate}
@@ -427,7 +427,7 @@ This is an electronically generated receipt.
   };
 
   const handlePayNow = (payment) => {
-    Alert.alert('Make Payment', `Pay ₹${payment.amount} for ${payment.month}?`, [
+    Alert.alert('Make Payment', `Pay ?${payment.amount} for ${payment.month}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Pay Now', onPress: () => {
@@ -459,7 +459,7 @@ This is an electronically generated receipt.
       <View style={styles.paymentDetails}>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Amount:</Text>
-          <Text style={styles.detailValue}>₹{item.amount.toLocaleString()}</Text>
+          <Text style={styles.detailValue}>?{item.amount.toLocaleString()}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Due Date:</Text>
@@ -495,7 +495,7 @@ This is an electronically generated receipt.
           style={styles.receiptButton}
           onPress={() => handleViewReceipt(item)}
         >
-          <Icon name="file-document" size={18} color="#4A90E2" />
+          <Icon name="file-document" size={18} color="#C9A84C" />
           <Text style={styles.receiptButtonText}>View Receipt</Text>
         </TouchableOpacity>
       )}
@@ -505,14 +505,14 @@ This is an electronically generated receipt.
   const renderDueMonthItem = ({ item }) => (
     <View style={styles.dueMonthCard}>
       <Text style={styles.dueMonthText}>{item.Month || item.month}</Text>
-      <Text style={styles.dueAmountText}>₹{item.DueAmount || item.dueAmount}</Text>
+      <Text style={styles.dueAmountText}>?{item.DueAmount || item.dueAmount}</Text>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -524,7 +524,7 @@ This is an electronically generated receipt.
 
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color="#C9A84C" />
           <Text style={styles.loadingText}>Loading payments...</Text>
         </View>
       ) : (
@@ -537,7 +537,7 @@ This is an electronically generated receipt.
             {/* Member Info */}
             {memberName && (
               <View style={styles.memberInfoCard}>
-                <Icon name="account" size={20} color="#4A90E2" />
+                <Icon name="account" size={20} color="#C9A84C" />
                 <Text style={styles.memberInfoText}>Welcome, {memberName}</Text>
               </View>
             )}
@@ -547,12 +547,12 @@ This is an electronically generated receipt.
               <LinearGradient colors={['#4CAF50', '#66BB6A']} style={styles.summaryCard}>
                 <Icon name="check-circle" size={32} color="#FFF" />
                 <Text style={styles.summaryLabel}>Total Paid</Text>
-                <Text style={styles.summaryAmount}>₹{totalPaid.toLocaleString()}</Text>
+                <Text style={styles.summaryAmount}>?{totalPaid.toLocaleString()}</Text>
               </LinearGradient>
               <LinearGradient colors={['#FF9800', '#FFB74D']} style={styles.summaryCard}>
                 <Icon name="alert-circle" size={32} color="#FFF" />
                 <Text style={styles.summaryLabel}>Amount Due</Text>
-                <Text style={styles.summaryAmount}>₹{totalDue.toLocaleString()}</Text>
+                <Text style={styles.summaryAmount}>?{totalDue.toLocaleString()}</Text>
               </LinearGradient>
             </View>
 
@@ -589,7 +589,7 @@ This is an electronically generated receipt.
 
             {/* Info Card */}
             <View style={styles.infoCard}>
-              <Icon name="information" size={20} color="#4A90E2" />
+              <Icon name="information" size={20} color="#C9A84C" />
               <Text style={styles.infoText}>
                 All payments must be made by the due date. Late payments may incur additional charges.
                 Receipts are automatically generated upon successful payment.
@@ -619,9 +619,9 @@ This is an electronically generated receipt.
             <ScrollView style={styles.modalContent}>
               {/* Amount */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Amount (₹) *</Text>
+                <Text style={styles.formLabel}>Amount (?) *</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="currency-inr" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="currency-inr" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <SpeechToTextInput
                     style={styles.input}
                     placeholder="e.g., 5000"
@@ -637,7 +637,7 @@ This is an electronically generated receipt.
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Payment Method *</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="credit-card" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="credit-card" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <SpeechToTextInput
                     style={styles.input}
                     placeholder="e.g., UPI, Credit Card, Net Banking"
@@ -655,7 +655,7 @@ This is an electronically generated receipt.
                   style={styles.dateInputContainer}
                   onPress={() => setShowPaymentDatePicker(true)}
                 >
-                  <Icon name="calendar" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="calendar" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <Text style={styles.dateText}>
                     {paymentForm.paymentDate.toDateString()}
                   </Text>
@@ -674,7 +674,7 @@ This is an electronically generated receipt.
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Transaction ID *</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="barcode" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="barcode" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <SpeechToTextInput
                     style={styles.input}
                     placeholder="e.g., TXN123456789"
@@ -693,7 +693,7 @@ This is an electronically generated receipt.
                   Enter month abbreviation (e.g., Jan, Feb, Mar)
                 </Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="calendar-month" size={18} color="#4A90E2" style={styles.inputIcon} />
+                  <Icon name="calendar-month" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <SpeechToTextInput
                     style={styles.input}
                     placeholder="e.g., Jan"
@@ -747,7 +747,7 @@ This is an electronically generated receipt.
               </TouchableOpacity>
               <Text style={styles.receiptHeaderTitle}>Payment Receipt</Text>
               <TouchableOpacity onPress={handleDownloadReceipt}>
-                <Icon name="download" size={24} color="#4A90E2" />
+                <Icon name="download" size={24} color="#C9A84C" />
               </TouchableOpacity>
             </View>
 
@@ -799,7 +799,7 @@ This is an electronically generated receipt.
                 </View>
                 <View style={styles.receiptDetailRow}>
                   <Text style={styles.receiptDetailLabel}>Amount:</Text>
-                  <Text style={styles.receiptDetailValue}>₹{selectedPayment?.amount?.toLocaleString() || '0'}</Text>
+                  <Text style={styles.receiptDetailValue}>?{selectedPayment?.amount?.toLocaleString() || '0'}</Text>
                 </View>
                 <View style={styles.receiptDetailRow}>
                   <Text style={styles.receiptDetailLabel}>Payment Method:</Text>
@@ -817,7 +817,7 @@ This is an electronically generated receipt.
 
               <View style={styles.receiptAmountBox}>
                 <Text style={styles.receiptAmountLabel}>Total Amount Paid</Text>
-                <Text style={styles.receiptAmountValue}>₹{selectedPayment?.amount?.toLocaleString() || '0'}</Text>
+                <Text style={styles.receiptAmountValue}>?{selectedPayment?.amount?.toLocaleString() || '0'}</Text>
               </View>
 
               <View style={styles.receiptSection}>
@@ -861,7 +861,7 @@ const styles = StyleSheet.create({
   backgroundImageStyle: { opacity: 0.1 },
   content: { flex: 1, padding: 15 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, color: '#4A90E2', fontSize: 14 },
+  loadingText: { marginTop: 10, color: '#C9A84C', fontSize: 14 },
 
   memberInfoCard: {
     flexDirection: 'row',
@@ -871,7 +871,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 15,
     borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   memberInfoText: { marginLeft: 10, fontSize: 14, fontWeight: '600', color: '#1976D2' },
 
@@ -896,7 +896,7 @@ const styles = StyleSheet.create({
   dueAmountText: { fontSize: 16, fontWeight: 'bold', color: '#FF9800' },
 
   historySection: { marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#4A90E2', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#C9A84C', marginBottom: 12 },
 
   emptyState: { alignItems: 'center', padding: 40 },
   emptyStateText: { marginTop: 10, color: '#999', fontSize: 14 },
@@ -912,7 +912,7 @@ const styles = StyleSheet.create({
   detailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   detailLabel: { fontSize: 13, color: '#666' },
   detailValue: { fontSize: 13, fontWeight: '600', color: '#333' },
-  payButton: { backgroundColor: '#4A90E2', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8 },
+  payButton: { backgroundColor: '#C9A84C', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8 },
   payButtonText: { color: '#FFF', fontSize: 14, fontWeight: '600', marginLeft: 8 },
   receiptButton: { backgroundColor: '#E3F2FD', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8 },
   pendingConfirmBanner: {
@@ -932,7 +932,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     flex: 1,
   },
-  receiptButtonText: { color: '#4A90E2', fontSize: 14, fontWeight: '600', marginLeft: 8 },
+  receiptButtonText: { color: '#C9A84C', fontSize: 14, fontWeight: '600', marginLeft: 8 },
 
   infoCard: { flexDirection: 'row', backgroundColor: '#E3F2FD', padding: 15, borderRadius: 12, marginBottom: 20 },
   infoText: { flex: 1, fontSize: 13, color: '#1976D2', marginLeft: 10, lineHeight: 20 },
@@ -941,18 +941,18 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'flex-end' },
   modalContainer: { backgroundColor: '#FFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#4A90E2' },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#C9A84C' },
   modalContent: { padding: 20 },
   formGroup: { marginBottom: 18 },
-  formLabel: { fontSize: 14, fontWeight: '600', color: '#4A90E2', marginBottom: 8 },
+  formLabel: { fontSize: 14, fontWeight: '600', color: '#C9A84C', marginBottom: 8 },
   formHint: { fontSize: 11, color: '#999', marginBottom: 4, fontStyle: 'italic' },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', borderRadius: 10, borderWidth: 1, borderColor: '#87CEEB', paddingHorizontal: 12, minHeight: 45 },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', borderRadius: 10, borderWidth: 1, borderColor: '#2E7D4F', paddingHorizontal: 12, minHeight: 45 },
   inputIcon: { marginRight: 8 },
   input: { flex: 1, fontSize: 14, color: '#333', paddingVertical: 10 },
-  dateInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', borderRadius: 10, borderWidth: 1, borderColor: '#87CEEB', paddingHorizontal: 12, minHeight: 45 },
+  dateInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', borderRadius: 10, borderWidth: 1, borderColor: '#2E7D4F', paddingHorizontal: 12, minHeight: 45 },
   dateText: { flex: 1, fontSize: 14, color: '#333', marginLeft: 8 },
-  submitButton: { backgroundColor: '#4A90E2', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 10, marginTop: 20, marginBottom: 10 },
-  submitButtonDisabled: { backgroundColor: '#87CEEB' },
+  submitButton: { backgroundColor: '#C9A84C', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, borderRadius: 10, marginTop: 20, marginBottom: 10 },
+  submitButtonDisabled: { backgroundColor: '#2E7D4F' },
   submitButtonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold', marginLeft: 8 },
   cancelButton: { backgroundColor: '#E0E0E0', padding: 14, borderRadius: 10, alignItems: 'center', marginBottom: 20 },
   cancelButtonText: { color: '#666', fontSize: 15, fontWeight: '600' },
@@ -961,11 +961,11 @@ const styles = StyleSheet.create({
   receiptModalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)' },
   receiptModalContainer: { flex: 1, backgroundColor: '#FFF', marginTop: 40, borderTopLeftRadius: 20, borderTopRightRadius: 20 },
   receiptHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#E0E0E0' },
-  receiptHeaderTitle: { fontSize: 18, fontWeight: 'bold', color: '#4A90E2' },
+  receiptHeaderTitle: { fontSize: 18, fontWeight: 'bold', color: '#C9A84C' },
   receiptContent: { flex: 1, padding: 20 },
-  receiptLogoSection: { alignItems: 'center', marginBottom: 20, paddingBottom: 15, borderBottomWidth: 2, borderBottomColor: '#4A90E2' },
+  receiptLogoSection: { alignItems: 'center', marginBottom: 20, paddingBottom: 15, borderBottomWidth: 2, borderBottomColor: '#C9A84C' },
   receiptLogo: { width: 80, height: 80, marginBottom: 10 },
-  receiptCompanyName: { fontSize: 24, fontWeight: 'bold', color: '#4A90E2' },
+  receiptCompanyName: { fontSize: 24, fontWeight: 'bold', color: '#C9A84C' },
   receiptCompanySubtitle: { fontSize: 12, color: '#666', marginTop: 4 },
   receiptTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 20 },
   receiptInfoRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
@@ -974,19 +974,20 @@ const styles = StyleSheet.create({
   receiptInfoValue: { fontSize: 14, fontWeight: 'bold', color: '#333' },
   receiptDivider: { height: 1, backgroundColor: '#E0E0E0', marginVertical: 15 },
   receiptSection: { marginBottom: 20 },
-  receiptSectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#4A90E2', marginBottom: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#E3F2FD' },
+  receiptSectionTitle: { fontSize: 14, fontWeight: 'bold', color: '#C9A84C', marginBottom: 12, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#E3F2FD' },
   receiptDetailRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   receiptDetailLabel: { fontSize: 13, color: '#666', fontWeight: '500' },
   receiptDetailValue: { fontSize: 13, color: '#333', fontWeight: '600' },
-  receiptAmountBox: { backgroundColor: '#E3F2FD', padding: 15, borderRadius: 10, marginBottom: 20, alignItems: 'center', borderLeftWidth: 4, borderLeftColor: '#4A90E2' },
+  receiptAmountBox: { backgroundColor: '#E3F2FD', padding: 15, borderRadius: 10, marginBottom: 20, alignItems: 'center', borderLeftWidth: 4, borderLeftColor: '#C9A84C' },
   receiptAmountLabel: { fontSize: 12, color: '#666', marginBottom: 8 },
-  receiptAmountValue: { fontSize: 28, fontWeight: 'bold', color: '#4A90E2' },
+  receiptAmountValue: { fontSize: 28, fontWeight: 'bold', color: '#C9A84C' },
   receiptFooter: { alignItems: 'center', paddingVertical: 20, borderTopWidth: 1, borderTopColor: '#E0E0E0' },
   receiptFooterText: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
   receiptFooterSubtext: { fontSize: 11, color: '#999', marginBottom: 4 },
-  receiptDownloadButton: { backgroundColor: '#4A90E2', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, marginHorizontal: 20, marginBottom: 20, borderRadius: 10 },
+  receiptDownloadButton: { backgroundColor: '#C9A84C', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 14, marginHorizontal: 20, marginBottom: 20, borderRadius: 10 },
   receiptDownloadButtonText: { color: '#FFF', fontSize: 15, fontWeight: 'bold', marginLeft: 8 },
 });
 
 export default MyPayments;
+
 

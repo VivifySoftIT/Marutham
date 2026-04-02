@@ -182,10 +182,10 @@ const AttendanceUploadScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#212c62" />
+      <StatusBar barStyle="light-content" backgroundColor="#1B5E35" />
 
       {/* Header */}
-      <LinearGradient colors={['#212c62', '#1a1f47']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#1a1f47']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="white" />
@@ -203,7 +203,7 @@ const AttendanceUploadScreen = () => {
             style={styles.dateButton}
             onPress={() => setShowDatePicker(true)}
           >
-            <Icon name="calendar" size={20} color="#4A90E2" />
+            <Icon name="calendar" size={20} color="#C9A84C" />
             <Text style={styles.dateButtonText}>
               {selectedDate.toLocaleDateString()}
             </Text>
@@ -249,7 +249,7 @@ const AttendanceUploadScreen = () => {
                 style={styles.previewButton}
                 onPress={() => setShowPreview(true)}
               >
-                <Icon name="eye" size={18} color="#4A90E2" />
+                <Icon name="eye" size={18} color="#C9A84C" />
               </TouchableOpacity>
             </View>
 
@@ -315,7 +315,7 @@ const AttendanceUploadScreen = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Members Preview</Text>
               <TouchableOpacity onPress={() => setShowPreview(false)}>
-                <Icon name="close" size={24} color="#212c62" />
+                <Icon name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
             <FlatList
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 12,
   },
   dateButton: {
@@ -387,18 +387,18 @@ const styles = StyleSheet.create({
   dateButtonText: {
     marginLeft: 12,
     fontSize: 16,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '500',
   },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingVertical: 16,
     borderRadius: 12,
     elevation: 3,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 4,
   },
   memberDetails: {
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginVertical: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   summaryItem: {
     alignItems: 'center',
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   saveButton: {
     flexDirection: 'row',
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginTop: 16,
   },
   emptyStateSubtext: {
@@ -545,7 +545,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   previewItem: {
     paddingVertical: 12,
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
   previewName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 4,
   },
   previewDetails: {
@@ -566,3 +566,4 @@ const styles = StyleSheet.create({
 });
 
 export default AttendanceUploadScreen;
+

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -319,8 +319,8 @@ const PaymentDetails = () => {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return '₹0';
-    return `₹${parseFloat(amount).toLocaleString('en-IN', {
+    if (!amount) return '?0';
+    return `?${parseFloat(amount).toLocaleString('en-IN', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     })}`;
@@ -338,8 +338,8 @@ const PaymentDetails = () => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
-        <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+        <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
+        <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="#FFF" />
           </TouchableOpacity>
@@ -347,7 +347,7 @@ const PaymentDetails = () => {
           <View style={{ width: 24 }} />
         </LinearGradient>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4A90E2" />
+          <ActivityIndicator size="large" color="#C9A84C" />
           <Text style={styles.loadingText}>{t('loadingData')}</Text>
         </View>
       </SafeAreaView>
@@ -356,10 +356,10 @@ const PaymentDetails = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
       {/* Enhanced Header */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
@@ -400,8 +400,8 @@ const PaymentDetails = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#4A90E2"
-            colors={['#4A90E2']}
+            tintColor="#C9A84C"
+            colors={['#C9A84C']}
           />
         }
       >
@@ -414,7 +414,7 @@ const PaymentDetails = () => {
             activeOpacity={0.7}
           >
             <View style={styles.selectionButtonContent}>
-              <Icon name="account-circle" size={24} color="#4A90E2" />
+              <Icon name="account-circle" size={24} color="#C9A84C" />
               <View style={styles.selectionTextContainer}>
                 <Text style={styles.selectionName}>
                   {memberData?.name || t('selectMember')}
@@ -423,7 +423,7 @@ const PaymentDetails = () => {
                   {memberData ? t('tapToChangeMember') : t('tapToSelectMember')}
                 </Text>
               </View>
-              <Icon name="chevron-right" size={24} color="#4A90E2" />
+              <Icon name="chevron-right" size={24} color="#C9A84C" />
             </View>
           </TouchableOpacity>
         </View>
@@ -432,7 +432,7 @@ const PaymentDetails = () => {
         {memberData && (
           <View style={styles.memberCard}>
             <LinearGradient
-              colors={['#4A90E2', '#87CEEB']}
+              colors={['#C9A84C', '#2E7D4F']}
               style={styles.memberCardGradient}
             >
               <View style={styles.memberCardHeader}>
@@ -543,7 +543,7 @@ const PaymentDetails = () => {
                   {/* Member Name Row - always show */}
                   {(payment.memberName || memberData?.name) ? (
                     <View style={styles.paymentMemberRow}>
-                      <Icon name="account" size={16} color="#4A90E2" />
+                      <Icon name="account" size={16} color="#C9A84C" />
                       <Text style={styles.paymentMemberName}>{payment.memberName || memberData?.name}</Text>
                     </View>
                   ) : null}
@@ -650,7 +650,7 @@ const PaymentDetails = () => {
             <ScrollView style={{ padding: 16 }}>
               {memberData && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#E3F2FD', borderRadius: 10, padding: 10, marginBottom: 14 }}>
-                  <Icon name="account" size={18} color="#4A90E2" />
+                  <Icon name="account" size={18} color="#C9A84C" />
                   <Text style={{ marginLeft: 8, fontWeight: '600', color: '#1976D2', fontSize: 14 }}>{memberData.name}</Text>
                 </View>
               )}
@@ -751,14 +751,14 @@ const PaymentDetails = () => {
                   animateContent();
                 }}
               >
-                <View style={[styles.modalMemberAvatar, { backgroundColor: '#4A90E2' }]}>
+                <View style={[styles.modalMemberAvatar, { backgroundColor: '#C9A84C' }]}>
                   <Icon name="account-group" size={20} color="#FFF" />
                 </View>
                 <View style={styles.modalMemberInfo}>
-                  <Text style={[styles.modalMemberName, { color: '#4A90E2', fontWeight: '700' }]}>All Members</Text>
+                  <Text style={[styles.modalMemberName, { color: '#C9A84C', fontWeight: '700' }]}>All Members</Text>
                   <Text style={styles.modalMemberDetails}>View payments for all members</Text>
                 </View>
-                {!selectedMemberId && <Icon name="check-circle" size={24} color="#4A90E2" />}
+                {!selectedMemberId && <Icon name="check-circle" size={24} color="#C9A84C" />}
               </TouchableOpacity>
 
               {filteredMembers.map((member) => (
@@ -776,11 +776,11 @@ const PaymentDetails = () => {
                   <View style={styles.modalMemberInfo}>
                     <Text style={styles.modalMemberName}>{member.name}</Text>
                     <Text style={styles.modalMemberDetails}>
-                      {member.memberId}  •  {member.phone}
+                      {member.memberId}  �  {member.phone}
                     </Text>
                   </View>
                   {selectedMemberId === member.id && (
-                    <Icon name="check-circle" size={24} color="#4A90E2" />
+                    <Icon name="check-circle" size={24} color="#C9A84C" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -889,7 +889,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     elevation: 8,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.2,
     shadowRadius: 16,
@@ -1041,7 +1041,7 @@ const styles = StyleSheet.create({
   historyCount: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   paymentCard: {
     backgroundColor: '#FFF',
@@ -1064,7 +1064,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 12,
     borderLeftWidth: 3,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   paymentMemberName: {
     marginLeft: 8,
@@ -1180,7 +1180,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     elevation: 8,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -1298,7 +1298,7 @@ const styles = StyleSheet.create({
   confirmBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
@@ -1352,8 +1352,8 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   monthChipActive: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
+    borderColor: '#C9A84C',
   },
   monthChipText: {
     fontSize: 12,
@@ -1382,6 +1382,7 @@ const styles = StyleSheet.create({
 });
 
 export default PaymentDetails;
+
 
 
 

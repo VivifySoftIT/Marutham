@@ -449,9 +449,9 @@ const ReferralSlip = ({ route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -480,7 +480,7 @@ const ReferralSlip = ({ route }) => {
 
             {selectedMember && (
               <View style={styles.preSelectedMemberBanner}>
-                <Icon name="information" size={20} color="#4A90E2" />
+                <Icon name="information" size={20} color="#C9A84C" />
                 <Text style={styles.preSelectedMemberText}>
                   {t('referralFor')}: <Text style={styles.preSelectedMemberName}>{selectedMember.name}</Text>
                 </Text>
@@ -495,17 +495,17 @@ const ReferralSlip = ({ route }) => {
                 style={styles.memberDropdownButton}
                 onPress={() => setShowMemberDropdown(!showMemberDropdown)}
               >
-                <Icon name="account" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="account" size={20} color="#C9A84C" style={styles.icon} />
                 <Text style={[styles.input, { color: formData.memberName ? '#333' : '#999' }]}>
                   {formData.memberName || t('selectMember')}
                 </Text>
-                <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#4A90E2" />
+                <Icon name={showMemberDropdown ? 'chevron-up' : 'chevron-down'} size={20} color="#C9A84C" />
               </TouchableOpacity>
 
               {showMemberDropdown && (
                 <View style={styles.memberDropdownList}>
                   <View style={styles.searchContainer}>
-                    <Icon name="magnify" size={20} color="#4A90E2" />
+                    <Icon name="magnify" size={20} color="#C9A84C" />
                     <SpeechToTextInput
                       style={styles.searchInput}
                       inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingLeft: 10, paddingVertical: 4 }}
@@ -534,7 +534,7 @@ const ReferralSlip = ({ route }) => {
                   <ScrollView style={styles.memberScrollView} nestedScrollEnabled={true}>
                     {loadingMembers ? (
                       <View style={styles.noMembersContainer}>
-                        <ActivityIndicator size="small" color="#4A90E2" />
+                        <ActivityIndicator size="small" color="#C9A84C" />
                         <Text style={styles.noMembersText}>{t('loadingMembers')}</Text>
                       </View>
                     ) : allMembers && allMembers.length > 0 ? (
@@ -570,7 +570,7 @@ const ReferralSlip = ({ route }) => {
                               )}
                             </View>
                             {formData.memberId === member.id && (
-                              <Icon name="check" size={20} color="#4A90E2" />
+                              <Icon name="check" size={20} color="#C9A84C" />
                             )}
                           </TouchableOpacity>
                         ))
@@ -596,7 +596,7 @@ const ReferralSlip = ({ route }) => {
                   <Icon
                     name={formData.referralType === 'inside' ? 'radiobox-marked' : 'radiobox-blank'}
                     size={20}
-                    color="#4A90E2"
+                    color="#C9A84C"
                   />
                   <Text style={styles.radioLabel}>{t('inside')}</Text>
                 </TouchableOpacity>
@@ -607,7 +607,7 @@ const ReferralSlip = ({ route }) => {
                   <Icon
                     name={formData.referralType === 'outside' ? 'radiobox-marked' : 'radiobox-blank'}
                     size={20}
-                    color="#4A90E2"
+                    color="#C9A84C"
                   />
                   <Text style={styles.radioLabel}>{t('outside')}</Text>
                 </TouchableOpacity>
@@ -625,7 +625,7 @@ const ReferralSlip = ({ route }) => {
                   <Icon
                     name={formData.referralCategory === 'Business' ? 'radiobox-marked' : 'radiobox-blank'}
                     size={20}
-                    color="#4A90E2"
+                    color="#C9A84C"
                   />
                   <Text style={styles.radioLabel}>{t('business')}</Text>
                 </TouchableOpacity>
@@ -636,7 +636,7 @@ const ReferralSlip = ({ route }) => {
                   <Icon
                     name={formData.referralCategory === 'Personal' ? 'radiobox-marked' : 'radiobox-blank'}
                     size={20}
-                    color="#4A90E2"
+                    color="#C9A84C"
                   />
                   <Text style={styles.radioLabel}>{t('personal')}</Text>
                 </TouchableOpacity>
@@ -648,7 +648,7 @@ const ReferralSlip = ({ route }) => {
               <View style={styles.section}>
                 <Text style={styles.label}>{t('Company or Client Name')}</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="account-tie" size={20} color="#4A90E2" style={styles.icon} />
+                  <Icon name="account-tie" size={20} color="#C9A84C" style={styles.icon} />
                   <SpeechToTextInput
                     style={styles.input}
                     inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingVertical: 4 }}
@@ -666,7 +666,7 @@ const ReferralSlip = ({ route }) => {
               <View style={styles.section}>
                 <Text style={styles.label}>{t('mobileNumber')}</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="phone" size={20} color="#4A90E2" style={styles.icon} />
+                  <Icon name="phone" size={20} color="#C9A84C" style={styles.icon} />
                   <SpeechToTextInput
                     style={styles.input}
                     inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingVertical: 4 }}
@@ -686,7 +686,7 @@ const ReferralSlip = ({ route }) => {
               <View style={styles.section}>
                 <Text style={styles.label}>{t('email')}</Text>
                 <View style={styles.inputContainer}>
-                  <Icon name="email" size={20} color="#4A90E2" style={styles.icon} />
+                  <Icon name="email" size={20} color="#C9A84C" style={styles.icon} />
                   <SpeechToTextInput
                     style={styles.input}
                     inputStyle={{ borderBottomWidth: 0, borderWidth: 0, paddingVertical: 4 }}
@@ -771,7 +771,7 @@ const ReferralSlip = ({ route }) => {
         <View style={styles.successOverlay}>
           <View style={styles.successCard}>
             <LinearGradient
-              colors={['#4A90E2', '#87CEEB']}
+              colors={['#C9A84C', '#2E7D4F']}
               style={styles.successHeader}
             >
               <Icon name="check-circle" size={60} color="#FFF" />
@@ -862,11 +862,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     borderLeftWidth: 4,
-    borderLeftColor: '#4A90E2',
+    borderLeftColor: '#C9A84C',
   },
   preSelectedMemberText: {
     fontSize: 14,
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginLeft: 8,
     flex: 1,
   },
@@ -880,7 +880,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 4,
   },
   inputContainer: {
@@ -983,7 +983,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
@@ -1022,7 +1022,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   selectedMemberInfo: {
     flexDirection: 'row',
@@ -1033,7 +1033,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -1137,7 +1137,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   confirmButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1147,7 +1147,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   confirmButtonDisabled: {
-    backgroundColor: '#87CEEB',
+    backgroundColor: '#2E7D4F',
   },
   confirmButtonText: {
     color: '#FFF',
@@ -1207,7 +1207,7 @@ const styles = StyleSheet.create({
   successLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     flex: 1,
   },
   successValue: {
@@ -1232,11 +1232,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: '#87CEEB',
+    backgroundColor: '#2E7D4F',
     gap: 6,
   },
   successButtonPrimary: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
   },
   successButtonText: {
     color: '#FFF',

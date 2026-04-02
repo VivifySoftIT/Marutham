@@ -207,10 +207,10 @@ const ExcelViewerScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#212c62" />
+      <StatusBar barStyle="light-content" backgroundColor="#1B5E35" />
 
       {/* Header */}
-      <LinearGradient colors={['#212c62', '#1a1f47']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#1a1f47']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="white" />
@@ -252,7 +252,7 @@ const ExcelViewerScreen = ({ navigation }) => {
             <View style={styles.section}>
               <View style={styles.infoGrid}>
                 <View style={styles.infoCard}>
-                  <Icon name="table-large" size={24} color="#4A90E2" />
+                  <Icon name="table-large" size={24} color="#C9A84C" />
                   <Text style={styles.infoValue}>{rows.length}</Text>
                   <Text style={styles.infoLabel}>Rows</Text>
                 </View>
@@ -294,7 +294,7 @@ const ExcelViewerScreen = ({ navigation }) => {
               <View style={styles.columnsGrid}>
                 {columns.map((col, idx) => (
                   <View key={idx} style={styles.columnTag}>
-                    <Icon name="table-column" size={14} color="#4A90E2" />
+                    <Icon name="table-column" size={14} color="#C9A84C" />
                     <Text style={styles.columnTagText} numberOfLines={1}>{col}</Text>
                   </View>
                 ))}
@@ -406,7 +406,7 @@ const ExcelViewerScreen = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Row #{selectedRow?.id} Details</Text>
               <TouchableOpacity onPress={() => setShowRowDetail(false)}>
-                <Icon name="close" size={24} color="#212c62" />
+                <Icon name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -463,18 +463,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 12,
   },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingVertical: 16,
     borderRadius: 12,
     elevation: 3,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
     marginTop: 8,
   },
   infoLabel: {
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
   columnTagText: {
     marginLeft: 6,
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   viewDescription: {
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
   },
   previewValue: {
     fontSize: 13,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '500',
   },
   tableRow: {
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
     width: 120,
     paddingHorizontal: 8,
     paddingVertical: 12,
-    backgroundColor: '#212c62',
+    backgroundColor: '#1B5E35',
     justifyContent: 'center',
     borderRightWidth: 1,
     borderRightColor: '#E0E0E0',
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
   },
   tableCellText: {
     fontSize: 12,
-    color: '#212c62',
+    color: '#1B5E35',
   },
   moreRowsText: {
     fontSize: 12,
@@ -660,7 +660,7 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginTop: 16,
   },
   emptyStateSubtext: {
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   modalBody: {
     flex: 1,
@@ -711,9 +711,10 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 14,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '500',
   },
 });
 
 export default ExcelViewerScreen;
+

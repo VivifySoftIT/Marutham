@@ -481,10 +481,10 @@ const Messages = ({ navigation }) => {
         onRequestClose={() => setShowComposeModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+          <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
           {/* Modal Header */}
-          <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.modalHeader}>
+          <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.modalHeader}>
             <TouchableOpacity onPress={() => setShowComposeModal(false)}>
               <Icon name="close" size={24} color="#FFF" />
             </TouchableOpacity>
@@ -524,7 +524,7 @@ const Messages = ({ navigation }) => {
                   <Icon 
                     name="account" 
                     size={currentLanguage === 'ta' ? 18 : 20} 
-                    color={formData.recipientType === 'member' ? '#FFF' : '#4A90E2'} 
+                    color={formData.recipientType === 'member' ? '#FFF' : '#C9A84C'} 
                     style={styles.recipientTypeIcon}
                   />
                   <Text style={[
@@ -550,7 +550,7 @@ const Messages = ({ navigation }) => {
                   <Icon 
                     name="account-multiple" 
                     size={currentLanguage === 'ta' ? 18 : 20} 
-                    color={formData.recipientType === 'all' ? '#FFF' : '#4A90E2'} 
+                    color={formData.recipientType === 'all' ? '#FFF' : '#C9A84C'} 
                     style={styles.recipientTypeIcon}
                   />
                   <Text style={[
@@ -572,13 +572,13 @@ const Messages = ({ navigation }) => {
                   style={styles.memberSelectionButton}
                   onPress={() => setShowMemberSelectionModal(true)}
                 >
-                  <Icon name="account-multiple" size={20} color="#4A90E2" style={styles.icon} />
+                  <Icon name="account-multiple" size={20} color="#C9A84C" style={styles.icon} />
                   <Text style={[styles.input, { color: selectedMembers.length > 0 ? '#333' : '#999' }]}>
                     {selectedMembers.length > 0 
                       ? `${selectedMembers.length} ${t('member')}${selectedMembers.length > 1 ? 's' : ''} ${t('selected')}`
                       : t('tapToSelectMembers') || 'Tap to select members'}
                   </Text>
-                  <Icon name="chevron-right" size={20} color="#4A90E2" />
+                  <Icon name="chevron-right" size={20} color="#C9A84C" />
                 </TouchableOpacity>
                 
                 {selectedMembers.length > 0 && (
@@ -620,7 +620,7 @@ const Messages = ({ navigation }) => {
                 <View style={styles.dateInputRow}>
                   {/* Text Input for manual entry */}
                   <View style={[styles.inputContainer, { flex: 1 }]}>
-                    <Icon name="calendar" size={20} color="#4A90E2" style={styles.icon} />
+                    <Icon name="calendar" size={20} color="#C9A84C" style={styles.icon} />
                     <TextInput
                       style={styles.input}
                       placeholder={t('dateFormatPlaceholder') || 'YYYY-MM-DD (e.g., 2025-02-15)'}
@@ -741,7 +741,7 @@ const Messages = ({ navigation }) => {
                     <View style={styles.paymentPeriodItem}>
                       <Text style={styles.paymentPeriodLabel}>{t('month')}</Text>
                       <View style={styles.pickerContainer}>
-                        <Icon name="calendar-month" size={20} color="#4A90E2" style={styles.pickerIcon} />
+                        <Icon name="calendar-month" size={20} color="#C9A84C" style={styles.pickerIcon} />
                         <Picker
                           selectedValue={formData.paymentMonth}
                           onValueChange={(value) => handleInputChange('paymentMonth', value)}
@@ -767,7 +767,7 @@ const Messages = ({ navigation }) => {
                     <View style={styles.paymentPeriodItem}>
                       <Text style={styles.paymentPeriodLabel}>{t('year')}</Text>
                       <View style={styles.pickerContainer}>
-                        <Icon name="calendar" size={20} color="#4A90E2" style={styles.pickerIcon} />
+                        <Icon name="calendar" size={20} color="#C9A84C" style={styles.pickerIcon} />
                         <Picker
                           selectedValue={formData.paymentYear}
                           onValueChange={(value) => handleInputChange('paymentYear', value)}
@@ -793,7 +793,7 @@ const Messages = ({ navigation }) => {
             <View style={styles.section}>
               <Text style={styles.label}>{t('subject')} *</Text>
               <View style={styles.inputContainer}>
-                <Icon name="format-title" size={20} color="#4A90E2" style={styles.icon} />
+                <Icon name="format-title" size={20} color="#C9A84C" style={styles.icon} />
                 <TextInput
                   style={styles.input}
                   placeholder={t('enterSubject') || 'Enter subject'}
@@ -863,10 +863,10 @@ const Messages = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -877,7 +877,7 @@ const Messages = ({ navigation }) => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Info Card */}
         <View style={styles.infoCard}>
-          <Icon name="information" size={20} color="#4A90E2" />
+          <Icon name="information" size={20} color="#C9A84C" />
           <Text style={styles.infoText}>
             {t('selectTemplateToSendMessages') || 'Select a template to send messages to members. Payment Reminder automatically sends to unpaid members.'}
           </Text>
@@ -900,7 +900,7 @@ const Messages = ({ navigation }) => {
         {/* Quick Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
-            <Icon name="email-send" size={24} color="#4A90E2" />
+            <Icon name="email-send" size={24} color="#C9A84C" />
             <Text style={[
               styles.statLabel, 
               currentLanguage === 'ta' && styles.statLabelTamil
@@ -971,10 +971,10 @@ const Messages = ({ navigation }) => {
         }}
       >
         <SafeAreaView style={styles.memberSelectionModalContainer}>
-          <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+          <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
           {/* Modal Header */}
-          <LinearGradient colors={['#4A90E2', '#87CEEB']} style={[
+          <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={[
             styles.modalHeader,
             currentLanguage === 'ta' && styles.modalHeaderTamil
           ]}>
@@ -1033,7 +1033,7 @@ const Messages = ({ navigation }) => {
 
           {/* Selected Count */}
           <View style={styles.selectedCountContainer}>
-            <Icon name="account-check" size={20} color="#4A90E2" />
+            <Icon name="account-check" size={20} color="#C9A84C" />
             <Text style={styles.selectedCountText}>
               {selectedMembers.length} {t('member')}{selectedMembers.length !== 1 ? 's' : ''} {t('selected')}
               {memberSearchQuery.trim() && (
@@ -1048,7 +1048,7 @@ const Messages = ({ navigation }) => {
           {/* Search Bar */}
           <View style={styles.searchContainer}>
             <View style={styles.searchInputContainer}>
-              <Icon name="magnify" size={20} color="#4A90E2" style={styles.searchIcon} />
+              <Icon name="magnify" size={20} color="#C9A84C" style={styles.searchIcon} />
               <TextInput
                 style={styles.searchInput}
                 placeholder={t('searchMembersByNameEmailPhone')}
@@ -1070,7 +1070,7 @@ const Messages = ({ navigation }) => {
           {/* Members List */}
           {loadingMembers ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4A90E2" />
+              <ActivityIndicator size="large" color="#C9A84C" />
               <Text style={styles.loadingText}>{t('loadingMembers')}</Text>
             </View>
           ) : (
@@ -1095,7 +1095,7 @@ const Messages = ({ navigation }) => {
                         </Text>
                       </View>
                     </View>
-                    {isSelected && <Icon name="check-circle" size={24} color="#4A90E2" />}
+                    {isSelected && <Icon name="check-circle" size={24} color="#C9A84C" />}
                   </TouchableOpacity>
                 );
               }}
@@ -1176,7 +1176,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 12,
     marginTop: 10,
   },
@@ -1254,7 +1254,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginTop: 4,
   },
   // Modal Styles
@@ -1324,7 +1324,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 8,
   },
   labelTamil: {
@@ -1346,7 +1346,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#FFF',
     borderWidth: 2,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     gap: 8,
     minHeight: 48,
   },
@@ -1357,13 +1357,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   recipientTypeButtonActive: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
+    borderColor: '#C9A84C',
   },
   recipientTypeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     textAlign: 'center',
     flexShrink: 1,
   },
@@ -1419,7 +1419,7 @@ const styles = StyleSheet.create({
   },
   attachmentButtonText: {
     fontSize: 14,
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginLeft: 10,
     fontWeight: '500',
   },
@@ -1442,7 +1442,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   sendButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1507,7 +1507,7 @@ const styles = StyleSheet.create({
   templateModalCloseText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   memberDropdownButton: {
     flexDirection: 'row',
@@ -1630,7 +1630,7 @@ const styles = StyleSheet.create({
   },
   memberSelectionModalContainer: {
     flex: 1,
-    backgroundColor: '#87CEEB',
+    backgroundColor: '#2E7D4F',
     marginTop: 50,
   },
   selectAllText: {
@@ -1759,8 +1759,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxSelected: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
+    borderColor: '#C9A84C',
   },
   memberInfo: {
     flex: 1,
@@ -1776,7 +1776,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   doneButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     paddingVertical: 15,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1817,7 +1817,7 @@ const styles = StyleSheet.create({
   },
   paymentPeriodHint: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginTop: 8,
     fontWeight: '600',
   },
@@ -1833,14 +1833,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   calendarButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     width: 50,
     height: 50,
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 2,
-    shadowColor: '#4A90E2',
+    shadowColor: '#C9A84C',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
@@ -1892,7 +1892,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
   },
   datePickerConfirmButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
   },
   datePickerCancelText: {
     fontSize: 16,

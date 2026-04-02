@@ -408,10 +408,10 @@ const NewMember = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#C9A84C" barStyle="light-content" />
 
       {/* Header - MembersDirectory Style */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#C9A84C', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -516,7 +516,7 @@ const NewMember = () => {
           <Text style={styles.label}>{t('dateOfBirth')}</Text>
           <Text style={styles.dateHelperText}>{t('formatYYYYMMDD')}</Text>
           <View style={styles.inputContainer}>
-            <Icon name="cake" size={18} color="#4A90E2" style={styles.inputIcon} />
+            <Icon name="cake" size={18} color="#C9A84C" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder={t('dobPlaceholder')}
@@ -532,7 +532,7 @@ const NewMember = () => {
               onPress={openDOBDatePicker}
               disabled={loading}
             >
-              <Icon name="calendar-month" size={20} color="#4A90E2" />
+              <Icon name="calendar-month" size={20} color="#C9A84C" />
             </TouchableOpacity>
           </View>
         </View>
@@ -542,7 +542,7 @@ const NewMember = () => {
           <Text style={styles.label}>{t('joiningDate')} *</Text>
           <Text style={styles.dateHelperText}>{t('formatYYYYMMDD')}</Text>
           <View style={styles.inputContainer}>
-            <Icon name="calendar" size={18} color="#4A90E2" style={styles.inputIcon} />
+            <Icon name="calendar" size={18} color="#C9A84C" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
               placeholder={t('dobPlaceholder')}
@@ -558,7 +558,7 @@ const NewMember = () => {
               onPress={openJoiningDatePicker}
               disabled={loading}
             >
-              <Icon name="calendar-month" size={20} color="#4A90E2" />
+              <Icon name="calendar-month" size={20} color="#C9A84C" />
             </TouchableOpacity>
           </View>
         </View>
@@ -619,7 +619,7 @@ const NewMember = () => {
             onPress={resetForm}
             disabled={loading}
           >
-            <Icon name="refresh" size={18} color="#4A90E2" />
+            <Icon name="refresh" size={18} color="#C9A84C" />
             <Text style={styles.resetButtonText}>{t('resetForm')}</Text>
           </TouchableOpacity>
 
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 4,
   },
   dateHelperText: {
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     paddingHorizontal: 12,
     minHeight: 45,
   },
@@ -723,7 +723,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     paddingHorizontal: 12,
     paddingVertical: 10,
     minHeight: 45,
@@ -749,17 +749,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: '#FFF',
     borderWidth: 1.5,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   resetButtonText: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 8,
   },
   addButton: {
     flex: 2,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -781,7 +781,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     paddingHorizontal: 12,
     minHeight: 45,
   },
@@ -798,7 +798,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     marginTop: 5,
     maxHeight: 200,
     elevation: 3,
@@ -821,7 +821,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   selectedDropdownItemText: {
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: 'bold',
   },
   dropdownItemSubText: {
@@ -845,19 +845,19 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
   },
   radioCircleSelected: {
-    borderColor: '#4A90E2',
+    borderColor: '#C9A84C',
   },
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#C9A84C',
   },
   radioLabel: {
     fontSize: 15,

@@ -436,9 +436,9 @@ const NewMemberUploadScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#212c62" />
+      <StatusBar barStyle="light-content" backgroundColor="#1B5E35" />
 
-      <LinearGradient colors={['#212c62', '#1a1f47']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#1a1f47']} style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="white" />
@@ -455,12 +455,12 @@ const NewMemberUploadScreen = () => {
 
           {/* Download Template Button */}
           <TouchableOpacity style={styles.templateButton} onPress={handleDownloadTemplate}>
-            <Icon name="file-download-outline" size={22} color="#212c62" />
+            <Icon name="file-download-outline" size={22} color="#1B5E35" />
             <View style={styles.templateTextContainer}>
               <Text style={styles.templateButtonText}>Download Template</Text>
               <Text style={styles.templateButtonSubtext}>Get the Excel template with required columns</Text>
             </View>
-            <Icon name="chevron-right" size={20} color="#212c62" />
+            <Icon name="chevron-right" size={20} color="#1B5E35" />
           </TouchableOpacity>
 
           <View style={styles.templateColumns}>
@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 12,
   },
   templateButton: {
@@ -654,7 +654,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#EEF2FF',
     borderWidth: 1.5,
-    borderColor: '#212c62',
+    borderColor: '#1B5E35',
     borderStyle: 'dashed',
     borderRadius: 12,
     padding: 14,
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
   templateButtonText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
   },
   templateButtonSubtext: {
     fontSize: 12,
@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
   templateColumnsTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#212c62',
+    color: '#1B5E35',
     marginBottom: 4,
   },
   templateColumnsText: {
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginBottom: 4,
   },
   statLabel: {
@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
   },
   selectAllText: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#C9A84C',
     fontWeight: '600',
   },
   memberRow: {
@@ -837,7 +837,7 @@ const styles = StyleSheet.create({
   },
   value: {
     fontSize: 13,
-    color: '#212c62',
+    color: '#1B5E35',
     fontWeight: '500',
     flex: 1,
   },
@@ -898,7 +898,7 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212c62',
+    color: '#1B5E35',
     marginTop: 16,
   },
   emptyStateSubtext: {

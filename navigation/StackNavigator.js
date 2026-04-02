@@ -1,8 +1,9 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { View, ActivityIndicator } from 'react-native'; // ðŸ‘ˆ ADDED
+import { View, ActivityIndicator } from 'react-native';
+import theme from '../styles/theme';
 
 // Import Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -85,21 +86,21 @@ const StackNavigator = () => {
     };
   }, []);
 
-  // âœ… Show loader while checking â€” BETTER UX
+  // ✅ Show loader while checking — BETTER UX
   if (isLoggedIn === null) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F4F7FB' }}>
-        <ActivityIndicator size="large" color="#212c62" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.bgLight }}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
 
-  // âœ… MAGIC LINE: Dynamically set starting screen
+  // ✅ MAGIC LINE: Dynamically set starting screen
   const initialRouteName = isLoggedIn ? 'DrawerNavigator' : 'Login';
 
   return (
     <Stack.Navigator
-      initialRouteName={initialRouteName} // ðŸ‘ˆ THIS IS THE FIX â€” WAS MISSING!
+      initialRouteName={initialRouteName} // 👈 THIS IS THE FIX — WAS MISSING!
       screenOptions={{ headerShown: false }}
     >
       <Stack.Screen
@@ -197,3 +198,4 @@ const StackNavigator = () => {
 };
 
 export default StackNavigator;
+
