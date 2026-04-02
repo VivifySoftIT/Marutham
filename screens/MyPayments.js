@@ -529,7 +529,7 @@ This is an electronically generated receipt.
         </View>
       ) : (
         <ImageBackground
-          source={require('../assets/logoicon.png')}
+          source={require('../assets/logomarutham.png')}
           style={styles.contentBackground}
           imageStyle={styles.backgroundImageStyle}
         >
@@ -754,7 +754,7 @@ This is an electronically generated receipt.
             <ScrollView style={styles.receiptContent}>
               <View style={styles.receiptLogoSection}>
                 <Image
-                  source={require('../assets/logoicon.png')}
+                  source={require('../assets/logomarutham.png')}
                   style={styles.receiptLogo}
                   resizeMode="contain"
                 />

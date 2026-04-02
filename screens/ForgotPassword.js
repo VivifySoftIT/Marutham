@@ -434,7 +434,7 @@ const ForgotPassword = ({ navigation }) => {
           <View style={styles.logoSection}>
             <View style={styles.logoContainer}>
               <Image
-                source={require('../assets/logoicon.png')}
+                source={require('../assets/logomarutham.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />

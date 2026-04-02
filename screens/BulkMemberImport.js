@@ -16,6 +16,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
@@ -79,6 +81,75 @@ const BulkMemberImport = () => {
     } catch (error) {
       console.error('BulkMemberImport - Error getting member ID:', error);
       return null;
+    }
+  };
+
+  // Download Excel template
+  const handleDownloadTemplate = async () => {
+    try {
+      const templateData = [
+        {
+          'MEMBER': 'R. Anbalagan',
+          'Contact': '9884090206',
+          'Email': 'example@email.com',
+          'Company Name': '4 Ankadi',
+          'Type Of Business': 'Super Market',
+          'Date of Birth': '1990-06-15',
+          'Joining Date': '2026-01-28',
+          'Gender': 'Male',
+          'Address': '123, Main Street, Chennai',
+        },
+        {
+          'MEMBER': 'J. Anbazhagan',
+          'Contact': '9444043342',
+          'Email': 'sample@email.com',
+          'Company Name': 'First Insurance Shop',
+          'Type Of Business': 'Investment Consultant',
+          'Date of Birth': '1985-03-20',
+          'Joining Date': '2026-01-28',
+          'Gender': 'Female',
+          'Address': '456, Park Road, Coimbatore',
+        },
+      ];
+
+      const ws = XLSX.utils.json_to_sheet(templateData);
+      ws['!cols'] = [
+        { wch: 25 }, { wch: 15 }, { wch: 28 }, { wch: 28 },
+        { wch: 28 }, { wch: 18 }, { wch: 18 }, { wch: 10 },
+        { wch: 35 },
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Members Template');
+
+      // Write as binary string then convert to base64
+      const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+
+      // Convert binary string to base64
+      const buf = new Uint8Array(wbout.length);
+      for (let i = 0; i < wbout.length; i++) {
+        buf[i] = wbout.charCodeAt(i) & 0xff;
+      }
+      const base64 = btoa(String.fromCharCode(...buf));
+
+      const fileUri = FileSystem.documentDirectory + 'Members_Template.xlsx';
+      await FileSystem.writeAsStringAsync(fileUri, base64, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Save Members Template',
+          UTI: 'com.microsoft.excel.xlsx',
+        });
+      } else {
+        Alert.alert('Saved', `Template saved to your device.`);
+      }
+    } catch (error) {
+      console.error('Template download error:', error);
+      Alert.alert('Error', 'Failed to generate template: ' + error.message);
     }
   };
 
@@ -169,18 +240,32 @@ const BulkMemberImport = () => {
       // Map Excel data to member format
       const mappedMembers = jsonData.map((row, index) => {
         console.log(`Processing row ${index}:`, row);
-        
+
+        // Parse date helper
+        const parseDate = (val) => {
+          if (!val) return null;
+          const s = String(val).trim();
+          if (!s) return null;
+          // Handle Excel serial numbers
+          if (/^\d{5}$/.test(s)) {
+            const d = XLSX.SSF.parse_date_code(parseInt(s));
+            return `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+          }
+          return s;
+        };
+
         return {
           id: `temp_${index}`,
-          sno: row['S.NO'] || row['S.No'] || row['sno'] || index + 1,
+          sno: row['S.NO'] || row['S.No'] || index + 1,
           name: row['MEMBER'] || row['Name'] || row['Member Name'] || row['name'] || '',
           phone: String(row['Contact'] || row['Phone'] || row['Mobile'] || row['phone'] || '').trim(),
           email: row['Email'] || row['email'] || '',
           company: row['Company Name'] || row['Company_Name'] || row['company'] || row['Company'] || '',
           business: row['Type Of Business'] || row['Type Of Buissness'] || row['Business'] || row['business'] || '',
-          joinDate: row['Join Date'] || row['Joining Date'] || row['joinDate'] || new Date().toISOString(),
+          dob: parseDate(row['Date of Birth'] || row['DOB'] || row['dob']),
+          joinDate: parseDate(row['Joining Date'] || row['Join Date'] || row['joinDate']),
+          gender: row['Gender'] || row['gender'] || '',
           address: row['Address'] || row['address'] || '',
-          batch: row['Batch'] || row['batch'] || '',
           status: 'Active',
           feesStatus: 'Unpaid',
           memberId: `MEM${String(Date.now() + index).slice(-6)}`,
@@ -293,14 +378,13 @@ const BulkMemberImport = () => {
               const memberData = {
                 Name: member.name,
                 Phone: member.phone,
-                Email: email, // Email is required by backend
-                DOB: member.dateOfBirth || null,
+                Email: email,
+                DOB: member.dob || null,
+                JoinDate: member.joinDate || null,
+                Gender: member.gender || null,
                 Address: member.address || null,
-                Batch: member.batch || null,
                 Business: member.business || null,
-                BusinessCategory: member.businessCategory || null,
-                MembershipType: member.membershipType || null,
-                ReferenceId: member.referenceId ? parseInt(member.referenceId) : null,
+                BusinessCategory: member.company || null,
                 CreatedBy: adminMemberId,
               };
 
@@ -373,7 +457,6 @@ const BulkMemberImport = () => {
                 // Generate email from name if not provided
                 let email = member.email;
                 if (!email || email.trim() === '') {
-                  // Convert name to email format: "John Doe" -> "johndoe@alaigal.com"
                   const namePart = member.name.toLowerCase().replace(/\s+/g, '');
                   email = `${namePart}@alaigal.com`;
                 }
@@ -383,6 +466,11 @@ const BulkMemberImport = () => {
                   Phone: member.phone.trim(),
                   Email: email.trim(),
                   Business: member.business ? member.business.trim() : null,
+                  BusinessCategory: member.company ? member.company.trim() : null,
+                  DOB: member.dob || null,
+                  JoinDate: member.joinDate || null,
+                  Gender: member.gender ? member.gender.trim() : null,
+                  Address: member.address ? member.address.trim() : null,
                 };
               });
 
@@ -536,9 +624,44 @@ const BulkMemberImport = () => {
           <Icon name="file-excel" size={60} color="#4CAF50" />
           <Text style={styles.instructionsTitle}>Import Members from Excel</Text>
           <Text style={styles.instructionsText}>
-            Upload an Excel file with columns:{'\n'}
-            Name, Phone, Email, Address, Batch, Business
+            Download the template, fill in member details, then upload it here.
           </Text>
+
+          {/* Step 1 - Download Template */}
+          <View style={styles.stepCard}>
+            <View style={styles.stepBadge}><Text style={styles.stepBadgeText}>1</Text></View>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Download Template</Text>
+              <Text style={styles.stepDesc}>Get the Excel file with all required columns</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.templateBtn} onPress={handleDownloadTemplate}>
+            <Icon name="file-download-outline" size={20} color="#FFF" />
+            <Text style={styles.templateBtnText}>Download Template</Text>
+          </TouchableOpacity>
+
+          <View style={styles.columnBox}>
+            <Text style={styles.columnBoxTitle}>Template Columns:</Text>
+            <Text style={styles.columnBoxText}>
+              MEMBER · Contact · Email · Company Name · Type Of Business · Date of Birth · Joining Date · Gender · Address
+            </Text>
+          </View>
+
+          {/* Divider */}
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>THEN</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Step 2 - Import */}
+          <View style={styles.stepCard}>
+            <View style={[styles.stepBadge, { backgroundColor: '#4CAF50' }]}><Text style={styles.stepBadgeText}>2</Text></View>
+            <View style={styles.stepContent}>
+              <Text style={styles.stepTitle}>Fill & Upload</Text>
+              <Text style={styles.stepDesc}>Fill the template with member data and import it</Text>
+            </View>
+          </View>
         </View>
       )}
 
@@ -743,22 +866,111 @@ const styles = StyleSheet.create({
   },
   instructionsContainer: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: 30,
+    padding: 24,
+    paddingTop: 30,
   },
   instructionsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#212c62',
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: 16,
+    marginBottom: 6,
   },
   instructionsText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  stepCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F4FF',
+    borderRadius: 10,
+    padding: 12,
+    width: '100%',
+    marginBottom: 12,
+  },
+  stepBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#212c62',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  stepBadgeText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#212c62',
+  },
+  stepDesc: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  templateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#212c62',
+    borderRadius: 10,
+    paddingVertical: 13,
+    paddingHorizontal: 24,
+    width: '100%',
+    marginBottom: 12,
+  },
+  templateBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  columnBox: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 8,
+    padding: 10,
+    width: '100%',
+    marginBottom: 20,
+  },
+  columnBoxTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#212c62',
+    marginBottom: 4,
+  },
+  columnBoxText: {
+    fontSize: 11,
+    color: '#555',
+    lineHeight: 18,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 16,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#DDD',
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#999',
   },
   loadingContainer: {
     flex: 1,

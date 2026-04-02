@@ -265,7 +265,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
             {/* Circle overlapping top of card */}
             <View style={styles.logoCircle}>
               <Image
-                source={require('../assets/logoicon.png')}
+                source={require('../assets/logomarutham.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />

@@ -221,7 +221,9 @@ class ApiService {
   }
 
   async searchMembers(query) {
-    return await this.request(`/api/Members/search?query=${encodeURIComponent(query)}`);
+    const subCompanyId = await this.getSubCompanyId();
+    const qs = subCompanyId ? `&subCompanyId=${subCompanyId}` : '';
+    return await this.request(`/api/Members/search?query=${encodeURIComponent(query)}${qs}`);
   }
 
   async getMemberStats(memberId) {
@@ -293,7 +295,9 @@ class ApiService {
 
   // Get all members with full details (business info included)
   async getMembersWithDetails() {
-    return await this.request('/api/Members');
+    const subCompanyId = await this.getSubCompanyId();
+    const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+    return await this.request(`/api/Members${qs}`);
   }
 
   // Get single member with full business details

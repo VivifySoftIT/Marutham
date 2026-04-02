@@ -647,13 +647,14 @@ public class MembersController : ControllerBase
                         CreatedDate = now,
                         UpdatedBy = dto.AdminMemberId.ToString(),
                         UpdatedDate = now,
-                        Password = phoneTrimmed, // ← Store phone as password in Members table too (if needed)
+                        Password = phoneTrimmed,
                         SubCompanyId = subCompanyId,
-                        DOB = null,
+                        DOB = memberDto.DOB,
+                        Gender = TruncateString(memberDto.Gender, 20) ?? "Other",
                         Address = TruncateString(memberDto.Address, 200),
                         ProfileImage = string.Empty,
                         BusinessCategory = TruncateString(memberDto.BusinessCategory, 100),
-                        JoinDate = now.Date,
+                        JoinDate = memberDto.JoinDate.HasValue ? memberDto.JoinDate.Value.Date : now.Date,
                         ReferralGivenCount = 0,
                         ReferralReceivedCount = 0,
                         TYFCBGivenCount = 0,
@@ -914,17 +915,15 @@ public class MembersController : ControllerBase
         [Required, EmailAddress] public string? Email { get; set; } = string.Empty;
         public string? Phone { get; set; }
         public DateTime? DOB { get; set; }
+        public DateTime? JoinDate { get; set; }
+        public string? Gender { get; set; }
         public string? Address { get; set; }
         public string? Business { get; set; }
-        public int? ReferenceId { get; set; }
-        public string? Batch { get; set; }
         public string? BusinessCategory { get; set; }
+        public int? ReferenceId { get; set; }
         public string? MembershipType { get; set; }
-        public string? MemberId { get; set; } // Custom member ID like "MEM563234"
-        public string? Gender { get; set; } // Custom member ID like "MEM563234"
-
-        // 🔑 This IS the admin's Member ID
-        public int? CreatedBy { get; set; } // Store admin's Member ID here
+        public string? MemberId { get; set; }
+        public int? CreatedBy { get; set; }
     }
     // POST: api/Members/bulk
     // POST: api/Members/bulk

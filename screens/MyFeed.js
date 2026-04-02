@@ -1361,7 +1361,7 @@ ${t('electronicReceipt')}
         </View>
       ) : filteredData.length > 0 ? (
         <ImageBackground
-          source={require('../assets/logoicon.png')}
+          source={require('../assets/logomarutham.png')}
           style={styles.backgroundImage}
           imageStyle={styles.backgroundImageStyle}
         >
@@ -1382,7 +1382,7 @@ ${t('electronicReceipt')}
         </ImageBackground>
       ) : (
         <ImageBackground
-          source={require('../assets/logoicon.png')}
+          source={require('../assets/logomarutham.png')}
           style={styles.backgroundImage}
           imageStyle={styles.backgroundImageStyle}
         >
