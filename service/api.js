@@ -940,6 +940,11 @@ class ApiService {
       CustomMessage: customMessage
     });
   }
+
+  // Daily Thirukkural — same kural for all users all day, changes each day
+  async getDailyThirukkural() {
+    return await this.request('/api/Thirukkural/daily');
+  }
 }
 
 export default new ApiService();

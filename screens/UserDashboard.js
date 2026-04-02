@@ -168,6 +168,7 @@ const UserDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState(null);
   const [greeting, setGreeting] = useState('');
+  const [dailyKural, setDailyKural] = useState(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showPeriodDropdown, setShowPeriodDropdown] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('all'); // 'all', 'weekly', 'monthly', 'annual'
@@ -208,6 +209,7 @@ const UserDashboard = () => {
     loadUserData();
     setGreetingMessage();
     loadDashboardReminders();
+    loadDailyKural();
   }, []);
 
   // Reload notifications when language changes so titles/messages update
@@ -364,6 +366,26 @@ const UserDashboard = () => {
       await fetchMemberStats(userData.memberId, periodId === 'all' ? null : periodId);
     }
   };
+
+const loadDailyKural = async () => {
+  try {
+    // Cache key includes today's date so it refreshes daily
+    const today = new Date().toISOString().split('T')[0];
+    const cacheKey = `dailyKural_${today}`;
+    const cached = await AsyncStorage.getItem(cacheKey);
+    if (cached) {
+      setDailyKural(JSON.parse(cached));
+      return;
+    }
+    const kural = await ApiService.getDailyThirukkural();
+    if (kural) {
+      setDailyKural(kural);
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(kural));
+    }
+  } catch (error) {
+    console.log('UserDashboard - Could not load daily kural:', error.message);
+  }
+};
 
 const loadDashboardReminders = async () => {
   try {
@@ -1292,10 +1314,14 @@ const handleMeetingResponse = async (notification) => {
   </View>
 </View>
 <View style={styles.headerCenterContent}>
-              
               <Text style={styles.thirukkuralQuote}>
-  “தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்” — திருக்குறள் 619
-</Text>
+                {dailyKural
+                  ? `"${dailyKural.tamil}" — திருக்குறள் ${dailyKural.number}`
+                  : '"தெய்வத்தான் ஆகா தெனினும் முயற்சிதன் மெய்வருத்தக் கூலி தரும்" — திருக்குறள் 619'}
+              </Text>
+              {dailyKural && (
+                <Text style={styles.thirukkuralMeaning}>{dailyKural.meaning}</Text>
+              )}
             </View>
           {/* Enhanced Member Info Card - My Card Style */}
           {/* Card removed as requested */}
@@ -3207,6 +3233,14 @@ const styles = StyleSheet.create({
   fontStyle: 'italic',
   fontWeight: '500',
   lineHeight: 20,
+  paddingHorizontal: 20,
+},
+thirukkuralMeaning: {
+  fontSize: 11,
+  color: 'rgba(255, 255, 255, 0.80)',
+  textAlign: 'center',
+  marginTop: 4,
+  lineHeight: 18,
   paddingHorizontal: 20,
 },
 headerTopRow: {
