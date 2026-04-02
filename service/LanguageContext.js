@@ -1195,6 +1195,20 @@ const translations = {
     pleaseEnterValid10DigitPhone: 'Please enter a valid 10-digit mobile number.',
     memberRequestSubmitted: 'Member Request Submitted',
     memberRequestSubmittedDesc: 'Your visitor member request has been submitted. It will be reviewed by the admin. You will see a notification on your dashboard until it is approved or rejected.',
+
+    // Add Payment Modal
+    addPayment: 'Add Payment',
+    addConfirmPayment: 'Add & Confirm Payment',
+    paymentMethod: 'Payment Method',
+    transactionId: 'Transaction ID',
+    monthLabel: 'Month (e.g. Jan)',
+    optional: 'Optional',
+    enterValidAmount: 'Enter a valid amount',
+    enterPaymentMonth: 'Enter payment month (e.g. Jan)',
+    enterValidMonth: 'Enter a valid month (Jan-Dec)',
+    paymentAddedConfirmed: 'Payment added and confirmed.',
+    failedToAddPayment: 'Failed to add payment',
+    error: 'Error',
   },
   ta: {
     // Common
@@ -2532,6 +2546,20 @@ const translations = {
     pleaseEnterValid10DigitPhone: 'சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.',
     memberRequestSubmitted: 'உறுப்பினர் கோரிக்கை சமர்ப்பிக்கப்பட்டது',
     memberRequestSubmittedDesc: 'உங்கள் பார்வையாளர் உறுப்பினர் கோரிக்கை சமர்ப்பிக்கப்பட்டது. நிர்வாகியால் மதிப்பாய்வு செய்யப்படும். அங்கீகரிக்கப்படும் வரை உங்கள் டாஷ்போர்டில் அறிவிப்பு காண்பிக்கப்படும்.',
+
+    // Add Payment Modal
+    addPayment: 'பணம் சேர்க்கவும்',
+    addConfirmPayment: 'பணம் சேர்த்து உறுதிப்படுத்தவும்',
+    paymentMethod: 'பணம் செலுத்தும் முறை',
+    transactionId: 'பரிவர்த்தனை அடையாளம்',
+    monthLabel: 'மாதம் (எ.கா. Jan)',
+    optional: 'விருப்பமானது',
+    enterValidAmount: 'சரியான தொகையை உள்ளிடவும்',
+    enterPaymentMonth: 'பணம் செலுத்திய மாதத்தை உள்ளிடவும்',
+    enterValidMonth: 'சரியான மாதத்தை உள்ளிடவும் (Jan-Dec)',
+    paymentAddedConfirmed: 'பணம் சேர்க்கப்பட்டு உறுதிப்படுத்தப்பட்டது.',
+    failedToAddPayment: 'பணம் சேர்க்க முடியவில்லை',
+    error: 'பிழை',
   },
 
 };

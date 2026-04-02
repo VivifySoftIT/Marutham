@@ -237,13 +237,13 @@ const PaymentDetails = () => {
   };
 
   const handleAddPayment = async () => {
-    if (!memberData) { Alert.alert('Error', 'Please select a member first'); return; }
+    if (!memberData) { Alert.alert(t('error'), t('pleaseSelectMember')); return; }
     if (!payForm.amount || isNaN(payForm.amount) || parseFloat(payForm.amount) <= 0) {
-      Alert.alert('Error', 'Enter a valid amount'); return;
+      Alert.alert(t('error'), t('enterValidAmount')); return;
     }
-    if (!payForm.paymentForMonth.trim()) { Alert.alert('Error', 'Enter payment month (e.g. Jan)'); return; }
+    if (!payForm.paymentForMonth.trim()) { Alert.alert(t('error'), t('enterPaymentMonth')); return; }
     const monthValid = MONTHS.some(m => m.toLowerCase() === payForm.paymentForMonth.trim().toLowerCase());
-    if (!monthValid) { Alert.alert('Error', 'Enter a valid month (Jan-Dec)'); return; }
+    if (!monthValid) { Alert.alert(t('error'), t('enterValidMonth')); return; }
 
     setSubmitting(true);
     try {
@@ -267,16 +267,16 @@ const PaymentDetails = () => {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        Alert.alert('Success', 'Payment added and confirmed.');
+        Alert.alert(t('success'), t('paymentAddedConfirmed'));
         setShowAddPayment(false);
         setPayForm({ amount: '', paymentMethod: 'Cash', transactionId: '', paymentForMonth: '', notes: '' });
         await loadPaymentData(selectedMemberId);
       } else {
         const err = await res.json().catch(() => ({}));
-        Alert.alert('Error', err.message || 'Failed to add payment');
+        Alert.alert(t('error'), err.message || t('failedToAddPayment'));
       }
     } catch (e) {
-      Alert.alert('Error', e.message);
+      Alert.alert(t('error'), e.message);
     } finally {
       setSubmitting(false);
     }
@@ -642,7 +642,7 @@ const PaymentDetails = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Payment</Text>
+              <Text style={styles.modalTitle}>{t('addPayment')}</Text>
               <TouchableOpacity onPress={() => setShowAddPayment(false)}>
                 <Icon name="close" size={24} color="#374151" />
               </TouchableOpacity>
@@ -654,29 +654,29 @@ const PaymentDetails = () => {
                   <Text style={{ marginLeft: 8, fontWeight: '600', color: '#1976D2', fontSize: 14 }}>{memberData.name}</Text>
                 </View>
               )}
-              <Text style={styles.formLabel}>Amount (₹) *</Text>
+              <Text style={styles.formLabel}>{t('amountRequired')}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="e.g. 500"
+                placeholder={t('enterAmount')}
                 keyboardType="numeric"
                 value={payForm.amount}
                 onChangeText={v => setPayForm(p => ({ ...p, amount: v.replace(/[^0-9]/g, '') }))}
               />
-              <Text style={styles.formLabel}>Payment Method</Text>
+              <Text style={styles.formLabel}>{t('paymentMethod')}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="Cash / UPI / Card"
+                placeholder={t('enterPaymentMethod')}
                 value={payForm.paymentMethod}
                 onChangeText={v => setPayForm(p => ({ ...p, paymentMethod: v }))}
               />
-              <Text style={styles.formLabel}>Transaction ID</Text>
+              <Text style={styles.formLabel}>{t('transactionId')}</Text>
               <TextInput
                 style={styles.formInput}
-                placeholder="Optional"
+                placeholder={t('optional')}
                 value={payForm.transactionId}
                 onChangeText={v => setPayForm(p => ({ ...p, transactionId: v }))}
               />
-              <Text style={styles.formLabel}>Month (e.g. Jan) *</Text>
+              <Text style={styles.formLabel}>{t('monthLabel')} *</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {MONTHS.map(m => (
                   <TouchableOpacity
@@ -688,10 +688,10 @@ const PaymentDetails = () => {
                   </TouchableOpacity>
                 ))}
               </View>
-              <Text style={styles.formLabel}>Notes</Text>
+              <Text style={styles.formLabel}>{t('notes')}</Text>
               <TextInput
                 style={[styles.formInput, { height: 70 }]}
-                placeholder="Optional"
+                placeholder={t('optional')}
                 multiline
                 value={payForm.notes}
                 onChangeText={v => setPayForm(p => ({ ...p, notes: v }))}
@@ -703,7 +703,7 @@ const PaymentDetails = () => {
               >
                 {submitting
                   ? <ActivityIndicator size="small" color="#FFF" />
-                  : <Text style={styles.submitBtnText}>Add & Confirm Payment</Text>
+                  : <Text style={styles.submitBtnText}>{t('addConfirmPayment')}</Text>
                 }
               </TouchableOpacity>
             </ScrollView>
