@@ -17,9 +17,9 @@ public class PaymentsController : ControllerBase
         _context = context;
     }
 
-    // GET: api/Payments?memberId=4
+    // GET: api/Payments?memberId=4&subCompanyId=2
     [HttpGet]
-    public async Task<IActionResult> GetPayments([FromQuery] int? memberId)
+    public async Task<IActionResult> GetPayments([FromQuery] int? memberId, [FromQuery] int? subCompanyId)
     {
         var query = _context.Payments
             .Include(p => p.Member)
@@ -31,11 +31,17 @@ public class PaymentsController : ControllerBase
                 .AnyAsync(m => m.Id == memberId.Value && m.IsActive);
 
             if (!memberExists)
-            {
                 return NotFound(new { message = $"Member with ID {memberId} not found" });
-            }
 
             query = query.Where(p => p.MemberId == memberId.Value);
+        }
+
+        // Filter by subCompanyId — via payment's own SubCompanyId or member's SubCompanyId
+        if (subCompanyId.HasValue)
+        {
+            query = query.Where(p =>
+                p.SubCompanyId == subCompanyId.Value ||
+                (p.SubCompanyId == null && p.Member != null && p.Member.SubCompanyId == subCompanyId.Value));
         }
 
         var payments = await query

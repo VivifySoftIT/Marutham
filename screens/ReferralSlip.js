@@ -164,7 +164,9 @@ const ReferralSlip = ({ route }) => {
   const loadMemberNames = async () => {
     try {
       setLoadingMembers(true);
-      const members = await apiGet('/api/Members/GetMemberNames');
+      const subCompanyId = await AsyncStorage.getItem('subCompanyId');
+      const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+      const members = await apiGet(`/api/Members/GetMemberNames${qs}`);
       if (members && Array.isArray(members)) {
         const formattedMembers = members.map(member => ({
           id: member.id,

@@ -63,7 +63,7 @@ const GraphView = ({ reportType, data, stats }) => {
         return {
           labels: Object.keys(tyfcbByMonth),
           values: Object.values(tyfcbByMonth),
-          colors: ['#4A90E2', '#87CEEB', '#5DADE2', '#2C5F8D'],
+          colors: ['#1B5E35', '#2E7D4F', '#5DADE2', '#1B5E35'],
         };
 
       case 'payment':
@@ -100,14 +100,14 @@ const GraphView = ({ reportType, data, stats }) => {
         return {
           labels: [t('becameMembers'), t('stillVisitors')],
           values: [becameMemberCount, stillVisitor],
-          colors: ['#4CAF50', '#4A90E2'],
+          colors: ['#4CAF50', '#1B5E35'],
         };
 
       default:
         return {
           labels: [t('total')],
           values: [data.length],
-          colors: ['#4A90E2'],
+          colors: ['#1B5E35'],
         };
     }
   };
@@ -156,7 +156,7 @@ const GraphView = ({ reportType, data, stats }) => {
         {/* Summary Stats */}
         <View style={styles.graphSummary}>
           <View style={styles.graphSummaryItem}>
-            <Icon name="chart-line" size={24} color="#4A90E2" />
+            <Icon name="chart-line" size={24} color="#1B5E35" />
             <Text style={styles.graphSummaryLabel}>{t('totalRecords')}</Text>
             <Text style={styles.graphSummaryValue}>{data.length}</Text>
           </View>
@@ -1524,7 +1524,7 @@ const Reports = ({ navigation }) => {
       </View>
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Icon name="calendar" size={14} color="#1B5E35" />
           <Text style={styles.statBadgeText}>
             {new Date(attendance.attendanceDate).toLocaleDateString()}
           </Text>
@@ -1644,7 +1644,7 @@ const Reports = ({ navigation }) => {
       </View>
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Icon name="calendar" size={14} color="#1B5E35" />
           <Text style={styles.statBadgeText}>
             {new Date(tyfcb.visitDate).toLocaleDateString()}
           </Text>
@@ -1695,7 +1695,7 @@ const Reports = ({ navigation }) => {
       </View>
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Icon name="calendar" size={14} color="#1B5E35" />
           <Text style={styles.statBadgeText}>
             {new Date(meeting.meetingDate).toLocaleDateString()}
           </Text>
@@ -1754,7 +1754,7 @@ const Reports = ({ navigation }) => {
       </View>
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Icon name="calendar" size={14} color="#1B5E35" />
           <Text style={styles.statBadgeText}>
             {new Date(referral.referralDate).toLocaleDateString()}
           </Text>
@@ -1818,7 +1818,7 @@ const Reports = ({ navigation }) => {
       </View>
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Icon name="calendar" size={14} color="#1B5E35" />
           <Text style={styles.statBadgeText}>
             {new Date(payment.paymentDate).toLocaleDateString()}
           </Text>
@@ -1868,7 +1868,7 @@ const Reports = ({ navigation }) => {
       </View>
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Icon name="calendar" size={14} color="#1B5E35" />
           <Text style={styles.statBadgeText}>
             {new Date(meeting.meetingDate).toLocaleDateString()}
           </Text>
@@ -1935,7 +1935,7 @@ const Reports = ({ navigation }) => {
       </View>
       <View style={styles.memberStats}>
         <View style={styles.statBadge}>
-          <Icon name="calendar" size={14} color="#4A90E2" />
+          <Icon name="calendar" size={14} color="#1B5E35" />
           <Text style={styles.statBadgeText}>
             {new Date(visitor.visitDate).toLocaleDateString()}
           </Text>
@@ -2022,10 +2022,10 @@ const Reports = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="#4A90E2" barStyle="light-content" />
+      <StatusBar backgroundColor="#1B5E35" barStyle="light-content" />
 
       {/* Header */}
-      <LinearGradient colors={['#4A90E2', '#87CEEB']} style={styles.header}>
+      <LinearGradient colors={['#1B5E35', '#2E7D4F']} style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Icon name="arrow-left" size={24} color="#FFF" />
         </TouchableOpacity>
@@ -2104,7 +2104,7 @@ const Reports = ({ navigation }) => {
                     <Icon
                       name={tab.icon}
                       size={18}
-                      color={selectedReportTab === tab.id ? '#FFF' : '#4A90E2'}
+                      color={selectedReportTab === tab.id ? '#FFF' : '#1B5E35'}
                     />
                     <Text style={[
                       styles.tabText,
@@ -2120,7 +2120,7 @@ const Reports = ({ navigation }) => {
             {/* Loading State */}
             {loading ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#4A90E2" />
+                <ActivityIndicator size="large" color="#1B5E35" />
                 <Text style={styles.loadingText}>{t('loadingReport')}</Text>
               </View>
             ) : error ? (
@@ -2155,7 +2155,7 @@ const Reports = ({ navigation }) => {
                         <Icon
                           name={currentTab.icon}
                           size={28}
-                          color="#4A90E2"
+                          color="#1B5E35"
                         />
                       </View>
                     </View>
@@ -2257,13 +2257,13 @@ const Reports = ({ navigation }) => {
                       style={styles.memberSelectButton}
                       onPress={() => setShowMemberListModal(true)}
                     >
-                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Icon name="account-search" size={18} color="#1B5E35" />
                       <Text style={styles.memberSelectText}>
                         {selectedMemberForReport
                           ? selectedMemberForReport.name
                           : t('allMembersFilter')}
                       </Text>
-                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                      <Icon name="chevron-right" size={18} color="#1B5E35" />
                     </TouchableOpacity>
                     {selectedMemberForReport && (
                       <TouchableOpacity
@@ -2285,13 +2285,13 @@ const Reports = ({ navigation }) => {
                       style={styles.memberSelectButton}
                       onPress={() => setShowMemberListModal(true)}
                     >
-                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Icon name="account-search" size={18} color="#1B5E35" />
                       <Text style={styles.memberSelectText}>
                         {selectedMemberForReport
                           ? selectedMemberForReport.name
                           : t('allMembersFilter')}
                       </Text>
-                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                      <Icon name="chevron-right" size={18} color="#1B5E35" />
                     </TouchableOpacity>
                     {selectedMemberForReport && (
                       <TouchableOpacity
@@ -2313,13 +2313,13 @@ const Reports = ({ navigation }) => {
                       style={styles.memberSelectButton}
                       onPress={() => setShowMemberListModal(true)}
                     >
-                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Icon name="account-search" size={18} color="#1B5E35" />
                       <Text style={styles.memberSelectText}>
                         {selectedMemberForReport
                           ? selectedMemberForReport.name
                           : t('allMembersFilter')}
                       </Text>
-                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                      <Icon name="chevron-right" size={18} color="#1B5E35" />
                     </TouchableOpacity>
                     {selectedMemberForReport && (
                       <TouchableOpacity
@@ -2341,13 +2341,13 @@ const Reports = ({ navigation }) => {
                       style={styles.memberSelectButton}
                       onPress={() => setShowMemberListModal(true)}
                     >
-                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Icon name="account-search" size={18} color="#1B5E35" />
                       <Text style={styles.memberSelectText}>
                         {selectedMemberForReport
                           ? selectedMemberForReport.name
                           : t('allMembersFilter')}
                       </Text>
-                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                      <Icon name="chevron-right" size={18} color="#1B5E35" />
                     </TouchableOpacity>
                     {selectedMemberForReport && (
                       <TouchableOpacity
@@ -2369,13 +2369,13 @@ const Reports = ({ navigation }) => {
                       style={styles.memberSelectButton}
                       onPress={() => setShowMemberListModal(true)}
                     >
-                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Icon name="account-search" size={18} color="#1B5E35" />
                       <Text style={styles.memberSelectText}>
                         {selectedMemberForReport
                           ? selectedMemberForReport.name
                           : t('allMembersFilter')}
                       </Text>
-                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                      <Icon name="chevron-right" size={18} color="#1B5E35" />
                     </TouchableOpacity>
                     {selectedMemberForReport && (
                       <TouchableOpacity
@@ -2397,13 +2397,13 @@ const Reports = ({ navigation }) => {
                       style={styles.memberSelectButton}
                       onPress={() => setShowMemberListModal(true)}
                     >
-                      <Icon name="account-search" size={18} color="#4A90E2" />
+                      <Icon name="account-search" size={18} color="#1B5E35" />
                       <Text style={styles.memberSelectText}>
                         {selectedMemberForReport
                           ? selectedMemberForReport.name
                           : t('allMembersFilter')}
                       </Text>
-                      <Icon name="chevron-right" size={18} color="#4A90E2" />
+                      <Icon name="chevron-right" size={18} color="#1B5E35" />
                     </TouchableOpacity>
                     {selectedMemberForReport && (
                       <TouchableOpacity
@@ -2447,7 +2447,7 @@ const Reports = ({ navigation }) => {
                         <Icon
                           name="format-list-bulleted"
                           size={18}
-                          color={viewMode === 'list' ? '#FFF' : '#4A90E2'}
+                          color={viewMode === 'list' ? '#FFF' : '#1B5E35'}
                         />
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -2460,7 +2460,7 @@ const Reports = ({ navigation }) => {
                         <Icon
                           name="chart-bar"
                           size={18}
-                          color={viewMode === 'graph' ? '#FFF' : '#4A90E2'}
+                          color={viewMode === 'graph' ? '#FFF' : '#1B5E35'}
                         />
                       </TouchableOpacity>
                     </View>
@@ -2534,8 +2534,8 @@ const Reports = ({ navigation }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#4A90E2"
-            colors={['#4A90E2']}
+            tintColor="#1B5E35"
+            colors={['#1B5E35']}
           />
         }
       />
@@ -2552,7 +2552,7 @@ const Reports = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('selectDateRange')}</Text>
               <TouchableOpacity onPress={() => setShowCustomDateModal(false)}>
-                <Icon name="close" size={24} color="#4A90E2" />
+                <Icon name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -2565,7 +2565,7 @@ const Reports = ({ navigation }) => {
                   setShowDatePicker(true);
                 }}
               >
-                <Icon name="calendar" size={18} color="#4A90E2" />
+                <Icon name="calendar" size={18} color="#1B5E35" />
                 <Text style={styles.dateInputText}>{fromDate.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
@@ -2579,7 +2579,7 @@ const Reports = ({ navigation }) => {
                   setShowDatePicker(true);
                 }}
               >
-                <Icon name="calendar" size={18} color="#4A90E2" />
+                <Icon name="calendar" size={18} color="#1B5E35" />
                 <Text style={styles.dateInputText}>{toDate.toLocaleDateString()}</Text>
               </TouchableOpacity>
             </View>
@@ -2631,7 +2631,7 @@ const Reports = ({ navigation }) => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('selectMember')}</Text>
               <TouchableOpacity onPress={() => setShowMemberListModal(false)}>
-                <Icon name="close" size={24} color="#4A90E2" />
+                <Icon name="close" size={24} color="#1B5E35" />
               </TouchableOpacity>
             </View>
 
@@ -2670,7 +2670,7 @@ const Reports = ({ navigation }) => {
                     </Text>
                   </View>
                   {selectedMemberForReport?.id === item.id && (
-                    <Icon name="check-circle" size={20} color="#4A90E2" />
+                    <Icon name="check-circle" size={20} color="#1B5E35" />
                   )}
                 </TouchableOpacity>
               ))}
@@ -2685,7 +2685,7 @@ const Reports = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F9FC',
+    backgroundColor: '#F5F5F0',
   },
   header: {
     flexDirection: 'row',
@@ -2711,7 +2711,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#1B5E35',
     marginBottom: 12,
   },
   periodScroll: {
@@ -2725,17 +2725,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     marginRight: 8,
     minWidth: 80,
   },
   activePeriod: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    backgroundColor: '#1B5E35',
+    borderColor: '#1B5E35',
   },
   periodText: {
     fontSize: 13,
-    color: '#4A90E2',
+    color: '#1B5E35',
     fontWeight: '500',
   },
   activePeriodText: {
@@ -2755,17 +2755,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     gap: 6,
     marginRight: 8,
   },
   activeTab: {
-    backgroundColor: '#4A90E2',
-    borderColor: '#4A90E2',
+    backgroundColor: '#1B5E35',
+    borderColor: '#1B5E35',
   },
   tabText: {
     fontSize: 12,
-    color: '#4A90E2',
+    color: '#1B5E35',
     fontWeight: '500',
   },
   activeTabText: {
@@ -2797,7 +2797,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 24,
     paddingVertical: 10,
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#1B5E35',
     borderRadius: 8,
   },
   retryButtonText: {
@@ -2809,7 +2809,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
   },
   reportHeader: {
     flexDirection: 'row',
@@ -2824,7 +2824,7 @@ const styles = StyleSheet.create({
   reportTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#1B5E35',
   },
   reportSubtitle: {
     fontSize: 12,
@@ -2840,7 +2840,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#E8F5EC',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -2874,7 +2874,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   downloadContainer: {
     flexDirection: 'row',
@@ -2913,7 +2913,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   activeFilterTab: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#1B5E35',
   },
   filterTabText: {
     fontSize: 12,
@@ -2935,7 +2935,7 @@ const styles = StyleSheet.create({
   },
   viewToggleContainer: {
     flexDirection: 'row',
-    backgroundColor: '#F5F9FC',
+    backgroundColor: '#F5F5F0',
     borderRadius: 8,
     padding: 2,
     borderWidth: 1,
@@ -2948,7 +2948,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 2,
   },
   viewToggleButtonActive: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#1B5E35',
   },
   memberCount: {
     fontSize: 12,
@@ -2962,7 +2962,7 @@ const styles = StyleSheet.create({
   },
   recordsList: {
     maxHeight: 400, // Fixed height for records scrolling container
-    backgroundColor: '#F5F9FC',
+    backgroundColor: '#F5F5F0',
     borderRadius: 8,
     marginTop: 10,
   },
@@ -2984,7 +2984,7 @@ const styles = StyleSheet.create({
   graphTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#1B5E35',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -3014,11 +3014,11 @@ const styles = StyleSheet.create({
   barChartValue: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
   },
   barChartBarContainer: {
     height: 30,
-    backgroundColor: '#F5F9FC',
+    backgroundColor: '#F5F5F0',
     borderRadius: 6,
     overflow: 'hidden',
   },
@@ -3049,7 +3049,7 @@ const styles = StyleSheet.create({
   graphSummaryValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#4A90E2',
+    color: '#C9A84C',
     marginTop: 4,
   },
   memberCard: {
@@ -3115,7 +3115,7 @@ const styles = StyleSheet.create({
   statBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F9FC',
+    backgroundColor: '#F5F5F0',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -3174,13 +3174,13 @@ const styles = StyleSheet.create({
   customDateDisplay: {
     marginTop: 10,
     padding: 10,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#E8F5EC',
     borderRadius: 8,
     alignItems: 'center',
   },
   customDateText: {
     fontSize: 13,
-    color: '#4A90E2',
+    color: '#1B5E35',
     fontWeight: '500',
   },
   modalOverlay: {
@@ -3205,7 +3205,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: '#4A90E2',
+    color: '#1B5E35',
     marginRight: 10,
   },
   dateInputGroup: {
@@ -3220,12 +3220,12 @@ const styles = StyleSheet.create({
   dateInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F9FC',
+    backgroundColor: '#F5F5F0',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
     gap: 10,
   },
   dateInputText: {
@@ -3234,7 +3234,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   applyButton: {
-    backgroundColor: '#4A90E2',
+    backgroundColor: '#1B5E35',
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -3254,7 +3254,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
   },
   memberSelectText: {
     flex: 1,
@@ -3279,12 +3279,12 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E3F2FD',
+    backgroundColor: '#E8F5EC',
     paddingHorizontal: 12,
     borderRadius: 8,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#87CEEB',
+    borderColor: '#2E7D4F',
   },
   searchInput: {
     flex: 1,
@@ -3309,8 +3309,8 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   memberSelectItemActive: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#4A90E2',
+    backgroundColor: '#E8F5EC',
+    borderColor: '#1B5E35',
     borderWidth: 2,
   },
   memberSelectInfo: {
@@ -3319,7 +3319,7 @@ const styles = StyleSheet.create({
   memberSelectName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2C5F8D',
+    color: '#1B5E35',
     marginBottom: 4,
   },
   memberSelectDetails: {

@@ -319,8 +319,8 @@ const PaymentDetails = () => {
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return '?0';
-    return `?${parseFloat(amount).toLocaleString('en-IN', {
+    if (!amount) return '₹0';
+    return `₹${parseFloat(amount).toLocaleString('en-IN', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     })}`;
@@ -776,7 +776,7 @@ const PaymentDetails = () => {
                   <View style={styles.modalMemberInfo}>
                     <Text style={styles.modalMemberName}>{member.name}</Text>
                     <Text style={styles.modalMemberDetails}>
-                      {member.memberId}  �  {member.phone}
+                      {member.memberId}  �  {member.phone}
                     </Text>
                   </View>
                   {selectedMemberId === member.id && (

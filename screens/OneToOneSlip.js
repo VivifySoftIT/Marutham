@@ -83,7 +83,9 @@ const OneToOneSlip = () => {
   const loadMembers = async () => {
     try {
       setLoadingMembers(true);
-      const members = await apiGet('/api/Members');
+      const subCompanyId = await AsyncStorage.getItem('subCompanyId');
+      const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+      const members = await apiGet(`/api/Members${qs}`);
       setAllMembers(members || []);
     } catch (error) {
       console.error('Error loading members:', error);

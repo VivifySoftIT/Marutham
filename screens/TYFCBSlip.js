@@ -94,7 +94,9 @@ const TYFCBSlip = () => {
   const loadMembers = async () => {
     try {
       setLoadingMembers(true);
-      const members = await apiGet('/api/Members');
+      const subCompanyId = await AsyncStorage.getItem('subCompanyId');
+      const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+      const members = await apiGet(`/api/Members${qs}`);
       console.log('TYFCBSlip - Total members loaded:', members?.length || 0);
       const formattedMembers = (members || []).map(member => ({
         ...member,

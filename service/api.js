@@ -309,9 +309,12 @@ class ApiService {
 
   // ==================== PAYMENTS APIs ====================
   async getPayments(memberId = null) {
-    // Use Payments controller endpoint
-    const endpoint = memberId ? `/api/Payments?memberId=${memberId}` : '/api/Payments';
-    return await this.request(endpoint);
+    const subCompanyId = await this.getSubCompanyId();
+    const params = [];
+    if (memberId) params.push(`memberId=${memberId}`);
+    if (subCompanyId) params.push(`subCompanyId=${subCompanyId}`);
+    const qs = params.length > 0 ? `?${params.join('&')}` : '';
+    return await this.request(`/api/Payments${qs}`);
   }
 
   async getPayment(id) {
