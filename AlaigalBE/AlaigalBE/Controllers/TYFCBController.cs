@@ -300,24 +300,31 @@ public class TYFCBController : ControllerBase
             // 🔑 Apply filters
             if (adminMemberId.HasValue && memberId.HasValue)
             {
-                // Admin + specific member in same company
                 query = query.Where(t =>
                     (t.GivenByMemberId == memberId.Value || t.ReceivedByMemberId == memberId.Value) &&
                     t.SubCompanyId == targetSubCompanyId.Value);
             }
             else if (adminMemberId.HasValue)
             {
-                // Admin view: all in company
                 query = query.Where(t => t.SubCompanyId == targetSubCompanyId.Value);
+            }
+            else if (memberId.HasValue && targetSubCompanyId.HasValue)
+            {
+                query = query.Where(t =>
+                    (t.GivenByMemberId == memberId.Value || t.ReceivedByMemberId == memberId.Value) &&
+                    t.SubCompanyId == targetSubCompanyId.Value);
             }
             else if (memberId.HasValue)
             {
-                // Member view: no company restriction
                 query = query.Where(t =>
                     t.GivenByMemberId == memberId.Value ||
                     t.ReceivedByMemberId == memberId.Value);
             }
-            // else: global view (no filters)
+            else if (targetSubCompanyId.HasValue)
+            {
+                // subCompanyId only — filter by company
+                query = query.Where(t => t.SubCompanyId == targetSubCompanyId.Value);
+            }
 
             // Execute query
             var tyfcbsFromDb = await query

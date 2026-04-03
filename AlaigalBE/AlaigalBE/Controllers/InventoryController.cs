@@ -416,6 +416,13 @@ public class InventoryController : ControllerBase
                     v.BroughtByMember != null &&
                     v.BroughtByMember.SubCompanyId == targetSubCompanyId.Value);
             }
+            else if (targetSubCompanyId.HasValue)
+            {
+                // subCompanyId only — filter by company
+                visitorsQuery = visitorsQuery.Where(v =>
+                    v.BroughtByMember != null &&
+                    v.BroughtByMember.SubCompanyId == targetSubCompanyId.Value);
+            }
 
             // Member filter
             if (memberId.HasValue)

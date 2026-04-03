@@ -139,7 +139,7 @@ public class AttendanceController : ControllerBase
             // === CASE 2: Admin or global view → include ABSENT members (only meaningful with adminMemberId) ===
             var membersQuery = _context.Members.Where(m => m.IsActive);
 
-            if (adminMemberId.HasValue)
+            if (adminMemberId.HasValue || targetSubCompanyId.HasValue)
             {
                 membersQuery = membersQuery.Where(m => m.SubCompanyId == targetSubCompanyId.Value);
             }

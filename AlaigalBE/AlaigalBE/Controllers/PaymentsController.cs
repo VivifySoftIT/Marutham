@@ -456,22 +456,28 @@ public class PaymentsController : ControllerBase
             // 🔑 Apply filters
             if (adminMemberId.HasValue && memberId.HasValue)
             {
-                // Admin + specific member in same company
                 query = query.Where(p =>
                     p.MemberId == memberId.Value &&
                     p.SubCompanyId == targetSubCompanyId.Value);
             }
             else if (adminMemberId.HasValue)
             {
-                // Admin view: all payments in company
                 query = query.Where(p => p.SubCompanyId == targetSubCompanyId.Value);
+            }
+            else if (memberId.HasValue && targetSubCompanyId.HasValue)
+            {
+                query = query.Where(p =>
+                    p.MemberId == memberId.Value &&
+                    p.SubCompanyId == targetSubCompanyId.Value);
             }
             else if (memberId.HasValue)
             {
-                // Member view: no company restriction
                 query = query.Where(p => p.MemberId == memberId.Value);
             }
-            // else: global view
+            else if (targetSubCompanyId.HasValue)
+            {
+                query = query.Where(p => p.SubCompanyId == targetSubCompanyId.Value);
+            }
 
             // Execute query
             var paymentsFromDb = await query

@@ -283,24 +283,30 @@ public class ReferralsController : ControllerBase
             // 🔑 Apply filters
             if (adminMemberId.HasValue && memberId.HasValue)
             {
-                // Admin + specific member in same company
                 query = query.Where(r =>
                     (r.GivenByMemberId == memberId.Value || r.ReceivedByMemberId == memberId.Value) &&
                     r.SubCompanyId == targetSubCompanyId.Value);
             }
             else if (adminMemberId.HasValue)
             {
-                // Admin view: all referrals in company
                 query = query.Where(r => r.SubCompanyId == targetSubCompanyId.Value);
+            }
+            else if (memberId.HasValue && targetSubCompanyId.HasValue)
+            {
+                query = query.Where(r =>
+                    (r.GivenByMemberId == memberId.Value || r.ReceivedByMemberId == memberId.Value) &&
+                    r.SubCompanyId == targetSubCompanyId.Value);
             }
             else if (memberId.HasValue)
             {
-                // Member view: no company restriction
                 query = query.Where(r =>
                     r.GivenByMemberId == memberId.Value ||
                     r.ReceivedByMemberId == memberId.Value);
             }
-            // else: global view
+            else if (targetSubCompanyId.HasValue)
+            {
+                query = query.Where(r => r.SubCompanyId == targetSubCompanyId.Value);
+            }
 
             // Execute query
             var referralsFromDb = await query

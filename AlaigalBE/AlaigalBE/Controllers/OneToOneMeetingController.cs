@@ -254,24 +254,30 @@ public class OneToOneMeetingController : ControllerBase
             // 🔑 Apply filters
             if (adminMemberId.HasValue && memberId.HasValue)
             {
-                // Admin + specific member in same company
                 query = query.Where(m =>
                     (m.Member1Id == memberId.Value || m.Member2Id == memberId.Value) &&
                     m.SubCompanyId == targetSubCompanyId.Value);
             }
             else if (adminMemberId.HasValue)
             {
-                // Admin view: all meetings in company
                 query = query.Where(m => m.SubCompanyId == targetSubCompanyId.Value);
+            }
+            else if (memberId.HasValue && targetSubCompanyId.HasValue)
+            {
+                query = query.Where(m =>
+                    (m.Member1Id == memberId.Value || m.Member2Id == memberId.Value) &&
+                    m.SubCompanyId == targetSubCompanyId.Value);
             }
             else if (memberId.HasValue)
             {
-                // Member view: no company restriction
                 query = query.Where(m =>
                     m.Member1Id == memberId.Value ||
                     m.Member2Id == memberId.Value);
             }
-            // else: global view (no filters)
+            else if (targetSubCompanyId.HasValue)
+            {
+                query = query.Where(m => m.SubCompanyId == targetSubCompanyId.Value);
+            }
 
             // Execute query
             var meetingsFromDb = await query
