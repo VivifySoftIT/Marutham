@@ -32,7 +32,9 @@ public class AttendanceController : ControllerBase
     {
         try
         {
-            var now = DateTime.UtcNow.Date;
+            // Use IST (UTC+5:30) for date calculations to match India local date
+            var istOffset = TimeSpan.FromHours(5.5);
+            var now = DateTime.UtcNow.Add(istOffset).Date;
             DateTime startDate, endDate;
 
             // Determine date range
@@ -48,15 +50,15 @@ public class AttendanceController : ControllerBase
                     case "weekly":
                         var startOfWeek = now.AddDays(-(int)now.DayOfWeek + (int)DayOfWeek.Monday);
                         startDate = startOfWeek;
-                        endDate = startOfWeek.AddDays(6);
+                        endDate = now;
                         break;
                     case "monthly":
                         startDate = new DateTime(now.Year, now.Month, 1);
-                        endDate = startDate.AddMonths(1).AddDays(-1);
+                        endDate = now;
                         break;
                     case "yearly":
                         startDate = new DateTime(now.Year, 1, 1);
-                        endDate = new DateTime(now.Year, 12, 31);
+                        endDate = now;
                         break;
                     case "daily":
                     default:
