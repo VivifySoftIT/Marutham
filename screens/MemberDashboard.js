@@ -545,17 +545,21 @@ const MemberDashboard = () => {
       if (!recipientMemberId && recipientName && recipientName !== 'member') {
         console.log('Fetching member ID for:', recipientName);
         try {
+          // Search without subCompanyId filter to find any member by name
           const response = await fetch(`${API_BASE_URL}/api/Members`);
           if (response.ok) {
             const members = await response.json();
             // Try exact match first
             let member = members.find(m => m.name && m.name.toLowerCase() === recipientName.toLowerCase());
-
-            // If no exact match, try partial match
+            // Partial match fallback
             if (!member) {
               member = members.find(m => m.name && m.name.toLowerCase().includes(recipientName.toLowerCase()));
             }
-
+            // First-name match fallback
+            if (!member) {
+              const firstName = recipientName.split(' ')[0].toLowerCase();
+              member = members.find(m => m.name && m.name.toLowerCase().startsWith(firstName));
+            }
             if (member) {
               recipientMemberId = member.id;
               console.log('Found member ID:', recipientMemberId, 'for name:', recipientName);
@@ -566,6 +570,20 @@ const MemberDashboard = () => {
         } catch (error) {
           console.error('Error fetching member ID:', error);
         }
+      }
+
+      // Last resort: try GetByName endpoint
+      if (!recipientMemberId && recipientName && recipientName !== 'member') {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/Members/search?query=${encodeURIComponent(recipientName)}`);
+          if (res.ok) {
+            const results = await res.json();
+            if (Array.isArray(results) && results.length > 0) {
+              recipientMemberId = results[0].id;
+              console.log('Found via search:', recipientMemberId);
+            }
+          }
+        } catch (_) {}
       }
 
       if (!recipientMemberId) {
@@ -934,18 +952,23 @@ const MemberDashboard = () => {
 
           if (msg.messageType === 'Birthday' || msg.messageType === 'NewMember') {
             if (msg.messageType === 'Birthday' && msg.content) {
-              const match = msg.content.match(/Today is (.+)'s birthday/);
-              if (match) recipientName = match[1];
+              // Match patterns: "Today is X's birthday!", "X's birthday is tomorrow!", "X's birthday is in N days!"
+              const match = msg.content.match(/(?:Today is |^)(.+?)(?:'s birthday|'s Birthday)/i);
+              if (match) recipientName = match[1].trim();
             }
             if (msg.messageType === 'NewMember' && msg.content) {
               const match = msg.content.match(/New member joined: (.+)/);
-              if (match) recipientName = match[1];
+              if (match) recipientName = match[1].trim();
+            }
+            // For system-generated birthday entries, extract memberId from negative ID
+            if (msg.messageType === 'Birthday' && msg.id < 0) {
+              recipientMemberId = Math.abs(msg.id) - 1000000;
             }
           }
 
           newNotifications.push({
             id: `message-${msg.id}`,
-            notificationDbId: msg.id,
+            notificationDbId: msg.id > 0 ? msg.id : null, // negative IDs are system-generated
             type: 'message',
             messageType: msg.messageType,
             title: getTitle(msg.messageType, msg.subject),
@@ -961,7 +984,9 @@ const MemberDashboard = () => {
             eventDate: msg.date,
             createdBy: msg.createdBy,
             attachmentUrl: msg.attachmentUrl,
-            recipientMemberId: recipientMemberId,
+            // For birthday entries: backend uses Id = -1000000 - memberId, extract real memberId
+            recipientMemberId: recipientMemberId ||
+              (msg.messageType === 'Birthday' && msg.id < 0 ? Math.abs(msg.id) - 1000000 : null),
             recipientName: recipientName || msg.content,
             // Meeting display fields
             rawDate: msg.date ? msg.date.split('T')[0] : null,
