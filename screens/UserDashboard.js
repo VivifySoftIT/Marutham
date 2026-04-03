@@ -198,8 +198,6 @@ const UserDashboard = () => {
     ceusCount: 0,
     visitorsCount: 0,
   });
-    businessesVisited: 0,
-  });
 
   const periods = [
     { id: 'all', label: t('allTime'), icon: 'calendar' },
