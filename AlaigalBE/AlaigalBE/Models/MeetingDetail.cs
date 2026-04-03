@@ -50,5 +50,6 @@ namespace Alaigal.Models
 
         public int? CreatedBy { get; set; } // This is the Member.Id
 
+        [MaxLength(500)]
+        public string? PosterImageUrl { get; set; }
     }
-}

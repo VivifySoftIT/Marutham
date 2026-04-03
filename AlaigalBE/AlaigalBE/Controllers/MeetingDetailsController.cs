@@ -48,6 +48,7 @@ public class MeetingDetailsController : ControllerBase
                     m.MeetingType,
                     m.MeetingLink,
                     m.MemberDetails,
+                    m.PosterImageUrl,
                     m.CreatedDate,
                     m.UpdatedDate
                 })
@@ -84,6 +85,7 @@ public class MeetingDetailsController : ControllerBase
                     m.MeetingType,
                     m.MeetingLink,
                     m.MemberDetails,
+                    m.PosterImageUrl,
                     m.CreatedDate,
                     m.UpdatedDate
                 })
@@ -157,6 +159,57 @@ public class MeetingDetailsController : ControllerBase
             return StatusCode(500, new { message = "Error creating meeting", error = ex.Message });
         }
     }
+    // POST: api/MeetingDetails/{id}/poster
+    [HttpPost("{id}/poster")]
+    public async Task<IActionResult> UploadPoster(int id, IFormFile file)
+    {
+        try
+        {
+            var meeting = await _context.MeetingDetails.FindAsync(id);
+            if (meeting == null)
+                return NotFound(new { message = "Meeting not found" });
+
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "No file provided" });
+
+            var allowedTypes = new[] { "image/jpeg", "image/png", "image/jpg", "image/webp" };
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+                return BadRequest(new { message = "Only image files are allowed (jpg, png, webp)" });
+
+            // Save to wwwroot/uploads/meeting-posters/
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "meeting-posters");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var ext = Path.GetExtension(file.FileName);
+            var fileName = $"meeting_{id}_{DateTime.UtcNow.Ticks}{ext}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+                await file.CopyToAsync(stream);
+
+            // Delete old poster file if exists
+            if (!string.IsNullOrEmpty(meeting.PosterImageUrl))
+            {
+                var oldFileName = Path.GetFileName(meeting.PosterImageUrl);
+                var oldPath = Path.Combine(uploadsFolder, oldFileName);
+                if (System.IO.File.Exists(oldPath))
+                    System.IO.File.Delete(oldPath);
+            }
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            meeting.PosterImageUrl = $"{baseUrl}/uploads/meeting-posters/{fileName}";
+            meeting.UpdatedDate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { posterImageUrl = meeting.PosterImageUrl });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error uploading poster", error = ex.Message });
+        }
+    }
+
     // PUT: api/MeetingDetails/5
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateMeetingDetail(int id, MeetingDetail meeting)

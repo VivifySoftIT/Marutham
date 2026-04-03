@@ -81,32 +81,37 @@ public class InventoryController : ControllerBase
 
                 ReferralsGiven = await _context.Referrals
                     .CountAsync(r => r.GivenByMemberId == memberId &&
-                                    (!start.HasValue || r.CreatedDate >= start.Value) &&
-                                    (!endOfDay.HasValue || r.CreatedDate <= endOfDay.Value)),
+                                    (!start.HasValue || r.ReferralDate >= start.Value) &&
+                                    (!endOfDay.HasValue || r.ReferralDate <= endOfDay.Value)),
 
                 ReferralsReceived = await _context.Referrals
                     .CountAsync(r => r.ReceivedByMemberId == memberId &&
-                                    (!start.HasValue || r.CreatedDate >= start.Value) &&
-                                    (!endOfDay.HasValue || r.CreatedDate <= endOfDay.Value)),
+                                    (!start.HasValue || r.ReferralDate >= start.Value) &&
+                                    (!endOfDay.HasValue || r.ReferralDate <= endOfDay.Value)),
 
                 ThanksGiven = await _context.TYFCB
                     .CountAsync(t => t.GivenByMemberId == memberId &&
-                                    (!start.HasValue || t.VisitDate >= start.Value) &&
-                                    (!endOfDay.HasValue || t.VisitDate <= endOfDay.Value)),
+                                    (!start.HasValue || (t.VisitDate.HasValue && t.VisitDate.Value >= start.Value)) &&
+                                    (!endOfDay.HasValue || (t.VisitDate.HasValue && t.VisitDate.Value <= endOfDay.Value))),
 
                 ThanksReceived = await _context.TYFCB
                     .CountAsync(t => t.ReceivedByMemberId == memberId &&
-                                    (!start.HasValue || t.VisitDate >= start.Value) &&
-                                    (!endOfDay.HasValue || t.VisitDate <= endOfDay.Value)),
+                                    (!start.HasValue || (t.VisitDate.HasValue && t.VisitDate.Value >= start.Value)) &&
+                                    (!endOfDay.HasValue || (t.VisitDate.HasValue && t.VisitDate.Value <= endOfDay.Value))),
+
                 BusinessesVisited = await _context.TYFCB
-    .Where(t => t.GivenByMemberId == memberId &&
-                t.Status == "Confirmed" && // ✅ Only confirmed records
-                !string.IsNullOrWhiteSpace(t.BusinessVisited) &&
-                (!start.HasValue || t.VisitDate >= start.Value) &&
-                (!endOfDay.HasValue || t.VisitDate <= endOfDay.Value))
-    .Select(t => t.BusinessVisited)
-    .Distinct()
-    .CountAsync(),
+                    .Where(t => t.GivenByMemberId == memberId &&
+                                !string.IsNullOrWhiteSpace(t.BusinessVisited) &&
+                                (!start.HasValue || (t.VisitDate.HasValue && t.VisitDate.Value >= start.Value)) &&
+                                (!endOfDay.HasValue || (t.VisitDate.HasValue && t.VisitDate.Value <= endOfDay.Value)))
+                    .Select(t => t.BusinessVisited)
+                    .Distinct()
+                    .CountAsync(),
+
+                BusinessesVisitedReceived = await _context.TYFCB
+                    .CountAsync(t => t.ReceivedByMemberId == memberId &&
+                                    (!start.HasValue || (t.VisitDate.HasValue && t.VisitDate.Value >= start.Value)) &&
+                                    (!endOfDay.HasValue || (t.VisitDate.HasValue && t.VisitDate.Value <= endOfDay.Value))),
 
                 CEUs = await _context.CEUs
                     .CountAsync(c => c.MemberId == memberId &&
@@ -115,8 +120,8 @@ public class InventoryController : ControllerBase
 
                 Visitors = await _context.Visitors
                     .CountAsync(v => v.BroughtByMemberId == memberId &&
-                                    (!start.HasValue || v.CreatedDate >= start.Value) &&
-                                    (!endOfDay.HasValue || v.CreatedDate <= endOfDay.Value))
+                                    (!start.HasValue || v.VisitDate >= start.Value) &&
+                                    (!endOfDay.HasValue || v.VisitDate <= endOfDay.Value))
             };
 
             return Ok(result);
@@ -130,14 +135,12 @@ public class InventoryController : ControllerBase
     public class MemberStatsDto
     {
         public int MemberId { get; set; }
-
         public int ReferralsGiven { get; set; }
         public int ReferralsReceived { get; set; }
-
         public int ThanksGiven { get; set; }
         public int ThanksReceived { get; set; }
-        public int BusinessesVisited { get; set; } // ✅ New field
-
+        public int BusinessesVisited { get; set; }
+        public int BusinessesVisitedReceived { get; set; }
         public int CEUs { get; set; }
         public int Visitors { get; set; }
     }

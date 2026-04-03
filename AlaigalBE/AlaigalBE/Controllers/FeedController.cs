@@ -392,7 +392,8 @@ Date = t.VisitDate?.ToString("yyyy-MM-dd") ?? "",
                 Icon = "calendar-multiselect",
                 Color = attendedMeetingIds.Contains(meeting.Id) ? "#4CAF50" : "#FF9800",
                 MemberName = meeting.ContactPersonName,
-                Amount = 0
+                Amount = 0,
+                PosterImageUrl = meeting.PosterImageUrl
             }).ToList();
 
             return Ok(feedItems);
@@ -566,4 +567,5 @@ public class FeedItemDto
     public string? Color { get; set; } = string.Empty;
     public string? MemberName { get; set; }
     public decimal? Amount { get; set; }
+    public string? PosterImageUrl { get; set; }
 }

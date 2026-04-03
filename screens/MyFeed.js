@@ -22,6 +22,7 @@ const MyFeed = ({ route }) => {
   const [referralTab, setReferralTab] = useState(route?.params?.referralTab || 'my');
   const [thanksNoteTab, setThanksNoteTab] = useState(route?.params?.subTab || 'given');
   const [meetingTab, setMeetingTab] = useState('one_to_one'); // 'one_to_one' | 'weekly'
+  const [posterModalUri, setPosterModalUri] = useState(null);
   const [feedData, setFeedData] = useState([]);
   const [updatingItemId, setUpdatingItemId] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -1194,6 +1195,17 @@ ${t('electronicReceipt')}
             {item.amount > 0 && ` \u2022 ${t('amount')}: \u20B9${item.amount.toLocaleString()}`}
           </Text>
 
+          {/* View Poster button for weekly meetings */}
+          {(item.type === 'weekly_meeting' || item.type === 'meeting') && item.posterImageUrl && (
+            <TouchableOpacity
+              style={styles.viewPosterButton}
+              onPress={() => setPosterModalUri(item.posterImageUrl)}
+            >
+              <Icon name="image" size={14} color="#1B5E35" />
+              <Text style={styles.viewPosterText}>{t('viewPoster') || 'View Poster'}</Text>
+            </TouchableOpacity>
+          )}
+
           {/* Show download button only for admin-confirmed payment items */}
           {item.type === 'payment_made' && item.adminConfirmed && (
             <View style={styles.paymentActions}>
@@ -1979,6 +1991,30 @@ ${t('electronicReceipt')}
               <Text style={styles.receiptDownloadButtonText}>{t('downloadReceipt')}</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+
+      {/* Poster Image Modal */}
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={!!posterModalUri}
+        onRequestClose={() => setPosterModalUri(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' }}>
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 50, right: 20, zIndex: 10 }}
+            onPress={() => setPosterModalUri(null)}
+          >
+            <Icon name="close-circle" size={36} color="#FFF" />
+          </TouchableOpacity>
+          {posterModalUri && (
+            <Image
+              source={{ uri: posterModalUri }}
+              style={{ width: '95%', height: '70%', borderRadius: 12 }}
+              resizeMode="contain"
+            />
+          )}
         </View>
       </Modal>
     </SafeAreaView>

@@ -13,15 +13,18 @@ import {
   Modal,
   FlatList,
   ImageBackground,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 import ApiService from '../service/api';
 import { useLanguage } from '../service/LanguageContext';
 import SpeechToTextInput from '../components/SpeechToTextInput';
+import API_BASE_URL from '../apiConfig';
 
 // Alaigal Water Blue Colors
 const waterBlueColors = {
@@ -67,6 +70,10 @@ const CreateMeeting = () => {
   // Loading States
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Poster image
+  const [posterImage, setPosterImage] = useState(null); // local uri
+  const [uploadingPoster, setUploadingPoster] = useState(false);
 
   // Load members
   useEffect(() => {
@@ -226,6 +233,59 @@ const CreateMeeting = () => {
     setSelectedMembers([]);
   };
 
+  const pickPosterImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(t('error'), t('cameraPermissionRequired') || 'Permission to access gallery is required.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets?.length > 0) {
+      setPosterImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadPosterForMeeting = async (meetingId) => {
+    if (!posterImage) return null;
+    try {
+      setUploadingPoster(true);
+      const token = await AsyncStorage.getItem('jwt_token') ||
+        await AsyncStorage.getItem('token') ||
+        await AsyncStorage.getItem('authToken');
+
+      const formData = new FormData();
+      const filename = posterImage.split('/').pop();
+      const ext = filename.split('.').pop();
+      formData.append('file', {
+        uri: posterImage,
+        name: filename,
+        type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+      });
+
+      const response = await fetch(`${API_BASE_URL}/api/MeetingDetails/${meetingId}/poster`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Poster upload failed');
+      const data = await response.json();
+      return data.posterImageUrl;
+    } catch (err) {
+      console.error('Poster upload error:', err);
+      return null;
+    } finally {
+      setUploadingPoster(false);
+    }
+  };
+
   const handleCreateMeeting = async () => {
     // Validation (Meeting Code is optional - backend will auto-generate)
     if (!meetingTitle.trim()) {
@@ -327,12 +387,16 @@ const CreateMeeting = () => {
       const result = await ApiService.createMeeting(meetingData);
       console.log('Meeting created successfully:', result);
 
+      // Upload poster if selected
+      if (posterImage && result?.id) {
+        await uploadPosterForMeeting(result.id);
+      }
+
       // Clear all form fields
       setMeetingCode('');
       setMeetingTitle('');
       setMeetingDescription('');
       setContactPerson('');
-
       setContactNumber('');
       setPlace('');
       setVirtualLink('');
@@ -340,6 +404,7 @@ const CreateMeeting = () => {
       setMeetingTime(new Date());
       setMemberSelection('all');
       setSelectedMembers([]);
+      setPosterImage(null);
 
       Alert.alert(
         t('success'),
@@ -640,13 +705,51 @@ const CreateMeeting = () => {
             </TouchableOpacity>
           )}
 
+          {/* Meeting Poster */}
+          <View style={{ marginBottom: 16 }}>
+            <Text style={styles.label}>{t('meetingPoster') || 'Meeting Poster'}</Text>
+            <TouchableOpacity
+              onPress={pickPosterImage}
+              style={{
+                borderWidth: 1.5, borderColor: '#2E7D4F', borderStyle: 'dashed',
+                borderRadius: 10, padding: 12, alignItems: 'center', backgroundColor: '#F5F5F0',
+              }}
+            >
+              {posterImage ? (
+                <Image
+                  source={{ uri: posterImage }}
+                  style={{ width: '100%', height: 180, borderRadius: 8 }}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                  <Icon name="image-plus" size={40} color="#2E7D4F" />
+                  <Text style={{ color: '#2E7D4F', marginTop: 8, fontWeight: '600' }}>
+                    {t('tapToUploadPoster') || 'Tap to upload poster'}
+                  </Text>
+                  <Text style={{ color: '#999', fontSize: 12, marginTop: 4 }}>JPG, PNG, WEBP</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            {posterImage && (
+              <TouchableOpacity
+                onPress={() => setPosterImage(null)}
+                style={{ alignSelf: 'flex-end', marginTop: 6 }}
+              >
+                <Text style={{ color: '#F44336', fontSize: 12 }}>
+                  {t('removePoster') || 'Remove poster'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
           {/* Create Button */}
           <TouchableOpacity
             style={styles.createButton}
             onPress={handleCreateMeeting}
-            disabled={saving}
+            disabled={saving || uploadingPoster}
           >
-            {saving ? (
+            {saving || uploadingPoster ? (
               <ActivityIndicator color="#FFF" />
             ) : (
               <>

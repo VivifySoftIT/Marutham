@@ -193,8 +193,11 @@ const UserDashboard = () => {
     referralReceived: 0,
     tyfcbGiven: 0,
     tyfcbReceived: 0,
+    businessesVisited: 0,
+    businessesVisitedReceived: 0,
     ceusCount: 0,
     visitorsCount: 0,
+  });
     businessesVisited: 0,
   });
 
@@ -305,9 +308,10 @@ const UserDashboard = () => {
           referralReceived: 0,
           tyfcbGiven: 0,
           tyfcbReceived: 0,
+          businessesVisited: 0,
+          businessesVisitedReceived: 0,
           ceusCount: 0,
           visitorsCount: 0,
-          businessesVisited: 0,
         });
         return;
       }
@@ -341,9 +345,10 @@ const UserDashboard = () => {
           referralReceived: data.referralsReceived || data.ReferralsReceived || 0,
           tyfcbGiven: data.thanksGiven || data.ThanksGiven || 0,
           tyfcbReceived: data.thanksReceived || data.ThanksReceived || 0,
+          businessesVisited: data.businessesVisited || data.BusinessesVisited || 0,
+          businessesVisitedReceived: data.businessesVisitedReceived || data.BusinessesVisitedReceived || 0,
           ceusCount: data.ceus || data.CEUs || 0,
           visitorsCount: data.visitors || data.Visitors || 0,
-          businessesVisited: data.businessesVisited || data.BusinessesVisited || 0,
         };
         console.log('UserDashboard - Setting stats:', newStats);
         setStats(newStats);
@@ -1564,8 +1569,17 @@ const handleMeetingResponse = async (notification) => {
               icon="briefcase-account"
               label={t('businessVisits')}
               value={stats.businessesVisited}
+              color="#FF9800"
               delay={300}
-              onPress={() => Alert.alert(t('businessVisits'), t('viewDetails'))}
+              onPress={() => navigation.navigate('MyFeed', { tab: 'thanksnote', subTab: 'given' })}
+            />
+            <StatCard
+              icon="briefcase-check"
+              label={t('businessesVisited') || 'Businesses Visited Me'}
+              value={stats.businessesVisitedReceived}
+              color="#9C27B0"
+              delay={325}
+              onPress={() => navigation.navigate('MyFeed', { tab: 'thanksnote', subTab: 'received' })}
             />
             <StatCard
               icon="account-multiple"
