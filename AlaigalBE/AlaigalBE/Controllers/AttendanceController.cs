@@ -173,6 +173,27 @@ public class AttendanceController : ControllerBase
 
             var memberIds = members.Select(m => m.Id).ToList();
 
+            // Fetch meeting dates in the range for this sub-company
+            // Only dates that have a meeting are counted for attendance
+            var meetingDates = await _context.MeetingDetails
+                .Where(m => m.IsActive &&
+                            m.SubCompanyId == targetSubCompanyId &&
+                            m.MeetingDate >= DateOnly.FromDateTime(startDate) &&
+                            m.MeetingDate <= DateOnly.FromDateTime(endDate))
+                .Select(m => m.MeetingDate)
+                .Distinct()
+                .ToListAsync();
+
+            // Convert to DateTime for comparison
+            var meetingDateSet = meetingDates
+                .Select(d => new DateTime(d.Year, d.Month, d.Day))
+                .ToHashSet();
+
+            // If no meetings found, fall back to all dates (backward compat)
+            var effectiveDates = meetingDateSet.Count > 0
+                ? dateRange.Where(d => meetingDateSet.Contains(d)).ToList()
+                : dateRange;
+
             // Fetch existing attendance records in the date range
             var existingAttendance = await _context.Attendance
                 .Where(a => a.IsActive &&
@@ -197,22 +218,21 @@ public class AttendanceController : ControllerBase
             var attendanceLookup = existingAttendance
                 .ToLookup(a => new { a.MemberId, a.AttendanceDate });
 
-            // Build full result including Absent
+            // Build full result — only for meeting dates
             var result = new List<AttendanceReportItem>();
 
             foreach (var member in members)
             {
-                foreach (var date in dateRange)
+                foreach (var date in effectiveDates)
                 {
                     var key = new { MemberId = member.Id, AttendanceDate = date };
                     var record = attendanceLookup[key].FirstOrDefault();
 
                     if (record != null)
                     {
-                        // Present
                         result.Add(new AttendanceReportItem
                         {
-                            Id = null, // No real attendance ID for consistency (or omit if unused)
+                            Id = null,
                             MemberId = member.Id,
                             MemberName = member.Name,
                             AttendanceDate = date,
@@ -228,7 +248,7 @@ public class AttendanceController : ControllerBase
                     }
                     else
                     {
-                        // Absent
+                        // Absent — only on meeting days
                         result.Add(new AttendanceReportItem
                         {
                             Id = null,
