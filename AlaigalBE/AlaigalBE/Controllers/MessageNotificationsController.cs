@@ -295,9 +295,15 @@ public class MessageNotificationsController : ControllerBase
                 await _context.SaveChangesAsync();
             }
 
-            // ✅ STEP 2: Fetch today's birthday wish (safe for nullable SentDate)
+            // ✅ STEP 2: Fetch today's birthday wish — same sub-company only
             var startOfToday = today;
             var startOfTomorrow = today.AddDays(1);
+
+            // Get receiver's sub-company
+            var receiver = await _context.Members
+                .Where(m => m.Id == memberId && m.IsActive)
+                .Select(m => new { m.SubCompanyId })
+                .FirstOrDefaultAsync();
 
             var result = await _context.BirthdayWishLogs
                 .Where(b => b.MemberId == memberId &&
@@ -312,9 +318,20 @@ public class MessageNotificationsController : ControllerBase
                         .Where(m => m.Id == b.SentById)
                         .Select(m => m.Name)
                         .FirstOrDefault() ?? "Unknown",
+                    SenderSubCompanyId = _context.Members
+                        .Where(m => m.Id == b.SentById)
+                        .Select(m => m.SubCompanyId)
+                        .FirstOrDefault(),
                     b.SentDate
                 })
                 .FirstOrDefaultAsync();
+
+            // Only return wish if sender is from the same sub-company
+            if (result != null && receiver?.SubCompanyId != null &&
+                result.SenderSubCompanyId != receiver.SubCompanyId)
+            {
+                result = null;
+            }
 
             // ✅ Always return 200 OK
             return Ok(new
@@ -397,6 +414,21 @@ public class MessageNotificationsController : ControllerBase
                 targetSubCompanyId = adminMember.SubCompanyId;
             }
 
+            // If no SubCompanyId resolved, return empty — never show cross-company data
+            if (!targetSubCompanyId.HasValue)
+            {
+                return Ok(new
+                {
+                    fromDate = startDate,
+                    toDate = endDate,
+                    period = period?.ToLowerInvariant(),
+                    type,
+                    adminMemberId,
+                    totalRecords = 0,
+                    data = new List<object>()
+                });
+            }
+
             // === Generate Birthday Notifications (from Members table ONLY) ===
             var birthdayNotifications = new List<object>();
             bool shouldIncludeBirthdays = string.IsNullOrWhiteSpace(type) ||
@@ -423,35 +455,24 @@ public class MessageNotificationsController : ControllerBase
 
                     if (daysUntil >= 0 && daysUntil <= 6)
                     {
-                        string contentMessage;
+                        // Don't show birthday reminder to the birthday person themselves
                         bool isSelf = adminMemberId.HasValue && member.Id == adminMemberId.Value;
+                        if (isSelf) continue;
 
+                        string contentMessage;
                         if (daysUntil == 0)
-                        {
-                            if (isSelf)
-                            {
-                                contentMessage = "Today is your birthday! 🎉";
-                            }
-                            else
-                            {
-                                contentMessage = $"Today is {member.Name}'s birthday! 🎉";
-                            }
-                        }
+                            contentMessage = $"Today is {member.Name}'s birthday! 🎉";
                         else if (daysUntil == 1)
-                        {
                             contentMessage = $"{member.Name}'s birthday is tomorrow! 🎂";
-                        }
                         else
-                        {
                             contentMessage = $"{member.Name}'s birthday is in {daysUntil} days! 🎂";
-                        }
 
                         birthdayNotifications.Add(new
                         {
                             Id = -1_000_000 - member.Id,
                             MessageType = "Birthday",
                             MemberIds = "*",
-                            Subject = isSelf ? "Happy Birthday!" : "Birthday Reminder!",
+                            Subject = "Birthday Reminder!",
                             Content = contentMessage,
                             AttachmentUrl = (string?)null,
                             Date = thisYearBirthday.ToString("yyyy-MM-dd"),
@@ -493,34 +514,31 @@ public class MessageNotificationsController : ControllerBase
             // === Load non-birthday notifications ===
             var eventTypes = new[] { "Event", "Meeting" };
             var broadcastTypes = new[] { "Welcome", "NewMember" };
+            var memberIdStr = adminMemberId.HasValue ? adminMemberId.Value.ToString() : "";
+
             var nonBirthdayQuery = _context.MessageNotifications
-      .Include(m => m.CreatedByMember)
-      .Where(m =>
-          m.MessageType != "Birthday" &&
-          (
-              // Events/Meetings: Use Date/SentDate for relevance; allow older CreatedDate
-              (eventTypes.Contains(m.MessageType) &&
-               (
-                   (m.Date.HasValue && m.Date.Value.Date >= startDate && m.Date.Value.Date <= endDate) ||
-                   (m.SentDate.HasValue && m.SentDate.Value.Date >= startDate && m.SentDate.Value.Date <= endDate) ||
-                   (!m.Date.HasValue && !m.SentDate.HasValue && m.CreatedDate >= startDate && m.CreatedDate <= endDate.AddDays(1).AddTicks(-1))
-               ))
-              ||
-              // Broadcast & other types: still bound by CreatedDate
-              (broadcastTypes.Contains(m.MessageType) && m.CreatedDate >= startDate && m.CreatedDate <= endDate.AddDays(1).AddTicks(-1))
-              ||
-              // Payment: bound by CreatedDate (or adjust if needed)
-              (m.MessageType == "Payment" &&
-               !string.IsNullOrEmpty(m.MemberIds) &&
-               m.MemberIds.Contains(adminMemberId.ToString()) &&
-               m.CreatedDate >= startDate && m.CreatedDate <= endDate.AddDays(1).AddTicks(-1))
-              ||
-              (m.MessageType == "Birthday" &&
-               !string.IsNullOrEmpty(m.MemberIds) &&
-               m.MemberIds.Contains(adminMemberId.ToString()) &&
-               m.CreatedDate >= startDate && m.CreatedDate <= endDate.AddDays(1).AddTicks(-1))
-          )
-      );
+                .Include(m => m.CreatedByMember)
+                .Where(m =>
+                    m.MessageType != "Birthday" &&
+                    (
+                        // Events/Meetings: filter by date range
+                        (eventTypes.Contains(m.MessageType) &&
+                         (
+                             (m.Date.HasValue && m.Date.Value.Date >= startDate && m.Date.Value.Date <= endDate) ||
+                             (m.SentDate.HasValue && m.SentDate.Value.Date >= startDate && m.SentDate.Value.Date <= endDate) ||
+                             (!m.Date.HasValue && !m.SentDate.HasValue && m.CreatedDate >= startDate && m.CreatedDate <= endDate.AddDays(1).AddTicks(-1))
+                         ))
+                        ||
+                        // Broadcast types: show to all in sub-company
+                        (broadcastTypes.Contains(m.MessageType) && m.CreatedDate >= startDate && m.CreatedDate <= endDate.AddDays(1).AddTicks(-1))
+                        ||
+                        // Payment: only show to the specific member in MemberIds
+                        (m.MessageType == "Payment" &&
+                         !string.IsNullOrEmpty(m.MemberIds) &&
+                         m.MemberIds.Contains(memberIdStr) &&
+                         m.CreatedDate >= startDate && m.CreatedDate <= endDate.AddDays(1).AddTicks(-1))
+                    )
+                );
 
             if (!string.IsNullOrWhiteSpace(type))
             {

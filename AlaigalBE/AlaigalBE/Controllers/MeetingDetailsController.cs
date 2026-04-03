@@ -19,12 +19,18 @@ public class MeetingDetailsController : ControllerBase
 
     // GET: api/MeetingDetails
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<object>>> GetMeetingDetails()
+    public async Task<ActionResult<IEnumerable<object>>> GetMeetingDetails([FromQuery] int? subCompanyId = null)
     {
         try
         {
-            var meetings = await _context.MeetingDetails
+            var query = _context.MeetingDetails
                 .Where(m => m.IsActive)
+                .AsQueryable();
+
+            if (subCompanyId.HasValue)
+                query = query.Where(m => m.SubCompanyId == subCompanyId.Value);
+
+            var meetings = await query
                 .OrderByDescending(m => m.MeetingDate)
                 .ThenByDescending(m => m.Time)
                 .Select(m => new

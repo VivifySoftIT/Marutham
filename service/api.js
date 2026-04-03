@@ -509,31 +509,6 @@ class ApiService {
     return await this.request(`/api/Inventory/${id}`, 'DELETE');
   }
 
-  // ==================== NOTICES APIs ====================
-  async getNotices() {
-    return await this.request('/api/Notices');
-  }
-
-  async getNotice(id) {
-    return await this.request(`/api/Notices/${id}`);
-  }
-
-  async createNotice(noticeData) {
-    return await this.request('/api/Notices', 'POST', noticeData);
-  }
-
-  async sendNotice(id) {
-    return await this.request(`/api/Notices/${id}/send`, 'POST');
-  }
-
-  async updateNotice(id, noticeData) {
-    return await this.request(`/api/Notices/${id}`, 'PUT', noticeData);
-  }
-
-  async deleteNotice(id) {
-    return await this.request(`/api/Notices/${id}`, 'DELETE');
-  }
-
   // ==================== MESSAGE NOTIFICATIONS APIs ====================
   async getMessageNotifications() {
     const subCompanyId = await this.getSubCompanyId();
@@ -810,7 +785,9 @@ class ApiService {
 
   // Get all meetings from MeetingDetails table
   async getMeetingDetails() {
-    return await this.request('/api/MeetingDetails');
+    const subCompanyId = await this.getSubCompanyId();
+    const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+    return await this.request(`/api/MeetingDetails${qs}`);
   }
 
   async createMeeting(meetingData) {
