@@ -392,7 +392,7 @@ Member ID: ${currentMemberId ? `MEM-${currentMemberId}` : 'N/A'}
 
 PAYMENT DETAILS
 Month: ${selectedPayment.month}
-Amount: ?${selectedPayment.amount.toLocaleString()}
+Amount: ₹${selectedPayment.amount.toLocaleString()}
 Payment Type: ${selectedPayment.type}
 Status: ${selectedPayment.status}
 Due Date: ${selectedPayment.dueDate}
@@ -403,7 +403,7 @@ Transaction ID: ${selectedPayment.transactionId || 'N/A'}
 
 Thank you for your payment!
 
-For queries, contact: support@alaigal.com
+For queries, contact: support@marutham.com
 Phone: +91-XXXXXXXXXX
 
 ================================
@@ -427,7 +427,7 @@ This is an electronically generated receipt.
   };
 
   const handlePayNow = (payment) => {
-    Alert.alert('Make Payment', `Pay ?${payment.amount} for ${payment.month}?`, [
+    Alert.alert('Make Payment', `Pay ₹${payment.amount} for ${payment.month}?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Pay Now', onPress: () => {
@@ -459,7 +459,7 @@ This is an electronically generated receipt.
       <View style={styles.paymentDetails}>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Amount:</Text>
-          <Text style={styles.detailValue}>?{item.amount.toLocaleString()}</Text>
+          <Text style={styles.detailValue}>₹{item.amount.toLocaleString()}</Text>
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Due Date:</Text>
@@ -505,7 +505,7 @@ This is an electronically generated receipt.
   const renderDueMonthItem = ({ item }) => (
     <View style={styles.dueMonthCard}>
       <Text style={styles.dueMonthText}>{item.Month || item.month}</Text>
-      <Text style={styles.dueAmountText}>?{item.DueAmount || item.dueAmount}</Text>
+      <Text style={styles.dueAmountText}>₹{item.DueAmount || item.dueAmount}</Text>
     </View>
   );
 
@@ -547,12 +547,12 @@ This is an electronically generated receipt.
               <LinearGradient colors={['#4CAF50', '#66BB6A']} style={styles.summaryCard}>
                 <Icon name="check-circle" size={32} color="#FFF" />
                 <Text style={styles.summaryLabel}>Total Paid</Text>
-                <Text style={styles.summaryAmount}>?{totalPaid.toLocaleString()}</Text>
+                <Text style={styles.summaryAmount}>₹{totalPaid.toLocaleString()}</Text>
               </LinearGradient>
               <LinearGradient colors={['#FF9800', '#FFB74D']} style={styles.summaryCard}>
                 <Icon name="alert-circle" size={32} color="#FFF" />
                 <Text style={styles.summaryLabel}>Amount Due</Text>
-                <Text style={styles.summaryAmount}>?{totalDue.toLocaleString()}</Text>
+                <Text style={styles.summaryAmount}>₹{totalDue.toLocaleString()}</Text>
               </LinearGradient>
             </View>
 
@@ -619,7 +619,7 @@ This is an electronically generated receipt.
             <ScrollView style={styles.modalContent}>
               {/* Amount */}
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Amount (?) *</Text>
+                <Text style={styles.formLabel}>Amount (₹) *</Text>
                 <View style={styles.inputContainer}>
                   <Icon name="currency-inr" size={18} color="#C9A84C" style={styles.inputIcon} />
                   <SpeechToTextInput
@@ -799,7 +799,7 @@ This is an electronically generated receipt.
                 </View>
                 <View style={styles.receiptDetailRow}>
                   <Text style={styles.receiptDetailLabel}>Amount:</Text>
-                  <Text style={styles.receiptDetailValue}>?{selectedPayment?.amount?.toLocaleString() || '0'}</Text>
+                  <Text style={styles.receiptDetailValue}>₹{selectedPayment?.amount?.toLocaleString() || '0'}</Text>
                 </View>
                 <View style={styles.receiptDetailRow}>
                   <Text style={styles.receiptDetailLabel}>Payment Method:</Text>
@@ -817,7 +817,7 @@ This is an electronically generated receipt.
 
               <View style={styles.receiptAmountBox}>
                 <Text style={styles.receiptAmountLabel}>Total Amount Paid</Text>
-                <Text style={styles.receiptAmountValue}>?{selectedPayment?.amount?.toLocaleString() || '0'}</Text>
+                <Text style={styles.receiptAmountValue}>₹{selectedPayment?.amount?.toLocaleString() || '0'}</Text>
               </View>
 
               <View style={styles.receiptSection}>
@@ -834,7 +834,7 @@ This is an electronically generated receipt.
 
               <View style={styles.receiptFooter}>
                 <Text style={styles.receiptFooterText}>Thank you for your payment!</Text>
-                <Text style={styles.receiptFooterSubtext}>For queries, contact: support@alaigal.com</Text>
+                <Text style={styles.receiptFooterSubtext}>For queries, contact: support@marutham.com</Text>
                 <Text style={styles.receiptFooterSubtext}>This is an electronically generated receipt.</Text>
               </View>
             </ScrollView>
