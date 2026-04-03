@@ -11,10 +11,12 @@ namespace AlaigalBE.Controllers;
 public class MeetingDetailsController : ControllerBase
 {
     private readonly AlaigalRefContext _context;
+    private readonly IConfiguration _config;
 
-    public MeetingDetailsController(AlaigalRefContext context)
+    public MeetingDetailsController(AlaigalRefContext context, IConfiguration config)
     {
         _context = context;
+        _config = config;
     }
 
     // GET: api/MeetingDetails
@@ -162,8 +164,7 @@ public class MeetingDetailsController : ControllerBase
     // POST: api/MeetingDetails/{id}/poster
     [HttpPost("{id}/poster")]
     [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-    public async Task<IActionResult> UploadPoster(int id, IFormFile file,
-        [FromServices] IHttpClientFactory httpClientFactory)
+    public async Task<IActionResult> UploadPoster(int id, IFormFile file)
     {
         try
         {
@@ -178,21 +179,23 @@ public class MeetingDetailsController : ControllerBase
             if (!allowedTypes.Contains(file.ContentType.ToLower()))
                 return BadRequest(new { message = "Only image files are allowed (jpg, png, webp)" });
 
-            // Generate GUID filename matching the Video API URL pattern
-            var ext = Path.GetExtension(file.FileName).TrimStart('.').ToLower();
-            var guidFileName = $"{Guid.NewGuid()}.{(ext == "jpg" ? "jpeg" : ext)}";
+            // Use same storage path as profile images (VideoFilePath config)
+            var rootPath = _config["VideoFilePath"];
+            var virtualPath = _config["VideoFileVirtualPath"];
 
-            // Try to save to the Video API folder on the same server
-            // Path: wwwroot/Video/ which is served as /api/Video/{filename}
-            var videoFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Video");
-            Directory.CreateDirectory(videoFolder);
-            var filePath = Path.Combine(videoFolder, guidFileName);
+            var year = DateTime.Now.Year.ToString();
+            var ext = Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}{ext}";
 
+            var directoryPath = Path.Combine(rootPath, year);
+            Directory.CreateDirectory(directoryPath);
+
+            var filePath = Path.Combine(directoryPath, fileName);
             using (var stream = new FileStream(filePath, FileMode.Create))
                 await file.CopyToAsync(stream);
 
-            // Store URL in the same pattern as existing video files
-            var posterUrl = $"https://www.vivifysoft.in/api/Video/{guidFileName}";
+            // Same URL pattern as profile images
+            var posterUrl = $"{virtualPath.TrimEnd('/')}/{fileName}";
 
             meeting.PosterImageUrl = posterUrl;
             meeting.UpdatedDate = DateTime.UtcNow;
