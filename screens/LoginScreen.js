@@ -369,7 +369,7 @@ const LoginScreen = ({ navigation, notificationScreen }) => {
                 <Text
                   style={styles.contactSupportText}
                   onPress={() => {
-                    Alert.alert('Contact Support', 'Please email support@alaigal.com');
+                    Alert.alert('Contact Support', 'Please email support@marutham.com');
                   }}
                 >
                   Contact Support
