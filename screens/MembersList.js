@@ -139,7 +139,7 @@ const MemberCard = ({ item, navigation, t }) => {
         <View style={styles.detailBox}>
           <Icon name="cash" size={16} color="#C9A84C" />
           <Text style={styles.detailLabel}>{t('amount')}</Text>
-          <Text style={styles.detailValue}>?{item.amount || '0'}</Text>
+          <Text style={styles.detailValue}>₹{item.amount || '0'}</Text>
         </View>
       </View>
 
