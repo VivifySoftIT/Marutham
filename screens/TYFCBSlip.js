@@ -395,7 +395,7 @@ const TYFCBSlip = () => {
         )}
       </View>
 
-      {/* Business Visited */}
+      {/* Business Completed */}
       <View style={styles.section}>
         <Text style={styles.label}>{t('businessVisited')} *</Text>
         <View style={styles.inputContainer}>
