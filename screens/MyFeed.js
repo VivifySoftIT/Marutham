@@ -1566,59 +1566,59 @@ ${t('electronicReceipt')}
                       <Text style={styles.notesText}>{selectedItem.notes}</Text>
                     </View>
                   )}
-
-                  {/* Action Buttons - Always visible for received items */}
-                  {((selectedItem.type === 'referral_received') ||
-                    (selectedItem.type === 'tyfcb_received')) && (
-                      <View style={styles.actionButtonsContainer}>
-                        <Text style={styles.actionTitle}>
-                          {(!selectedItem.status || translateStatus(selectedItem.status) === t('pending'))
-                            ? t('takeAction')
-                            : t('actions')}
-                        </Text>
-                        <View style={styles.actionButtons}>
-                          <TouchableOpacity
-                            style={[styles.actionButton, styles.confirmActionButton]}
-                            onPress={confirmStatusUpdate}
-                            disabled={updatingItemId === selectedItem.id ||
-                              (selectedItem.status && translateStatus(selectedItem.status) !== t('pending'))}
-                          >
-                            {updatingItemId === selectedItem.id ? (
-                              <ActivityIndicator size="small" color="#FFF" />
-                            ) : (
-                              <>
-                                <Icon name="check-circle" size={20} color="#FFF" />
-                                <Text style={styles.actionButtonText}>{t('confirm')}</Text>
-                              </>
-                            )}
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={[styles.actionButton, styles.rejectActionButton]}
-                            onPress={rejectStatusUpdate}
-                            disabled={updatingItemId === selectedItem.id ||
-                              (selectedItem.status && translateStatus(selectedItem.status) !== t('pending'))}
-                          >
-                            {updatingItemId === selectedItem.id ? (
-                              <ActivityIndicator size="small" color="#FFF" />
-                            ) : (
-                              <>
-                                <Icon name="close-circle" size={20} color="#FFF" />
-                                <Text style={styles.actionButtonText}>{t('reject')}</Text>
-                              </>
-                            )}
-                          </TouchableOpacity>
-                        </View>
-                        {selectedItem.status && translateStatus(selectedItem.status) !== t('pending') && (
-                          <Text style={styles.actionHint}>
-                            {t('alreadyProcessed')} {translateStatus(selectedItem.status).toLowerCase()}
-                          </Text>
-                        )}
-                      </View>
-                    )}
                 </>
               )}
             </ScrollView>
+
+            {/* Action Buttons - pinned outside ScrollView so always visible */}
+            {selectedItem && ((selectedItem.type === 'referral_received') ||
+              (selectedItem.type === 'tyfcb_received')) && (
+                <View style={[styles.actionButtonsContainer, { borderTopWidth: 1, borderTopColor: '#E0E0E0', paddingHorizontal: 16, paddingBottom: 16 }]}>
+                  <Text style={styles.actionTitle}>
+                    {(!selectedItem.status || translateStatus(selectedItem.status) === t('pending'))
+                      ? t('takeAction')
+                      : t('actions')}
+                  </Text>
+                  <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.confirmActionButton]}
+                      onPress={confirmStatusUpdate}
+                      disabled={updatingItemId === selectedItem.id ||
+                        (selectedItem.status && translateStatus(selectedItem.status) !== t('pending'))}
+                    >
+                      {updatingItemId === selectedItem.id ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                      ) : (
+                        <>
+                          <Icon name="check-circle" size={20} color="#FFF" />
+                          <Text style={styles.actionButtonText}>{t('confirm')}</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.rejectActionButton]}
+                      onPress={rejectStatusUpdate}
+                      disabled={updatingItemId === selectedItem.id ||
+                        (selectedItem.status && translateStatus(selectedItem.status) !== t('pending'))}
+                    >
+                      {updatingItemId === selectedItem.id ? (
+                        <ActivityIndicator size="small" color="#FFF" />
+                      ) : (
+                        <>
+                          <Icon name="close-circle" size={20} color="#FFF" />
+                          <Text style={styles.actionButtonText}>{t('reject')}</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  {selectedItem.status && translateStatus(selectedItem.status) !== t('pending') && (
+                    <Text style={styles.actionHint}>
+                      {t('alreadyProcessed')} {translateStatus(selectedItem.status).toLowerCase()}
+                    </Text>
+                  )}
+                </View>
+              )}
           </View>
         </View>
       </Modal>
@@ -2308,6 +2308,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 500,
     maxHeight: '90%',
+    flex: 0,
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -2318,13 +2319,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0'
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#333'
   },
@@ -2332,7 +2333,7 @@ const styles = StyleSheet.create({
     padding: 4
   },
   modalContent: {
-    padding: 16
+    padding: 12
   },
   // Detail Modal Styles
   detailHeader: {
@@ -2341,15 +2342,15 @@ const styles = StyleSheet.create({
     marginBottom: 16
   },
   detailIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15
+    marginRight: 12
   },
   detailTitle: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
     flex: 1
@@ -2377,18 +2378,18 @@ const styles = StyleSheet.create({
   detailItem: {
     flex: 1,
     backgroundColor: '#F8F9FA',
-    padding: 12,
+    padding: 8,
     borderRadius: 10,
     alignItems: 'center'
   },
   detailLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#666',
-    marginTop: 8,
-    marginBottom: 4
+    marginTop: 4,
+    marginBottom: 2
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#333',
     textAlign: 'center'
@@ -2430,13 +2431,13 @@ const styles = StyleSheet.create({
     lineHeight: 20
   },
   actionButtonsContainer: {
-    marginTop: 16
+    marginTop: 8
   },
   actionTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 15,
+    marginBottom: 10,
     textAlign: 'center'
   },
   actionButtons: {
@@ -2448,9 +2449,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 11,
     borderRadius: 10,
-    gap: 10
+    gap: 8
   },
   confirmActionButton: {
     backgroundColor: '#4CAF50'
