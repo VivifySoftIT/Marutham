@@ -40,6 +40,9 @@ namespace Alaigal.Models
 
         public bool IsActive { get; set; } = true;
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? MonthlyFee { get; set; } // Admin-configured monthly fee per member
+
         public DateTime CreatedDate { get; set; } = DateTime.Now;
 
         [StringLength(100)]

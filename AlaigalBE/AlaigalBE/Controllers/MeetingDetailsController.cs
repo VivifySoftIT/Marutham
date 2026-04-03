@@ -11,10 +11,12 @@ namespace AlaigalBE.Controllers;
 public class MeetingDetailsController : ControllerBase
 {
     private readonly AlaigalRefContext _context;
+    private readonly IConfiguration _config;
 
-    public MeetingDetailsController(AlaigalRefContext context)
+    public MeetingDetailsController(AlaigalRefContext context, IConfiguration config)
     {
         _context = context;
+        _config = config;
     }
 
     // GET: api/MeetingDetails
@@ -161,8 +163,8 @@ public class MeetingDetailsController : ControllerBase
     }
     // POST: api/MeetingDetails/{id}/poster
     [HttpPost("{id}/poster")]
-    public async Task<IActionResult> UploadPoster(int id, IFormFile file,
-        [FromServices] IHttpClientFactory httpClientFactory)
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+    public async Task<IActionResult> UploadPoster(int id, IFormFile file)
     {
         try
         {
@@ -177,39 +179,23 @@ public class MeetingDetailsController : ControllerBase
             if (!allowedTypes.Contains(file.ContentType.ToLower()))
                 return BadRequest(new { message = "Only image files are allowed (jpg, png, webp)" });
 
-            // Forward file to external Video API
-            var client = httpClientFactory.CreateClient();
-            var ext = Path.GetExtension(file.FileName).TrimStart('.');
-            var fileName = $"{Guid.NewGuid()}.{(ext == "jpg" ? "jpeg" : ext)}";
+            // Use same storage path as profile images (VideoFilePath config)
+            var rootPath = _config["VideoFilePath"];
+            var virtualPath = _config["VideoFileVirtualPath"];
 
-            using var multipart = new MultipartFormDataContent();
-            using var fileStream = file.OpenReadStream();
-            var streamContent = new StreamContent(fileStream);
-            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
-            multipart.Add(streamContent, "file", fileName);
+            var year = DateTime.Now.Year.ToString();
+            var ext = Path.GetExtension(file.FileName);
+            var fileName = $"{Guid.NewGuid()}{ext}";
 
-            var uploadResponse = await client.PostAsync("https://www.vivifysoft.in/api/Video/upload", multipart);
+            var directoryPath = Path.Combine(rootPath, year);
+            Directory.CreateDirectory(directoryPath);
 
-            string posterUrl;
+            var filePath = Path.Combine(directoryPath, fileName);
+            using (var stream = new FileStream(filePath, FileMode.Create))
+                await file.CopyToAsync(stream);
 
-            if (uploadResponse.IsSuccessStatusCode)
-            {
-                // External API returned the URL — parse it
-                var json = await uploadResponse.Content.ReadAsStringAsync();
-                using var doc = System.Text.Json.JsonDocument.Parse(json);
-                var root = doc.RootElement;
-
-                // Try common response field names
-                posterUrl = root.TryGetProperty("url", out var urlProp) ? urlProp.GetString()
-                          : root.TryGetProperty("fileUrl", out var fileUrlProp) ? fileUrlProp.GetString()
-                          : root.TryGetProperty("path", out var pathProp) ? pathProp.GetString()
-                          : $"https://www.vivifysoft.in/api/Video/{fileName}";
-            }
-            else
-            {
-                // Fallback: construct URL using the guid filename pattern
-                posterUrl = $"https://www.vivifysoft.in/api/Video/{fileName}";
-            }
+            // Same URL pattern as profile images
+            var posterUrl = $"{virtualPath.TrimEnd('/')}/{fileName}";
 
             meeting.PosterImageUrl = posterUrl;
             meeting.UpdatedDate = DateTime.UtcNow;

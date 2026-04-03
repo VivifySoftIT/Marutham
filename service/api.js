@@ -325,6 +325,12 @@ class ApiService {
     return await this.request(`/api/Payments/member/${memberId}`);
   }
 
+  async getAllMembersSummary() {
+    const subCompanyId = await this.getSubCompanyId();
+    const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+    return await this.request(`/api/Payments/all-members-summary${qs}`);
+  }
+
   async getMemberPaymentSummary(memberId) {
     return await this.request(`/api/Payments/member/${memberId}/summary`);
   }

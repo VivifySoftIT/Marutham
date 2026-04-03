@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Voice from '@react-native-voice/voice';
+import { Audio } from 'expo-av';
 
 /**
  * SpeechToTextInput - A TextInput component with enhanced Google Web Speech API
@@ -184,6 +185,17 @@ const SpeechToTextInput = ({
     // For Mobile Platform - React Native Voice
     else {
       try {
+        // Request mic permission before starting
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert(
+            'Microphone Permission',
+            'Microphone access is required for voice input. Please enable it in Settings.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+
         await Voice.destroy();
         Voice.removeAllListeners();
 

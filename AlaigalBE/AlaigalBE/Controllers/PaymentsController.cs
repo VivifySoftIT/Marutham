@@ -83,72 +83,116 @@ public class PaymentsController : ControllerBase
     [HttpGet("member/{memberId}")]
     public async Task<ActionResult<MemberPaymentSummaryDto>> GetMemberPayments(int memberId)
     {
-        // 1️⃣ Get member
+        // 1️⃣ Get member with sub-company
         var member = await _context.Members
+            .Include(m => m.SubCompany)
             .FirstOrDefaultAsync(m => m.Id == memberId && m.IsActive);
 
         if (member == null)
-        {
             return NotFound(new { message = "Member not found" });
-        }
 
-        // 2️⃣ Get payments
+        // 2️⃣ Get configured monthly fee from sub-company, fallback to last payment amount
+        decimal configuredFee = 0;
+        if (member.SubCompany?.MonthlyFee.HasValue == true && member.SubCompany.MonthlyFee.Value > 0)
+            configuredFee = member.SubCompany.MonthlyFee.Value;
+
+        // 3️⃣ Get all payments ordered by date
         var payments = await _context.Payments
             .Where(p => p.MemberId == memberId)
             .OrderBy(p => p.PaymentEndDate)
             .ToListAsync();
 
-        if (!payments.Any())
+        decimal totalPaidAmount = payments.Sum(p => p.Amount);
+
+        // If no fee configured and no payments, return empty
+        if (configuredFee == 0 && !payments.Any())
         {
             return Ok(new MemberPaymentSummaryDto
             {
                 MemberId = memberId,
                 MemberName = member.Name,
+                MonthlyFee = 0,
                 TotalPaidAmount = 0,
                 TotalDueAmount = 0
             });
         }
 
-        // 3️⃣ Total paid
-        decimal totalPaidAmount = payments.Sum(p => p.Amount);
+        // Use last payment amount as fallback fee if not configured
+        if (configuredFee == 0 && payments.Any())
+            configuredFee = payments.OrderByDescending(p => p.PaymentEndDate).First().Amount;
 
-        // 4️⃣ Last paid payment (December)
-        var lastPayment = payments
-            .OrderByDescending(p => p.PaymentEndDate)
-            .First();
+        // 4️⃣ Determine start month — member join date or first payment, whichever is earlier
+        var now = DateTime.Now;
+        var currentMonth = new DateTime(now.Year, now.Month, 1);
 
-        decimal monthlyFee = lastPayment.Amount; // 🔥 KEY RULE
-        DateTime lastPaidEndDate = lastPayment.PaymentEndDate;
+        DateTime startMonth;
+        if (member.JoinDate.HasValue)
+            startMonth = new DateTime(member.JoinDate.Value.Year, member.JoinDate.Value.Month, 1);
+        else if (payments.Any())
+            startMonth = new DateTime(payments.First().PaymentEndDate.Year, payments.First().PaymentEndDate.Month, 1);
+        else
+        {
+            // No join date, no payments — nothing owed
+            return Ok(new MemberPaymentSummaryDto
+            {
+                MemberId = memberId,
+                MemberName = member.Name,
+                MonthlyFee = configuredFee,
+                TotalPaidAmount = 0,
+                TotalDueAmount = 0,
+                CreditBalance = 0
+            });
+        }
 
-        // 5️⃣ Calculate due months
+        // 5️⃣ Calculate total months owed from start to current month (inclusive)
+        int totalMonthsOwed = ((currentMonth.Year - startMonth.Year) * 12) + (currentMonth.Month - startMonth.Month) + 1;
+        decimal totalOwed = totalMonthsOwed * configuredFee;
+
+        // 6️⃣ Credit balance = total paid - total owed
+        decimal creditBalance = totalPaidAmount - totalOwed;
+
         var dueMonths = new List<DueMonthDto>();
         decimal totalDueAmount = 0;
 
-        var dueMonth = new DateTime(lastPaidEndDate.Year, lastPaidEndDate.Month, 1)
-                            .AddMonths(1);
-
-        var currentMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-
-        while (dueMonth <= currentMonth)
+        if (creditBalance >= 0)
         {
-            dueMonths.Add(new DueMonthDto
-            {
-                Month = dueMonth.ToString("MMMM yyyy"),
-                DueAmount = monthlyFee
-            });
+            // Advance paid — calculate how many future months are covered
+            int advanceMonthsCovered = configuredFee > 0 ? (int)(creditBalance / configuredFee) : 0;
+            // No due months, show credit info
+            totalDueAmount = 0;
+        }
+        else
+        {
+            // Calculate which months are unpaid
+            // Find the last month covered by payments
+            decimal runningBalance = totalPaidAmount;
+            var checkMonth = startMonth;
 
-            totalDueAmount += monthlyFee;
-            dueMonth = dueMonth.AddMonths(1);
+            while (checkMonth <= currentMonth)
+            {
+                runningBalance -= configuredFee;
+                if (runningBalance < 0)
+                {
+                    dueMonths.Add(new DueMonthDto
+                    {
+                        Month = checkMonth.ToString("MMMM yyyy"),
+                        DueAmount = configuredFee
+                    });
+                    totalDueAmount += configuredFee;
+                }
+                checkMonth = checkMonth.AddMonths(1);
+            }
         }
 
-        // 6️⃣ Prepare response
+        // 7️⃣ Prepare response
         var response = new MemberPaymentSummaryDto
         {
             MemberId = memberId,
             MemberName = member.Name,
+            MonthlyFee = configuredFee,
             TotalPaidAmount = totalPaidAmount,
             TotalDueAmount = totalDueAmount,
-
+            CreditBalance = creditBalance > 0 ? creditBalance : 0,
             Payments = payments.Select(p => new MemberPaymentDto
             {
                 PaymentId = p.Id,
@@ -161,21 +205,144 @@ public class PaymentsController : ControllerBase
                 PaymentMethod = p.PaymentMethod,
                 Status = p.Status,
             }).ToList(),
-
             DueMonths = dueMonths
         };
 
         return Ok(response);
     }
 
+    // GET: api/Payments/all-members-summary?subCompanyId=2
+    [HttpGet("all-members-summary")]
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+    public async Task<IActionResult> GetAllMembersSummary([FromQuery] int? subCompanyId = null)
+    {
+        var now = DateTime.Now;
+        var currentMonth = new DateTime(now.Year, now.Month, 1);
+
+        // Get sub-company fee
+        decimal configuredFee = 0;
+        if (subCompanyId.HasValue)
+        {
+            var sc = await _context.SubCompanies.FindAsync(subCompanyId.Value);
+            if (sc?.MonthlyFee.HasValue == true) configuredFee = sc.MonthlyFee.Value;
+        }
+
+        // Get all active members in sub-company
+        var membersQuery = _context.Members.Where(m => m.IsActive);
+        if (subCompanyId.HasValue)
+            membersQuery = membersQuery.Where(m => m.SubCompanyId == subCompanyId.Value);
+
+        var members = await membersQuery
+            .OrderBy(m => m.Name)
+            .Select(m => new { m.Id, m.Name, m.JoinDate, m.SubCompanyId })
+            .ToListAsync();
+
+        // Get all payments for these members in one query
+        var memberIds = members.Select(m => m.Id).ToList();
+        var allPayments = await _context.Payments
+            .Where(p => memberIds.Contains(p.MemberId))
+            .ToListAsync();
+
+        var result = new List<object>();
+
+        foreach (var member in members)
+        {
+            var payments = allPayments.Where(p => p.MemberId == member.Id).OrderBy(p => p.PaymentEndDate).ToList();
+            decimal totalPaid = payments.Sum(p => p.Amount);
+
+            decimal fee = configuredFee > 0 ? configuredFee
+                        : (payments.Any() ? payments.OrderByDescending(p => p.PaymentEndDate).First().Amount : 0);
+
+            // Start month from join date — skip if no join date and no payments
+            DateTime startMonth;
+            if (member.JoinDate.HasValue)
+                startMonth = new DateTime(member.JoinDate.Value.Year, member.JoinDate.Value.Month, 1);
+            else if (payments.Any())
+                startMonth = new DateTime(payments.First().PaymentEndDate.Year, payments.First().PaymentEndDate.Month, 1);
+            else
+            {
+                // No join date, no payments — nothing owed
+                result.Add(new
+                {
+                    memberId = member.Id,
+                    memberName = member.Name,
+                    monthlyFee = fee,
+                    totalPaidAmount = totalPaid,
+                    totalDueAmount = (decimal)0,
+                    creditBalance = (decimal)0,
+                    dueMonths = new List<object>(),
+                    paymentCount = payments.Count,
+                    payments = payments.Select(p => new
+                    {
+                        paymentId = p.Id,
+                        paymentForMonth = p.PaymentForMonth,
+                        amount = p.Amount,
+                        paymentDate = p.PaymentDate,
+                        receiptNo = p.ReceiptNumber,
+                        paymentMethod = p.PaymentMethod,
+                        status = p.Status,
+                    }).ToList()
+                });
+                continue;
+            }
+
+            int totalMonthsOwed = ((currentMonth.Year - startMonth.Year) * 12) + (currentMonth.Month - startMonth.Month) + 1;
+            decimal totalOwed = totalMonthsOwed * fee;
+            decimal creditBalance = totalPaid - totalOwed;
+
+            var dueMonths = new List<object>();
+            decimal totalDueAmount = 0;
+
+            if (creditBalance < 0 && fee > 0)
+            {
+                decimal runningBalance = totalPaid;
+                var checkMonth = startMonth;
+                while (checkMonth <= currentMonth)
+                {
+                    runningBalance -= fee;
+                    if (runningBalance < 0)
+                    {
+                        dueMonths.Add(new { month = checkMonth.ToString("MMMM yyyy"), dueAmount = fee });
+                        totalDueAmount += fee;
+                    }
+                    checkMonth = checkMonth.AddMonths(1);
+                }
+            }
+
+            result.Add(new
+            {
+                memberId = member.Id,
+                memberName = member.Name,
+                monthlyFee = fee,
+                totalPaidAmount = totalPaid,
+                totalDueAmount,
+                creditBalance = creditBalance > 0 ? creditBalance : 0,
+                dueMonths,
+                paymentCount = payments.Count,
+                payments = payments.Select(p => new
+                {
+                    paymentId = p.Id,
+                    paymentForMonth = p.PaymentForMonth,
+                    amount = p.Amount,
+                    paymentDate = p.PaymentDate,
+                    receiptNo = p.ReceiptNumber,
+                    paymentMethod = p.PaymentMethod,
+                    status = p.Status,
+                }).ToList()
+            });
+        }
+
+        return Ok(result);
+    }
+
     public class MemberPaymentSummaryDto
     {
         public int MemberId { get; set; }
         public string MemberName { get; set; } = string.Empty;
-
+        public decimal MonthlyFee { get; set; }
         public decimal TotalPaidAmount { get; set; }
         public decimal TotalDueAmount { get; set; }
-
+        public decimal CreditBalance { get; set; }
         public List<MemberPaymentDto> Payments { get; set; } = new();
         public List<DueMonthDto> DueMonths { get; set; } = new();
     }

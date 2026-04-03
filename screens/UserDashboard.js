@@ -1355,7 +1355,7 @@ const handleMeetingResponse = async (notification) => {
   styles.welcomeText,
   t('alaigal') === 'அலைகள்' && styles.tamilText
 ]}>
-  {t('alaigal')}
+  {language === 'ta' ? 'மருதம்' : 'Marutham'}
 </Text>
     </View>
   </View>
@@ -1695,7 +1695,7 @@ const handleMeetingResponse = async (notification) => {
               <Text style={[
                 styles.infoTitle,
                 language === 'ta' && styles.tamilInfoTitle
-              ]}>{t('welcomeToAlaigal')}</Text>
+              ]}>{language === 'ta' ? 'மருதம்க்கு வரவேற்கிறோம்' : 'Welcome to Marutham'}</Text>
               <Text style={[
                 styles.infoText,
                 language === 'ta' && styles.tamilInfoText

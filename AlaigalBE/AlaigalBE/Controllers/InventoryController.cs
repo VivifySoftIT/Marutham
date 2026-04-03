@@ -225,7 +225,7 @@ public class InventoryController : ControllerBase
             {
                 // Get last used receipt number
                 var lastReceipt = await _context.Payments
-                    .Where(p => p.ReceiptNumber != null && p.ReceiptNumber.StartsWith("ALAIGAL"))
+                    .Where(p => p.ReceiptNumber != null && p.ReceiptNumber.StartsWith("MARUTHAM"))
                     .OrderByDescending(p => p.Id)
                     .Select(p => p.ReceiptNumber)
                     .FirstOrDefaultAsync();
@@ -233,14 +233,14 @@ public class InventoryController : ControllerBase
                 int nextNumber = 1000; // default start
                 if (lastReceipt != null)
                 {
-                    string numericPart = lastReceipt.Replace("ALAIGAL", "");
+                    string numericPart = lastReceipt.Replace("MARUTHAM", "");
                     if (int.TryParse(numericPart, out int lastNum))
                     {
                         nextNumber = lastNum + 1;
                     }
                 }
 
-                string candidate = $"ALAIGAL{nextNumber}";
+                string candidate = $"MARUTHAM{nextNumber}";
 
                 // Check if this candidate already exists (defensive check)
                 bool alreadyExists = await _context.Payments.AnyAsync(p => p.ReceiptNumber == candidate);
@@ -254,16 +254,15 @@ public class InventoryController : ControllerBase
                     retryCount++;
                     if (retryCount < maxRetries)
                     {
-                        // Small delay before retry to reduce collision chance
                         await Task.Delay(10 * retryCount);
                     }
                 }
             }
 
-            // Fallback: use timestamp if retries exhausted (should rarely happen)
+            // Fallback: use timestamp if retries exhausted
             if (!receiptGenerated)
             {
-                receiptNumber = $"ALAIGAL{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+                receiptNumber = $"MARUTHAM{DateTime.UtcNow:yyyyMMddHHmmssfff}";
             }
 
             // === CREATE PAYMENT ENTITY ===
@@ -289,7 +288,17 @@ public class InventoryController : ControllerBase
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, payment);
+            return Ok(new
+            {
+                statusCode = 200,
+                statusDesc = "Payment created successfully",
+                paymentId = payment.Id,
+                receiptNumber = payment.ReceiptNumber,
+                amount = payment.Amount,
+                paymentForMonth = payment.PaymentForMonth,
+                paymentDate = payment.PaymentDate,
+                status = payment.Status
+            });
         }
         catch (DbUpdateException dbEx)
         {
