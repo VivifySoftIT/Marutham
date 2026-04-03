@@ -1572,18 +1572,10 @@ const handleMeetingResponse = async (notification) => {
               onPress={() => navigation.navigate('MyFeed', { tab: 'thanksnote', subTab: 'given' })}
             />
             <StatCard
-              icon="briefcase-check"
-              label={t('businessesVisited') || 'Businesses Visited Me'}
-              value={stats.businessesVisitedReceived}
-              color="#9C27B0"
-              delay={325}
-              onPress={() => navigation.navigate('MyFeed', { tab: 'thanksnote', subTab: 'received' })}
-            />
-            <StatCard
               icon="account-multiple"
               label={t('visitors')}
               value={stats.visitorsCount}
-              delay={350}
+              delay={325}
               onPress={() => navigation.navigate('MyFeed', { tab: 'visitors' })}
             />
           </View>
