@@ -407,6 +407,58 @@ const loadDashboardReminders = async () => {
     let birthdayWishReceived = null;
     let upcomingMeetings = [];
     let memberPayments = null;
+    let frontendBirthdayNotifications = [];
+
+    // ── Frontend birthday check (works regardless of backend timezone) ──
+    try {
+      const allMembers = await ApiService.getMembers();
+      const today = new Date();
+      const todayMonth = today.getMonth() + 1;
+      const todayDay = today.getDate();
+      const tomorrowDate = new Date(today);
+      tomorrowDate.setDate(today.getDate() + 1);
+      const tomorrowMonth = tomorrowDate.getMonth() + 1;
+      const tomorrowDay = tomorrowDate.getDate();
+
+      (allMembers || []).forEach(member => {
+        if (!member.dob && !member.DOB) return;
+        if (member.id === memberId) return; // skip self
+
+        const dobStr = member.dob || member.DOB;
+        const dob = new Date(dobStr);
+        if (isNaN(dob.getTime())) return;
+
+        const dobMonth = dob.getMonth() + 1;
+        const dobDay = dob.getDate();
+
+        let label = null;
+        if (dobMonth === todayMonth && dobDay === todayDay) {
+          label = `🎉 Today is ${member.name}'s birthday!`;
+        } else if (dobMonth === tomorrowMonth && dobDay === tomorrowDay) {
+          label = `🎂 ${member.name}'s birthday is tomorrow!`;
+        }
+
+        if (label) {
+          frontendBirthdayNotifications.push({
+            id: `bday-fe-${member.id}`,
+            type: 'message',
+            messageType: 'Birthday',
+            title: `🎂 Birthday Reminder!`,
+            message: label,
+            time: '',
+            icon: 'cake-variant',
+            color: '#FF6B6B',
+            backgroundColor: '#FFE5E5',
+            isRead: false,
+            canRespond: true,
+            recipientName: member.name,
+            recipientMemberId: member.id,
+          });
+        }
+      });
+    } catch (e) {
+      console.log('Frontend birthday check failed:', e.message);
+    }
     
     try {
       messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
@@ -449,7 +501,9 @@ const loadDashboardReminders = async () => {
 
     // Load birthday wish received
     try {
-      birthdayWishReceived = await ApiService.getTodaysBirthdayWish(memberId);
+      const wishResponse = await ApiService.getTodaysBirthdayWish(memberId);
+      // API returns { birthdayWish: {...} | null, message: ... }
+      birthdayWishReceived = wishResponse?.birthdayWish ?? null;
       console.log('UserDashboard - Birthday wish received:', birthdayWishReceived);
     } catch (error) {
       console.log('UserDashboard - No birthday wish received today');
@@ -686,6 +740,16 @@ const loadDashboardReminders = async () => {
         });
       });
     }
+
+    // Merge frontend birthday notifications (deduplicate by member id)
+    const existingBdayIds = new Set(
+      newNotifications.filter(n => n.messageType === 'Birthday').map(n => n.recipientMemberId)
+    );
+    frontendBirthdayNotifications.forEach(n => {
+      if (!existingBdayIds.has(n.recipientMemberId)) {
+        newNotifications.unshift(n); // add at top
+      }
+    });
 
     setNotifications(newNotifications);
     setNotificationCount(newNotifications.filter(n => !n.isRead).length);
