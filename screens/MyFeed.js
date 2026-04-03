@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ActivityIndicator, RefreshControl, Alert, ImageBackground, Modal, ScrollView, TextInput, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, FlatList, ActivityIndicator, RefreshControl, Alert, ImageBackground, Image, Modal, ScrollView, TextInput, Platform } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1199,7 +1199,12 @@ ${t('electronicReceipt')}
           {(item.type === 'weekly_meeting' || item.type === 'meeting') && item.posterImageUrl && (
             <TouchableOpacity
               style={styles.viewPosterButton}
-              onPress={() => setPosterModalUri(item.posterImageUrl)}
+              onPress={() => {
+                const url = item.posterImageUrl?.startsWith('http')
+                  ? item.posterImageUrl
+                  : `${API_BASE_URL}${item.posterImageUrl}`;
+                setPosterModalUri(url);
+              }}
             >
               <Icon name="image" size={14} color="#1B5E35" />
               <Text style={styles.viewPosterText}>{t('viewPoster') || 'View Poster'}</Text>

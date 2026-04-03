@@ -130,6 +130,7 @@ const MemberDashboard = () => {
   const [selectedNotificationFilter, setSelectedNotificationFilter] = useState('all');
   const [memberName, setMemberName] = useState('');
   const [companyName, setCompanyName] = useState('Marutham');
+  const [userRole, setUserRole] = useState(null);
   const [dailyKural, setDailyKural] = useState(null);
 
   // For swipeable sections
@@ -212,6 +213,68 @@ const MemberDashboard = () => {
       return { title: `📅 ${titleText}`, message: parts.join(' • '), time: displayDate };
     }
     return { title: notification.title, message: notification.message, time: notification.time };
+  };
+
+  // Admin: long-press delete meeting notification
+  const handleDeleteMeetingNotification = (notification) => {
+    if (notification.messageType !== 'Meeting') return;
+    Alert.alert(
+      'Delete Meeting',
+      'Remove this meeting notification for all members?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('jwt_token') ||
+                await AsyncStorage.getItem('token') ||
+                await AsyncStorage.getItem('authToken');
+
+              console.log('Delete meeting - notificationDbId:', notification.notificationDbId, 'meetingDetailId:', notification.meetingDetailId);
+
+              let success = false;
+
+              if (notification.notificationDbId) {
+                // Delete from MessageNotifications
+                const res = await fetch(
+                  `${API_BASE_URL}/api/MessageNotifications/${notification.notificationDbId}`,
+                  { method: 'DELETE', headers: { 'Content-Type': 'application/json' } }
+                );
+                success = res.ok || res.status === 204;
+                if (!success) {
+                  const errText = await res.text();
+                  console.error('Delete MessageNotification failed:', res.status, errText);
+                }
+              } else if (notification.meetingDetailId) {
+                // Use POST /delete (IIS blocks DELETE verb)
+                const res = await fetch(
+                  `${API_BASE_URL}/api/MeetingDetails/${notification.meetingDetailId}/delete`,
+                  { method: 'POST', headers: { 'Content-Type': 'application/json' } }
+                );
+                success = res.ok || res.status === 204;
+                if (!success) {
+                  const errText = await res.text();
+                  console.error('Delete MeetingDetail failed:', res.status, errText);
+                }
+              }
+
+              if (success) {
+                setNotifications(prev => prev.filter(n => n.id !== notification.id));
+                setNotificationCount(prev => Math.max(0, prev - 1));
+              } else if (!notification.notificationDbId && !notification.meetingDetailId) {
+                Alert.alert('Error', `Meeting ID not found. id=${notification.id}`);
+              } else {
+                Alert.alert('Error', 'Failed to delete meeting.');
+              }
+            } catch (e) {
+              Alert.alert('Error', e.message);
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Handle notification press
@@ -685,6 +748,10 @@ const MemberDashboard = () => {
       setLoading(true);
       console.log('Loading dashboard data...');
 
+      // Load user role for admin actions
+      const role = await AsyncStorage.getItem('role');
+      setUserRole(role);
+
       // Load notifications
       await loadNotifications();
 
@@ -723,9 +790,10 @@ const MemberDashboard = () => {
 
       let messageNotifications = null;
       let birthdayReminders = null;
+      let upcomingMeetings = [];
 
       try {
-        messageNotifications = await ApiService.getMessageNotificationReport(null, 'daily', memberId);
+        messageNotifications = await ApiService.getMessageNotificationReport(null, 'monthly', memberId);
         console.log('MemberDashboard - Message notifications response:', messageNotifications);
         if (messageNotifications && messageNotifications.data) {
           messageNotifications = messageNotifications.data;
@@ -736,6 +804,21 @@ const MemberDashboard = () => {
       } catch (error) {
         console.error('MemberDashboard - Error loading message notifications:', error);
         messageNotifications = [];
+      }
+
+      // Load upcoming meetings directly from MeetingDetails (same as UserDashboard)
+      try {
+        const meetingsData = await ApiService.getMeetingDetails();
+        const allMeetings = Array.isArray(meetingsData) ? meetingsData : [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        upcomingMeetings = allMeetings.filter(m => {
+          const d = m.meetingDate || m.MeetingDate || '';
+          return d >= todayStr;
+        });
+        console.log('MemberDashboard - Upcoming meetings:', upcomingMeetings.length);
+      } catch (error) {
+        console.log('MemberDashboard - Could not load meetings:', error.message);
+        upcomingMeetings = [];
       }
 
       // Load birthday reminders
@@ -753,6 +836,37 @@ const MemberDashboard = () => {
       }
 
       const newNotifications = [];
+
+      // Add upcoming meeting notifications from MeetingDetails
+      if (upcomingMeetings.length > 0) {
+        upcomingMeetings.forEach((meeting) => {
+          const meetingDate = meeting.meetingDate || meeting.MeetingDate || '';
+          const rawTitle = meeting.meetingTitle || meeting.MeetingTitle || 'Weekly Meeting';
+          const rawPlace = meeting.place || meeting.Place || '';
+          const rawTime = meeting.time || meeting.Time || '';
+          newNotifications.push({
+            id: `meeting-detail-${meeting.id || meeting.Id}`,
+            notificationDbId: null,
+            type: 'meeting',
+            messageType: 'Meeting',
+            title: `📅 ${rawTitle}`,
+            message: [rawPlace, rawTime].filter(Boolean).join(' • ') || rawTitle,
+            time: meetingDate
+              ? new Date(meetingDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+              : t('upcoming'),
+            icon: 'calendar-clock',
+            color: '#4ECDC4',
+            backgroundColor: '#E8F8F7',
+            isRead: false,
+            canRespond: true,
+            rawDate: meetingDate,
+            rawTime: rawTime,
+            rawPlace: rawPlace,
+            rawTitle: rawTitle,
+            meetingDetailId: meeting.id || meeting.Id,
+          });
+        });
+      }
 
       // Add birthday reminders as notifications with tap-to-respond
       if (birthdayReminders && birthdayReminders.length > 0) {
@@ -831,6 +945,7 @@ const MemberDashboard = () => {
 
           newNotifications.push({
             id: `message-${msg.id}`,
+            notificationDbId: msg.id,
             type: 'message',
             messageType: msg.messageType,
             title: getTitle(msg.messageType, msg.subject),
@@ -848,6 +963,11 @@ const MemberDashboard = () => {
             attachmentUrl: msg.attachmentUrl,
             recipientMemberId: recipientMemberId,
             recipientName: recipientName || msg.content,
+            // Meeting display fields
+            rawDate: msg.date ? msg.date.split('T')[0] : null,
+            rawTime: null,
+            rawPlace: null,
+            rawTitle: msg.subject || null,
           });
         });
       }
@@ -1231,6 +1351,7 @@ const MemberDashboard = () => {
                     !notification.isRead && styles.unreadNotificationCard
                   ]}
                   onPress={() => handleNotificationPress(notification)}
+                  onLongPress={() => (userRole === 'Admin' || userRole === 'admin') && handleDeleteMeetingNotification(notification)}
                   activeOpacity={0.8}
                 >
                   <View style={[
@@ -1574,6 +1695,7 @@ const MemberDashboard = () => {
                       !notification.isRead && styles.unreadNotificationItem
                     ]}
                     onPress={() => handleNotificationPress(notification)}
+                    onLongPress={() => (userRole === 'Admin' || userRole === 'admin') && handleDeleteMeetingNotification(notification)}
                     activeOpacity={0.7}
                   >
                     <View style={[

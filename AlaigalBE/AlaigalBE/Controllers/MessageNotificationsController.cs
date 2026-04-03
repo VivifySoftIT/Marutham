@@ -512,7 +512,6 @@ public class MessageNotificationsController : ControllerBase
             }
 
             // === Load non-birthday notifications ===
-            var eventTypes = new[] { "Event", "Meeting" };
             var broadcastTypes = new[] { "Welcome", "NewMember" };
             var memberIdStr = adminMemberId.HasValue ? adminMemberId.Value.ToString() : "";
 
@@ -521,8 +520,12 @@ public class MessageNotificationsController : ControllerBase
                 .Where(m =>
                     m.MessageType != "Birthday" &&
                     (
-                        // Events/Meetings: filter by date range
-                        (eventTypes.Contains(m.MessageType) &&
+                        // Meetings: show all upcoming (today or future) regardless of SubCompanyId filter
+                        // Also show past meetings created within the period
+                        (m.MessageType == "Meeting")
+                        ||
+                        // Events: filter by date range
+                        (m.MessageType == "Event" &&
                          (
                              (m.Date.HasValue && m.Date.Value.Date >= startDate && m.Date.Value.Date <= endDate) ||
                              (m.SentDate.HasValue && m.SentDate.Value.Date >= startDate && m.SentDate.Value.Date <= endDate) ||
@@ -545,9 +548,15 @@ public class MessageNotificationsController : ControllerBase
                 nonBirthdayQuery = nonBirthdayQuery.Where(m => m.MessageType == type);
             }
 
+            // SubCompanyId filter: apply only for non-Meeting types
+            // Meetings are shown to all members of the same sub-company
             if (targetSubCompanyId.HasValue)
             {
-                nonBirthdayQuery = nonBirthdayQuery.Where(m => m.SubCompanyId == targetSubCompanyId.Value);
+                nonBirthdayQuery = nonBirthdayQuery.Where(m =>
+                    m.MessageType == "Meeting"
+                        ? (m.SubCompanyId == null || m.SubCompanyId == targetSubCompanyId.Value)
+                        : m.SubCompanyId == targetSubCompanyId.Value
+                );
             }
 
             var rawNonBirthday = await nonBirthdayQuery.ToListAsync();

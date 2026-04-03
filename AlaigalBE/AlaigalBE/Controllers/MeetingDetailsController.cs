@@ -161,7 +161,8 @@ public class MeetingDetailsController : ControllerBase
     }
     // POST: api/MeetingDetails/{id}/poster
     [HttpPost("{id}/poster")]
-    public async Task<IActionResult> UploadPoster(int id, IFormFile file)
+    public async Task<IActionResult> UploadPoster(int id, IFormFile file,
+        [FromServices] IHttpClientFactory httpClientFactory)
     {
         try
         {
@@ -176,33 +177,45 @@ public class MeetingDetailsController : ControllerBase
             if (!allowedTypes.Contains(file.ContentType.ToLower()))
                 return BadRequest(new { message = "Only image files are allowed (jpg, png, webp)" });
 
-            // Save to wwwroot/uploads/meeting-posters/
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "meeting-posters");
-            Directory.CreateDirectory(uploadsFolder);
+            // Forward file to external Video API
+            var client = httpClientFactory.CreateClient();
+            var ext = Path.GetExtension(file.FileName).TrimStart('.');
+            var fileName = $"{Guid.NewGuid()}.{(ext == "jpg" ? "jpeg" : ext)}";
 
-            var ext = Path.GetExtension(file.FileName);
-            var fileName = $"meeting_{id}_{DateTime.UtcNow.Ticks}{ext}";
-            var filePath = Path.Combine(uploadsFolder, fileName);
+            using var multipart = new MultipartFormDataContent();
+            using var fileStream = file.OpenReadStream();
+            var streamContent = new StreamContent(fileStream);
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+            multipart.Add(streamContent, "file", fileName);
 
-            using (var stream = new FileStream(filePath, FileMode.Create))
-                await file.CopyToAsync(stream);
+            var uploadResponse = await client.PostAsync("https://www.vivifysoft.in/api/Video/upload", multipart);
 
-            // Delete old poster file if exists
-            if (!string.IsNullOrEmpty(meeting.PosterImageUrl))
+            string posterUrl;
+
+            if (uploadResponse.IsSuccessStatusCode)
             {
-                var oldFileName = Path.GetFileName(meeting.PosterImageUrl);
-                var oldPath = Path.Combine(uploadsFolder, oldFileName);
-                if (System.IO.File.Exists(oldPath))
-                    System.IO.File.Delete(oldPath);
+                // External API returned the URL — parse it
+                var json = await uploadResponse.Content.ReadAsStringAsync();
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                // Try common response field names
+                posterUrl = root.TryGetProperty("url", out var urlProp) ? urlProp.GetString()
+                          : root.TryGetProperty("fileUrl", out var fileUrlProp) ? fileUrlProp.GetString()
+                          : root.TryGetProperty("path", out var pathProp) ? pathProp.GetString()
+                          : $"https://www.vivifysoft.in/api/Video/{fileName}";
+            }
+            else
+            {
+                // Fallback: construct URL using the guid filename pattern
+                posterUrl = $"https://www.vivifysoft.in/api/Video/{fileName}";
             }
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            meeting.PosterImageUrl = $"{baseUrl}/uploads/meeting-posters/{fileName}";
+            meeting.PosterImageUrl = posterUrl;
             meeting.UpdatedDate = DateTime.UtcNow;
-
             await _context.SaveChangesAsync();
 
-            return Ok(new { posterImageUrl = meeting.PosterImageUrl });
+            return Ok(new { posterImageUrl = posterUrl });
         }
         catch (Exception ex)
         {
@@ -399,6 +412,7 @@ public class MeetingDetailsController : ControllerBase
         }
     }
     [HttpDelete("{id}")]
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     public async Task<IActionResult> DeleteMeetingDetail(int id)
     {
         var meeting = await _context.MeetingDetails.FindAsync(id);
@@ -414,6 +428,28 @@ public class MeetingDetailsController : ControllerBase
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error deleting meeting", error = ex.Message });
+        }
+    }
+
+    // POST: api/MeetingDetails/{id}/delete  (IIS-safe alternative to DELETE verb)
+    [HttpPost("{id}/delete")]
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+    public async Task<IActionResult> DeleteMeetingDetailPost(int id)
+    {
+        var meeting = await _context.MeetingDetails.FindAsync(id);
+        if (meeting == null || !meeting.IsActive)
+            return NotFound(new { message = "Meeting not found" });
+
+        try
+        {
+            meeting.IsActive = false;
+            meeting.UpdatedDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Meeting deleted successfully" });
         }
         catch (Exception ex)
         {
