@@ -296,8 +296,11 @@ public class MessageNotificationsController : ControllerBase
             }
 
             // ✅ STEP 2: Fetch today's birthday wish — same sub-company only
-            var startOfToday = today;
-            var startOfTomorrow = today.AddDays(1);
+            // Use IST (UTC+5:30) to avoid timezone mismatch
+            var istOffset = TimeSpan.FromHours(5.5);
+            var istNow = DateTime.UtcNow.Add(istOffset);
+            var startOfTodayUtc = istNow.Date.Subtract(istOffset);
+            var startOfTomorrowUtc = startOfTodayUtc.AddDays(1);
 
             // Get receiver's sub-company
             var receiver = await _context.Members
@@ -307,8 +310,9 @@ public class MessageNotificationsController : ControllerBase
 
             var result = await _context.BirthdayWishLogs
                 .Where(b => b.MemberId == memberId &&
-                            b.SentDate >= startOfToday &&
-                            b.SentDate < startOfTomorrow)
+                            b.SentById != memberId &&          // exclude self-wishes
+                            b.SentDate >= startOfTodayUtc &&
+                            b.SentDate < startOfTomorrowUtc)
                 .Select(b => new
                 {
                     b.Id,
@@ -374,7 +378,9 @@ public class MessageNotificationsController : ControllerBase
         try
         {
             var now = DateTime.UtcNow;
-            var today = now.Date;
+            // Use IST (UTC+5:30) so birthday checks match India local date
+            var istOffset = TimeSpan.FromHours(5.5);
+            var today = now.Add(istOffset).Date;
 
             DateTime startDate, endDate;
 
@@ -671,6 +677,10 @@ public class MessageNotificationsController : ControllerBase
 
             if (dto.CreatedBy <= 0)
                 return BadRequest("Valid CreatedBy ID is required.");
+
+            // Block self-wishes
+            if (dto.MemberId == dto.CreatedBy)
+                return BadRequest("A member cannot send a birthday wish to themselves.");
 
             // Validate recipient
             var recipient = await _context.Members
