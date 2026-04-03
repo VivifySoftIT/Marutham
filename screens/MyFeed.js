@@ -17,7 +17,7 @@ const MyFeed = ({ route }) => {
   const { t, language } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [companyName, setCompanyName] = useState('Alaigal');
+  const [companyName, setCompanyName] = useState('Marutham');
   const [activeTab, setActiveTab] = useState(route?.params?.tab || 'all');
   const [referralTab, setReferralTab] = useState(route?.params?.referralTab || 'my');
   const [thanksNoteTab, setThanksNoteTab] = useState(route?.params?.subTab || 'given');
@@ -586,7 +586,7 @@ const MyFeed = ({ route }) => {
 
     try {
       const receiptContent = `
-${t('alaigalMembersNetwork')}
+${companyName.toUpperCase()} MEMBERS NETWORK
 ================================
 
 ${t('paymentReceipt').toUpperCase()}
@@ -641,7 +641,7 @@ ${t('electronicReceipt')}
       const memberName = paymentItem.memberName || t('notAvailable');
       
       const receiptContent = `
-${t('alaigalMembersNetwork')}
+${companyName.toUpperCase()} MEMBERS NETWORK
 ================================
 
 ${t('paymentReceipt').toUpperCase()}
@@ -1086,12 +1086,12 @@ ${t('electronicReceipt')}
   // Helper function to translate status values
   const translateStatus = (status) => {
     if (!status) return '';
-    
+
     const statusLower = status.toLowerCase();
-    
+
     if (statusLower === 'pending' || statusLower === 'waiting') return t('pending');
     if (statusLower === 'completed' || statusLower === 'complete' || statusLower === 'done') return t('completed');
-    if (statusLower === 'confirmed' || statusLower === 'confirm') return t('confirmed');
+    if (statusLower === 'confirmed' || statusLower === 'confirm' || statusLower === 'adminconfirmed') return t('confirmed');
     if (statusLower === 'approved' || statusLower === 'approve') return t('approved');
     if (statusLower === 'rejected' || statusLower === 'reject' || statusLower === 'declined') return t('rejected');
     if (statusLower === 'cancelled' || statusLower === 'cancel' || statusLower === 'canceled') return t('cancelled');
@@ -1100,8 +1100,11 @@ ${t('electronicReceipt')}
     if (statusLower === 'active') return t('active');
     if (statusLower === 'inactive') return t('inactive');
     if (statusLower === 'member') return t('member');
-    
-    // Return original status if no translation found
+    // Handle Tamil status values stored in DB — map back to English key
+    if (statusLower === 'செலுத்தப்பட்டது' || statusLower === 'செலுத்தப்பட்ட') return t('paid');
+    if (statusLower === 'நிலுவையில்' || statusLower === 'நிலுவை') return t('pending');
+    if (statusLower === 'உறுப்பினர்') return t('member');
+
     return status;
   };
 

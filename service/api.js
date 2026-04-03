@@ -536,7 +536,9 @@ class ApiService {
 
   // ==================== MESSAGE NOTIFICATIONS APIs ====================
   async getMessageNotifications() {
-    return await this.request('/api/MessageNotifications');
+    const subCompanyId = await this.getSubCompanyId();
+    const qs = subCompanyId ? `?subCompanyId=${subCompanyId}` : '';
+    return await this.request(`/api/MessageNotifications${qs}`);
   }
 
   async getMessageNotification(id) {

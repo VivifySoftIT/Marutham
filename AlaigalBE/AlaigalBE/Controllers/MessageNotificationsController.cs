@@ -20,10 +20,19 @@ public class MessageNotificationsController : ControllerBase
 
     // GET: api/MessageNotifications
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<MessageNotification>>> GetMessageNotifications()
+    public async Task<ActionResult<IEnumerable<MessageNotification>>> GetMessageNotifications(
+        [FromQuery] int? subCompanyId = null)
     {
-        return await _context.MessageNotifications
+        var query = _context.MessageNotifications
             .Include(m => m.CreatedByMember)
+            .AsQueryable();
+
+        if (subCompanyId.HasValue)
+        {
+            query = query.Where(m => m.SubCompanyId == subCompanyId.Value);
+        }
+
+        return await query
             .OrderByDescending(m => m.CreatedDate)
             .ToListAsync();
     }
@@ -117,6 +126,45 @@ public class MessageNotificationsController : ControllerBase
                 // For Birthday/Payment, leave MemberIds as null/empty if not provided
 
                 targetSubCompanyId = creator.SubCompanyId;
+            }
+
+            // 🔑 For Payment type: filter out members who already paid for that month
+            if (dto.MessageType == "Payment" && !string.IsNullOrWhiteSpace(dto.PaymentForMonth) && validMemberIds.Any())
+            {
+                var monthAbbreviations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    {"january","Jan"},{"february","Feb"},{"march","Mar"},{"april","Apr"},
+                    {"may","May"},{"june","Jun"},{"july","Jul"},{"august","Aug"},
+                    {"september","Sep"},{"october","Oct"},{"november","Nov"},{"december","Dec"}
+                };
+
+                // Extract abbreviation from e.g. "April 2026" → "Apr"
+                string monthKey = dto.PaymentForMonth.Trim();
+                var parts = monthKey.Split(' ');
+                if (parts.Length >= 1 && monthAbbreviations.TryGetValue(parts[0], out var abbr))
+                    monthKey = abbr;
+
+                // Find members who already have a payment record for this month
+                var paidMemberIds = await _context.Payments
+                    .Where(p => validMemberIds.Contains(p.MemberId) &&
+                                p.PaymentForMonth != null &&
+                                p.PaymentForMonth.ToLower().StartsWith(monthKey.ToLower()))
+                    .Select(p => p.MemberId)
+                    .Distinct()
+                    .ToListAsync();
+
+                validMemberIds = validMemberIds.Except(paidMemberIds).ToList();
+                dto.MemberIds = validMemberIds.Any() ? string.Join(",", validMemberIds) : null;
+
+                if (!validMemberIds.Any())
+                {
+                    return Ok(new
+                    {
+                        message = $"All members have already paid for {dto.PaymentForMonth}. No reminder sent.",
+                        skipped = paidMemberIds.Count,
+                        sent = 0
+                    });
+                }
             }
 
             var notification = new MessageNotification
