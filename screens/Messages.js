@@ -165,7 +165,7 @@ const Messages = ({ navigation }) => {
       color: '#E91E63',
       description: t('sendBirthdayWishesToMembers') || 'Send birthday wishes to members',
       defaultSubject: t('happyBirthday') || 'Happy Birthday! 🎉',
-      defaultContent: t('birthdayWishContent') || 'Dear Member,\n\nWishing you a wonderful birthday filled with joy and success!\n\nMay this year bring you great opportunities and prosperity.\n\nHappy Birthday!\nAlaigal Team',
+      defaultContent: t('birthdayWishContent') || 'Dear Member,\n\nWishing you a wonderful birthday filled with joy and success!\n\nMay this year bring you great opportunities and prosperity.\n\nHappy Birthday!\nMarutham Team',
       messageType: 'Birthday'
     },
     {
@@ -174,8 +174,8 @@ const Messages = ({ navigation }) => {
       icon: 'cash-multiple',
       color: '#FF9800',
       description: t('sendPaymentReminderDesc') || 'Send payment reminder (validates payment status)',
-      defaultSubject: t('paymentReminderSubject') || 'Payment Reminder - Alaigal Membership',
-      defaultContent: t('paymentReminderContent') || 'Dear Member,\n\nThis is a friendly reminder that your membership payment is due.\n\nPlease make the payment at your earliest convenience.\n\nThank you,\nAlaigal Team',
+      defaultSubject: t('paymentReminderSubject') || 'Payment Reminder - Marutham Membership',
+      defaultContent: t('paymentReminderContent') || 'Dear Member,\n\nThis is a friendly reminder that your membership payment is due.\n\nPlease make the payment at your earliest convenience.\n\nThank you,\nMarutham Team',
       messageType: 'Payment'
     },
     {
@@ -184,8 +184,8 @@ const Messages = ({ navigation }) => {
       icon: 'calendar-star',
       color: '#2196F3',
       description: t('notifyMembersAboutEvents') || 'Notify members about upcoming events',
-      defaultSubject: t('upcomingEventSubject') || 'Upcoming Event - Alaigal Networking',
-      defaultContent: t('eventNotificationContent') || 'Dear Member,\n\nWe are excited to invite you to our upcoming networking event!\n\nEvent Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nLooking forward to seeing you there!\n\nAlaigal Team',
+      defaultSubject: t('upcomingEventSubject') || 'Upcoming Event - Marutham Networking',
+      defaultContent: t('eventNotificationContent') || 'Dear Member,\n\nWe are excited to invite you to our upcoming networking event!\n\nEvent Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nLooking forward to seeing you there!\n\nMarutham Team',
       messageType: 'Event'
     },
     {
@@ -194,8 +194,8 @@ const Messages = ({ navigation }) => {
       icon: 'account-group',
       color: '#00BCD4',
       description: t('notifyMembersAboutMeetings') || 'Notify members about meetings',
-      defaultSubject: t('meetingNotificationSubject') || 'Meeting Notification - Alaigal',
-      defaultContent: t('meetingNotificationContent') || 'Dear Member,\n\nYou are invited to attend our upcoming meeting.\n\nMeeting Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nPlease confirm your attendance.\n\nAlaigal Team',
+      defaultSubject: t('meetingNotificationSubject') || 'Meeting Notification - Marutham',
+      defaultContent: t('meetingNotificationContent') || 'Dear Member,\n\nYou are invited to attend our upcoming meeting.\n\nMeeting Details:\nDate: [Date]\nTime: [Time]\nLocation: [Location]\n\nPlease confirm your attendance.\n\nMarutham Team',
       messageType: 'Meeting'
     },
     {
@@ -204,8 +204,8 @@ const Messages = ({ navigation }) => {
       icon: 'hand-wave',
       color: '#4CAF50',
       description: t('welcomeNewMembers') || 'Welcome new members',
-      defaultSubject: t('welcomeToAlaigal'),
-      defaultContent: t('welcomeMessageContent') || 'Dear Member,\n\nWelcome to Alaigal! We are excited to have you as part of our community.\n\nFeel free to connect with other members and grow your business together.\n\nBest regards,\nAlaigal Team',
+      defaultSubject: t('welcomeToMarutham'),
+      defaultContent: t('welcomeMessageContent') || 'Dear Member,\n\nWelcome to Marutham! We are excited to have you as part of our community.\n\nFeel free to connect with other members and grow your business together.\n\nBest regards,\nMarutham Team',
       messageType: 'Welcome'
     },
   ], [t]); // Re-compute when translation function changes
@@ -1907,4 +1907,5 @@ const styles = StyleSheet.create({
 });
 
 export default Messages;
+
 
