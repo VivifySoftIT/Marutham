@@ -36,16 +36,16 @@
       },
       "useNextNotificationsApi": true,
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA",
-        "READ_MEDIA_IMAGES",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "USE_BIOMETRIC",
-        "USE_FINGERPRINT",
-        "POST_NOTIFICATIONS",
-        "RECORD_AUDIO"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO"
       ],
       "package": "com.Marutham"
     },
@@ -74,8 +74,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "9045acc5-4e5b-48a3-8216-c04497de89a7"
+        "projectId": "5e441c9a-3317-42c1-86e2-00c005f8f5dd"
       }
-    }
+    },
+    "owner": "vijayajeyam"
   }
 }

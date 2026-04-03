@@ -546,7 +546,7 @@ const TYFCBSlip = () => {
               {savedData?.amount && (
                 <View style={styles.successDetailRow}>
                   <Text style={styles.successLabel}>{t('amount')}:</Text>
-                  <Text style={styles.successValue}>\u20B9{savedData.amount}</Text>
+                  <Text style={styles.successValue}>₹{savedData.amount}</Text>
                 </View>
               )}
 

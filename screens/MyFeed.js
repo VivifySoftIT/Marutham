@@ -2307,7 +2307,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     width: '100%',
     maxWidth: 500,
-    maxHeight: '80%',
+    maxHeight: '90%',
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
