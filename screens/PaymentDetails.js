@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../service/api';
+import API_BASE_URL from '../apiConfig';
 import { useLanguage } from '../service/LanguageContext';
 import LanguageSelector from '../components/LanguageSelector';
 import SpeechToTextInput from '../components/SpeechToTextInput';
@@ -53,6 +54,15 @@ const PaymentDetails = () => {
   });
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+  // Admin: fee setting
+  const [userRole, setUserRole] = useState(null);
+  const [subCompanyId, setSubCompanyId] = useState(null);
+  const [monthlyFee, setMonthlyFee] = useState('');
+  const [showFeeModal, setShowFeeModal] = useState(false);
+  const [savingFee, setSavingFee] = useState(false);
+  const [memberSummary, setMemberSummary] = useState(null);
+  const [allMembersSummary, setAllMembersSummary] = useState([]);
+
   // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const slideAnim = useState(new Animated.Value(50))[0];
@@ -82,6 +92,11 @@ const PaymentDetails = () => {
     try {
       setLoading(true);
 
+      const role = await AsyncStorage.getItem('role');
+      setUserRole(role);
+      const scId = await AsyncStorage.getItem('subCompanyId');
+      setSubCompanyId(scId ? parseInt(scId) : null);
+
       // Load all members for search
       const members = await ApiService.getMembers();
       setAllMembers(members || []);
@@ -93,9 +108,7 @@ const PaymentDetails = () => {
       // If memberId is provided, find and set member data
       if (memberId && members) {
         const member = members.find(m => m.id === memberId);
-        if (member) {
-          setMemberData(member);
-        }
+        if (member) setMemberData(member);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -107,54 +120,34 @@ const PaymentDetails = () => {
 
   const loadPaymentData = async (targetMemberId) => {
     try {
-      const payments = await ApiService.getPayments(targetMemberId);
-      setPaymentHistory(payments || []);
-
-      // Calculate summary
-      if (payments && payments.length > 0) {
-        const totalPaid = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
-        const lastPayment = payments.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))[0];
-        const nextDueDate = calculateNextDueDate(lastPayment.paymentDate);
-
-        setPaymentSummary({
-          totalPaid: totalPaid,
-          totalDue: calculateTotalDue(payments),
-          nextDueDate: nextDueDate,
-          paymentCount: payments.length,
-          lastPaymentDate: lastPayment.paymentDate
-        });
-      } else {
-        setPaymentSummary({
-          totalPaid: 0,
-          totalDue: 0,
-          nextDueDate: null,
-          paymentCount: 0,
-          lastPaymentDate: null
-        });
+      if (!targetMemberId) {
+        // All members view
+        const allSummary = await ApiService.getAllMembersSummary();
+        setAllMembersSummary(Array.isArray(allSummary) ? allSummary : []);
+        setPaymentHistory([]);
+        setMemberSummary(null);
+        setPaymentSummary(null);
+        return;
       }
+      // Single member view
+      setAllMembersSummary([]);
+      const summary = await ApiService.getMemberPayments(targetMemberId);
+      setMemberSummary(summary);
+      setPaymentHistory(summary?.payments || []);
+      setPaymentSummary({
+        totalPaid: summary?.totalPaidAmount || 0,
+        totalDue: summary?.totalDueAmount || 0,
+        creditBalance: summary?.creditBalance || 0,
+        monthlyFee: summary?.monthlyFee || 0,
+        dueMonths: summary?.dueMonths || [],
+        paymentCount: (summary?.payments || []).length,
+      });
+      if (summary?.monthlyFee) setMonthlyFee(summary.monthlyFee.toString());
     } catch (error) {
       console.error('Error loading payments:', error);
       setPaymentHistory([]);
-      setPaymentSummary({
-        totalPaid: 0,
-        totalDue: 0,
-        nextDueDate: null,
-        paymentCount: 0,
-        lastPaymentDate: null
-      });
+      setPaymentSummary({ totalPaid: 0, totalDue: 0, creditBalance: 0, monthlyFee: 0, dueMonths: [], paymentCount: 0 });
     }
-  };
-
-  const calculateNextDueDate = (lastPaymentDate) => {
-    if (!lastPaymentDate) return null;
-    const date = new Date(lastPaymentDate);
-    date.setMonth(date.getMonth() + 1);
-    return date.toISOString();
-  };
-
-  const calculateTotalDue = (payments) => {
-    // Implement your business logic for due calculation
-    return 0;
   };
 
   const onRefresh = async () => {
@@ -199,6 +192,44 @@ const PaymentDetails = () => {
     (await AsyncStorage.getItem('jwt_token')) ||
     (await AsyncStorage.getItem('token')) ||
     (await AsyncStorage.getItem('authToken'));
+
+  const handleSaveFee = async () => {
+    const fee = parseFloat(monthlyFee);
+    if (!fee || fee <= 0) { Alert.alert('Error', 'Enter a valid fee amount'); return; }
+
+    // Re-read subCompanyId in case state wasn't set yet
+    const scId = subCompanyId || parseInt(await AsyncStorage.getItem('subCompanyId') || '0');
+    if (!scId) { Alert.alert('Error', 'Sub-company not found. Please login again.'); return; }
+
+    setSavingFee(true);
+    try {
+      const url = `${API_BASE_URL}/api/SubCompanies/${scId}/fee`;
+      console.log('Saving fee:', url, { monthlyFee: fee });
+
+      const res = await fetch(url, {
+        method: 'POST',  // use POST to avoid IIS blocking PUT
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ monthlyFee: fee }),
+      });
+
+      const text = await res.text();
+      console.log('Save fee response:', res.status, text);
+
+      if (res.ok) {
+        Alert.alert('Success', `Monthly fee set to ₹${fee}`);
+        setShowFeeModal(false);
+        if (selectedMemberId) await loadPaymentData(selectedMemberId);
+      } else {
+        let msg = 'Failed to save fee';
+        try { msg = JSON.parse(text)?.message || msg; } catch (_) { msg = text || msg; }
+        Alert.alert('Error', `${res.status}: ${msg}`);
+      }
+    } catch (e) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setSavingFee(false);
+    }
+  };
 
   const handleConfirmPayment = async (paymentId) => {
     if (!paymentId) {
@@ -476,22 +507,44 @@ const PaymentDetails = () => {
         )}
 
         {/* Payment Summary Cards */}
+        {(() => {
+          // Aggregate totals — use allMembersSummary when no member selected
+          const aggTotalPaid = !selectedMemberId && allMembersSummary.length > 0
+            ? allMembersSummary.reduce((s, m) => s + (m.totalPaidAmount || 0), 0)
+            : (paymentSummary?.totalPaid || 0);
+          const aggTotalDue = !selectedMemberId && allMembersSummary.length > 0
+            ? allMembersSummary.reduce((s, m) => s + (m.totalDueAmount || 0), 0)
+            : (paymentSummary?.totalDue || 0);
+          const aggCredit = !selectedMemberId && allMembersSummary.length > 0
+            ? allMembersSummary.reduce((s, m) => s + (m.creditBalance || 0), 0)
+            : (paymentSummary?.creditBalance || 0);
+          const memberCount = !selectedMemberId ? allMembersSummary.length : null;
+
+          return (
         <View style={styles.summaryContainer}>
-          <Text style={styles.sectionTitle}>{t('paymentSummary')}</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.summaryScroll}
-          >
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <Text style={styles.sectionTitle}>{t('paymentSummary')}</Text>
+            {(userRole === 'Admin' || userRole === 'admin') && (
+              <TouchableOpacity
+                onPress={() => setShowFeeModal(true)}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#1B5E35', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+              >
+                <Icon name="currency-inr" size={14} color="#C9A84C" />
+                <Text style={{ color: '#C9A84C', fontSize: 12, fontWeight: '700', marginLeft: 4 }}>
+                  Set Fee {paymentSummary?.monthlyFee ? `(₹${paymentSummary.monthlyFee})` : ''}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.summaryScroll}>
             <View style={styles.summaryCard}>
               <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
                 <Icon name="wallet" size={24} color="#10B981" />
               </View>
               <Text style={styles.summaryCardLabel}>{t('totalPaid')}</Text>
-              <Text style={styles.summaryCardValue}>
-                {formatCurrency(paymentSummary?.totalPaid || 0)}
-              </Text>
-              <Text style={styles.summaryCardSubtext}>{t('allTimePayments')}</Text>
+              <Text style={styles.summaryCardValue}>{formatCurrency(aggTotalPaid)}</Text>
+              <Text style={styles.summaryCardSubtext}>{memberCount ? `${memberCount} members` : t('allTimePayments')}</Text>
             </View>
 
             <View style={styles.summaryCard}>
@@ -499,24 +552,109 @@ const PaymentDetails = () => {
                 <Icon name="alert-circle" size={24} color="#F59E0B" />
               </View>
               <Text style={styles.summaryCardLabel}>{t('pending')}</Text>
-              <Text style={styles.summaryCardValue}>
-                {formatCurrency(paymentSummary?.totalDue || 0)}
-              </Text>
+              <Text style={styles.summaryCardValue}>{formatCurrency(aggTotalDue)}</Text>
               <Text style={styles.summaryCardSubtext}>{t('amountDue')}</Text>
             </View>
 
-            <View style={styles.summaryCard}>
-              <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
-                <Icon name="calendar-clock" size={24} color="#8B5CF6" />
+            {aggCredit > 0 && (
+              <View style={styles.summaryCard}>
+                <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                  <Icon name="piggy-bank" size={24} color="#10B981" />
+                </View>
+                <Text style={styles.summaryCardLabel}>Advance Credit</Text>
+                <Text style={[styles.summaryCardValue, { color: '#10B981' }]}>{formatCurrency(aggCredit)}</Text>
+                <Text style={styles.summaryCardSubtext}>Paid in advance</Text>
               </View>
-              <Text style={styles.summaryCardLabel}>{t('nextDue')}</Text>
-              <Text style={styles.summaryCardValue}>
-                {paymentSummary?.nextDueDate ? formatDate(paymentSummary.nextDueDate) : t('notAvailable')}
-              </Text>
-              <Text style={styles.summaryCardSubtext}>{t('paymentDeadline')}</Text>
-            </View>
+            )}
+
+            {!selectedMemberId && (
+              <View style={styles.summaryCard}>
+                <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
+                  <Icon name="account-group" size={24} color="#8B5CF6" />
+                </View>
+                <Text style={styles.summaryCardLabel}>Members</Text>
+                <Text style={styles.summaryCardValue}>{memberCount || 0}</Text>
+                <Text style={styles.summaryCardSubtext}>Total members</Text>
+              </View>
+            )}
+
+            {selectedMemberId && (
+              <View style={styles.summaryCard}>
+                <View style={[styles.summaryIconContainer, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
+                  <Icon name="currency-inr" size={24} color="#8B5CF6" />
+                </View>
+                <Text style={styles.summaryCardLabel}>Monthly Fee</Text>
+                <Text style={styles.summaryCardValue}>{formatCurrency(paymentSummary?.monthlyFee || 0)}</Text>
+                <Text style={styles.summaryCardSubtext}>Per month</Text>
+              </View>
+            )}
           </ScrollView>
+
+          {/* Single member due months */}
+          {selectedMemberId && paymentSummary?.dueMonths?.length > 0 && (
+            <View style={{ marginTop: 12, backgroundColor: '#FFF8E1', borderRadius: 10, padding: 12, borderLeftWidth: 4, borderLeftColor: '#F59E0B' }}>
+              <Text style={{ fontWeight: '700', color: '#92400E', marginBottom: 8, fontSize: 13 }}>
+                ⚠️ Due Months ({paymentSummary.dueMonths.length})
+              </Text>
+              {paymentSummary.dueMonths.map((dm, i) => (
+                <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, borderBottomWidth: i < paymentSummary.dueMonths.length - 1 ? 1 : 0, borderBottomColor: '#FDE68A' }}>
+                  <Text style={{ color: '#92400E', fontSize: 13 }}>{dm.month}</Text>
+                  <Text style={{ color: '#92400E', fontWeight: '700', fontSize: 13 }}>₹{dm.dueAmount}</Text>
+                </View>
+              ))}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F59E0B' }}>
+                <Text style={{ fontWeight: '700', color: '#92400E' }}>Total Due</Text>
+                <Text style={{ fontWeight: '700', color: '#DC2626', fontSize: 15 }}>₹{paymentSummary.totalDue}</Text>
+              </View>
+            </View>
+          )}
+
+          {selectedMemberId && paymentSummary?.creditBalance > 0 && (
+            <View style={{ marginTop: 12, backgroundColor: '#F0FDF4', borderRadius: 10, padding: 12, borderLeftWidth: 4, borderLeftColor: '#10B981' }}>
+              <Text style={{ fontWeight: '700', color: '#065F46', fontSize: 13 }}>
+                ✅ Advance paid — ₹{paymentSummary.creditBalance} credit balance
+              </Text>
+            </View>
+          )}
         </View>
+          );
+        })()}
+
+        {/* All Members Summary */}
+        {!selectedMemberId && allMembersSummary.length > 0 && (
+          <View style={styles.historyContainer}>
+            <Text style={styles.sectionTitle}>All Members — Due Summary</Text>
+            {allMembersSummary.map((m, i) => (
+              <View key={m.memberId || i} style={{ backgroundColor: '#FFF', borderRadius: 12, padding: 14, marginBottom: 10, borderLeftWidth: 4, borderLeftColor: m.totalDueAmount > 0 ? '#F59E0B' : '#10B981', elevation: 2 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Text style={{ fontWeight: '700', fontSize: 15, color: '#1B5E35', flex: 1 }}>{m.memberName}</Text>
+                  {m.totalDueAmount > 0
+                    ? <Text style={{ color: '#DC2626', fontWeight: '700', fontSize: 14 }}>Due ₹{m.totalDueAmount}</Text>
+                    : m.creditBalance > 0
+                      ? <Text style={{ color: '#10B981', fontWeight: '700', fontSize: 14 }}>Advance ₹{m.creditBalance}</Text>
+                      : <Text style={{ color: '#10B981', fontWeight: '700', fontSize: 14 }}>✓ Paid</Text>
+                  }
+                </View>
+                <View style={{ flexDirection: 'row', gap: 16 }}>
+                  <Text style={{ color: '#666', fontSize: 12 }}>Paid: ₹{m.totalPaidAmount}</Text>
+                  <Text style={{ color: '#666', fontSize: 12 }}>Fee: ₹{m.monthlyFee}/mo</Text>
+                  <Text style={{ color: '#666', fontSize: 12 }}>{m.paymentCount} payments</Text>
+                </View>
+                {m.dueMonths?.length > 0 && (
+                  <View style={{ marginTop: 8, backgroundColor: '#FFF8E1', borderRadius: 6, padding: 8 }}>
+                    <Text style={{ fontSize: 11, color: '#92400E', fontWeight: '600', marginBottom: 4 }}>Due months:</Text>
+                    {m.dueMonths.map((dm, j) => (
+                      <View key={j} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={{ fontSize: 12, color: '#92400E' }}>{dm.month}</Text>
+                        <Text style={{ fontSize: 12, color: '#92400E', fontWeight: '700' }}>₹{dm.dueAmount}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Payment History */}
         <View style={styles.historyContainer}>
@@ -775,9 +913,11 @@ const PaymentDetails = () => {
                   </View>
                   <View style={styles.modalMemberInfo}>
                     <Text style={styles.modalMemberName}>{member.name}</Text>
-                    <Text style={styles.modalMemberDetails}>
-                      {member.memberId}  �  {member.phone}
-                    </Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", marginTop: 2 }}>
+                      <Text style={styles.modalMemberDetails}>{member.memberId || "N/A"}</Text>
+                      <Icon name="phone" size={12} color="#6B7280" style={{ marginHorizontal: 4 }} />
+                      <Text style={styles.modalMemberDetails}>{member.phone}</Text>
+                    </View>
                   </View>
                   {selectedMemberId === member.id && (
                     <Icon name="check-circle" size={24} color="#C9A84C" />
@@ -793,6 +933,44 @@ const PaymentDetails = () => {
                 </View>
               )}
             </ScrollView>
+          </View>
+        </View>
+      )}
+
+      {/* Set Monthly Fee Overlay */}
+      {showFeeModal && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20, zIndex: 999 }}>
+          <View style={{ backgroundColor: '#FFF', borderRadius: 16, padding: 24, width: '100%' }}>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1B5E35', marginBottom: 6 }}>Set Monthly Fee</Text>
+            <Text style={{ fontSize: 13, color: '#666', marginBottom: 16 }}>This fee applies to all members in your sub-company.</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#1B5E35', borderRadius: 10, paddingHorizontal: 12, marginBottom: 20 }}>
+              <Text style={{ fontSize: 18, color: '#1B5E35', fontWeight: '700', marginRight: 6 }}>₹</Text>
+              <TextInput
+                style={{ flex: 1, fontSize: 20, fontWeight: '700', color: '#1B5E35', paddingVertical: 12 }}
+                keyboardType="numeric"
+                placeholder="0"
+                value={monthlyFee}
+                onChangeText={setMonthlyFee}
+              />
+            </View>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity
+                onPress={() => setShowFeeModal(false)}
+                style={{ flex: 1, padding: 14, borderRadius: 10, borderWidth: 1.5, borderColor: '#ccc', alignItems: 'center' }}
+              >
+                <Text style={{ color: '#666', fontWeight: '600' }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSaveFee}
+                disabled={savingFee}
+                style={{ flex: 1, padding: 14, borderRadius: 10, backgroundColor: '#1B5E35', alignItems: 'center' }}
+              >
+                {savingFee
+                  ? <ActivityIndicator color="#FFF" size="small" />
+                  : <Text style={{ color: '#C9A84C', fontWeight: '700' }}>Save Fee</Text>
+                }
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       )}

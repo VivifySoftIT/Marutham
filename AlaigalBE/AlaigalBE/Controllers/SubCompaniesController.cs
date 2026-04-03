@@ -196,9 +196,46 @@ namespace AlaigalBE.Controllers
             return members;
         }
 
+        // PUT: api/SubCompanies/{id}/fee  — Admin sets monthly fee for this sub-company
+        [HttpPut("{id}/fee")]
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+        public async Task<IActionResult> SetMonthlyFee(int id, [FromBody] SetFeeDto dto)
+        {
+            var subCompany = await _context.SubCompanies.FindAsync(id);
+            if (subCompany == null || !subCompany.IsActive)
+                return NotFound(new { message = "Sub-company not found" });
+
+            subCompany.MonthlyFee = dto.MonthlyFee;
+            subCompany.ModifiedDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Monthly fee updated", monthlyFee = subCompany.MonthlyFee });
+        }
+
+        // POST: api/SubCompanies/{id}/fee  — IIS-safe alternative to PUT
+        [HttpPost("{id}/fee")]
+        [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+        public async Task<IActionResult> SetMonthlyFeePost(int id, [FromBody] SetFeeDto dto)
+        {
+            var subCompany = await _context.SubCompanies.FindAsync(id);
+            if (subCompany == null || !subCompany.IsActive)
+                return NotFound(new { message = "Sub-company not found" });
+
+            subCompany.MonthlyFee = dto.MonthlyFee;
+            subCompany.ModifiedDate = DateTime.Now;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Monthly fee updated", monthlyFee = subCompany.MonthlyFee });
+        }
+
         private bool SubCompanyExists(int id)
         {
             return _context.SubCompanies.Any(e => e.Id == id);
         }
+    }
+
+    public class SetFeeDto
+    {
+        public decimal MonthlyFee { get; set; }
     }
 }
