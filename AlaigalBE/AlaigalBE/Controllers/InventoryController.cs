@@ -288,7 +288,17 @@ public class InventoryController : ControllerBase
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetPayment), new { id = payment.Id }, payment);
+            return Ok(new
+            {
+                statusCode = 200,
+                statusDesc = "Payment created successfully",
+                paymentId = payment.Id,
+                receiptNumber = payment.ReceiptNumber,
+                amount = payment.Amount,
+                paymentForMonth = payment.PaymentForMonth,
+                paymentDate = payment.PaymentDate,
+                status = payment.Status
+            });
         }
         catch (DbUpdateException dbEx)
         {

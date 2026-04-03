@@ -367,10 +367,11 @@ Date = t.VisitDate?.ToString("yyyy-MM-dd") ?? "",
             if (!member.SubCompanyId.HasValue)
                 return Ok(new List<FeedItemDto>());
 
-            // Get all active meetings for this member's SubCompanyId
+            // Get only active upcoming meetings (today and future) for this member's SubCompanyId
+            var today = DateOnly.FromDateTime(DateTime.Now);
             var weeklyMeetings = await _context.MeetingDetails
-                .Where(m => m.SubCompanyId == member.SubCompanyId && m.IsActive)
-                .OrderByDescending(m => m.MeetingDate)
+                .Where(m => m.SubCompanyId == member.SubCompanyId && m.IsActive && m.MeetingDate >= today)
+                .OrderBy(m => m.MeetingDate)
                 .ToListAsync();
 
             // Batch-fetch attendance for this member (one query)

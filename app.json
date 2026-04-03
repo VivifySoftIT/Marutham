@@ -23,7 +23,8 @@
         "NSPhotoLibraryAddUsageDescription": "We need access to your photos to update your profile picture .",
         "NSUserNotificationsUsageDescription": "We use notifications to keep you updated on important alerts and messages.",
         "NSMicrophoneUsageDescription": "We need access to your microphone for voice search functionality.",
-        "NSSpeechRecognitionUsageDescription": "We need access to speech recognition for voice search functionality."
+        "NSSpeechRecognitionUsageDescription": "We need access to speech recognition for voice search functionality.",
+        "NSCameraUsageDescription": "We need access to your camera to upload profile photos and meeting posters."
       },
       "bundleIdentifier": "com.vivify.safety"
     },
@@ -36,6 +37,11 @@
       "useNextNotificationsApi": true,
       "permissions": [
         "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
         "POST_NOTIFICATIONS",
