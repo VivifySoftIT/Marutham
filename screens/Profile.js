@@ -1232,7 +1232,6 @@ const MyProfile = () => {
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={handleDateChange}
-          maximumDate={new Date()}
         />
       )}
 
