@@ -71,14 +71,14 @@ const SettingsScreen = () => {
   };
 
   const translateRole = (role) => {
-    if (!role) return t('role');
+    if (!role) return t('member');
     
     const roleTranslations = {
       'Admin': t('administrator'),
       'admin': t('administrator'),
       'Administrator': t('administrator'),
-      'User': t('user'),
-      'user': t('user'),
+      'User': t('member'),
+      'user': t('member'),
       'Member': t('member'),
       'member': t('member'),
     };
@@ -292,8 +292,8 @@ const SettingsScreen = () => {
                 <Text style={styles.profileName}>{userData?.fullName || 'Admin User'}</Text>
                 <Text style={styles.profileEmail}>{userData?.email || 'admin@alaigal.com'}</Text>
                 <View style={styles.profileBadge}>
-                  <Icon name="shield-crown" size={14} color={'#1B5E35'} />
-                  <Text style={styles.profileBadgeText}>{t('administrator')}</Text>
+                  <Icon name={userData?.role === 'Admin' || userData?.role === 'admin' || userData?.role === 'Administrator' ? 'shield-crown' : 'account'} size={14} color={'#1B5E35'} />
+                  <Text style={styles.profileBadgeText}>{translateRole(userData?.role)}</Text>
                 </View>
               </View>
             </View>
